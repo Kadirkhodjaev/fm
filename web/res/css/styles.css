@@ -1,0 +1,45 @@
+/** Главная страница **/
+.banner       {border-bottom: 1px solid #e7e7e7; background-color: #f8f8f8; height: 50px; margin-bottom: 10px}
+.banner table {width: 100%}
+.banner table tr td:first-child {padding-left: 10px;}
+.banner table tr td:first-child span {position:relative; top:-4px; left:10px; font-size: 20px;}
+.leftMenu {padding-left: 0; margin-bottom: 0; list-style: none;}
+.leftMenu li {padding: 15px; color: #337ab7; border-bottom: 1px solid #e7e7e7; cursor: pointer}
+.leftMenu li.active, .leftMenu li:hover {background: #eee;}
+
+.print-button {
+  float:right;
+  margin-top: -5px
+}
+.hover:hover {background: #eee}
+.hand {cursor: pointer}
+/** Add Edit Page **/
+.formTable {font-family:'Arial'; font-size: 14px; margin: auto;}
+.formTableRight {font-family:'Arial'; font-size: 14px;}
+.formTable td {border:1px solid #eee; padding: 3px;}
+.right {text-align: right;}
+.center {text-align: center;}
+.bold {font-weight: bold}
+.formTable input[type=text], .formTable input[type=password], .formTable input[type=number], .formTable select {height: 24px !important;}
+.datepicker {width: 100px !important; text-align: center; padding: 5px}
+.dateImg {width: 20px; height: 20px; margin:5px 0 0 4px; float:left; cursor:pointer; background: red; background:url(../datepicker/images/cal.gif) no-repeat}
+
+/* Грид стили */
+.pageNum {height: 28px;padding: 6px 4px;font-size: 12px;border: 1px solid #ccc;}
+.grid {font-size: 12px}
+.grid tr {cursor: hand}
+.grid thead {background:#d1d1d1}
+.grid thead tr th {text-align: center; border:1px solid #ddd !important;}
+.paginationBlock {text-align: right; height: 32px; margin-top: -10px}
+.grid tbody tr:hover {background: #f9f9f9}
+.grid tbody tr td, .grid thead tr th {padding: 4px !important;}
+.grid tbody tr.selected {background: #e8e8e8}
+
+.jqte {margin:0 !important;}
+
+.noselect {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

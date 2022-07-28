@@ -1,0 +1,472 @@
+package ckb.controllers.med;
+
+
+import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.depts.DDept;
+import ckb.dao.admin.dicts.DDict;
+import ckb.dao.admin.forms.opts.DOpt;
+import ckb.dao.admin.region.DRegion;
+import ckb.dao.admin.users.DUser;
+import ckb.dao.med.client.DClient;
+import ckb.dao.med.dicts.rooms.DRooms;
+import ckb.dao.med.kdos.DKdos;
+import ckb.dao.med.lv.plan.DLvPlan;
+import ckb.dao.med.patient.*;
+import ckb.domains.admin.Kdos;
+import ckb.domains.med.dicts.Rooms;
+import ckb.domains.med.lv.LvPlans;
+import ckb.domains.med.patient.PatientPlans;
+import ckb.domains.med.patient.PatientWatchers;
+import ckb.domains.med.patient.Patients;
+import ckb.services.admin.form.SForm;
+import ckb.services.admin.user.SUser;
+import ckb.services.med.patient.SPatient;
+import ckb.session.Session;
+import ckb.session.SessionUtil;
+import ckb.utils.Req;
+import ckb.utils.Util;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Controller
+@RequestMapping("/reg/")
+public class CReg {
+
+  private Session session = null;
+  @Autowired SForm sForm;
+  @Autowired SPatient sPatient;
+  @Autowired DPatient dPatient;
+  @Autowired SUser sUser;
+  @Autowired DDept dDept;
+  @Autowired DPatientLink dPatientLink;
+  @Autowired DCountery dCountery;
+  @Autowired DRegion dRegion;
+  @Autowired DOpt dOpt;
+  @Autowired DUser dUser;
+  @Autowired DRooms dRooms;
+  @Autowired DKdos dKdos;
+  @Autowired DLvPlan dLvPlan;
+  @Autowired DPatientPlan dPatientPlan;
+  @Autowired DPatientWatchers dPatientWatchers;
+  @Autowired DPatientPays dPatientPays;
+  @Autowired DDict dDict;
+  @Autowired DClient dClient;
+
+  @RequestMapping("nurse/index.s")
+  protected String view(@ModelAttribute("patient") Patients p, HttpServletRequest req, Model m) {
+    //if(!Util.getCurDate().substring(6, 10).equals("2018")) return "redirect:/out.s";
+    session = SessionUtil.getUser(req);
+    if (!Req.isNull(req, "id"))
+      session.setCurPat(Req.getInt(req, "id"));
+    session.setCurUrl("/reg/nurse/index.s" + (Req.isNull(req, "id") ? "" : "?id=" + Req.get(req, "id")));
+    sForm.setSelectOptionModel(m, 1, "cat");
+    sForm.setSelectOptionModel(m, 1, "pitanie");
+    sForm.setSelectOptionModel(m, 1, "sex");
+    sForm.setSelectOptionModel(m, 1, "redirect");
+    sForm.setSelectOptionModel(m, 1, "vidPer");
+    sForm.setSelectOptionModel(m, 1, "metka");
+    sForm.setSelectOptionModel(m, 1, "lgotaType");
+    sForm.setSelectOptionModel(m, 1, "bloodGroup");
+    sForm.setSelectOptionModel(m, 1, "pay_type");
+    m.addAttribute("watcherPrice", session.getParam("WATCHER_PRICE"));
+    m.addAttribute("watchers", dPatientWatchers.byPatient(p.getId()));
+    m.addAttribute("curDate", Util.getCurDate());
+    sPatient.createModel(req, p);
+    m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
+    m.addAttribute("deps", dDept.getAll());
+    m.addAttribute("lvs", sUser.getLvs());
+    //
+    List<Rooms> list = dRooms.getActives();
+    List<Rooms> rooms = new ArrayList<Rooms>();
+    for(Rooms room: list) {
+      Long count = dPatient.getCount("From Patients Where state != 'ARCH' And state != 'ZGV' And room.id = " + room.getId());
+      if(count < room.getKoykoLimit() || room.getAccess().equals("Y"))
+        rooms.add(room);
+    }
+    m.addAttribute("rooms", rooms);
+    //
+    m.addAttribute("counteries", dCountery.getCounteries());
+    m.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+    m.addAttribute("reg", Util.nvl(Util.get(req, "reg")).equals("Y") ? session.getCurPat() : "");
+    m.addAttribute("booking", Util.get(req, "booking", ""));
+    List<Kdos> kdos = dKdos.getList("From Kdos Where necKdo = 'Y'");
+    List<Kdos> kkk = new ArrayList<Kdos>();
+    for(Kdos kdo: kdos) {
+      kdo.setShortName("_" + kdo.getId() + "_");
+      kkk.add(kdo);
+    }
+    m.addAttribute("kdos", kkk);
+    String planIds = "";
+    if (!Req.isNull(req, "id")) {
+      List<PatientPlans> plans = dPatientPlan.getList("From PatientPlans Where patient_id = " + session.getCurPat());
+      for(PatientPlans plan: plans) {
+        planIds += "_" + dLvPlan.get(plan.getPlan_Id()).getKdo().getId() + "_";
+      }
+    }
+    m.addAttribute("planIds", planIds);
+    m.addAttribute("clients", dClient.getList("From Clients Order By surname"));
+    if (p.getId() == null)
+      p.setTarDate(Util.getCurDate());
+    Util.makeMsg(req, m);
+    return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "index";
+  }
+
+  @RequestMapping(value = "nurse/index.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String addEdit(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    if(req.getParameter("birthdayString") == null) {
+      json.put("success", false);
+      json.put("msg", "Дата рождения не может быть пустым");
+      return json.toString();
+    } else {
+      if(Util.stringToDate(req.getParameter("birthdayString")) == null) {
+        json.put("success", false);
+        json.put("msg", "Не правильный формат даты рождения");
+        return json.toString();
+      }
+    }
+    try {
+      Patients p = sPatient.save(req);
+      dPatientLink.saveLink(Util.getNullInt(req, "reg"), p.getId());
+      json.put("id", p.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "nurse/kdo/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String nurseNecKdoSave(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      Patients pat = dPatient.get(session.getCurPat());
+      String[] ids = req.getParameterValues("id");
+      String planIds = "";
+      List<PatientPlans> plans = dPatientPlan.getList("From PatientPlans Where patient_id = " + session.getCurPat());
+      for(PatientPlans plan: plans) {
+        planIds += "_" + dLvPlan.get(plan.getPlan_Id()).getKdo().getId() + "_";
+      }
+      for(String id: ids) {
+        if(Util.get(req,"kdo" + id) == null) {
+          List<PatientPlans> kdos = dPatientPlan.getList("From PatientPlans t Where Exists (Select 1 From LvPlans c where c.resultId = 0 And c.id = t.plan_Id And c.kdo.id = " + id + ") And t.patient_id = " + session.getCurPat());
+          for(PatientPlans k: kdos) {
+            dPatientPlan.delete(k.getId());
+            dLvPlan.delete(k.getPlan_Id());
+          }
+        }
+        if(Util.get(req, "kdo" + id, "N").equals("Y")) {
+          if(!planIds.contains("_" + id + "_")) {
+            LvPlans p = new LvPlans();
+            Kdos kdo = dKdos.get(Integer.parseInt(id));
+            p.setKdo(kdo);
+            p.setKdoType(kdo.getKdoType());
+            p.setDone("N");
+            p.setPatientId(session.getCurPat());
+            p.setResultId(0);
+            p.setPrice(pat.getCounteryId() == 199 ? kdo.getPrice() : kdo.getFor_price());
+            p.setCashState(p.getPrice() == null || p.getPrice() == 0 ? "FREE" : "ENT");
+            if (p.getPrice() == null || p.getPrice() == 0) p.setPayDate(new Date());
+            p.setUserId(session.getUserId());
+            p.setCrOn(new Date());
+            p.setActDate(Util.stringToDate(Util.getCurDate()));
+            dLvPlan.save(p);
+
+            PatientPlans pp = new PatientPlans();
+            pp.setPlan_Id(p.getId());
+            pp.setKdo_type_id(p.getKdoType().getId());
+            pp.setActDate(p.getActDate());
+            pp.setPatient_id(p.getPatientId());
+            dPatientPlan.save(pp);
+          }
+        }
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping("nurse/del.s")
+  protected String delPatient(HttpServletRequest request) {
+    session = SessionUtil.getUser(request);
+    session.setCurUrl("/patients/list.s?msgState=1&msgCode=successDelete");
+    if(dPatient.get(session.getCurPat()).getState().equals("PRN")) {
+      dPatientLink.deletePatient(session.getCurPat());
+      dPatient.delete(session.getCurPat());
+    }
+    return "redirect:/main.s";
+  }
+
+  @RequestMapping("nurse/view.s")
+  protected String nursePrint(HttpServletRequest request, Model model) {
+    session = SessionUtil.getUser(request);
+    Patients pat = dPatient.get(session.getCurPat());
+    model.addAttribute("pat", pat);
+    if(pat.getLv_id() != null)
+      model.addAttribute("lv", dUser.get(pat.getLv_id()));
+    model.addAttribute("lvs", dUser.getLvs());
+    model.addAttribute("zavs", dUser.getList("From Users Where zavlv = 1"));
+    model.addAttribute("country", pat.getCounteryId() != null ? dCountery.get(pat.getCounteryId()).getName() : "");
+    model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
+    return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
+  }
+
+  @RequestMapping(value = "nurse/watcher.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String saveWatcher(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      Patients pat = dPatient.get(Util.getInt(req, "id"));
+      if(pat.getRoom().getRoomType().getId() == 7) {
+        json.put("success", false);
+        json.put("msg", "Нельзя добавить дополнительное спальное место. Полулюкс является одноместной палатой");
+        return json.toString();
+      }
+      //
+      Double EXTRA_KOYKA_LUX_UZB = Double.parseDouble(session.getParam("EXTRA_KOYKA_LUX_UZB"));
+      Double EXTRA_KOYKA_SIMPLE_UZB = Double.parseDouble(session.getParam("EXTRA_KOYKA_SIMPLE_UZB"));
+      Double EXTRA_KOYKA_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
+      Double EXTRA_KOYKA_SIMPLE = Double.parseDouble(session.getParam("EXTRA_KOYKA_SIMPLE"));
+
+      Double BRON_KOYKA_SIMPLE_UZB = Double.parseDouble(session.getParam("BRON_KOYKA_SIMPLE_UZB"));
+      Double BRON_KOYKA_LUX_UZB = Double.parseDouble(session.getParam("BRON_KOYKA_LUX_UZB"));
+      Double BRON_KOYKA_SIMPLE = Double.parseDouble(session.getParam("BRON_KOYKA_SIMPLE"));
+      Double BRON_KOYKA_LUX = Double.parseDouble(session.getParam("BRON_KOYKA_LUX"));
+      //
+      PatientWatchers watcher = new PatientWatchers();
+      watcher.setDayCount(Util.getInt(req, "days"));
+      watcher.setPatient_id(pat.getId());
+      watcher.setType(dDict.get(Util.getInt(req, "type")));
+      if(pat.getCounteryId() == 199) {
+        if(pat.getRoom().getRoomType().getId() == 5) { // Люкс
+          if(watcher.getType().getId() == 8)
+            watcher.setPrice(BRON_KOYKA_LUX_UZB);
+          else
+            watcher.setPrice(EXTRA_KOYKA_LUX_UZB);
+        }
+        if(pat.getRoom().getRoomType().getId() == 6) { // Простая
+          if(watcher.getType().getId() == 8)
+            watcher.setPrice(BRON_KOYKA_SIMPLE_UZB);
+          else
+            watcher.setPrice(EXTRA_KOYKA_SIMPLE_UZB);
+        }
+      } else {
+        if(pat.getRoom().getRoomType().getId() == 5) { // Люкс
+          if(watcher.getType().getId() == 8)
+            watcher.setPrice(BRON_KOYKA_LUX);
+          else
+            watcher.setPrice(EXTRA_KOYKA_LUX);
+        }
+        if(pat.getRoom().getRoomType().getId() == 6) { // Простая
+          if(watcher.getType().getId() == 8)
+            watcher.setPrice(BRON_KOYKA_SIMPLE);
+          else
+            watcher.setPrice(EXTRA_KOYKA_SIMPLE);
+        }
+      }
+      watcher.setTotal(watcher.getPrice()*watcher.getDayCount());
+      watcher.setState("ENT");
+      watcher.setCrBy(session.getUserId());
+      watcher.setCrOn(new Date());
+      dPatientWatchers.save(watcher);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "nurse/watcher/day.s", method = RequestMethod.POST)
+  protected @ResponseBody String setWatcherDay(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    JSONObject data = new JSONObject();
+    try {
+      PatientWatchers watcher = dPatientWatchers.get(Util.getInt(req, "id"));
+      watcher.setDayCount(Util.getInt(req, "day"));
+      dPatientWatchers.save(watcher);
+      data.put("success", true);
+    } catch (Exception e) {
+      data.put("success", false);
+      data.put("msg", e.getMessage());
+    }
+    return data.toString();
+  }
+
+  @RequestMapping("doctor/index.s")
+  protected String regDoc(@ModelAttribute("patient") Patients patient, HttpServletRequest req, Model model) {
+    session = SessionUtil.getUser(req);
+    session.setCurPat(Req.getInt(req, "id"));
+    Patients pat = dPatient.get(session.getCurPat());
+    session.setCurUrl("/reg/doctor/index.s?id=" + pat.getId());
+    model.addAttribute("fio", pat.getSurname() + " " + pat.getName());
+    model.addAttribute("lvs", sUser.getLvs());
+    model.addAttribute("deps", dDept.getAll());
+    sPatient.createDocModel(pat, patient);
+    model.addAttribute("date_Begin", Util.dateToString(pat.getDateBegin()));
+    model.addAttribute("Date_End", Util.dateToString(pat.getDateEnd()));
+    model.addAttribute("diagnos_Date", Util.dateToString(pat.getDiagnosDate()));
+    model.addAttribute("bioCount", dLvPlan.getCount("From LvPlans Where kdo.id = 153 And patientId = " + pat.getId()));
+    Util.makeMsg(req, model);
+    String url = "med/registration/doctor/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "index";
+    return url;
+  }
+
+  @RequestMapping("doctor/view.s")
+  protected String docPrint(HttpServletRequest req, Model model) {
+    session = SessionUtil.getUser(req);
+    Patients pat = dPatient.get(session.getCurPat());
+    model.addAttribute("pat", pat);
+    if(pat.getLv_id() != null)
+      model.addAttribute("lv", sUser.getLv(pat.getLv_id()).getFio());
+    model.addAttribute("page", Util.get(req, "page"));
+    return "med/registration/doctor/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
+  }
+
+  @RequestMapping(value = "stat/removeRow.s", method = RequestMethod.POST)
+  protected @ResponseBody String removeRow(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    JSONObject data = new JSONObject();
+    res.setContentType("text/plain;charset=UTF-8");
+    try {
+      if(Util.isNotNull(req,"code") && Util.isNotNull(req,"id")) {
+        if(Util.get(req, "code").equals("watcher")) {
+          dPatientWatchers.delete(Util.getInt(req, "id"));
+        }
+      }
+      data.put("success", true);
+    } catch (Exception e) {
+      data.put("success", false);
+      data.put("msg", e.getMessage());
+    }
+    return data.toString();
+  }
+
+  @RequestMapping(value = "stat/cashPlanState.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String cashPlanState(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    JSONObject data = new JSONObject();
+    res.setContentType("text/plain;charset=UTF-8");
+    try {
+     LvPlans plan = dLvPlan.get(Util.getInt(req, "id"));
+     if(Util.get(req, "code").equals("C")) {
+       plan.setCashState("PAID");
+       plan.setPayDate(new Date());
+     } else {
+       plan.setCashState("ENT");
+       plan.setPayDate(null);
+     }
+     dLvPlan.save(plan);
+     data.put("success", true);
+    } catch (Exception e) {
+      data.put("success", false);
+      data.put("msg", e.getMessage());
+    }
+    return data.toString();
+  }
+
+  @RequestMapping(value = "doctor/index.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String regDoc(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    Session session = SessionUtil.getUser(req);
+    JSONObject data = new JSONObject();
+    res.setContentType("text/plain;charset=UTF-8");
+    try {
+      String msg = "";
+      if (!session.isParamEqual("CLINIC_CODE", "fm")) {
+        msg = Util.isNull(req, "dept.id") ? "Не заполнено поле - Отделение\n" : "";
+        msg += Util.isNull(req, "palata") ? "Не заполнено поле - Палата\n" : "";
+        msg += Util.isNull(req, "lv_id") ? "Не заполнено поле - Лечащий врач\n" : "";
+      }
+      msg += Req.isNull(req, "date_Begin") ? "Не заполнено поле - Дата поступление\n" : "";
+      msg += Req.isNull(req, "yearNum") ? "Не заполнено поле - Номер история болезни\n" : "";
+      if (msg.equals(""))
+        if (dPatient.existIbNum(Util.getInt(req, "id"), Util.getNullInt(req, "yearNum"), Util.getNullInt(req, "ordNum")))
+          msg += "Номер история болезни - такой номер уже существует\n";
+      //
+      if (msg.equals("")) {
+        Patients p = sPatient.docSave(req);
+        data.put("success", true);
+        data.put("id", p.getId());
+      } else {
+        data.put("success", false);
+        data.put("msg", msg);
+      }
+    } catch (Exception e) {
+      data.put("success", false);
+      data.put("msg", e.getMessage());
+    }
+    return data.toString();
+  }
+
+  @RequestMapping(value = "doctor/getIbNum.s", method = RequestMethod.POST)
+  protected @ResponseBody String getNum(HttpServletRequest req) {
+    session = SessionUtil.getUser(req);
+    Patients p = dPatient.get(session.getCurPat());
+    return "{\"y\":" + (p.getYearNum() == null ? dPatient.getNextYearNum() : p.getYearNum()) + "}";
+  }
+
+  @RequestMapping(value = "lvConf.s", method = RequestMethod.POST)
+  protected @ResponseBody String lvConf(HttpServletRequest req) throws JSONException {
+    session = SessionUtil.getUser(req);
+    Patients p = dPatient.get(session.getCurPat());
+    JSONObject data = new JSONObject();
+    try {
+      if (Util.isNotNull(req, "lv")) {
+        p.setLv_id(Util.getInt(req, "lv"));
+        p.setLv_dept_id(dUser.get(p.getLv_id()).getDept().getId());
+      }
+      p.setZavlv(dUser.get(Util.getInt(req, "zavlv")));
+      dPatient.save(p);
+      data.put("success", true);
+      return data.toString();
+    } catch (Exception e) {
+      data.put("msg", e.getMessage());
+      data.put("success", false);
+      return data.toString();
+    }
+  }
+
+  @RequestMapping("print.s")
+  protected String regPrint(HttpServletRequest request, Model model) {
+    session = SessionUtil.getUser(request);
+    model.addAttribute("p", dPatient.get(session.getCurPat()));
+    return "med/registration/print";
+  }
+
+  @RequestMapping("ekg.s")
+  protected String regEkg(HttpServletRequest req, Model model) {
+     session = SessionUtil.getUser(req);
+    if(session.getCurPat() != 0)
+      model.addAttribute("patFio", dPatient.getFio(session.getCurPat()));
+    Integer id = Util.getInt(req, "id");
+    model.addAttribute("printPage", "");
+    if(id > 0) {
+      try {
+        LvPlans plan = dLvPlan.getObj("Select t From LvPlans t Where t.id in (Select Min(c.id) From LvPlans c Where c.isDone = 'Y' And c.kdo.id = 50 And c.patientId = " + id + ") And t.kdo.id = 50 And t.patientId = " + id);
+        model.addAttribute("printPage", "/kdo/obs.s?print=Y&id=" + plan.getId() + "&kdo=" + plan.getKdo().getId());
+      } catch (Exception e) {}
+    }
+    return "med/registration/doctor/fm/ekg";
+  }
+
+}

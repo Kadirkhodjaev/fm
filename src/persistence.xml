@@ -1,0 +1,14 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="1.0">
+  <persistence-unit name="cleansoftUnit" transaction-type="RESOURCE_LOCAL">
+
+    <provider>org.hibernate.ejb.HibernatePersistence</provider>
+
+    <properties>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5InnoDBDialect" /> <!--MySql version-->
+      <property name="hibernate.transaction.auto_close_session" value="true" />
+      <property name="hibernate.cache.use_second_level_cache" value="true" />
+      <property name="hibernate.hbm2ddl.auto" value="update" />
+      <property name="hibernate.show_sql" value="false" />
+    </properties>
+  </persistence-unit>
+</persistence>
