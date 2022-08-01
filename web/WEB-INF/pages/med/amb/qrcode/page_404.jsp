@@ -4,6 +4,6 @@
   <title>Title</title>
 </head>
 <body>
-
+Данные пациент не найден!
 </body>
 </html>

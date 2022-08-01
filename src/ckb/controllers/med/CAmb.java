@@ -4,6 +4,7 @@ import ckb.dao.admin.countery.DCountery;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
+import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
@@ -15,11 +16,16 @@ import ckb.dao.med.template.DTemplate;
 import ckb.domains.admin.Forms;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.*;
-import ckb.models.*;
+import ckb.models.AmbGroup;
+import ckb.models.AmbService;
+import ckb.models.Grid;
 import ckb.models.drugs.PatientDrug;
 import ckb.models.drugs.PatientDrugDate;
+import ckb.models.result.Doctor;
+import ckb.models.result.Result;
 import ckb.services.admin.form.SForm;
 import ckb.services.med.amb.SAmb;
+import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.DB;
@@ -49,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/amb")
 public class CAmb {
 
+  //region AUTOWIRED
   private Session session = null;
   @Autowired private SAmb sAmb;
   @Autowired private DCountery dCountery;
@@ -74,7 +81,11 @@ public class CAmb {
   @Autowired private DAmbDrugDate dAmbDrugDate;
   @Autowired private DAmbDrugRow dAmbDrugRow;
   @Autowired private DClient dClient;
+  @Autowired private DParam dParam;
+  @Autowired private SRkdo sRkdo;
+  //endregion
 
+  //region PATIENTS
   @RequestMapping(value = "/setFilter.s", method = RequestMethod.POST)
   @ResponseBody
   protected void setFilter(HttpServletRequest req){
@@ -259,7 +270,9 @@ public class CAmb {
       return null;
     }
   }
+  //endregion
 
+  //region REGISTRATION
   @RequestMapping("/reg.s")
   protected String reg(@ModelAttribute("patient") AmbPatients p, HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
@@ -486,7 +499,9 @@ public class CAmb {
     }
     return json.toString();
   }
+  //endregion
 
+  //region Амбулаторные услуги
   @RequestMapping("/patientServices.s")
   protected String patientServices(HttpServletRequest req, Model m){
     session = SessionUtil.getUser(req);
@@ -687,97 +702,6 @@ public class CAmb {
     return "med/amb/print/print";
   }
 
-  @RequestMapping("/bot-pdf.s")
-  protected String botPdf(HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
-    m.addAttribute("path", Util.get(req, "path"));
-    Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    ResultSet rc = null;
-    //
-    List<AmbPatients> patients = dAmbPatients.getList("From AmbPatients Where qrcode = '" + Util.get(req, "id") + "'");
-    if(patients.size() > 0) {
-      int patId = patients.get(0).getId();
-      List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + patId);
-      try {
-        conn = DB.getConnection();
-        ps = conn.prepareStatement(
-          "Select t.worker_id, u.fio, u.profil " +
-            "  From Amb_Patient_Services t, Users u, Amb_Services s " +
-            "  Where u.id = t.worker_id " +
-            "    And s.id = t.service_id " +
-            "    And t.patient =  " + patId +
-            "    And s.form_id in (777, 888) " +
-            "  Group By t.worker_id, u.fio ");
-        rs = ps.executeQuery();
-        List<Obj> objs777 = new ArrayList<Obj>();
-        while(rs.next()) {
-          Obj obj = new Obj();
-          obj.setId(rs.getInt("worker_id"));
-          obj.setFio(rs.getString("fio"));
-          obj.setName(rs.getString("profil"));
-          //
-          ps = conn.prepareStatement("Select t.* From Amb_Patient_Services t, Amb_Services s Where t.service_id = s.id And s.form_id in (777, 888) And t.patient = " + patId + " And worker_id = " + obj.getId());
-          rc = ps.executeQuery();
-          List<ObjList> o = new ArrayList<ObjList>();
-          while(rc.next()){
-            ObjList oo = new ObjList();
-            oo.setC1("" + rc.getInt("id"));
-            o.add(oo);
-          }
-          obj.setList(o);
-          if(o.size() > 0)
-            objs777.add(obj);
-          DB.done(rc);
-          DB.done(ps);
-        }
-        ps = conn.prepareStatement(
-          "Select t.worker_id, u.fio, u.profil " +
-            "  From Amb_Patient_Services t, Users u, Amb_Services s " +
-            "  Where u.id = t.worker_id " +
-            "    And s.id = t.service_id " +
-            "    And t.patient = " + patId +
-            "    And s.form_id not in (777, 888) " +
-            "  Group By t.worker_id, u.fio ");
-        rs = ps.executeQuery();
-        List<Obj> objs = new ArrayList<Obj>();
-        while(rs.next()) {
-          Obj obj = new Obj();
-          obj.setId(rs.getInt("worker_id"));
-          obj.setFio(rs.getString("fio"));
-          obj.setName(rs.getString("profil"));
-          //
-          ps = conn.prepareStatement("Select t.* From Amb_Patient_Services t, Amb_Services s Where t.service_id = s.id And s.form_id not in (777, 888) And t.id = " + patId + " And worker_id = " + obj.getId());
-          rc = ps.executeQuery();
-          List<ObjList> o = new ArrayList<ObjList>();
-          while(rc.next()){
-            ObjList oo = new ObjList();
-            oo.setC1("" + rc.getInt("id"));
-            o.add(oo);
-          }
-          obj.setList(o);
-          if(obj.getList().size() > 0)
-            objs.add(obj);
-          DB.done(rc);
-          DB.done(ps);
-        }
-        m.addAttribute("obj777", objs777);
-        m.addAttribute("objs", objs);
-        m.addAttribute("services", services);
-        return "med/amb/qrcode/pages";
-      } catch (Exception e) {
-        e.printStackTrace();
-      } finally {
-        DB.done(rs);
-        DB.done(ps);
-        DB.done(conn);
-      }
-    }
-    //
-    return "med/amb/qrcode/404";
-  }
-
   @RequestMapping("/printForm.s")
   protected String printForm(HttpServletRequest req, Model model) {
     AmbPatientServices service = dAmbPatientServices.get(Util.getInt(req, "id"));
@@ -921,7 +845,9 @@ public class CAmb {
     }
     return json.toString();
   }
+  //endregion
 
+  //region DRUGS
   @RequestMapping("/drug.s")
   protected String drug(HttpServletRequest req, Model model){
     session = SessionUtil.getUser(req);
@@ -1185,6 +1111,97 @@ public class CAmb {
     }
     return json.toString();
   }
+  //endregion
 
+  @RequestMapping("qrcode.s")
+  protected String botPdf(HttpServletRequest req, Model m) {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    ResultSet rc = null;
+    //
+    List<AmbPatients> patients = dAmbPatients.getList("From AmbPatients Where qrcode = '" + Util.get(req, "id") + "'");
+    if(patients.size() > 0) {
+      int patId = patients.get(0).getId();
+      m.addAttribute("patient", patients.get(0));
+      List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + patId);
+      try {
+        conn = DB.getConnection();
+        ps = conn.prepareStatement(
+          "Select t.worker_id, u.fio, u.profil " +
+            "  From Amb_Patient_Services t, Users u, Amb_Services s " +
+            "  Where u.id = t.worker_id " +
+            "    And s.id = t.service_id " +
+            "    And t.patient =  " + patId +
+            "    And s.form_id in (777, 888) " +
+            "  Group By t.worker_id, u.fio ");
+        rs = ps.executeQuery();
+        List<Doctor> objs777 = new ArrayList<Doctor>();
+        while(rs.next()) {
+          Doctor obj = new Doctor();
+          obj.setUser(rs.getInt("worker_id"));
+          obj.setFio(rs.getString("fio"));
+          obj.setProfil(rs.getString("profil"));
+          //
+          ps = conn.prepareStatement("Select t.id From Amb_Patient_Services t, Amb_Services s Where t.state = 'DONE' And t.service_id = s.id And s.form_id in (777, 888) And t.patient = " + patId + " And worker_id = " + obj.getUser());
+          rc = ps.executeQuery();
+          List<Result> o = new ArrayList<Result>();
+          while(rc.next()) {
+            Result res = sRkdo.getAmbResult(rc.getInt("id"));
+            if(res != null) o.add(res);
+          }
+          obj.setResults(o);
+          if(o.size() > 0)
+            objs777.add(obj);
+          DB.done(rc);
+          DB.done(ps);
+        }
+        ps = conn.prepareStatement(
+          "Select t.worker_id, u.fio, u.profil " +
+            "  From Amb_Patient_Services t, Users u, Amb_Services s " +
+            "  Where u.id = t.worker_id " +
+            "    And s.id = t.service_id " +
+            "    And t.patient = " + patId +
+            "    And s.form_id not in (777, 888) " +
+            "  Group By t.worker_id, u.fio ");
+        rs = ps.executeQuery();
+        List<Doctor> objs = new ArrayList<Doctor>();
+        while(rs.next()) {
+          Doctor obj = new Doctor();
+          obj.setUser(rs.getInt("worker_id"));
+          obj.setFio(rs.getString("fio"));
+          obj.setProfil(rs.getString("profil"));
+          //
+          ps = conn.prepareStatement("Select t.id From Amb_Patient_Services t, Amb_Services s Where t.state = 'DONE' And t.service_id = s.id And s.form_id not in (777, 888) And t.patient = " + patId + " And worker_id = " + obj.getUser());
+          rc = ps.executeQuery();
+          List<Result> o = new ArrayList<Result>();
+          while(rc.next()) {
+            Result res = sRkdo.getAmbResult(rc.getInt("id"));
+            if(res != null) o.add(res);
+          }
+          obj.setResults(o);
+          if(o.size() > 0)
+            objs.add(obj);
+          DB.done(rc);
+          DB.done(ps);
+        }
+        m.addAttribute("objs777", objs777);
+        m.addAttribute("objs", objs);
+        m.addAttribute("services", services);
+        m.addAttribute("clinic_address", dParam.byCode("CLINIC_ADDRESS"));
+        m.addAttribute("path", Util.get(req, "path"));
+        return "med/amb/qrcode/pages";
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        DB.done(rs);
+        DB.done(rc);
+        DB.done(ps);
+        DB.done(conn);
+      }
+    }
+    //
+    return "med/amb/qrcode/page_404";
+  }
 
 }

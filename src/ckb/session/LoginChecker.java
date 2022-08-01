@@ -16,7 +16,7 @@ public class LoginChecker implements Filter {
     HttpServletResponse response = (HttpServletResponse) res;
     String url = request.getRequestURL().toString();
     Session session = SessionUtil.getUser(request);
-    if(url.contains("bot-pdf.s?id=") && session == null && url.indexOf("login.s") == -1)
+    if(url.contains("bot-pdf.s?id=") && session == null && url.indexOf("login.s") == -1 && url.indexOf("amb/qrcode") == -1)
       response.getOutputStream().println("<script>parent.parent.document.location = '/login.s'</script>");
     else
       chain.doFilter(req, res);

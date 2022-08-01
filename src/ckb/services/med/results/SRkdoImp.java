@@ -2,6 +2,9 @@ package ckb.services.med.results;
 
 import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.users.DUser;
+import ckb.dao.med.amb.DAmbPatientServices;
+import ckb.dao.med.amb.DAmbResults;
+import ckb.dao.med.amb.DAmbServiceFields;
 import ckb.dao.med.kdos.forms.f1.DF1;
 import ckb.dao.med.kdos.forms.f10.DF10;
 import ckb.dao.med.kdos.forms.f11.DF11;
@@ -62,14 +65,20 @@ import ckb.dao.med.lv.consul.DLvConsul;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.patient.DPatient;
 import ckb.domains.admin.FormFields;
+import ckb.domains.med.amb.AmbPatientServices;
+import ckb.domains.med.amb.AmbResults;
+import ckb.domains.med.amb.AmbServiceFields;
 import ckb.domains.med.kdo.*;
 import ckb.domains.med.lv.LvConsuls;
 import ckb.domains.med.lv.LvPlans;
+import ckb.models.result.FormRow;
+import ckb.models.result.Result;
 import ckb.services.admin.form.SForm;
 import ckb.utils.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class SRkdoImp implements SRkdo {
@@ -136,6 +145,9 @@ public class SRkdoImp implements SRkdo {
   @Autowired DF152 df152;
   @Autowired DF174 df174;
   @Autowired DF999 df999;
+  @Autowired private DAmbPatientServices dAmbPatientServices;
+  @Autowired private DAmbResults dAmbResults;
+  @Autowired private DAmbServiceFields dAmbServiceFields;
 
   @Override
   public List<String> getResults(int curPat) {
@@ -278,6 +290,158 @@ public class SRkdoImp implements SRkdo {
           list.add("<b>Консультацияси: " + con.getLvName() + " </b> " + con.getText() + "<br/>");
     }
     return list;
+  }
+
+  protected HashMap<String, String> getAmbHashResult(int id) {
+    AmbResults r = dAmbResults.get(id);
+    HashMap<String, String> hm = new HashMap<String, String>();
+    hm.put("c1", r.getC1());
+    hm.put("c2", r.getC2());
+    hm.put("c3", r.getC3());
+    hm.put("c4", r.getC4());
+    hm.put("c5", r.getC5());
+    hm.put("c6", r.getC6());
+    hm.put("c7", r.getC7());
+    hm.put("c8", r.getC8());
+    hm.put("c9", r.getC9());
+    hm.put("c10", r.getC10());
+    hm.put("c11", r.getC11());
+    hm.put("c12", r.getC12());
+    hm.put("c13", r.getC13());
+    hm.put("c14", r.getC14());
+    hm.put("c15", r.getC15());
+    hm.put("c16", r.getC16());
+    hm.put("c17", r.getC17());
+    hm.put("c18", r.getC18());
+    hm.put("c19", r.getC19());
+    hm.put("c20", r.getC20());
+    hm.put("c21", r.getC21());
+    hm.put("c22", r.getC22());
+    hm.put("c23", r.getC23());
+    hm.put("c24", r.getC24());
+    hm.put("c25", r.getC25());
+    hm.put("c26", r.getC26());
+    hm.put("c27", r.getC27());
+    hm.put("c28", r.getC28());
+    hm.put("c29", r.getC29());
+    hm.put("c30", r.getC30());
+    hm.put("c31", r.getC31());
+    hm.put("c32", r.getC32());
+    hm.put("c33", r.getC33());
+    hm.put("c34", r.getC34());
+    hm.put("c35", r.getC35());
+    hm.put("c36", r.getC36());
+    hm.put("c37", r.getC37());
+    hm.put("c38", r.getC38());
+    hm.put("c39", r.getC39());
+    hm.put("c40", r.getC40());
+    hm.put("c41", r.getC41());
+    hm.put("c42", r.getC42());
+    hm.put("c43", r.getC43());
+    hm.put("c44", r.getC44());
+    hm.put("c45", r.getC45());
+    hm.put("c46", r.getC46());
+    hm.put("c47", r.getC47());
+    hm.put("c48", r.getC48());
+    hm.put("c49", r.getC49());
+    hm.put("c50", r.getC50());
+    hm.put("c51", r.getC51());
+    hm.put("c52", r.getC52());
+    hm.put("c53", r.getC53());
+    hm.put("c54", r.getC54());
+    hm.put("c55", r.getC55());
+    hm.put("c56", r.getC56());
+    hm.put("c57", r.getC57());
+    hm.put("c58", r.getC58());
+    hm.put("c59", r.getC59());
+    hm.put("c60", r.getC60());
+    return hm;
+  }
+
+  @Override
+  public Result getAmbResult(int id) {
+    Result res = new Result();
+    AmbPatientServices ser = dAmbPatientServices.get(id);
+    res.setPatientService(ser.getId());
+    res.setServiceName(ser.getService().getName());
+    HashMap<String, String> r = getAmbHashResult(ser.getResult());
+    Integer form = ser.getService().getForm_id();
+    res.setForm(form == null ? 0 : form);
+    if(form == 777 || form == 888 || form == 999) {
+      res.setNorma(ser.getService().getNormaFrom() + " " + ser.getService().getNormaTo());
+      res.setEI(ser.getService().getEi());
+      String val = r.get("c1");
+      if (val == null || val.equals("") || val.equals("<br>") || val.equals("<br/>")) return null;
+      res.setValue(val);
+    } else if (ser.getService().getForm_id() == null) {
+      List<AmbServiceFields> fieds = dAmbServiceFields.byService(ser.getService().getId());
+      List<String> colName = new ArrayList<String>();
+      List<String> vals = new ArrayList<String>();
+      if(fieds != null && fieds.size() > 0)
+        for(AmbServiceFields field: fieds) {
+          colName.add(field.getName());
+          vals.add(r.get("c" + field.getField()));
+        }
+      res.setVals(vals);
+    } else if (form == 1000 || form == 1001 || form == 1002 || form == 1003 || form == 1005 || form == 1006 || form == 1007 || form == 1008 || form == 1009) {
+      List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
+      List<FormRow> fs = new ArrayList<FormRow>();
+      if(fieds != null && fieds.size() > 0)
+        for(FormFields field: fieds) {
+          FormRow f = new FormRow();
+          f.setName(field.getField());
+          f.setFieldType(field.getFieldType());
+          f.setNorma(Util.nvl(field.getNormaFrom()) + " " + Util.nvl(field.getNormaTo()));
+          f.setValue(r.get(field.getFieldCode()));
+          f.setEI(field.getEI());
+          fs.add(f);
+        }
+      res.setRows(fs);
+    } else if (form == 81 || form == 82 || form == 83) {
+      List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
+      List<FormRow> fs = new ArrayList<FormRow>();
+      if(fieds != null && fieds.size() > 0)
+        for(FormFields field: fieds) {
+          FormRow f = new FormRow();
+          f.setName(field.getField());
+          f.setFieldType(field.getFieldType());
+          f.setNorma(Util.nvl(field.getNormaFrom()) + " " + Util.nvl(field.getNormaTo()));
+          f.setValue(r.get(field.getFieldCode()));
+          f.setEI(field.getEI());
+          fs.add(f);
+        }
+      res.setRows(fs);
+    } /*else {
+      List<FormCols> cols = dFormCol.getList("From FormCols Where form.id = " + res.getForm());
+      List<String> colName = new ArrayList<String>();
+      if(cols != null && cols.size() > 0)
+        for(FormCols col: cols)
+          colName.add(col.getName());
+      res.setColName(colName);
+      res.setIsei(ser.getService().getForm().isEi());
+      res.setIsnorma(ser.getService().getForm().isNorma());
+      List<FormColFields> colFields = dFormColField.getList("From FormColFields Where form.id = " + res.getForm());
+      List<FormRow> rows = new ArrayList<FormRow>();
+      for(FormColFields col: colFields) {
+        FormRow row = new FormRow();
+        row.setFieldType(col.getParent().getFieldType());
+        row.setName(col.getParent().getField());
+        row.setValue(r.get(col.getParent().getFieldCode()));
+        row.setNorma(col.getParent().getNormaFrom() + " " + col.getParent().getNormaTo());
+        row.setEI(col.getParent().getEI());
+        if(col.getC2() != null) row.setC2(r.get(col.getC2().getFieldCode()));
+        if(col.getC3() != null) row.setC2(r.get(col.getC3().getFieldCode()));
+        if(col.getC4() != null) row.setC2(r.get(col.getC4().getFieldCode()));
+        if(col.getC5() != null) row.setC2(r.get(col.getC5().getFieldCode()));
+        if(col.getC6() != null) row.setC2(r.get(col.getC6().getFieldCode()));
+        if(col.getC7() != null) row.setC2(r.get(col.getC7().getFieldCode()));
+        if(col.getC8() != null) row.setC2(r.get(col.getC8().getFieldCode()));
+        if(col.getC9() != null) row.setC2(r.get(col.getC9().getFieldCode()));
+        rows.add(row);
+      }
+      res.setRows(rows);
+    }*/
+    return res;
   }
 
   private String makeCell(List<FormFields> cols, Integer pos, String val){

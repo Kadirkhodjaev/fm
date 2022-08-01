@@ -39,6 +39,7 @@
           <th>Стоимость</th>
           <th>Стоимость (Иностранцы)</th>
           <th>Состояние</th>
+          <th>Форма</th>
         </thead>
         <tbody>
         <c:forEach items="${services}" var="s" varStatus="loop">
@@ -53,6 +54,9 @@
             <td style="vertical-align: middle; text-align: center">
               <c:if test="${s.service.state == 'A'}">Активный</c:if>
               <c:if test="${s.service.state == 'P'}">Пассивный</c:if>
+            </td>
+            <td style="vertical-align: middle; text-align: center">
+              ${s.service.form_id}
             </td>
           </tr>
         </c:forEach>

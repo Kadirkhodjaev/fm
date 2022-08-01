@@ -22,7 +22,7 @@
           <c:if test="${p.state == 'DONE' && p.worker.id == curUser}"><img src='/res/imgs/green.gif'/></c:if>
         </td>
         <td>
-          <a href="#" onclick="setPage('/amb/work.s?id=${p.id}')">${p.service.name}</a>
+          <a href="#" onclick="setPage('/amb/work.s?id=${p.id}')">${p.service.name} ${p.service.form_id}</a>
         </td>
         <td align=center>
           <fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.regDate}" />
