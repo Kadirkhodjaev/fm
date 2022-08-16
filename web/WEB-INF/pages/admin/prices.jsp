@@ -33,10 +33,10 @@
               <td style="vertical-align: middle" class="center">${loop.index + 1}</td>
               <td style="vertical-align: middle">${s.name}</td>
               <td style="vertical-align: middle" class="right">
-                <c:if test="${s.code == 'HEAD_NURSE'}">
+                <c:if test="${s.fieldType == 'STRING'}">
                   <input type="text" class="form-control" name="price" value="${s.val}"/>
                 </c:if>
-                <c:if test="${s.code != 'HEAD_NURSE'}">
+                <c:if test="${s.fieldType == 'NUMBER'}">
                   <input type="number" class="form-control right" name="price" value="${s.val}"/>
                 </c:if>
               </td>

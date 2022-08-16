@@ -1,6 +1,7 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbPatientPays;
@@ -91,6 +92,7 @@ public class CCashbox {
   @Autowired private DLvEpic dLvEpic;
   @Autowired private DHNDateAmbRow dhnDateAmbRow;
   @Autowired private DHNDate dhnDate;
+  @Autowired private DParam dParam;
 
 
   @RequestMapping("/operday.s")
@@ -291,6 +293,35 @@ public class CCashbox {
     return json.toString();
   }
 
+  @RequestMapping("/amb/check.s")
+  protected String printCheck(HttpServletRequest req, Model model) {
+    session = SessionUtil.getUser(req);
+    AmbPatients pat = dAmbPatients.get(session.getCurPat());
+    model.addAttribute("pat", pat);
+    int id = Util.getInt(req, "id");
+    List<AmbPatientServices> rows = dAmbPatientServices.getList("From AmbPatientServices Where state In ('PAID', 'DONE') And patient = " + pat.getId() + (id > 0 ? " And pay = " + id : ""));
+    double sum = 0;
+    for(AmbPatientServices row: rows) {
+      sum += row.getPrice();
+    }
+    if(pat.getQrcode() == null || pat.getQrcode().equals("")) {
+      pat.setQrcode(Util.md5(pat.getId().toString()));
+      dAmbPatients.save(pat);
+    }
+    model.addAttribute("cur_time", Util.getCurTime());
+    model.addAttribute("rows", rows);
+    model.addAttribute("sum", sum);
+    model.addAttribute("sale", dCashDiscount.ambDiscountSum(pat.getId()));
+    model.addAttribute("address", dParam.byCode("CHECK_ADDRESS"));
+    model.addAttribute("inn", dParam.byCode("ORG_INN"));
+    model.addAttribute("org_name", dParam.byCode("CHECK_ORG_NAME"));
+    model.addAttribute("deviz", dParam.byCode("DEVIZ"));
+    model.addAttribute("qrcode", dParam.byCode("QRCODE"));
+    model.addAttribute("qrcodeurl", dParam.byCode("QRCODEURL"));
+    model.addAttribute("casher", session.getUserName());
+    return "med/cashbox/check";
+  }
+
   @RequestMapping(value = "/getDiscount.s", method = RequestMethod.POST)
   @ResponseBody
   protected String getDiscount(HttpServletRequest req) throws JSONException {
@@ -339,6 +370,7 @@ public class CCashbox {
         List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
         for (AmbPatientServices service : services) {
           if ("ENT".equals(service.getState())) {
+            service.setPay(pay.getId());
             service.setState("PAID");
             service.setCashDate(new Date());
             dAmbPatientServices.save(service);

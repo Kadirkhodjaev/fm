@@ -12,4 +12,6 @@ public interface DCashDiscount extends Dao<CashDiscounts> {
 
   Double patientAmbDiscountSum(Integer patId);
   Double patientStatDiscountSum(Integer patId);
+
+  Double ambDiscountSum(Integer id);
 }

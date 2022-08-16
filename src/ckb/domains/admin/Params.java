@@ -22,6 +22,9 @@ public class Params extends GenId {
   @Column(length = 512)
   private String val;
 
+  @Column private String showFlag;
+  @Column private String fieldType;
+
   public String getCode() {
     return code;
   }
@@ -44,5 +47,21 @@ public class Params extends GenId {
 
   public void setVal(String val) {
     this.val = val;
+  }
+
+  public String getShowFlag() {
+    return showFlag;
+  }
+
+  public void setShowFlag(String showFlag) {
+    this.showFlag = showFlag;
+  }
+
+  public String getFieldType() {
+    return fieldType;
+  }
+
+  public void setFieldType(String fieldType) {
+    this.fieldType = fieldType;
   }
 }

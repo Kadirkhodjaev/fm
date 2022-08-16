@@ -61,11 +61,16 @@
   </table>
 </div>
 <div id="print-content">
-  <c:if test="${!isFizio}">
-    <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/amb/printPage.s?ids=${ids}"></iframe>
+  <c:if test="${!check}">
+    <c:if test="${!isFizio}">
+      <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/amb/printPage.s?ids=${ids}"></iframe>
+    </c:if>
+    <c:if test="${isFizio}">
+      <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/amb/fizio/print.s"></iframe>
+    </c:if>
   </c:if>
-  <c:if test="${isFizio}">
-    <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/amb/fizio/print.s"></iframe>
+  <c:if test="${check}">
+    <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/cashbox/amb/check.s?id=${check_id}"></iframe>
   </c:if>
 </div>
 </body>

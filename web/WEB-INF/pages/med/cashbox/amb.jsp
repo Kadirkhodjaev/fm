@@ -40,10 +40,16 @@
       }
     }
   }
+  function printCheck(id) {
+    window.open('/amb/print.s?check=' + id);
+  }
 </script>
 <div class="panel panel-info" style="width: 800px !important; margin: auto">
   <div class="panel-heading bold">
     Реквизиты пациента <span style="color:red">ID: ${patient.id}</span>
+    <c:if test="${serviceTotalSum == 0}">
+      <button type="button" class="btn btn-info" style="float:right; height:25px; padding:1px 10px" onclick="printCheck(0)"><b class="fa fa-print"></b> Чек</button>
+    </c:if>
   </div>
   <div class="panel-body">
     <table class="formTable" style="width:100%">
@@ -172,6 +178,7 @@
             <td class="center bold">Наличные</td>
             <td class="center bold">Карта</td>
             <td class="center bold">Перечисление</td>
+            <td width="80px" class="center bold">Чек</td>
             <td width="80px" class="center bold">Удалить</td>
           </tr>
           <c:forEach items="${pays}" var="pay">
@@ -186,6 +193,9 @@
               <td align="center"><fmt:formatNumber value="${pay.cash}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.card}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.transfer}" type = "number"/></td>
+              <td class="center">
+                <button type="button" class="btn btn-info" style="height:20px;padding:0 10px" onclick="printCheck(${pay.id})"><b class="fa fa-print"></b></button>
+              </td>
               <td align="center">
                 <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" onclick="delCashOper(${pay.id})">
                   <span class="fa fa-minus"></span>

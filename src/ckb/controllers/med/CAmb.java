@@ -678,6 +678,8 @@ public class CAmb {
     m.addAttribute("patFio", pat.getSurname() + " " + pat.getName() + " " + pat.getMiddlename());
     SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
     m.addAttribute("isFizio", !Req.isNull(req, "fizio"));
+    m.addAttribute("check", Util.isNotNull(req, "check"));
+    m.addAttribute("check_id", Util.get(req, "check"));
     //
     return "med/amb/print";
   }
@@ -1162,7 +1164,7 @@ public class CAmb {
             "  Where u.id = t.worker_id " +
             "    And s.id = t.service_id " +
             "    And t.patient = " + patId +
-            "    And s.form_id not in (777, 888) " +
+            "    And (s.form_id not in (777, 888) Or s.form_id is null) " +
             "  Group By t.worker_id, u.fio ");
         rs = ps.executeQuery();
         List<Doctor> objs = new ArrayList<Doctor>();
@@ -1172,7 +1174,7 @@ public class CAmb {
           obj.setFio(rs.getString("fio"));
           obj.setProfil(rs.getString("profil"));
           //
-          ps = conn.prepareStatement("Select t.id From Amb_Patient_Services t, Amb_Services s Where t.state = 'DONE' And t.service_id = s.id And s.form_id not in (777, 888) And t.patient = " + patId + " And worker_id = " + obj.getUser());
+          ps = conn.prepareStatement("Select t.id From Amb_Patient_Services t, Amb_Services s Where t.state = 'DONE' And t.service_id = s.id And (s.form_id not in (777, 888) Or s.form_id is null) And t.patient = " + patId + " And worker_id = " + obj.getUser());
           rc = ps.executeQuery();
           List<Result> o = new ArrayList<Result>();
           while(rc.next()) {

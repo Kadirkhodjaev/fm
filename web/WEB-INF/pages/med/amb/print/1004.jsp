@@ -29,7 +29,7 @@
     <td style="padding:5px;border:1px solid black;text-align:center">${ser.fields[5].name}</td>
     <td style="padding:5px;border:1px solid black;text-align:center;">${ser.fields[5].html}</td>
     <td style="padding:5px;border:1px solid black;text-align:center;">${ser.fields[6].html}</td>
-    <td rowspan="3" class="center" style="padding:5px;border-bottom:1px solid black;">
+    <td rowspan="3" class="center" style="padding:5px;border:1px solid black;">
       Ночной диурез<br/>
       ДД = ${ser.fields[7].html} мл
     </td>
@@ -48,7 +48,7 @@
     <td style="padding:5px;border:1px solid black;text-align:center">${ser.fields[12].name}</td>
     <td style="padding:5px;border:1px solid black;text-align:center;">${ser.fields[12].html}</td>
     <td style="padding:5px;border:1px solid black;text-align:center;">${ser.fields[13].html}</td>
-    <td rowspan="3" class="center" style="padding:5px;border-bottom:1px solid black;">
+    <td rowspan="3" class="center" style="padding:5px;border:1px solid black;">
       Суточный диурез<br/>
       ДД = ${ser.fields[14].html} мл
     </td>

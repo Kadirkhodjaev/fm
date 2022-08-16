@@ -39,4 +39,14 @@ public class DCashDiscountImp extends DaoImp<CashDiscounts> implements DCashDisc
       return 0D;
     }
   }
+
+  @Override
+  public Double ambDiscountSum(Integer id) {
+    try {
+      Double summ = (Double) entityManager.createQuery("Select Sum(summ) From CashDiscounts Where ambStat = 'AMB' And patient = " + id).getSingleResult();
+      return summ == null ? 0D : summ;
+    } catch (Exception e) {
+      return 0D;
+    }
+  }
 }

@@ -1,5 +1,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%
   if(request.getParameter("word") != null) {
     response.setContentType("application/msword;charset=Windows-1251");
@@ -77,7 +78,10 @@
       </tr>
     </c:if>
     <tr>
-      <td align=center style="padding:10px; border:1px solid #ababab;"><b>${plan.kdo.name}</b></td>
+      <td align=center style="padding:10px; border:1px solid #ababab;position: relative">
+        <div style="position: absolute; right:10px; font-size: 12px !important; font-weight: bold">Дата: <fmt:formatDate pattern="dd.MM.yyyy" value="${plan.resDate}"/></div>
+        <b>${plan.kdo.name}</b>
+      </td>
     </tr>
     <tr>
       <td style="">

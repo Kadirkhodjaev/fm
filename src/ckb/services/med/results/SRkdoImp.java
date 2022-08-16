@@ -367,13 +367,13 @@ public class SRkdoImp implements SRkdo {
     HashMap<String, String> r = getAmbHashResult(ser.getResult());
     Integer form = ser.getService().getForm_id();
     res.setForm(form == null ? 0 : form);
-    if(form == 777 || form == 888 || form == 999) {
+    if(form != null && (form == 777 || form == 888 || form == 999)) {
       res.setNorma(ser.getService().getNormaFrom() + " " + ser.getService().getNormaTo());
       res.setEI(ser.getService().getEi());
       String val = r.get("c1");
       if (val == null || val.equals("") || val.equals("<br>") || val.equals("<br/>")) return null;
       res.setValue(val);
-    } else if (ser.getService().getForm_id() == null) {
+    } else if (form == null) {
       List<AmbServiceFields> fieds = dAmbServiceFields.byService(ser.getService().getId());
       List<String> colName = new ArrayList<String>();
       List<String> vals = new ArrayList<String>();
@@ -382,65 +382,35 @@ public class SRkdoImp implements SRkdo {
           colName.add(field.getName());
           vals.add(r.get("c" + field.getField()));
         }
-      res.setVals(vals);
-    } else if (form == 1000 || form == 1001 || form == 1002 || form == 1003 || form == 1005 || form == 1006 || form == 1007 || form == 1008 || form == 1009) {
-      List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
-      List<FormRow> fs = new ArrayList<FormRow>();
-      if(fieds != null && fieds.size() > 0)
-        for(FormFields field: fieds) {
-          FormRow f = new FormRow();
-          f.setName(field.getField());
-          f.setFieldType(field.getFieldType());
-          f.setNorma(Util.nvl(field.getNormaFrom()) + " " + Util.nvl(field.getNormaTo()));
-          f.setValue(r.get(field.getFieldCode()));
-          f.setEI(field.getEI());
-          fs.add(f);
-        }
-      res.setRows(fs);
-    } else if (form == 81 || form == 82 || form == 83) {
-      List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
-      List<FormRow> fs = new ArrayList<FormRow>();
-      if(fieds != null && fieds.size() > 0)
-        for(FormFields field: fieds) {
-          FormRow f = new FormRow();
-          f.setName(field.getField());
-          f.setFieldType(field.getFieldType());
-          f.setNorma(Util.nvl(field.getNormaFrom()) + " " + Util.nvl(field.getNormaTo()));
-          f.setValue(r.get(field.getFieldCode()));
-          f.setEI(field.getEI());
-          fs.add(f);
-        }
-      res.setRows(fs);
-    } /*else {
-      List<FormCols> cols = dFormCol.getList("From FormCols Where form.id = " + res.getForm());
-      List<String> colName = new ArrayList<String>();
-      if(cols != null && cols.size() > 0)
-        for(FormCols col: cols)
-          colName.add(col.getName());
       res.setColName(colName);
-      res.setIsei(ser.getService().getForm().isEi());
-      res.setIsnorma(ser.getService().getForm().isNorma());
-      List<FormColFields> colFields = dFormColField.getList("From FormColFields Where form.id = " + res.getForm());
-      List<FormRow> rows = new ArrayList<FormRow>();
-      for(FormColFields col: colFields) {
-        FormRow row = new FormRow();
-        row.setFieldType(col.getParent().getFieldType());
-        row.setName(col.getParent().getField());
-        row.setValue(r.get(col.getParent().getFieldCode()));
-        row.setNorma(col.getParent().getNormaFrom() + " " + col.getParent().getNormaTo());
-        row.setEI(col.getParent().getEI());
-        if(col.getC2() != null) row.setC2(r.get(col.getC2().getFieldCode()));
-        if(col.getC3() != null) row.setC2(r.get(col.getC3().getFieldCode()));
-        if(col.getC4() != null) row.setC2(r.get(col.getC4().getFieldCode()));
-        if(col.getC5() != null) row.setC2(r.get(col.getC5().getFieldCode()));
-        if(col.getC6() != null) row.setC2(r.get(col.getC6().getFieldCode()));
-        if(col.getC7() != null) row.setC2(r.get(col.getC7().getFieldCode()));
-        if(col.getC8() != null) row.setC2(r.get(col.getC8().getFieldCode()));
-        if(col.getC9() != null) row.setC2(r.get(col.getC9().getFieldCode()));
-        rows.add(row);
-      }
-      res.setRows(rows);
-    }*/
+      res.setVals(vals);
+    } else if (form != null && (form == 1000 || form == 1001 || form == 1002 || form == 1003 || form == 1005 || form == 1006 || form == 1007 || form == 1008 || form == 1009)) {
+      List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
+      List<FormRow> fs = new ArrayList<FormRow>();
+      if(fieds != null && fieds.size() > 0)
+        for(FormFields field: fieds) {
+          FormRow f = new FormRow();
+          f.setName(field.getField());
+          f.setFieldType(field.getFieldType());
+          f.setNorma(Util.nvl(field.getNormaFrom()) + " " + Util.nvl(field.getNormaTo()));
+          f.setEI(field.getEI());
+          f.setValue(r.get(field.getFieldCode()));
+          fs.add(f);
+        }
+      res.setRows(fs);
+    } else if (form != null && (form == 81 || form == 82 || form == 83 || form == 1004)) {
+      List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
+      List<FormRow> fs = new ArrayList<FormRow>();
+      if(fieds != null && fieds.size() > 0)
+        for(FormFields field: fieds) {
+          FormRow f = new FormRow();
+          f.setName(field.getField());
+          f.setFieldType(field.getFieldType());
+          f.setValue(r.get(field.getFieldCode()));
+          fs.add(f);
+        }
+      res.setRows(fs);
+    }
     return res;
   }
 

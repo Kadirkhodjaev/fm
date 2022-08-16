@@ -749,7 +749,7 @@ public class CAdmin {
   protected String price(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/admin/price.s");
-    model.addAttribute("prices", dParam.getList("From Params Where code like '%KOYKA%' Or code = 'HEAD_NURSE'"));
+    model.addAttribute("prices", dParam.getList("From Params Where showFlag = 'Y'"));
     return "/admin/prices";
   }
 

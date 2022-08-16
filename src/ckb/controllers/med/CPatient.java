@@ -375,7 +375,6 @@ public class CPatient {
       for (String id : ids) {
         Patients p = dPatient.get(Integer.parseInt(id));
         if (session.getRoleId() == 3) { // Медсестра ПП
-
           LvPlans plan = new LvPlans();
           plan.setActDate(Util.stringToDate(Util.getCurDate()));
           plan.setKdo(dKdos.get(50));
@@ -404,13 +403,13 @@ public class CPatient {
             p.setState("CZG"); // Отправляется леч. врачу
             dPatient.save(p);
           } else {
-            if (p.getLv_id() != null && p.getDept() != null && !p.getLv_id().equals(null) && !p.getDept().getId().equals(null)) {
+            if (p.getLv_id() != null && p.getDept() != null && p.getLv_id() != null && p.getDept().getId() != null) {
               p.setState("LV"); // Отправляется леч. врачу
               dPatient.save(p);
             }
           }
         }
-        if (session.getRoleId() == 5) {
+        if (session.getRoleId() == 5 && p.getState().equals("LV")) {
           p.setState("ZGV");
           dPatient.save(p);
         }

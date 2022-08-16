@@ -22,6 +22,8 @@ public class AmbPatientServices extends GenId {
   @Column private String amb_repeat = "N";
   @Column private String diagnoz = "";
 
+  @Column private Integer pay;
+
   @Column private Integer crBy;
   @Column private Date crOn;
   @Column private Date cashDate;
@@ -128,5 +130,13 @@ public class AmbPatientServices extends GenId {
 
   public void setCashDate(Date cashDate) {
     this.cashDate = cashDate;
+  }
+
+  public Integer getPay() {
+    return pay;
+  }
+
+  public void setPay(Integer pay) {
+    this.pay = pay;
   }
 }
