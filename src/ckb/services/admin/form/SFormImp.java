@@ -52,11 +52,14 @@ public class SFormImp implements SForm {
     for(FormFields f : fields){
       model.addAttribute(f.getFieldCode()+"name", f.getField());
       model.addAttribute(f.getFieldCode()+"html", getFieldHtml(f));
-
-      String norma = Util.nvl(f.getNormaFrom()) + " " + Util.nvl(f.getNormaTo()), ei = Util.nvl(f.getEI());
-
-      model.addAttribute(f.getFieldCode()+"norma", Util.nvl(norma.length() > 0 ? norma : kdo.getNorma()));
-      model.addAttribute(f.getFieldCode()+"ei", Util.nvl(ei.length() > 0 ? ei : kdo.getEi()));
+      if(formId != 777) {
+        String norma = Util.nvl(f.getNormaFrom()) + " " + Util.nvl(f.getNormaTo()), ei = Util.nvl(f.getEI());
+        model.addAttribute(f.getFieldCode() + "norma", Util.nvl(norma.length() > 0 ? norma : kdo.getNorma()));
+        model.addAttribute(f.getFieldCode() + "ei", Util.nvl(ei.length() > 0 ? ei : kdo.getEi()));
+      } else {
+        model.addAttribute(f.getFieldCode() + "norma", Util.nvl(kdo.getNorma()));
+        model.addAttribute(f.getFieldCode() + "ei", Util.nvl(kdo.getEi()));
+      }
     }
   }
 

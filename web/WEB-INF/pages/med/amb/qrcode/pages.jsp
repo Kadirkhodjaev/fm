@@ -4,7 +4,7 @@
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <html>
 <style>
-  * {font-size: 12px}
+    * {font-size: 12px}
 </style>
 <body>
 <div>
@@ -14,20 +14,20 @@
         <img src="C:\fm.png" style="width:180px">
       </td>
       <td rowspan="2" style="font-weight:bold; text-align:right;padding-top:20px">
-        ЦП "Farxod Mada Shifo"<br/>
+        ЧП "Farhod Madad Shifo"<br/>
         Республика Узбекистан<br/>
         Ташкантская область<br/>
         Кибрайский район<br/>
-        ул. Зебинисо, 8А<br/>
+        ул. Зебунисо, 8А<br/>
         Наш сайт: www.forux.uz<br/>
         email: forux@mail.ru<br/>
-        Тел/Факс: (71) 289-24-66
+        Тел/Факс: (55) 500-28-88
       </td>
     </tr>
     <tr>
       <td style="text-align:left;font-weight:bold">
         <div style="padding-left:90px">Свидетельство №1878</div>
-        <div style="padding-left:100px">Лицензия №01727</div>
+        <div style="padding-left:100px">Лицензия №27544351</div>
       </td>
     </tr>
   </table>
@@ -64,7 +64,7 @@
         <td style="padding:2px; text-align:left; border:1px solid black;">${ser.service.name}</td>
         <td style="padding:2px; text-align:center; border:1px solid black; font-weight:bold">
           <c:if test="${ser.state == 'DONE'}"><span style="color:green">Готов</span></c:if>
-          <c:if test="${ser.state != 'DONE'}"><span style="color:red">Не говот</span></c:if>
+          <c:if test="${ser.state != 'DONE'}"><span style="color:red">Не готов</span></c:if>
         </td>
         <td style="text-align:center; padding:2px; border:1px solid black;"><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${ser.confDate}"/></td>
       </tr>
@@ -712,3 +712,4 @@
 </c:forEach>
 </body>
 </html>
+
