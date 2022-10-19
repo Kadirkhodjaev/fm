@@ -34,6 +34,7 @@ public class Kdos extends GenId {
   @Column private Double real_price;
   @Column private Double for_real_price;
   @Column private String room;
+  @Column private String fizei;
   @Column private Integer minTime = 0;
   @Column private Integer maxTime = 0;
 
@@ -163,5 +164,13 @@ public class Kdos extends GenId {
 
   public void setMaxTime(Integer maxTime) {
     this.maxTime = maxTime;
+  }
+
+  public String getFizei() {
+    return fizei;
+  }
+
+  public void setFizei(String fizei) {
+    this.fizei = fizei;
   }
 }

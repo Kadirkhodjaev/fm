@@ -54,6 +54,7 @@
       <tr>
         <td>&nbsp;</td>
         <td align="center" width="250"><b>Наименование</b></td>
+        <td align="center" width="100"><b>Ед.изм.</b></td>
         <td align="center" width="100"><b>Стоимость</b></td>
         <td align="center" width="250"><b>Область</b></td>
         <td align="center" width="100"><b>Кол-во</b></td>
@@ -67,6 +68,12 @@
             <tr id="fizio${fizio.id}">
               <td align="center">${loop.index + 1}</td>
               <td width="250">${fizio.kdo.name}</td>
+              <c:if test="${fizio.kdo.fizei == '' || fizio.fizei == null}">
+                <td width="100"><input type="number" maxlength="10" class="form-control center" name="fizei" value="${fizio.fizei}"/></td>
+              </c:if>
+              <c:if test="${fizio.kdo.fizei != '' && fizio.fizei != null}">
+                <td width="100" align="center">${fizio.fizei}</td>
+              </c:if>
               <td width="100" align="right">${fizio.price * (fizio.count == null ? 0 : fizio.count) - (fizio.paidSum != null ? fizio.paidSum : 0)}</td>
               <td width="250"><input type="text" maxlength="200" class="form-control" name="oblast" value="${fizio.oblast}"/></td>
               <td align="center" nowrap>

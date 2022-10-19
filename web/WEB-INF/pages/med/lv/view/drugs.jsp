@@ -174,6 +174,24 @@
     </c:forEach>
   </tr>
   <tr>
+    <td style="border:1px solid #ababab;padding: 4px" colspan="2">Шприц</td>
+    <c:forEach var="i" begin="1" end="${fn:length(dates) + 3}" step="1" varStatus="loop">
+      <td style="border:1px solid #ababab">&nbsp;</td>
+    </c:forEach>
+  </tr>
+  <tr>
+    <td style="border:1px solid #ababab;padding: 4px" colspan="2">Система</td>
+    <c:forEach var="i" begin="1" end="${fn:length(dates) + 3}" step="1" varStatus="loop">
+      <td style="border:1px solid #ababab">&nbsp;</td>
+    </c:forEach>
+  </tr>
+  <tr>
+    <td style="border:1px solid #ababab;padding: 4px" colspan="2">Перчатка</td>
+    <c:forEach var="i" begin="1" end="${fn:length(dates) + 3}" step="1" varStatus="loop">
+      <td style="border:1px solid #ababab">&nbsp;</td>
+    </c:forEach>
+  </tr>
+  <tr>
     <td style="border:1px solid #ababab;padding: 4px" colspan="2">Подпись медсестры</td>
     <c:forEach var="i" begin="1" end="${fn:length(dates) + 3}" step="1" varStatus="loop">
       <td style="border:1px solid #ababab">&nbsp;</td>

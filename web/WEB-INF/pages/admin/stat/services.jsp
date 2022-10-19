@@ -179,6 +179,12 @@
               </td>
             </tr>
             <tr>
+              <td class="right bold">Единица для физиотерапии*:</td>
+              <td>
+                <input type="text" id="fizei" class="form-control center" name="fizei" value=""/>
+              </td>
+            </tr>
+            <tr>
               <td class="right bold">Активный?:</td>
               <td class="left">
                 <input type="checkbox" checked name="state" value="Y"/>
@@ -263,6 +269,7 @@
           $('*[name=maxTime]').val(res.maxTime);
           $('*[name=group]').val(res.group);
           $('*[name=room]').val(res.room);
+          $('*[name=fizei]').val(res.fizei);
           $('*[name=necKdo]').prop('checked', res.necKdo == 'Y');
           $('*[name=state]').prop('checked', res.state == 'A');
           if(res.kdoType === 4) {

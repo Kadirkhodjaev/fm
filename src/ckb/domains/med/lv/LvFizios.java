@@ -23,6 +23,7 @@ public class LvFizios extends GenId {
   @Column private String comment;
   @Column private Integer count;
   @Column private Double price;
+  @Column private Double fizei;
   @Column private String paid;
   @Column private Date payDate;
   @Column private Double paidSum;
@@ -122,5 +123,13 @@ public class LvFizios extends GenId {
 
   public void setPaidCount(Integer paidCount) {
     this.paidCount = paidCount;
+  }
+
+  public Double getFizei() {
+    return fizei;
+  }
+
+  public void setFizei(Double fizei) {
+    this.fizei = fizei;
   }
 }

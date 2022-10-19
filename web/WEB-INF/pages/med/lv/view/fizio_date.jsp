@@ -78,12 +78,13 @@
     </div>
     <table class="formTable" style="width:100%">
       <tr>
-        <td colspan="3"><b>Пациент(ка):</b> ${pat.surname}&nbsp;${pat.name}&nbsp;${pat.middlename}</td>
+        <td colspan="4"><b>Пациент(ка):</b> ${pat.surname}&nbsp;${pat.name}&nbsp;${pat.middlename}</td>
         <td colspan="2"><b>Год рождения:</b> ${pat.birthyear}</td>
       </tr>
       <tr>
         <td>&nbsp;</td>
         <td align="center" width="250" style="height:48px"><b>Наименование</b></td>
+        <td align="center" width="100"><b>Ед.изм.</b></td>
         <td align="center" width="100"><b>Стоимость</b></td>
         <td align="center" width="250"><b>Область</b></td>
         <c:if test="${fn:length(fizios) > 0}">
@@ -101,6 +102,14 @@
             <tr id="fizio${fizio.id}">
               <td align="center">${loop.index + 1}</td>
               <td width="250">${fizio.kdo.name}</td>
+              <c:choose>
+                <c:when test="${ fizio.kdo.fizei == null || fizio.fizei == null}">
+                  <td width="100"><input type="number" maxlength="10" class="form-control center" name="fizei" value="${fizio.fizei}"/></td>
+                </c:when>
+                <c:otherwise>
+                  <td width="100" align="center"><input type="hidden" name="fizei" value="${fizio.fizei}"/>${fizio.fizei}</td>
+                </c:otherwise>
+              </c:choose>
               <td width="100" align="right">${fizio.price * (fizio.count == null ? 0 : fizio.count) - (fizio.paidSum != null ? fizio.paidSum : 0)}</td>
               <td width="250"><input type="text" maxlength="200" class="form-control" name="oblast" value="${fizio.oblast}"/></td>
               <c:forEach items="${ds[fizio.id]}" var="d">
@@ -127,6 +136,7 @@
             <tr id="fizio${fizio.id}">
               <td align="center">${loop.index + 1}</td>
               <td width="250">${fizio.kdo.name}</td>
+              <td align="center" nowrap>${fizio.fizei}</td>
               <td width="250">${fizio.oblast}</td>
               <td align="center" nowrap>${fizio.count}</td>
               <td>${fizio.comment}</td>

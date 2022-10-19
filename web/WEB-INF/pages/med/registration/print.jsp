@@ -85,6 +85,7 @@
 <!-- Second Page -->
 <p style="page-break-after:always"></p>
 <p style="text-align:center;padding:5px;font-size:${sessionScope.fontSize + 10}px !important"><b style="font-size:${sessionScope.fontSize + 4}px !important;">ҚАБУЛХОНА БЎЛИМИДА ШИФОКОР КЎРИГИ</b></p>
+<p style="margin:auto;padding:5px;">ФИШ: <b><u>${p.surname} ${p.name} ${p.middlename}</u></b></p>
 <p style="margin:auto;padding:5px;">А/Д: <b><u>${p.c25}</u></b></p>
 <p style="margin:auto;padding:5px;">Пульс: <b><u>${p.c20}</u></b></p>
 <p style="margin:auto;padding:5px;">Шикоятлари:</p>

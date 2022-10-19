@@ -704,6 +704,7 @@ public class CAdmin {
       json.put("norma", d.getNorma());
       json.put("ei", d.getEi());
       json.put("room", d.getRoom());
+      json.put("fizei", d.getFizei());
       json.put("form", d.getFormId());
       json.put("success", true);
     } catch (Exception e) {
@@ -734,6 +735,7 @@ public class CAdmin {
       d.setShortName(d.getName());
       d.setFormId(Util.getInt(req, "form_id"));
       d.setRoom(Util.get(req, "room"));
+      d.setFizei(Util.get(req, "fizei"));
       if(Util.isNotNull(req, "minTime")) d.setMinTime(Integer.parseInt(Util.get(req, "minTime").replaceAll(",", ".")));
       if(Util.isNotNull(req, "maxTime")) d.setMaxTime(Integer.parseInt(Util.get(req, "maxTime").replaceAll(",", ".")));
       dKdo.save(d);

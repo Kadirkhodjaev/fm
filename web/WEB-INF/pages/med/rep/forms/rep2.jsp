@@ -45,7 +45,7 @@
           <td align="center" style="padding:5px;">${loop.index + 1}</td>
           <td align="left" style="padding:5px;">${service.c1}</td>
           <td align="left" style="padding:5px;">${service.c2}</td>
-          <td align="left" style="padding:5px;">${service.c3}</td>
+          <td align="center" style="padding:5px;">${service.c3}</td>
           <td align="center" style="padding:5px;">${service.c4}</td>
           <td align="center" style="padding:5px;">${service.c5}</td>
           <td align="center" style="padding:5px;">${service.c6}</td>

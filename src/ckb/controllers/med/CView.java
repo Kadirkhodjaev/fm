@@ -503,6 +503,7 @@ public class CView {
       fizios.setPaidSum(0D);
       fizios.setPaidCount(0);
       fizios.setPrice(patient.getCounteryId() == 199 ? kdo.getPrice() : kdo.getFor_price());
+      fizios.setFizei(kdo.getFizei() != null ? Double.parseDouble(kdo.getFizei().replace(",", ".")) : null);
       dLvFizio.save(fizios);
     }
     return "{}";
@@ -525,7 +526,7 @@ public class CView {
   @ResponseBody
   protected String saveFizio(HttpServletRequest request) throws JSONException {
     String[] ids = request.getParameterValues("id");
-    //String[] counts = request.getParameterValues("count");
+    String[] fizeis = request.getParameterValues("fizei");
     String[] oblast = request.getParameterValues("oblast");
     String[] comments = request.getParameterValues("comment");
     for(int i = 0;i<ids.length;i++) {
@@ -534,6 +535,7 @@ public class CView {
       //fizios.setCount(Integer.parseInt(counts[i]));
       fizios.setOblast(oblast[i]);
       fizios.setComment(comments[i]);
+      fizios.setFizei(Double.parseDouble(fizeis[i]));
       dLvFizio.save(fizios);
       String[] dates = request.getParameterValues("date_" + fizios.getId());
       int counter = 0;

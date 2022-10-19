@@ -43,8 +43,6 @@ import java.util.zip.ZipOutputStream;
 @RequestMapping("/")
 public class  CApp {
 
-  private Session session = null;
-
   @Autowired SUser sUser;
   @Autowired DUser dUser;
   @Autowired DRole dRole;
@@ -69,7 +67,7 @@ public class  CApp {
   @RequestMapping({"/main.s", "/"})
   protected String main(HttpServletRequest request, Model model) {
     //
-    session = SessionUtil.getUser(request);
+    Session session = SessionUtil.getUser(request);
     List<Roles> userRoles = sUser.getUserRoles(session.getUserId());
     if(userRoles.size() == 1 && session.getRoleId() == 0) {
       session.setRoleId(userRoles.get(0).getId());
@@ -254,7 +252,7 @@ public class  CApp {
   @RequestMapping("/setRole.s")
   protected String setRole(HttpServletRequest request){
     try {
-      session = SessionUtil.getUser(request);
+      Session session = SessionUtil.getUser(request);
       if(session == null) return "redirect:/login.s";
       session.setRoleId(Req.getInt(request, "id"));
       session.setCurUrl("");
@@ -267,7 +265,8 @@ public class  CApp {
   }
 
   @RequestMapping("/roles.s")
-  protected String roles(Model model){
+  protected String roles(HttpServletRequest req, Model model){
+    Session session = SessionUtil.getUser(req);
     model.addAttribute("roles", sUser.getUserRoles(session.getUserId()));
     return "roles";
   }
@@ -276,7 +275,7 @@ public class  CApp {
   protected String loginPost(@ModelAttribute("loginForm") Login auth, Errors errors, HttpServletRequest request, Model model){
     ValidationUtils.rejectIfEmptyOrWhitespace(errors, "login", "login.isEmpty", "Field name is required.");
     ValidationUtils.rejectIfEmptyOrWhitespace(errors, "password", "password.isEmpty", "Password must not be empty.");
-    session = sUser.login(request);
+    Session session = sUser.login(request);
     if(session == null && !errors.hasErrors())
       errors.rejectValue("login", "authError", "Field name is required.");
     if(session != null && !errors.hasErrors()) {

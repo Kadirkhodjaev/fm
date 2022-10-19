@@ -199,6 +199,8 @@ public class SRepImp implements SRep {
 			rep61(req, m);
 		} else if(id == 62) { // Отчет по МКБ 10 за период
 			rep62(req, m);
+		} else if(id == 63) { // Рентген муолажалари (Стат, Амб)
+			rep63(req, m);
 		}
 	}
 	// Амбулаторные услуги - По категориям
@@ -291,42 +293,57 @@ public class SRepImp implements SRep {
 			r.setGroupName(user.getFio());
 			try {
 				conn = DB.getConnection();
+				String sql = "Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio , " +
+					"				 (Select dept.name From Depts dept Where dept.Id = t.Dept_Id) depName, " +
+					"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = t.Room_Id) Palata, " +
+					"				 Date_Format(t.Date_Begin, '%d.%m.%Y') dateBegin, " +
+					"				 Date_Format(d.dateEnd, '%d.%m.%Y') dateEnd, " +
+					"				 Datediff(d.dateEnd, t.Date_Begin) + 1 bunkDay," +
+					"				 1 Row_Type," +
+					"		     (Select Count(*) From Lv_Epics f Where f.patientid = t.id) Epic_Count," +
+					"			   Date_Format(t.Start_Epic_Date, '%d.%m.%Y') epic_date," +
+					"				 Datediff(date(d.dateEnd), date(t.Start_Epic_Date)) extraDay " +
+					"   From Patients t, Hn_Patients d" +
+					"  Where d.dateEnd Is Not Null" +
+					"    AND t.lv_id != 1 " +
+					"    And d.patient_id = t.id " +
+					"    And d.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
+					(deptId != null ? " And t.Dept_Id = " + deptId : "") +
+					(doctorId != null ? " And t.Lv_Id = " + doctorId : "") +
+					" Union All " +
+					"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
+					"				 (Select dept.name From Depts dept Where dept.Id = p.Dept_Id) depName, " +
+					"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = e.Room_Id) Palata, " +
+					"				 (Case When e.dateBegin Is Not Null Then DATE_FORMAT(e.dateBegin, '%d.%m.%Y') Else Date_Format(p.Start_Epic_Date, '%d.%m.%Y') End) dateBegin, " +
+					"				 Date_Format(e.dateEnd, '%d.%m.%Y') dateEnd, " +
+					"				 (Case When e.dateBegin Is Not Null Then Datediff(e.dateEnd, e.dateBegin) Else Datediff(e.dateEnd, p.Start_Epic_Date) End) bunkDay ," +
+					"				 0 Row_Type," +
+					"		     0 Epic_Count," +
+					" 		   null epic_date, " +
+					" 		   null extraDay " +
+					"   From Lv_Epics e, Patients p " +
+					"  Where e.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
+					"    And date(e.dateEnd) != date(e.dateBegin) " +
+					"    AND p.lv_id != 1 " +
+					" 	 And e.patientId = p.Id " +
+					(deptId != null ? " And e.DeptId = " + deptId : "") +
+					(doctorId != null ? " And e.LvId = " + doctorId : "");
 				ps = conn.prepareStatement(
-					"Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio , " +
-						"				 (Select dept.name From Depts dept Where dept.Id = t.Dept_Id) depName, " +
-						"				 t.Palata, " +
-						"				 Date_Format(t.Date_Begin, '%d.%m.%Y') dateBegin, " +
-						"				 Date_Format(t.Date_End, '%d.%m.%Y') dateEnd, " +
-						"				 Datediff(t.Date_End, t.Date_Begin) bunkDay " +
-						"   From Patients t" +
-						"  Where t.Date_End Is Not Null" +
-            "    AND t.lv_id != 1 " +
-						"    And t.Date_End Between '" + dateBegin + "' And '" + dateEnd + "'" +
-						(deptId != null ? " And t.Dept_Id = " + deptId : "") +
-						(doctorId != null ? " And t.Lv_Id = " + doctorId : "") +
-						" Union " +
-						"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
-						"				 (Select dept.name From Depts dept Where dept.Id = p.Dept_Id) depName, " +
-						"				 p.Palata, " +
-						"				 (Case When e.dateBegin Is Not Null Then DATE_FORMAT(e.dateBegin, '%d.%m.%Y') Else Date_Format(p.Start_Epic_Date, '%d.%m.%Y') End) dateBegin, " +
-						"				 Date_Format(e.dateEnd, '%d.%m.%Y') dateEnd, " +
-						"				 (Case When e.dateBegin Is Not Null Then Datediff(e.dateEnd, e.dateBegin) + 1 Else Datediff(e.dateEnd, p.Start_Epic_Date) + 1 End) bunkDay " +
-						"   From Lv_Epics e, Patients p" +
-						"  Where e.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
-            "    AND p.lv_id != 1 " +
-						" 	 And e.patientId = p.Id " +
-						(deptId != null ? " And e.DeptId = " + deptId : "") +
-						(doctorId != null ? " And e.LvId = " + doctorId : "")
+					sql
 				);
 				rs = ps.executeQuery();
 				while (rs.next()) {
 					ObjList service = new ObjList();
-					service.setC1(rs.getString(1));
-					service.setC2(rs.getString(2));
-					service.setC3(rs.getString(3));
-					service.setC4(rs.getString(4));
-					service.setC5(rs.getString(5));
-					service.setC6(rs.getString(6));
+					service.setC1(rs.getString("Fio"));
+					service.setC2(rs.getString("depName"));
+					service.setC3(rs.getString("Palata"));
+					service.setC4(rs.getString("dateBegin"));
+					service.setC5(rs.getString("dateEnd"));
+					service.setC6(rs.getString("bunkDay"));
+					if(rs.getInt("Row_Type") > 0 && rs.getInt("Epic_Count") > 0) {
+						service.setC4(rs.getString("epic_date"));
+						service.setC6(rs.getString("extraDay"));
+					}
 					patients.add(service);
 				}
 				r.setServices(patients);
@@ -345,23 +362,61 @@ public class SRepImp implements SRep {
 				for (Users user : users) {
 					Rep1 r = new Rep1();
 					r.setGroupName(user.getFio());
+
+					String sql = "Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio , " +
+						"				 (Select dept.name From Depts dept Where dept.Id = t.Dept_Id) depName, " +
+						"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = t.Room_Id) Palata, " +
+						"				 Date_Format(t.Date_Begin, '%d.%m.%Y') dateBegin, " +
+						"				 Date_Format(d.dateEnd, '%d.%m.%Y') dateEnd, " +
+						"				 Datediff(d.dateEnd, t.Date_Begin) + 1 bunkDay," +
+						"				 1 Row_Type," +
+						"		     (Select Count(*) From Lv_Epics f Where f.patientid = t.id) Epic_Count," +
+						"			   Date_Format(t.Start_Epic_Date, '%d.%m.%Y') epic_date," +
+						"				 Datediff(date(d.dateEnd), date(t.Start_Epic_Date)) extraDay " +
+						"   From Patients t, Hn_Patients d" +
+						"  Where d.dateEnd Is Not Null" +
+						"    AND t.lv_id != 1 " +
+						"    And d.patient_id = t.id " +
+						"    And d.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
+						(deptId != null ? " And t.Dept_Id = " + deptId : "") +
+						" And t.Lv_Id = " + user.getId() +
+						" Union All " +
+						"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
+						"				 (Select dept.name From Depts dept Where dept.Id = p.Dept_Id) depName, " +
+						"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = e.Room_Id) Palata, " +
+						"				 (Case When e.dateBegin Is Not Null Then DATE_FORMAT(e.dateBegin, '%d.%m.%Y') Else Date_Format(p.Start_Epic_Date, '%d.%m.%Y') End) dateBegin, " +
+						"				 Date_Format(e.dateEnd, '%d.%m.%Y') dateEnd, " +
+						"				 (Case When e.dateBegin Is Not Null Then Datediff(e.dateEnd, e.dateBegin) Else Datediff(e.dateEnd, p.Start_Epic_Date) End) bunkDay ," +
+						"				 0 Row_Type," +
+						"		     0 Epic_Count," +
+						" 		   null epic_date, " +
+						" 		   null extraDay " +
+						"   From Lv_Epics e, Patients p " +
+						"  Where e.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
+						"    And date(e.dateEnd) != date(e.dateBegin) " +
+						"    AND p.lv_id != 1 " +
+						" 	 And e.patientId = p.Id " +
+					(deptId != null ? " And e.DeptId = " + deptId : "");
 					ps = conn.prepareStatement(
-						"Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio , " +
+						sql
+						/*"Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio , " +
 							"				 (Select dept.name From Depts dept Where dept.Id = t.Dept_Id) depName, " +
-							"				 t.Palata, " +
+							"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = t.Room_Id) Palata, " +
 							"				 Date_Format(t.Date_Begin, '%d.%m.%Y') dateBegin, " +
-							"				 Date_Format(t.Date_End, '%d.%m.%Y') dateEnd, " +
-							"				 Datediff(t.Date_End, t.Date_Begin) bunkDay " +
-							"   From Patients t" +
-							"  Where t.Date_End Is Not Null" +
+							"				 Date_Format(d.dateEnd, '%d.%m.%Y') dateEnd, " +
+							"				 Datediff(d.dateEnd, t.Date_Begin) bunkDay " +
+							"   From Patients t, Hn_Patients d" +
+							"  Where d.dateEnd Is Not Null" +
               "    AND t.lv_id != 1 " +
-							"    And t.Date_End Between '" + dateBegin + "' And '" + dateEnd + "'" +
+							"    And d.patient_id = t.id " +
+							"    AND t.id != d.patient_id " +
+							"    And d.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
 							(deptId != null ? " And t.Dept_Id = " + deptId : "") +
 							" And t.Lv_Id = " + user.getId() +
 							" Union " +
 							"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
 							"				 (Select dept.name From Depts dept Where dept.Id = p.Dept_Id) depName, " +
-							"				 p.Palata, " +
+							"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = e.Room_Id) Palata, " +
 							"				 (Case When e.dateBegin Is Not Null Then DATE_FORMAT(e.dateBegin, '%d.%m.%Y') Else Date_Format(p.Start_Epic_Date, '%d.%m.%Y') End) dateBegin, " +
 							"				 Date_Format(e.dateEnd, '%d.%m.%Y') dateEnd, " +
 							"				 (Case When e.dateBegin Is Not Null Then Datediff(e.dateEnd, e.dateBegin) Else Datediff(e.dateEnd, p.Start_Epic_Date) End) bunkDay " +
@@ -369,7 +424,7 @@ public class SRepImp implements SRep {
 							"  Where e.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
               "    AND p.lv_id != 1 " +
 							" 	 And e.patientId = p.Id " +
-							(deptId != null ? " And e.DeptId = " + deptId : "")
+							(deptId != null ? " And e.DeptId = " + deptId : "")*/
 					);
 					rs = ps.executeQuery();
 					List<ObjList> services = new ArrayList<ObjList>();
@@ -2573,7 +2628,8 @@ public class SRepImp implements SRep {
 					"         Date_Format(t.actDate, '%d.%m.%Y') cr_on, " +
 					"         c.Name Service_Name, " +
 					"         'Стац.' service_Type," +
-					"         t.actDate " +
+					"         t.actDate," +
+					"				  t.fizei " +
 					" From Lv_Fizios t, Kdos c, Patients p, Users u  " +
 					" Where t.Kdo_Id = c.id " +
 					"   And t.patientId = p.id " + (catStat.equals("") ? "" : " And c.id = " + catStat) +
@@ -2586,7 +2642,8 @@ public class SRepImp implements SRep {
 					"  			 Date_Format(t.confDate, '%d.%m.%Y') cr_on, " +
 					"        ser.Name Service_Name, " +
 					"				 'Амб' Service_Type, " +
-					"        t.confDate " +
+					"        t.confDate," +
+					"				 0 fizei " +
 					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
 					"  Where ser.Id = t.Service_Id " +
 					"    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
@@ -2612,6 +2669,7 @@ public class SRepImp implements SRep {
 				service.setC3(rs.getString("service_Type"));
 				//
 				service.setC4("" + counter);
+				service.setC5(rs.getString("fizei"));
 				fio = rs.getString("fio");
 				//
 				rows.add(service);
@@ -4855,4 +4913,84 @@ public class SRepImp implements SRep {
 		// Параметры отчета
 		m.addAttribute("params", params);
 	}
+	// Рентген муолажалари (Стац, Амб)
+	private void rep63(HttpServletRequest req, Model m) {
+		Connection conn = DB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		String params = "";
+		List<ObjList> rows = new ArrayList<ObjList>();
+		//
+		String cat = Util.get(req, "cat");
+		String catStat = Util.get(req, "cat_stat");
+		String catAmb = Util.get(req, "cat_amb");
+		Date startDate = Util.getDate(req, "period_start");
+		Date endDate = Util.getDate(req, "period_end");
+		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
+		try {
+			ps = conn.prepareStatement(
+				"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio,  " +
+					"         p.birthyear, " +
+					"         Date_Format(t.Result_Date, '%d.%m.%Y') cr_on, " +
+					"         f.c1 diagnoz, " +
+					"         c.Name Service_Name, " +
+					"         'Стац.' service_Type," +
+					"         t.result_date " +
+					" From Lv_Plans t, Kdos c, Patients p, Users u, F999 f  " +
+					" Where t.Kdo_Id = c.id " +
+					"   And t.patientId = p.id " +
+					"   And f.plan_id = t.id" + (catStat.equals("") ? "" : " And c.id = " + catStat) +
+					"   And c.kdo_type = 3 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
+					"   And u.id = p.lv_id " +
+					"   And date (t.Result_Date) Between ? and ? " +
+					" UNION ALL " +
+					" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
+					"        p.birthyear, " +
+					"  			 Date_Format(t.confDate, '%d.%m.%Y') cr_on, " +
+					"        t.diagnoz, " +
+					"				 ser.Name Service_Name, " +
+					"				 'Амб' Service_Type, " +
+					"        t.confDate " +
+					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
+					"  Where ser.Id = t.Service_Id " +
+					"    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
+					"		 And ser.Group_Id = 12 " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
+					" 	 And date (t.confDate) Between ? and ? "+
+					" Order By 7 "
+			);
+			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+			ps.setString(3, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(4, Util.dateDB(Util.get(req, "period_end")));
+			rs = ps.executeQuery();
+			int counter = 0; String fio = "";
+			while (rs.next()) {
+				if (!rs.getString("fio").equals(fio))
+					counter++;
+				ObjList service = new ObjList();
+				service.setFio(rs.getString("fio"));
+				service.setBirthyear(rs.getString("BirthYear"));
+				service.setDate(rs.getString("cr_on"));
+				//
+				service.setC1(rs.getString("diagnoz"));
+				service.setC2(rs.getString("service_name"));
+				service.setC3(rs.getString("service_Type"));
+				//
+				service.setC4("" + counter);
+				fio = rs.getString("fio");
+				//
+				rows.add(service);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DB.done(conn);
+			DB.done(ps);
+			DB.done(rs);
+		}
+		m.addAttribute("rows", rows);
+		// Параметры отчета
+		m.addAttribute("params", params);
+	}
+
 }
