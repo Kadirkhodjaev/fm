@@ -592,6 +592,28 @@ public class CHeadNurse {
     return json.toString();
   }
 
+  @RequestMapping(value = "saldo/edit.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String saldoEdit(HttpServletRequest req) throws JSONException {
+    session = SessionUtil.getUser(req);
+    JSONObject json = new JSONObject();
+    try {
+      HNDrugs drug = dhnDrug.get(Util.getInt(req, "id"));
+      if(!(drug.getDrugCount() - Double.parseDouble(Util.nvl(req, "counter", "0")) >= 0) || Double.parseDouble(Util.nvl(req, "counter", "0")) > drug.getDrugCount()) {
+        json.put("success", false);
+        json.put("msg", "Проверьте правильности данных. Остаток не может быть меньше 0");
+        return json.toString();
+      }
+      drug.setRasxod(drug.getDrugCount() - Double.parseDouble(Util.nvl(req, "counter", "0")));
+      dhnDrug.save(drug);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
   @RequestMapping(value = "out/patient/delete.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outPatientDelete(HttpServletRequest req) throws JSONException {

@@ -88,7 +88,7 @@
       </thead>
       <tbody>
       <c:forEach items="${rows}" var="row" varStatus="loop">
-        <tr id="row_${row.id}" class="hover" <c:if test="${row.parent_row == 0}">style="color:blue; font-weight: bold"</c:if> <c:if test="${row.parent_row == -1}">style="color:red; font-weight: bold"</c:if>>
+        <tr id="row_${row.id}" class="hover" title="ID: ${row.id} DRUG:${row.drug.id} Direction: ${row.direction.id}" <c:if test="${row.parent_row == 0}">style="color:blue; font-weight: bold"</c:if> <c:if test="${row.parent_row == -1}">style="color:red; font-weight: bold"</c:if>>
           <td align="center">${loop.index + 1}</td>
           <td>${row.direction.name}</td>
           <td>${row.drug.name}</td>
@@ -116,6 +116,9 @@
             <c:if test="${row.writeOffRows == null && row.rasxod == 0}">
               <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delSaldoRow(${row.id})"><i class="fa fa-minus"></i></button>
             </c:if>
+            <c:if test="${sessionScope.ENV.userId == 1}">
+              <button class="btn btn-info btn-sm" style="height:20px;padding:1px 10px" title="Корректировка остатка" onclick="openEditSaldo(${row.id}, ${row.drugCount}, ${row.rasxod})"><i class="fa fa-edit"></i></button>
+            </c:if>
           </td>
         </tr>
       </c:forEach>
@@ -123,8 +126,66 @@
     </table>
   </div>
 </div>
+<a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title" id="myModalLabel">Корректировка остатка</h4>
+      </div>
+      <div class="modal-body">
+        <form id="addEditForm" name="addEditForm">
+          <input type="hidden" id="saldo_count_id" name="id" value="" />
+          <input type="hidden" id="real_saldo" name="real_saldo" value="" />
+          <table class="table table-bordered">
+            <tr>
+              <td class="right bold">Остаток на текущий момент*:</td>
+              <td>
+                <input type="number" id="saldo_count" class="form-control center" name="saldo_count" value=""/>
+              </td>
+            </tr>
+          </table>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="saveDrugSaldo()">Сохранить</button>
+        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
 
 <script>
+  function openEditSaldo(id, saldo, rasxod) {
+    $('#saldo_count_id').val(id);
+    $('#real_saldo').val(saldo);
+    $('#saldo_count').val(saldo - rasxod);
+    $('#modal_window').click();
+  }
+  function saveDrugSaldo() {
+    var id = $('#saldo_count_id').val(), count = $('#saldo_count').val(), saldo = $('#real_saldo').val();
+    if(!(id > 0) || !(count > 0) || parseFloat(count) > parseFloat(saldo)) {
+      alert('Проверьте правильность ввода данных. Не все поля заполнены правильно');
+      return;
+    }
+    $.ajax({
+      url: '/head_nurse/saldo/edit.s',
+      data: 'id=' + id + '&counter=' + count,
+      method: 'post',
+      dataType: 'json',
+      success: function (res) {
+        if (res.success) {
+          $('#close-modal').click();
+          alert('Данные успешно сохранены');
+          setPage('/head_nurse/saldo.s');
+        } else
+          alert(res.msg);
+      }
+    });
+  }
   function setSaldoDrug(dom) {
     $('#drug_counter').empty();
     $.ajax({

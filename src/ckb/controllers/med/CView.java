@@ -503,7 +503,7 @@ public class CView {
       fizios.setPaidSum(0D);
       fizios.setPaidCount(0);
       fizios.setPrice(patient.getCounteryId() == 199 ? kdo.getPrice() : kdo.getFor_price());
-      fizios.setFizei(kdo.getFizei() != null ? Double.parseDouble(kdo.getFizei().replace(",", ".")) : null);
+      fizios.setFizei(kdo.getFizei() != null && !"".equals(kdo.getFizei()) ? Double.parseDouble(kdo.getFizei().replace(",", ".")) : null);
       dLvFizio.save(fizios);
     }
     return "{}";
