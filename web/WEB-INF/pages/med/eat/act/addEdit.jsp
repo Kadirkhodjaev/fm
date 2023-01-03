@@ -191,9 +191,9 @@
         <td class="right">${drug.drugCount}</td>
         <td>${drug.measure.name}</td>
         <td class="right">${drug.rasxod}</td>
-        <td class="right">${drug.drugCount - drug.rasxod - drug.unlead}</td>
+        <td class="right">${drug.counter - drug.rasxod}</td>
         <td class="center">
-          <c:if test="${drug.rasxod == 0 && drug.unlead == 0}">
+          <c:if test="${drug.rasxod == 0}">
             <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delActDrug(${drug.id})"><i class="fa fa-minus"></i></button>
           </c:if>
         </td>

@@ -10,7 +10,7 @@
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
     Детализация
-    <button class="btn <c:if test="${page_code == 'write_off'}">btn-success</c:if> btn-sm" onclick="setPageCode('write_off')" style="width:120px; float:right; margin-left:5px; margin-top:-5px">Списанные</button>
+    <button class="btn <c:if test="${page_code == 'out'}">btn-success</c:if> btn-sm" onclick="setPageCode('out')" style="width:120px; float:right; margin-left:5px; margin-top:-5px">Списанные</button>
     <button class="btn <c:if test="${page_code == 'rasxod'}">btn-success</c:if> btn-sm" onclick="setPageCode('rasxod')" style="width:120px; float:right; margin-left:5px; margin-top:-5px">Расход</button>
     <button class="btn <c:if test="${page_code == 'saldo'}">btn-success</c:if> btn-sm" onclick="setPageCode('saldo')" style="width:120px; float:right; margin-left:5px; margin-top:-5px">Остаток</button>
     <button class="btn <c:if test="${page_code == 'all'}">btn-success</c:if> btn-sm" onclick="setPageCode('all')" style="width:120px; float:right;margin-left:5px; margin-top:-5px">Все</button>
@@ -22,7 +22,6 @@
         <tr>
           <th width="50px">#</th>
           <th>Наименование</th>
-          <th>Источник</th>
           <th width="150px">Цена за единицу</th>
           <th width="150px">Количество</th>
           <th width="150px">Расход</th>
@@ -34,14 +33,10 @@
           <tr id="row_${row.ib}" row_type="${row.c2}" onclick="viewDetail(${row.ib})" class="hover">
             <td align="center">${loop.index + 1}</td>
             <td>${row.c1}</td>
-            <td align="center">
-              <c:if test="${row.c2 == 'act'}">Приход</c:if>
-              <c:if test="${row.c2 == 'saldo'}">Сальдо на начало</c:if>
-            </td>
             <td align="right"><fmt:formatNumber value = "${row.c3}" type = "number"/></td>
-            <td align="center"><fmt:formatNumber value = "${row.c4}" type = "number"/></td>
-            <td align="center"><fmt:formatNumber value = "${row.c6}" type = "number"/></td>
-            <td align="center"><fmt:formatNumber value = "${row.c4 - row.c6}" type = "number"/></td>
+            <td align="right"><fmt:formatNumber value = "${row.c4}" type = "number"/></td>
+            <td align="right"><fmt:formatNumber value = "${row.c6}" type = "number"/></td>
+            <td align="right"><fmt:formatNumber value = "${row.c4 - row.c6}" type = "number"/></td>
           </tr>
         </c:forEach>
       </tbody>
@@ -80,7 +75,7 @@
           </tr>
           <tr>
             <td colspan="8">
-              <table class="table miniGrid" id="write_off_rows">
+              <table class="table miniGrid" id="out_rows">
                 <thead>
                   <tr>
                     <th>Дата расхода</th>
@@ -109,30 +104,30 @@
     drugs.push({id: ${row.ib}, name: '${row.c1}', type: '${row.c2}', price: '<fmt:formatNumber value = "${row.c3}" type = "number"/>', counter: '<fmt:formatNumber value = "${row.c4}" type = "number"/>', rasxod: '<fmt:formatNumber value = "${row.c6}" type = "number"/>', saldo: '<fmt:formatNumber value = "${row.c4-row.c6}" type = "number"/>'});
   </c:forEach>
   function viewDetail(id) {
-    var type_code = $('#row_' + id).attr('row_type');
     $.ajax({
       url: '/drugs/details.s',
-      data: 'id=' + id + '&type=' + type_code,
+      data: 'id=' + id,
       method: 'post',
       dataType: 'json',
       success: function (res) {
         $('#error_text').hide();
         if (res.success) {
-          $('#write_off_rows').find('tbody').html('');
+          console.log(res.rows)
+          $('#out_rows').find('tbody').html('');
           $('#drug_name').html(res.name);
           $('#drug_price').html(res.price);
           $('#drug_count').html(res.drug_count);
           $('#rasxod_count').html(res.rasxod);
           $('#detail_count').html(res.counter);
-          if(parseFloat(res.rasxod) != parseFloat(res.counter))
+          if(parseFloat(res.rasxod) != parseFloat(res.drug_count))
             $('#error_text').show();
           res.rows.forEach(dom => {
             var tr = $('<tr></tr>');
             var td1 = $('<td align="center" title="' + dom.doc_id + '">№' + dom.reg_num + ' от ' + dom.reg_date + '</td>');
             var td2 = $('<td align="center" title="' + dom.id + '">' + dom.direction_name + '</td>');
-            var td3 = $('<td align="center">' + dom.drug_count + '</td>');
+            var td3 = $('<td align="center">' + dom.counter + '</td>');
             tr.append(td1).append(td2).append(td3);
-            $('#write_off_rows').find('tbody').append(tr);
+            $('#out_rows').find('tbody').append(tr);
           });
           $('#modal_window').click();
         } else
@@ -149,12 +144,11 @@
           var tr = $('<tr id="row_' + drug.id + '" row_type="' + drug.type + '" onclick="viewDetail(' + drug.id + ')"></tr>');
           var td0 = $('<td align="center">' + (++i) + '</td>');
           var td1 = $('<td>' + drug.name + '</td>');
-          var td2 = $("<td align='center'>" + (drug.type === 'saldo' ? 'Сальдо на начало' : 'Приход') + "</td>");
           var td3 = $("<td align='right'>" + drug.price + "</td>");
-          var td4 = $("<td align='center'>" + drug.counter + "</td>");
-          var td5 = $("<td align='center'>" + drug.rasxod + "</td>");
-          var td6 = $("<td align='center'>" + drug.saldo + "</td>");
-          tr.append(td0).append(td1).append(td2).append(td3).append(td4).append(td5).append(td6);
+          var td4 = $("<td align='right'>" + drug.counter + "</td>");
+          var td5 = $("<td align='right'>" + drug.rasxod + "</td>");
+          var td6 = $("<td align='right'>" + drug.saldo + "</td>");
+          tr.append(td0).append(td1).append(td3).append(td4).append(td5).append(td6);
           $('#saldo_rows').find('tbody').append(tr);
         }
       }

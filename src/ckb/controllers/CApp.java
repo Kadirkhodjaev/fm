@@ -58,7 +58,7 @@ public class  CApp {
   @Autowired private DDrug dDrug;
   @Autowired private DDrugSaldo dDrugSaldo;
   @Autowired private DDrugActDrug dDrugActDrug;
-  @Autowired private DDrugWriteOffRow dDrugWriteOffRow;
+  @Autowired private DDrugOutRow dDrugOutRow;
   @Autowired private DHNPatientKdo dHNPatientKdo;
   @Autowired private DHNPatientDrug dHNPatientDrug;
   @Autowired private DPatientPays dPatientPay;
@@ -141,7 +141,7 @@ public class  CApp {
       m.add(new Menu("Склад", "/drugs/sklad.s", "fa fa-group fa-fw", session.getCurUrl().equals("/drugs/sklad.s")));
       m.add(new Menu("Сальдо", "/drugs/saldo.s", "fa fa-group fa-fw", session.getCurUrl().equals("/drugs/saldo.s")));
       m.add(new Menu("Приход", "/drugs/acts.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/drugs/acts.s")));
-      m.add(new Menu("Расход", "/drugs/write-off.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/drugs/write-off.s")));
+      m.add(new Menu("Расход", "/drugs/out.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/drugs/out.s")));
       //m.add(new Menu("Архив заявок", "/drugs/claims/archive.s", "fa fa-archive fa-edit", session.getCurUrl().equals("/drugs/claims/archive.s")));
       m.add(new Menu("Справочники", "/drugs/dicts.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/drugs/dicts.s")));
     }
@@ -208,8 +208,8 @@ public class  CApp {
       m.add(new Menu("Стационар", "/head_nurse/out/patient.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/patient.s")));
       m.add(new Menu("Амбулатория", "/head_nurse/out/amb.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/amb.s")));
       m.add(new Menu("Расход", "/head_nurse/out.s", "fa fa-file-text fa-users", session.getCurUrl().equals("/head_nurse/out.s")));
+      m.add(new Menu("Перевод", "/head_nurse/transfer.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/transfer.s")));
       m.add(new Menu("Приход", "/head_nurse/incomes.s", "fa fa-stack-overflow fa-fw", session.getCurUrl().equals("/head_nurse/incomes.s")));
-      m.add(new Menu("Перевод", "/head_nurse/shock.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/shock.s")));
       m.add(new Menu("Справочники", "/head_nurse/dicts.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/dicts.s")));
       m.add(new Menu("Пациенты", "/head_nurse/total/patients.s", "fa fa-barcode fa-fw", session.getCurUrl().equals("/head_nurse/total/patients.s")));
     }
@@ -400,10 +400,10 @@ public class  CApp {
       actDrug.setPrice(800D);
       dDrugActDrug.save(actDrug);
     }
-    List<DrugWriteOffRows> drugWriteOffRows = dDrugWriteOffRow.getAll();
-    for(DrugWriteOffRows drugWriteOffRow: drugWriteOffRows) {
-      drugWriteOffRow.setPrice(800D);
-      dDrugWriteOffRow.save(drugWriteOffRow);
+    List<DrugOutRows> drugOutRows = dDrugOutRow.getAll();
+    for(DrugOutRows drugOutRow: drugOutRows) {
+      drugOutRow.setPrice(800D);
+      dDrugOutRow.save(drugOutRow);
     }
     List<HNPatientKdos> hnPatientKdos = dHNPatientKdo.getAll();
     for(HNPatientKdos hnPatientKdo: hnPatientKdos) {

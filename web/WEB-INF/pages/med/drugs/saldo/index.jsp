@@ -47,7 +47,7 @@
             <td align="center"><fmt:formatNumber value="${obj.drugCount - obj.rasxod}" type="number"/></td>
             <c:if test="${false}">
               <td class="center">
-                <c:if test="${obj.rasxod == 0 && obj.unlead == 0}">
+                <c:if test="${obj.rasxod == 0}">
                   <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.id})"><i class="fa fa-minus"></i></button>
                 </c:if>
               </td>

@@ -204,9 +204,9 @@ public class CCashbox {
     Double drugSum = 0D, drugSums = 0D;
     for(HNDateAmbRows drug: drugs) {
       if(drug.getDoc().getPaid().equals("N")) {
-        drugSum += drug.getRasxod() * drug.getHndrug().getWriteOffRows().getPrice() / drug.getHndrug().getDropCount();
+        drugSum += drug.getRasxod() * drug.getHndrug().getPrice();
       }
-      drugSums += drug.getRasxod() * drug.getHndrug().getWriteOffRows().getPrice() / drug.getHndrug().getDropCount();
+      drugSums += drug.getRasxod() * drug.getHndrug().getPrice();
     }
     //
     Double discountSum = dCashDiscount.patientAmbDiscountSum(pat.getId());

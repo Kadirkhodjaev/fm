@@ -15,7 +15,7 @@ public class DDrugImp extends DaoImp<Drugs> implements DDrug {
 
   @Override
   public Double getRealSaldo(Integer drugId, Double expense) {
-    Double saldo = (Double) entityManager.createQuery("Select Sum(drugCount - rasxod - unlead) From DrugActDrugs Where drug.id = " + drugId).getSingleResult();
+    Double saldo = (Double) entityManager.createQuery("Select Sum(counter - rasxod) From DrugActDrugs Where drug.id = " + drugId).getSingleResult();
     return saldo - expense;
   }
 }

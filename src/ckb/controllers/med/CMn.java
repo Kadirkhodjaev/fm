@@ -54,33 +54,33 @@ public class CMn {
       Double saldo = DB.getSum(conn, "Select Sum(price * drugCount) From Drug_Saldos");
       //
       Double income_in = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
-      Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Write_Offs t, Drug_Write_Off_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
+      Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       //
       Double income_period = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
-      Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Write_Offs t, Drug_Write_Off_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
+      Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
       //
       model.addAttribute("saldo_in", saldo + income_in - out_in);
       model.addAttribute("income_sum", income_period);
       model.addAttribute("outcome_sum", out_period);
       model.addAttribute("saldo_out", saldo + income_in - out_in + income_period - out_period);
       //
-      Double hnSaldoOut = DB.getSum(conn, "Select Sum((t.drugCount - t.rasxod) * c.price / t.dropCount) From Hn_Drugs t, Drug_Write_Off_Rows c Where c.id = t.writeOffRows_Id And t.drugCount - t.rasxod > 0");
+      Double hnSaldoOut = DB.getSum(conn, "Select Sum((t.drugCount - t.rasxod) * c.price / t.dropCount) From Hn_Drugs t, Drug_Out_Rows c Where c.id = t.outRow_Id And t.drugCount - t.rasxod > 0");
       Double hnDayOut = DB.getSum(conn, "Select sum(t.summ) From ( " +
-        " Select ifnull(sum(t.rasxod * f.price / c.dropCount), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_write_off_rows f where c.id = t.drug_Id And f.id = c.writeOffRows_Id And date(t.crOn) = CURRENT_DATE() " +
+        " Select ifnull(sum(t.rasxod * f.price / c.dropCount), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_Id And date(t.crOn) = CURRENT_DATE() " +
         " union all " +
-        " Select ifnull(sum(t.rasxod * f.price / c.dropCount), 0) summ From hn_date_rows t, hn_drugs c, drug_write_off_rows f where c.id = t.drug_Id And f.id = c.writeOffRows_Id And date(t.crOn) = CURRENT_DATE() " +
+        " Select ifnull(sum(t.rasxod * f.price / c.dropCount), 0) summ From hn_date_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_id And date(t.crOn) = CURRENT_DATE() " +
         " ) t ");
-      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount/c.dropCount) * f.price, 0) summ From hn_drugs c, drug_write_off_rows f where f.id = c.writeOffRows_Id And date(c.crOn) = CURRENT_DATE()");
+      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount/c.dropCount) * f.price, 0) summ From hn_drugs c, drug_out_rows f where f.id = c.outRow_id And date(c.crOn) = CURRENT_DATE()");
       model.addAttribute("hn_saldo_in", hnSaldoOut - hnDayIn + hnDayOut);
       model.addAttribute("hn_day_in", hnDayIn);
       model.addAttribute("hn_day_out", hnDayOut);
       model.addAttribute("hn_saldo_out", hnSaldoOut);
       ps = conn.prepareStatement(
         "Select t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear, Sum(t.rasxod * w.price / d.dropCount) Summ, count(*) " +
-        "      From hn_date_patient_rows t, Patients c, hn_drugs d, drug_write_off_rows w " +
+        "      From hn_date_patient_rows t, Patients c, hn_drugs d, drug_out_rows w " +
         "     Where t.patient_id = c.id " +
         "       and t.drug_Id = d.id " +
-        "       and w.Id = d.writeOffRows_Id " +
+        "       and w.Id = d.outRow_id " +
         "       And c.paid != 'CLOSED' " +
         "  Group By t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear"
       );
@@ -158,20 +158,20 @@ public class CMn {
         "      Group By t.drug_id " +
         "    Union All " +
         "    Select f.drug_id, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ " +
-        "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a  " +
-        "     Where a.id = f.writeOffRows_Id  " +
+        "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
+        "     Where a.id = f.outRow_id  " +
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
-        "       And f.writeOffRows_Id > 0 " +
+        "       And f.outRow_id > 0 " +
         "       And d.date <= ? " +
         "     Group By f.drug_id " +
         "    Union All " +
         "    Select f.drug_id, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ " +
-        "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a " +
-        "     Where a.id = f.writeOffRows_Id " +
+        "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
+        "     Where a.id = f.outRow_id " +
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
-        "       And f.writeOffRows_Id > 0 " +
+        "       And f.outRow_id > 0 " +
         "       And d.date <= ? " +
         "     Group By f.drug_id) f " +
         "Group By f.drug_id " +
@@ -193,20 +193,20 @@ public class CMn {
         "     Group By t.drug_id " +
         "    Union All " +
         "    Select f.drug_id, 0, 0, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ " +
-        "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a  " +
-        "     Where a.id = f.writeOffRows_Id  " +
+        "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
+        "     Where a.id = f.outRow_id  " +
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
-        "       And f.writeOffRows_Id > 0 " +
+        "       And f.outRow_id > 0 " +
         "       And d.date Between ? And ? " +
         "     Group By f.drug_id " +
         "    Union All " +
         "    Select f.drug_id, 0, 0, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ " +
-        "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a " +
-        "     Where a.id = f.writeOffRows_Id " +
+        "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
+        "     Where a.id = f.outRow_id " +
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
-        "       And f.writeOffRows_Id > 0 " +
+        "       And f.outRow_id > 0 " +
         "       And d.date Between ? And ? " +
         "     Group By f.drug_id) f " +
         "Group By f.drug_id ) f, drug_s_names c " +
@@ -362,19 +362,19 @@ public class CMn {
           "               Round(Sum(f.saldo_count), 2) saldo_count,  " +
           "               Round(Sum(f.saldo_sum), 2) saldo_sum  " +
           "          From (Select f.drug_id, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ, 0 saldo_count, 0 saldo_sum  " +
-          "                  From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a   " +
-          "                  Where a.id = f.writeOffRows_Id   " +
+          "                  From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a   " +
+          "                  Where a.id = f.outRow_id   " +
           "                    And d.Id = c.doc_Id   " +
           "                    And c.drug_Id = f.id  " +
-          "                    And f.writeOffRows_Id > 0  " +
+          "                    And f.outRow_id > 0  " +
           "                  Group By f.drug_id  " +
           "                Union All  " +
           "                Select f.drug_id, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ, 0 saldo_count, 0 saldo_sum  " +
-          "                  From hn_date_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a  " +
-          "                  Where a.id = f.writeOffRows_Id  " +
+          "                  From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
+          "                  Where a.id = f.outRow_id  " +
           "                    And d.Id = c.doc_Id   " +
           "                    And c.drug_Id = f.id  " +
-          "                    And f.writeOffRows_Id > 0  " +
+          "                    And f.outRow_id > 0  " +
           "                  Group By f.drug_id  " +
           "                Union All  " +
           "                Select t.drug_id,  " +
@@ -393,19 +393,19 @@ public class CMn {
           "                  Group By t.drug_id  " +
           "                Union All  " +
           "                Select f.drug_id, 0, 0, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ  " +
-          "                  From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a   " +
-          "                  Where a.id = f.writeOffRows_Id   " +
+          "                  From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a   " +
+          "                  Where a.id = f.outRow_id   " +
           "                    And d.Id = c.doc_Id   " +
           "                    And c.drug_Id = f.id   " +
-          "                    And f.writeOffRows_Id > 0  " +
+          "                    And f.outRow_id > 0  " +
           "                  Group By f.drug_id  " +
           "                Union All  " +
           "                Select f.drug_id, 0, 0, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ  " +
-          "                  From hn_date_rows c, hn_drugs f, hn_dates d, drug_write_off_rows a  " +
-          "                  Where a.id = f.writeOffRows_Id  " +
+          "                  From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
+          "                  Where a.id = f.outRow_id  " +
           "                    And d.Id = c.doc_Id   " +
           "                    And c.drug_Id = f.id   " +
-          "                    And f.writeOffRows_Id > 0  " +
+          "                    And f.outRow_id > 0  " +
           "                  Group By f.drug_id) f  " +
           "          Group By f.drug_id) f, drug_s_names a  " +
           "  Where a.id = f.drug_id " +
@@ -567,7 +567,7 @@ public class CMn {
       ps = cn.prepareStatement(
         "Select c.fio, t.crOn, t.drugCount, t.dropCount, d.name  " +
           "    From hn_drugs t, users c, drug_s_directions d " +
-          "   Where t.writeOffRows_Id is null " +
+          "   Where t.outRow_id is null " +
           "     And t.drug_id > 0 " +
           "     And d.id = t.direction_id " +
           "     And c.id = t.crBy  " +
@@ -648,13 +648,12 @@ public class CMn {
 
             "         sum(f.price * t.drugCount / t.dropCount) prixod_total, " +
             "         sum(f.price * t.rasxod / t.dropCount)  rasxod_total " +
-            "  From Hn_Drugs t, Drug_s_Names c, Drug_Write_Off_Rows f  " +
+            "  From Hn_Drugs t, Drug_s_Names c, Drug_Out_Rows f  " +
             " Where t.direction_Id = ? " +
             "   And c.id = t.drug_id " +
             //"   And c.id = 3 " +
             "   And f.income_Id > 0 " +
-            "   And f.id = t.writeOffRows_id " +
-            //"   And t.parent_row is null " +
+            "   And f.id = t.outRow_id " +
             " Group By t.drug_id");
         ps.setInt(1, direction.getId());
         ps.execute();

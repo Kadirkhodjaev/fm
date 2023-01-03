@@ -7,10 +7,10 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "Drug_Act_Drugs")
-public class DrugActDrugs extends GenId {
+@Table(name = "Drug_h_Act_Drugs")
+public class DrughActDrugs extends GenId {
 
-  @OneToOne @JoinColumn private DrugActs act;
+  @OneToOne @JoinColumn private DrughActs act;
   @OneToOne @JoinColumn private Drugs drug;
   @OneToOne @JoinColumn private DrugMeasures measure;
   @OneToOne @JoinColumn private DrugStorages storage;
@@ -19,8 +19,7 @@ public class DrugActDrugs extends GenId {
 
   @Column private Double price;
   @Column private Double blockCount;
-  @Column private Double counter;
-  @Column private Double countPrice;
+  @Column private Double drugCount;
   @Column private Double rasxod;
   @Column private Date startDate;
   @Column private Date endDate;
@@ -28,19 +27,19 @@ public class DrugActDrugs extends GenId {
   @Column private Integer crBy;
   @Column private Date crOn;
 
-  public Double getCountPrice() {
-    return countPrice;
+  public DrugManufacturers getManufacturer() {
+    return manufacturer;
   }
 
-  public void setCountPrice(Double countPrice) {
-    this.countPrice = countPrice;
+  public void setManufacturer(DrugManufacturers manufacturer) {
+    this.manufacturer = manufacturer;
   }
 
-  public DrugActs getAct() {
+  public DrughActs getAct() {
     return act;
   }
 
-  public void setAct(DrugActs act) {
+  public void setAct(DrughActs act) {
     this.act = act;
   }
 
@@ -84,12 +83,12 @@ public class DrugActDrugs extends GenId {
     this.price = price;
   }
 
-  public Double getCounter() {
-    return counter;
+  public Double getDrugCount() {
+    return drugCount;
   }
 
-  public void setCounter(Double drugCount) {
-    this.counter = drugCount;
+  public void setDrugCount(Double drugCount) {
+    this.drugCount = drugCount;
   }
 
   public Double getRasxod() {
@@ -138,13 +137,5 @@ public class DrugActDrugs extends GenId {
 
   public void setBlockCount(Double blockCount) {
     this.blockCount = blockCount;
-  }
-
-  public DrugManufacturers getManufacturer() {
-    return manufacturer;
-  }
-
-  public void setManufacturer(DrugManufacturers manufacturer) {
-    this.manufacturer = manufacturer;
   }
 }

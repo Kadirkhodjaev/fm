@@ -31,7 +31,6 @@
           <th>#</th>
           <th>Категория</th>
           <th>Наименование</th>
-          <th>Количественный учет</th>
         </tr>
         </thead>
         <tbody>
@@ -40,7 +39,6 @@
             <td align="center">${loop.index + 1}</td>
             <td align="center">${obj.c5}</td>
             <td>${obj.c2}</td>
-            <td align="center" id="res_${obj.c1}">${obj.c3}</td>
           </tr>
         </c:forEach>
         </tbody>

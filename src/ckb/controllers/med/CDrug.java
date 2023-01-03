@@ -16,8 +16,8 @@ import ckb.dao.med.drug.dict.measures.DDrugMeasure;
 import ckb.dao.med.drug.dict.partners.DDrugPartner;
 import ckb.dao.med.drug.dict.storages.DDrugStorage;
 import ckb.dao.med.drug.drugsaldo.DDrugSaldo;
-import ckb.dao.med.drug.write_off.DDrugWriteOff;
-import ckb.dao.med.drug.write_off.DDrugWriteOffRow;
+import ckb.dao.med.drug.out.DDrugOut;
+import ckb.dao.med.drug.out.DDrugOutRow;
 import ckb.domains.med.drug.*;
 import ckb.domains.med.drug.dict.*;
 import ckb.models.Obj;
@@ -60,8 +60,8 @@ public class CDrug {
   @Autowired private DDrugAct dDrugAct;
   @Autowired private DDrugActDrug dDrugActDrug;
   @Autowired private DDrugSaldo dDrugSaldo;
-  @Autowired private DDrugWriteOff dDrugWriteOff;
-  @Autowired private DDrugWriteOffRow dDrugWriteOffRow;
+  @Autowired private DDrugOut dDrugOut;
+  @Autowired private DDrugOutRow dDrugOutRow;
   @Autowired private DDrugCount dDrugCount;
   @Autowired private DDept dDept;
   @Autowired private DDrugDirectionDep dDrugDirectionDep;
@@ -116,6 +116,7 @@ public class CDrug {
     model.addAttribute("mans", dDrugManufacturer.getAll());
     // List Of Act Drugs
     model.addAttribute("drugs", dDrugActDrug.getList("From DrugActDrugs Where act.id = " + Util.getInt(req, "id") + " Order By Id Desc"));
+    model.addAttribute("drug_total_sum", dDrugActDrug.getActSum(Util.getInt(req, "id")));
     Util.makeMsg(req, model);
     return "/med/drugs/incomes/addEdit";
   }
@@ -149,7 +150,6 @@ public class CDrug {
   @RequestMapping(value = "/act/action.s", method = RequestMethod.POST)
   @ResponseBody
   protected String actAction(HttpServletRequest req) throws JSONException {
-    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       if(Util.get(req, "code").equals("delete")) {
@@ -181,8 +181,12 @@ public class CDrug {
         isErr = true;
         json.put("msg", "Поля цена имеет не правильный формат");
       }
-      if(Util.isNotDouble(req, "drug_count")) {
+      if(Util.isNotDouble(req, "block_count")) {
         json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поля кол-во имеет не правильный формат");
+        isErr = true;
+      }
+      if(Util.isNull(req, "counter") || Util.isNotDouble(req, "counter")) {
+        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поля Кол-во единиц имеет не правильный формат");
         isErr = true;
       }
       if(endDate.before(new Date()) || endDate.equals(new Date())) {
@@ -201,11 +205,12 @@ public class CDrug {
       drug.setAct(dDrugAct.get(Util.getInt(req, "act")));
       drug.setDrug(dDrug.get(Util.getInt(req, "drug")));
       drug.setManufacturer(dDrugManufacturer.get(Util.getInt(req, "man")));
-      drug.setPrice(Double.parseDouble(Util.get(req, "price")));
-      drug.setBlockCount(Double.parseDouble(Util.get(req, "drug_count")));
+      drug.setPrice(Util.getDouble(req, "price"));
+      drug.setBlockCount(Util.getDouble(req, "block_count"));
+      drug.setCounter(Util.getDouble(req, "counter"));
+      drug.setCountPrice(Util.getDouble(req, "price") / (Util.getDouble(req, "counter") / Util.getDouble(req, "block_count")));
       drug.setEndDate(endDate);
       drug.setRasxod(0D);
-      drug.setUnlead(0D);
       drug.setCrBy(session.getUserId());
       drug.setCrOn(new Date());
       dDrugActDrug.save(drug);
@@ -245,28 +250,29 @@ public class CDrug {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      Double saldo = DB.getSum(conn, "Select Sum(price * drugCount) From Drug_Saldos");
       //
       Double income_in = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
-      Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Write_Offs t, Drug_Write_Off_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
+      Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       //
       Double income_period = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
-      Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Write_Offs t, Drug_Write_Off_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
+      Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
       //
-      model.addAttribute("saldo_in", saldo + income_in - out_in);
+      model.addAttribute("saldo_in", income_in - out_in);
       model.addAttribute("income_sum", income_period);
       model.addAttribute("outcome_sum", out_period);
-      model.addAttribute("saldo_out", saldo + income_in - out_in + income_period - out_period);
+      model.addAttribute("saldo_out", income_in - out_in + income_period - out_period);
       //
       List<ObjList> rows = new ArrayList<ObjList>();
       ps = conn.prepareStatement(
-        "Select t.drug_id, t.summ, t.counter, t.price, c.name From (" +
-          " Select t.drug_Id, t.price * (t.drugCount - t.rasxod) summ, t.drugCount - t.rasxod counter, t.price Price From Drug_Saldos t Where t.drugCount - t.rasxod > 0 " +
-          " Union ALL " +
-          " Select t.Drug_Id, t.price * (t.blockCount - t.rasxod) summ, t.blockCount - t.rasxod counter, t.price Price From drug_act_drugs t Where t.blockCount - t.rasxod > 0 " +
-          " ) t, drug_s_names c " +
-          " Where c.Id = t.drug_Id " +
-          " Order By c.Name" );
+          " Select t.Drug_Id, " +
+            "      c.name, " +
+          "        t.countPrice * (t.counter - t.rasxod) summ, " +
+          "        t.counter - t.rasxod counter, " +
+          "        t.countprice Price " +
+          "   From drug_act_drugs t, drug_s_names c " +
+          "  Where t.counter - t.rasxod > 0" +
+          "    And t.drug_id = c.id " +
+          "  Order By c.Name");
       rs = ps.executeQuery();
       while (rs.next()) {
         ObjList obj = new ObjList();
@@ -303,9 +309,9 @@ public class CDrug {
       List<ObjList> rows = new ArrayList<ObjList>();
       ps = conn.prepareStatement(
         "Select t.drug_id, t.summ, t.counter, t.price, c.name From (" +
-          " Select t.drug_Id, t.price * (t.count - t.rasxod) summ, t.count - t.rasxod counter, t.price Price From Drug_Saldos t Where t.count - t.rasxod > 0 " +
+          " Select t.drug_Id, t.countprice * (t.count - t.rasxod) summ, t.count - t.rasxod counter, t.countprice Price From Drug_Saldos t Where t.count - t.rasxod > 0 " +
           " Union ALL " +
-          " Select t.Drug_Id, t.price * (t.blockCount - t.rasxod) summ, t.blockCount - t.rasxod counter, t.price Price From drug_act_drugs t Where t.blockCount - t.rasxod > 0 " +
+          " Select t.Drug_Id, t.countprice * (t.counter - t.rasxod) summ, t.counter - t.rasxod counter, t.countprice Price From drug_act_drugs t Where t.counter - t.rasxod > 0 " +
           " ) t, drug_s_names c " +
           " Where c.Id = t.drug_Id " +
           " Order By c.Name" );
@@ -346,19 +352,20 @@ public class CDrug {
       conn = DB.getConnection();
       List<ObjList> rows = new ArrayList<ObjList>();
       ps = conn.prepareStatement(
-        "Select t.id, t.drug_id, c.name, t.in_type, t.summ, t.counter, t.price, t.rasxod From ( " +
-          " Select t.id, t.drug_Id, 'saldo' in_type, t.price * t.drugCount summ, t.drugCount counter, t.price, t.rasxod From Drug_Saldos t " + (code.equals("write_off") ? " Where t.drugCount - t.rasxod = 0 " : "") + (code.equals("saldo") ? " Where t.drugCount - t.rasxod != 0 " : "") + (code.equals("rasxod") ? " Where t.rasxod > 0 " : "") +
-          " Union ALL " +
-          " Select t.id, t.drug_id, 'act' in_type, t.price * t.blockCount summ, t.blockCount counter, t.price, t.rasxod From drug_act_drugs t" + (code.equals("write_off") ? " Where t.drugCount - t.rasxod = 0 " : "") + (code.equals("saldo") ? " Where t.drugCount - t.rasxod != 0 " : "") + (code.equals("rasxod") ? " Where t.rasxod > 0 " : "") +
-          ") t, drug_s_names c " +
-          " Where c.Id = t.drug_Id " +
-          " Order By c.Name");
+        " Select t.id, " +
+          "          c.name, " +
+          "          t.drug_id, " +
+          "          t.price * t.blockCount summ, " +
+          "          t.counter, " +
+          "          t.price, " +
+          "          t.rasxod " +
+          "     From drug_act_drugs t, drug_s_names c Where c.id = t.drug_id " + (code.equals("out") ? "  " : "") + (code.equals("saldo") ? " And t.counter - t.rasxod != 0 " : "") + (code.equals("rasxod") ? " And t.rasxod > 0 " : "") +
+          "  Order By c.Name");
       rs = ps.executeQuery();
       while (rs.next()) {
         ObjList obj = new ObjList();
         obj.setIb(rs.getString("id"));
         obj.setC1(rs.getString("name"));
-        obj.setC2(rs.getString("in_type"));
         obj.setC3(rs.getString("price"));
         obj.setC4(rs.getString("counter"));
         obj.setC5(rs.getString("summ"));
@@ -391,54 +398,37 @@ public class CDrug {
       conn = DB.getConnection();
       JSONArray rows = new JSONArray();
       Double counter = 0D;
-      if(Util.get(req, "type").equals("saldo")) {
-        ps = conn.prepareStatement(
-          "Select t.*, d.name direction_name, c.regDate, c.regNum, c.id act_id From Drug_Write_Off_Rows t, Drug_Write_Offs c, Drug_s_Directions d Where d.id = c.direction_id And c.id = t.doc_id And t.saldo_id = ? Order By c.regDate"
-        );
-        ps.setInt(1, Util.getInt(req, "id"));
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          JSONObject obj = new JSONObject();
-          obj.put("direction_name", rs.getString("direction_name"));
-          obj.put("reg_num", rs.getString("regNum"));
-          obj.put("reg_date", Util.dateToString(rs.getDate("regDate")));
-          obj.put("drug_count", rs.getDouble("drugCount"));
-          obj.put("doc_id", rs.getInt("act_id"));
-          obj.put("id", rs.getInt("id"));
-          counter += rs.getDouble("drugCount");
-          //
-          rows.put(obj);
-        }
-        DrugSaldos saldo = dDrugSaldo.get(Util.getInt(req, "id"));
-        json.put("name", saldo.getDrug().getName() + "(ID: " + Util.get(req, "id") + ")");
-        json.put("drug_count", saldo.getDrugCount());
-        json.put("rasxod", saldo.getRasxod());
-        json.put("price", saldo.getPrice());
+      ps = conn.prepareStatement(
+        "Select t.*, " +
+          "         d.name direction_name, " +
+          "         c.regDate, " +
+          "         c.regNum, " +
+          "         c.id act_id " +
+          "    From Drug_Out_Rows t, Drug_Outs c, Drug_s_Directions d " +
+          "   Where d.id = c.direction_id " +
+          "     And c.id = t.doc_id " +
+          "     And t.income_id = ? " +
+          "   Order By c.regDate"
+      );
+      ps.setInt(1, Util.getInt(req, "id"));
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        JSONObject obj = new JSONObject();
+        obj.put("direction_name", rs.getString("direction_name"));
+        obj.put("reg_num", rs.getString("regNum"));
+        obj.put("reg_date", Util.dateToString(rs.getDate("regDate")));
+        obj.put("counter", rs.getDouble("drugCount"));
+        obj.put("doc_id", rs.getInt("act_id"));
+        obj.put("id", rs.getInt("id"));
+        counter += rs.getDouble("drugCount");
+        //
+        rows.put(obj);
       }
-      if(Util.get(req, "type").equals("act")) {
-        ps = conn.prepareStatement(
-          "Select t.*, d.name direction_name, c.regDate, c.regNum, c.id act_id From Drug_Write_Off_Rows t, Drug_Write_Offs c, Drug_s_Directions d Where d.id = c.direction_id And c.id = t.doc_id And t.income_id = ? Order By c.regDate"
-        );
-        ps.setInt(1, Util.getInt(req, "id"));
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          JSONObject obj = new JSONObject();
-          obj.put("direction_name", rs.getString("direction_name"));
-          obj.put("reg_num", rs.getString("regNum"));
-          obj.put("reg_date", Util.dateToString(rs.getDate("regDate")));
-          obj.put("drug_count", rs.getDouble("drugCount"));
-          obj.put("doc_id", rs.getInt("act_id"));
-          obj.put("id", rs.getInt("id"));
-          counter += rs.getDouble("drugCount");
-          //
-          rows.put(obj);
-        }
-        DrugActDrugs actDrug = dDrugActDrug.get(Util.getInt(req, "id"));
-        json.put("name", actDrug.getDrug().getName() + "(ID: " + Util.get(req, "id") + ")");
-        json.put("drug_count", actDrug.getDrugCount());
-        json.put("rasxod", actDrug.getRasxod());
-        json.put("price", actDrug.getPrice());
-      }
+      DrugActDrugs actDrug = dDrugActDrug.get(Util.getInt(req, "id"));
+      json.put("name", actDrug.getDrug().getName() + "(ID: " + Util.get(req, "id") + ")");
+      json.put("drug_count", counter);
+      json.put("rasxod", actDrug.getRasxod());
+      json.put("price", actDrug.getCountPrice());
       json.put("rows", rows);
       json.put("counter", counter);
       json.put("success", true);
@@ -478,7 +468,6 @@ public class CDrug {
           saldo = dDrugSaldo.get(Util.getInt(req, "id"));
         else {
           saldo.setRasxod(0D);
-          saldo.setUnlead(0D);
         }
         saldo.setDrug(dDrug.get(Util.getInt(req, "drug")));
         saldo.setDrugCount(Double.parseDouble(Util.get(req, "count")));
@@ -918,23 +907,23 @@ public class CDrug {
   //endregion
 
   //region OUTS
-  @RequestMapping("/write-off.s")
-  protected String writeOff(HttpServletRequest request, Model model) {
+  @RequestMapping("/out.s")
+  protected String Out(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
-    session.setCurUrl("/drugs/write-off.s");
+    session.setCurUrl("/drugs/out.s");
     String startDate = Util.get(request, "period_start", "01" + Util.getCurDate().substring(2));
     String endDate = Util.get(request, "period_end", Util.getCurDate());
     //
-    List<DrugWriteOffs> acts = dDrugWriteOff.getList("From DrugWriteOffs Where (state in ('SND', 'CON') Or state = null) And regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By regDate Desc, id desc");
+    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By regDate Desc, id desc");
     List<ObjList> list = new ArrayList<ObjList>();
     //
-    for(DrugWriteOffs act : acts) {
+    for(DrugOuts act : acts) {
       ObjList obj = new ObjList();
       obj.setIb(act.getId().toString());
       obj.setC1("№" + act.getRegNum() + " от " + Util.dateToString(act.getRegDate()));
-      obj.setC2(dDrugActDrug.getCount("From DrugWriteOffRows Where doc.id = " + act.getId()).toString());
+      obj.setC2(dDrugActDrug.getCount("From DrugOutRows Where doc.id = " + act.getId()).toString());
       if(act != null && act.getId() != null) {
-        Double sum = dDrugWriteOffRow.getActSum(act.getId());
+        Double sum = dDrugOutRow.getActSum(act.getId());
         obj.setC3("" + (sum == null ? 0 : sum));
       } else {
         obj.setC3("0");
@@ -953,50 +942,34 @@ public class CDrug {
     model.addAttribute("list", list);
     model.addAttribute("period_start", startDate);
     model.addAttribute("period_end", endDate);
-    return "/med/drugs/write-off/index";
+    return "/med/drugs/out/index";
   }
 
-  @RequestMapping("/write-off/save.s")
-  protected String writeOffSave(HttpServletRequest req, Model model) {
+  @RequestMapping("/out/save.s")
+  protected String OutSave(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/drugs/write-off/save.s?id=" + Util.getInt(req, "id"));
+    session.setCurUrl("/drugs/out/save.s?id=" + Util.getInt(req, "id"));
     //
-    DrugWriteOffs obj = Util.getInt(req, "id") > 0 ? dDrugWriteOff.get(Util.getInt(req, "id")) : new DrugWriteOffs();
+    DrugOuts obj = Util.getInt(req, "id") > 0 ? dDrugOut.get(Util.getInt(req, "id")) : new DrugOuts();
     if(Util.getInt(req, "id") == 0) obj.setId(0);
-    List<DrugWriteOffRows> rr = dDrugWriteOffRow.getList("From DrugWriteOffRows t Where t.doc.id = " + obj.getId());
+    List<DrugOutRows> rr = dDrugOutRow.getList("From DrugOutRows t Where t.doc.id = " + obj.getId());
     List<Obj> list = new ArrayList<Obj>();
-    for(DrugWriteOffRows r: rr) {
+    for(DrugOutRows r: rr) {
       Obj b = new Obj();
       b.setId(r.getId());
-      if(r.getDrug() == null) {
-        if (r.getChildType().equals("income"))
-          r.setDrug(r.getIncome().getDrug());
-        else
-          r.setDrug(r.getSaldo().getDrug());
-      }
       b.setName(r.getDrug().getName());
       b.setClaimCount(r.getClaimCount());
       b.setDrugCount(r.getDrugCount());
       b.setPrice(r.getPrice());
-      List<DrugSaldos> saldo = dDrugSaldo.getList("From DrugSaldos Where drugCount - rasxod > 0 And drug.id = " + r.getDrug().getId());
-      List<DrugActDrugs> act = dDrugActDrug.getList("From DrugActDrugs Where blockCount - rasxod > 0 And drug.id = " + r.getDrug().getId());
+      List<DrugActDrugs> act = dDrugActDrug.getList("From DrugActDrugs Where act.state != 'E' And counter - rasxod > 0 And drug.id = " + r.getDrug().getId());
       List<ObjList> variuos = new ArrayList<ObjList>();
-      if(saldo.size() > 0)
-        for(DrugSaldos s: saldo) {
-          ObjList o = new ObjList();
-          o.setC1(s.getId().toString());
-          o.setC2((s.getDrugCount() - s.getRasxod()) + "");
-          o.setC3(s.getPrice().toString());
-          o.setC4("saldo");
-          variuos.add(o);
-        }
       if(act.size() > 0)
         for(DrugActDrugs a: act) {
           ObjList o = new ObjList();
           o.setC1(a.getId().toString());
-          o.setC2((a.getBlockCount() - a.getRasxod()) + "");
+          o.setC2((a.getCounter() - a.getRasxod()) + "");
           o.setC3(a.getPrice().toString());
-          o.setC4("income");
+          o.setC4(a.getBlockCount().toString());
           variuos.add(o);
         }
       b.setList(variuos);
@@ -1005,32 +978,27 @@ public class CDrug {
     model.addAttribute("rows", list);
     //
     model.addAttribute("obj", obj);
-    model.addAttribute("measures", dDrugMeasure.getList("From DrugMeasures Where incomeFlag = 1"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
+    model.addAttribute("measures", dDrugMeasure.getList("From DrugMeasures"));
+    model.addAttribute("drugs", dDrug.getList("From Drugs t Where exists (Select 1 From DrugActDrugs c Where act.state != 'E' And c.counter - c.rasxod > 0 And c.drug.id = t.id) Order By t.name"));
     Util.makeMsg(req, model);
-    return "/med/drugs/write-off/addEdit";
+    return "/med/drugs/out/addEdit";
   }
 
-  @RequestMapping(value = "/write-off/row/clear.s", method = RequestMethod.POST)
+  @RequestMapping(value = "/out/row/clear.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String writeOffDel(HttpServletRequest req) throws JSONException {
+  protected String OutDel(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      DrugWriteOffRows row = dDrugWriteOffRow.get(Util.getInt(req, "id"));
-      if (row.getChildType().equals("income")) {
-        DrugActDrugs income = row.getIncome();
-        income.setRasxod(income.getRasxod() - row.getDrugCount());
-        dDrugActDrug.save(income);
-      } else if(row.getChildType().equals("saldo")) {
-        DrugSaldos saldo = row.getSaldo();
-        saldo.setRasxod(saldo.getRasxod() - row.getDrugCount());
-        dDrugSaldo.save(saldo);
-      }
-      row.setSaldo(null);
+      DrugOutRows row = dDrugOutRow.get(Util.getInt(req, "id"));
+      //
+      DrugActDrugs income = row.getIncome();
+      income.setRasxod(income.getRasxod() - row.getDrugCount());
+      dDrugActDrug.save(income);
+      //
       row.setIncome(null);
-      row.setChildType(null);
+      row.setPrice(null);
       row.setDrugCount(null);
-      dDrugWriteOffRow.save(row);
+      dDrugOutRow.save(row);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1039,45 +1007,28 @@ public class CDrug {
     return json.toString();
   }
 
-  @RequestMapping(value = "/write-off/row/save.s", method = RequestMethod.POST)
+  @RequestMapping(value = "/out/row/save.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String writeOffRowSave(HttpServletRequest req) throws JSONException {
+  protected String outRowSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
       String[] row_ids = req.getParameterValues("row_id");
-      String[] child_types = req.getParameterValues("child_type");
       String[] drug_ids = req.getParameterValues("drug_id");
       String[] drug_counts = req.getParameterValues("drug_count");
       for(int i=0;i<row_ids.length;i++) {
-        DrugWriteOffRows row = dDrugWriteOffRow.get(Integer.parseInt(row_ids[i]));
+        DrugOutRows row = dDrugOutRow.get(Integer.parseInt(row_ids[i]));
         row.setDrugCount(Double.parseDouble(drug_counts[i]));
-        if(child_types[i].equals("income")) {
-          DrugActDrugs income = dDrugActDrug.get(Integer.parseInt(drug_ids[i]));
-          if(row.getDrugCount() > income.getBlockCount() - income.getRasxod()) {
-            json.put("success", false);
-            json.put("msg", "Кол-во списании не может быть больше остатка. Препарад: " + row.getDrug().getName() + " Остаток: " + (income.getBlockCount() - income.getRasxod()) + " Списание: " + row.getDrugCount());
-            return json.toString();
-          }
-          income.setRasxod(income.getRasxod() + row.getDrugCount());
-          dDrugActDrug.save(income);
-          row.setPrice(income.getPrice());
-          row.setIncome(income);
-        } else if(child_types[i].equals("saldo")) {
-          DrugSaldos saldo = dDrugSaldo.get(Integer.parseInt(drug_ids[i]));
-          if(row.getDrugCount() > saldo.getDrugCount() - saldo.getRasxod()) {
-            json.put("success", false);
-            json.put("msg", "Кол-во списании не может быть больше остатка. Препарад: " + row.getDrug().getName() + " Остаток: " + (saldo.getDrugCount() - saldo.getRasxod()) + " Списание: " + row.getDrugCount());
-            return json.toString();
-          }
-          if(child_types[i].equals("no"))
-            row.setDrugCount(0D);
-          saldo.setRasxod(saldo.getRasxod() + row.getDrugCount());
-          dDrugSaldo.save(saldo);
-          row.setPrice(saldo.getPrice());
-          row.setSaldo(saldo);
+        DrugActDrugs income = dDrugActDrug.get(Integer.parseInt(drug_ids[i]));
+        if(row.getDrugCount() > income.getCounter() - income.getRasxod()) {
+          json.put("success", false);
+          json.put("msg", "Кол-во списании не может быть больше остатка. Препарад: " + row.getDrug().getName() + " Остаток: " + (income.getCounter() - income.getRasxod()) + " Списание: " + row.getDrugCount());
+          return json.toString();
         }
-        row.setChildType(child_types[i]);
-        dDrugWriteOffRow.save(row);
+        income.setRasxod(income.getRasxod() + row.getDrugCount());
+        dDrugActDrug.save(income);
+        row.setPrice(income.getCountPrice());
+        row.setIncome(income);
+        dDrugOutRow.save(row);
       }
       json.put("success", true);
     } catch (Exception e) {
@@ -1087,26 +1038,25 @@ public class CDrug {
     return json.toString();
   }
 
-  @RequestMapping(value = "/write-off/row/copy.s", method = RequestMethod.POST)
+  @RequestMapping(value = "/out/row/copy.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String writeOffRowCopy(HttpServletRequest req) throws JSONException {
+  protected String OutRowCopy(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      DrugWriteOffRows fact = dDrugWriteOffRow.get(Util.getInt(req, "id"));
+      DrugOutRows fact = dDrugOutRow.get(Util.getInt(req, "id"));
       Double rc = Double.parseDouble(Util.get(req, "drug_count", "0"));
       if(fact.getClaimCount() <= rc || rc <= 0) {
         json.put("msg", "Кол-во для разделения не соответствует требованиям");
         json.put("success", false);
       }
       fact.setClaimCount(fact.getClaimCount() - rc);
-      dDrugWriteOffRow.save(fact);
+      dDrugOutRow.save(fact);
       fact.setId(null);
       fact.setClaimCount(rc);
-      fact.setSaldo(null);
       fact.setIncome(null);
-      fact.setChildType(null);
+      fact.setPrice(null);
       fact.setDrugCount(null);
-      dDrugWriteOffRow.save(fact);
+      dDrugOutRow.save(fact);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1115,12 +1065,12 @@ public class CDrug {
     return json.toString();
   }
 
-  @RequestMapping(value = "/write-off/row/del.s", method = RequestMethod.POST)
+  @RequestMapping(value = "/out/row/del.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String writeOffRowDel(HttpServletRequest req) throws JSONException {
+  protected String OutRowDel(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      dDrugWriteOffRow.delete(Util.getInt(req, "id"));
+      dDrugOutRow.delete(Util.getInt(req, "id"));
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1129,14 +1079,14 @@ public class CDrug {
     return json.toString();
   }
 
-  @RequestMapping(value = "/write-off/confirm.s", method = RequestMethod.POST)
+  @RequestMapping(value = "/out/confirm.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String writeOffConfirm(HttpServletRequest req) throws JSONException {
+  protected String OutConfirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      DrugWriteOffs row = dDrugWriteOff.get(Util.getInt(req, "id"));
-      List<DrugWriteOffRows> rows = dDrugWriteOffRow.getList("From DrugWriteOffRows Where doc.id = " + row.getId());
-      for(DrugWriteOffRows rw: rows) {
+      DrugOuts row = dDrugOut.get(Util.getInt(req, "id"));
+      List<DrugOutRows> rows = dDrugOutRow.getList("From DrugOutRows Where doc.id = " + row.getId());
+      for(DrugOutRows rw: rows) {
         if(rw.getDrugCount() == null) {
           json.put("success", false);
           json.put("msg", "Не все строки обработаны");
@@ -1145,7 +1095,7 @@ public class CDrug {
       }
       row.setConfirmOn(new Date());
       row.setState("CON");
-      dDrugWriteOff.save(row);
+      dDrugOut.save(row);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);

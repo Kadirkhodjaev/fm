@@ -78,6 +78,7 @@
           <th>Срок годности</th>
           <th>Цена</th>
           <th>Количество</th>
+          <th>Кол-во единиц</th>
         </tr>
       </thead>
       <tr>
@@ -106,7 +107,10 @@
           <input type="number" required class="form-control right" onblur="removeVergul(this, 'price')" id="drug_price" name="price" disabled />
         </td>
         <td>
-          <input type="number" required class="form-control center" onblur="removeVergul(this, 'count')" id="drug_count" name="drug_count" disabled />
+          <input type="number" required class="form-control center" onblur="removeVergul(this, 'block_count')" id="block_count" name="block_count" disabled />
+        </td>
+        <td>
+          <input type="number" required class="form-control right" onblur="removeVergul(this, 'counter')" id="counter" name="counter" disabled/>
         </td>
         <td id="drug_default_count" class="center"></td>
       </tr>
@@ -187,7 +191,7 @@
   </div>
 </c:if>
 <c:if test="${fn:length(drugs) > 0}">
-  <div class="form-name">Список препаратов по акту</div>
+  <div class="form-name">Список препаратов по акту на сумму: <span style="color: red"><fmt:formatNumber value="${drug_total_sum}" type = "number"/> сум</span></div>
   <table class="miniGrid table table-striped table-bordered" style="width:99%; margin:5px;">
     <thead>
       <tr>
@@ -196,6 +200,8 @@
         <th>Срок годность</th>
         <th>Цена</th>
         <th>Кол-во</th>
+        <th>Сумма прихода</th>
+        <th>Кол-во единиц</th>
         <th>Расход</th>
         <th>Остаток</th>
         <c:if test="${obj.state == 'E'}">
@@ -209,12 +215,14 @@
         <td>${drug.manufacturer.name}</td>
         <td class="center"><fmt:formatDate pattern="dd.MM.yyyy" value="${drug.endDate}"/></td>
         <td class="right"><fmt:formatNumber value="${drug.price}" type = "number"/></td>
-        <td class="right">${drug.blockCount}</td>
-        <td class="right">${drug.rasxod}</td>
-        <td class="right">${drug.blockCount - drug.rasxod - drug.unlead}</td>
+        <td class="right"><fmt:formatNumber value="${drug.blockCount}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.price * drug.blockCount}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.counter}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.rasxod}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.counter - drug.rasxod}" type = "number"/></td>
         <c:if test="${obj.state == 'E'}">
           <td class="center">
-            <c:if test="${drug.rasxod == 0 && drug.unlead == 0}">
+            <c:if test="${drug.rasxod == 0}">
               <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delActDrug(${drug.id})"><i class="fa fa-minus"></i></button>
             </c:if>
           </td>
@@ -328,7 +336,8 @@
     //
     var cn = dom.options[dom.selectedIndex].getAttribute('data_count');
     $('#drug_price').attr('disabled', dom.value === '' || cn === 0 || cn === '');
-    $('#drug_count').attr('disabled', dom.value === '' || cn === 0 || cn === '');
+    $('#block_count').attr('disabled', dom.value === '' || cn === 0 || cn === '');
+    $('#counter').attr('disabled', dom.value === '' || cn === 0 || cn === '');
   }
   function saveDrugForm() {
     if($('#drug-name').val() == '') {

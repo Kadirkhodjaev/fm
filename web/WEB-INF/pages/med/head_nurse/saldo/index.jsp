@@ -88,20 +88,20 @@
       </thead>
       <tbody>
       <c:forEach items="${rows}" var="row" varStatus="loop">
-        <tr id="row_${row.id}" class="hover" title="ID: ${row.id} DRUG:${row.drug.id} Direction: ${row.direction.id}" <c:if test="${row.parent_row == 0}">style="color:blue; font-weight: bold"</c:if> <c:if test="${row.parent_row == -1}">style="color:red; font-weight: bold"</c:if>>
+        <tr id="row_${row.id}" class="hover" title="ID: ${row.id} DRUG:${row.drug.id} Direction: ${row.direction.id}">
           <td align="center">${loop.index + 1}</td>
           <td>${row.direction.name}</td>
           <td>${row.drug.name}</td>
           <td class="center" style="width:250px">
-            <c:if test="${row.writeOffRows != null}">
-              Акт №${row.writeOffRows.doc.regNum} от <fmt:formatDate pattern="dd.MM.yyyy" value="${row.writeOffRows.doc.regDate}"/>
+            <c:if test="${row.outRow != null}">
+              Акт №${row.outRow.doc.regNum} от <fmt:formatDate pattern="dd.MM.yyyy" value="${row.outRow.doc.regDate}"/>
             </c:if>
-            <c:if test="${row.writeOffRows == null}">
+            <c:if test="${row.outRow == null}">
               Сальдо
             </c:if>
           </td>
           <td class="center">
-            <fmt:formatDate pattern="dd.MM.yyyy" value="${row.writeOffRows.income.endDate}"/>
+            <fmt:formatDate pattern="dd.MM.yyyy" value="${row.outRow.income.endDate}"/>
           </td>
           <td class="right" style="width:150px">
               ${row.drugCount}
@@ -113,7 +113,7 @@
               ${row.drugCount - row.rasxod}
           </td>
           <td class="center">
-            <c:if test="${row.writeOffRows == null && row.rasxod == 0}">
+            <c:if test="${row.outRow == null && row.rasxod == 0}">
               <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delSaldoRow(${row.id})"><i class="fa fa-minus"></i></button>
             </c:if>
             <c:if test="${sessionScope.ENV.userId == 1}">

@@ -202,6 +202,7 @@
   <bean id="dDrugContract" class="ckb.dao.med.drug.dict.contracts.DDrugContractImp" parent="daoImpl"/>
   <bean id="dDrugCupboard" class="ckb.dao.med.drug.dict.cupboards.DDrugCupboardImp" parent="daoImpl"/>
   <bean id="dDrug" class="ckb.dao.med.drug.dict.drugs.DDrugImp" parent="daoImpl"/>
+  <bean id="dDrugDrugMeasure" class="ckb.dao.med.drug.dict.drugs.measure.DDrugDrugMeasureImp" parent="daoImpl"/>
   <bean id="dDrugCount" class="ckb.dao.med.drug.dict.drugs.counter.DDrugCountImp" parent="daoImpl"/>
   <bean id="dDrugDrugCategory" class="ckb.dao.med.drug.dict.drugs.category.DDrugDrugCategoryImp" parent="daoImpl"/>
   <bean id="dDrugMeasure" class="ckb.dao.med.drug.dict.measures.DDrugMeasureImp" parent="daoImpl"/>
@@ -210,8 +211,8 @@
   <bean id="dDrugActDrug" class="ckb.dao.med.drug.actdrug.DDrugActDrugImp" parent="daoImpl"/>
   <bean id="dDrugAct" class="ckb.dao.med.drug.act.DDrugActImp" parent="daoImpl"/>
   <bean id="dDrugSaldo" class="ckb.dao.med.drug.drugsaldo.DDrugSaldoImp" parent="daoImpl"/>
-  <bean id="dDrugWriteOff" class="ckb.dao.med.drug.write_off.DDrugWriteOffImp" parent="daoImpl"/>
-  <bean id="dDrugWriteOffRow" class="ckb.dao.med.drug.write_off.DDrugWriteOffRowImp" parent="daoImpl"/>
+  <bean id="dDrugOut" class="ckb.dao.med.drug.out.DDrugOutImp" parent="daoImpl"/>
+  <bean id="dDrugOutRow" class="ckb.dao.med.drug.out.DDrugOutRowImp" parent="daoImpl"/>
 
   <bean id="dRoomBooking" class="ckb.dao.med.bookings.DRoomBookingsImp" parent="daoImpl"/>
   <bean id="dAmbPatientPay" class="ckb.dao.med.amb.DAmbPatientPaysImp" parent="daoImpl"/>

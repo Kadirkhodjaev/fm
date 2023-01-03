@@ -18,8 +18,6 @@ public class DrugSaldos extends GenId {
   private Double drugCount;
   @Column
   private Double rasxod;
-  @Column
-  private Double unlead;
 
   public Drugs getDrug() {
     return drug;
@@ -51,13 +49,5 @@ public class DrugSaldos extends GenId {
 
   public void setRasxod(Double rasxod) {
     this.rasxod = rasxod;
-  }
-
-  public Double getUnlead() {
-    return unlead;
-  }
-
-  public void setUnlead(Double unlead) {
-    this.unlead = unlead;
   }
 }

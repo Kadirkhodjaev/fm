@@ -364,4 +364,8 @@ public class Util {
     //
     return finalText.toString();
   }
+
+  public static Double getDouble(HttpServletRequest req, String name) {
+    return Double.parseDouble(get(req, name));
+  }
 }

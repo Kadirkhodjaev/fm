@@ -1,7 +1,8 @@
 package ckb.domains.med.head_nurse;
 
 import ckb.domains.GenId;
-import ckb.domains.med.drug.DrugOutRows;
+import ckb.domains.med.drug.DrughOutRows;
+import ckb.domains.med.drug.dict.DrugCount;
 import ckb.domains.med.drug.dict.DrugDirections;
 import ckb.domains.med.drug.dict.DrugMeasures;
 import ckb.domains.med.drug.dict.Drugs;
@@ -10,39 +11,25 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "HN_Drugs")
-public class HNDrugs extends GenId {
+@Table(name = "HN_h_Drugs")
+public class HNHDrugs extends GenId {
 
   @OneToOne @JoinColumn private Drugs drug;
   @OneToOne @JoinColumn private DrugDirections direction;
-  @OneToOne @JoinColumn private DrugOutRows outRow;
+  @OneToOne @JoinColumn private DrughOutRows outRow;
 
-  @Column private Double drugCount;
+  @OneToOne @JoinColumn private DrugCount counter;
   @OneToOne @JoinColumn private DrugMeasures measure;
-  @Column private Double rasxod;
-  @Column private Double price;
 
-  @Column private Integer transfer;
-  @Column private Integer transfer_hndrug_id;
+  @Column private Integer parent_id;
+  @Column private Integer parent_row;
+  @Column private Double parentCount;
+  @Column private Double dropCount;
+  @Column private Double drugCount;
+  @Column private Double rasxod;
 
   @Column private Integer crBy;
   @Column private Date crOn;
-
-  public Integer getTransfer_hndrug_id() {
-    return transfer_hndrug_id;
-  }
-
-  public void setTransfer_hndrug_id(Integer transfer_hndrug_id) {
-    this.transfer_hndrug_id = transfer_hndrug_id;
-  }
-
-  public Integer getTransfer() {
-    return transfer;
-  }
-
-  public void setTransfer(Integer transfer) {
-    this.transfer = transfer;
-  }
 
   public Integer getCrBy() {
     return crBy;
@@ -68,6 +55,14 @@ public class HNDrugs extends GenId {
     this.direction = direction;
   }
 
+  public Integer getParent_id() {
+    return parent_id;
+  }
+
+  public void setParent_id(Integer parent_id) {
+    this.parent_id = parent_id;
+  }
+
   public Drugs getDrug() {
     return drug;
   }
@@ -76,12 +71,36 @@ public class HNDrugs extends GenId {
     this.drug = drug;
   }
 
-  public DrugOutRows getOutRow() {
+  public DrughOutRows getOutRow() {
     return outRow;
   }
 
-  public void setOutRow(DrugOutRows outRow) {
+  public void setOutRow(DrughOutRows outRow) {
     this.outRow = outRow;
+  }
+
+  public DrugCount getCounter() {
+    return counter;
+  }
+
+  public void setCounter(DrugCount counter) {
+    this.counter = counter;
+  }
+
+  public Double getParentCount() {
+    return parentCount;
+  }
+
+  public void setParentCount(Double parentCount) {
+    this.parentCount = parentCount;
+  }
+
+  public Double getDropCount() {
+    return dropCount;
+  }
+
+  public void setDropCount(Double dropCount) {
+    this.dropCount = dropCount;
   }
 
   public Double getDrugCount() {
@@ -108,11 +127,11 @@ public class HNDrugs extends GenId {
     this.measure = measure;
   }
 
-  public Double getPrice() {
-    return price;
+  public Integer getParent_row() {
+    return parent_row;
   }
 
-  public void setPrice(Double price) {
-    this.price = price;
+  public void setParent_row(Integer parent_row) {
+    this.parent_row = parent_row;
   }
 }

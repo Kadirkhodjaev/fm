@@ -7,8 +7,8 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "Drug_Write_Offs")
-public class DrugWriteOffs extends GenId {
+@Table(name = "Drug_h_Outs")
+public class DrughOuts extends GenId {
 
   @Column private String regNum;
   @Column private Date regDate;

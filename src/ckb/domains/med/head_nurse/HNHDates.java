@@ -9,15 +9,14 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "HN_Dates")
-public class HNDates extends GenId {
+@Table(name = "HN_h_Dates")
+public class HNHDates extends GenId {
 
   @OneToOne @JoinColumn private HNDirections receiver;
 
   @Column private Date date;
   @Column private String state;
   @Column private String paid;
-  @Column private String typeCode;
 
   @OneToOne @JoinColumn private Users crBy;
   @Column private Date crOn;
@@ -87,13 +86,5 @@ public class HNDates extends GenId {
 
   public void setPatient(AmbPatients patient) {
     this.patient = patient;
-  }
-
-  public String getTypeCode() {
-    return typeCode;
-  }
-
-  public void setTypeCode(String typeCode) {
-    this.typeCode = typeCode;
   }
 }

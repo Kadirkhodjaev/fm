@@ -2,36 +2,23 @@ package ckb.domains.med.head_nurse;
 
 import ckb.domains.GenId;
 import ckb.domains.admin.Users;
-import ckb.domains.med.amb.AmbPatients;
 import ckb.domains.med.drug.dict.DrugDirections;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "HN_Dates")
-public class HNDates extends GenId {
+@Table(name = "HN_h_Opers")
+public class HNHOpers extends GenId {
 
-  @OneToOne @JoinColumn private HNDirections receiver;
+  @OneToOne @JoinColumn private DrugDirections parent;
+  @OneToOne @JoinColumn private DrugDirections direction;
 
   @Column private Date date;
   @Column private String state;
-  @Column private String paid;
-  @Column private String typeCode;
 
   @OneToOne @JoinColumn private Users crBy;
   @Column private Date crOn;
-
-  @OneToOne @JoinColumn private DrugDirections direction;
-  @OneToOne @JoinColumn private AmbPatients patient;
-
-  public String getPaid() {
-    return paid;
-  }
-
-  public void setPaid(String paid) {
-    this.paid = paid;
-  }
 
   public Date getDate() {
     return date;
@@ -73,27 +60,11 @@ public class HNDates extends GenId {
     this.direction = direction;
   }
 
-  public HNDirections getReceiver() {
-    return receiver;
+  public DrugDirections getParent() {
+    return parent;
   }
 
-  public void setReceiver(HNDirections receiver) {
-    this.receiver = receiver;
-  }
-
-  public AmbPatients getPatient() {
-    return patient;
-  }
-
-  public void setPatient(AmbPatients patient) {
-    this.patient = patient;
-  }
-
-  public String getTypeCode() {
-    return typeCode;
-  }
-
-  public void setTypeCode(String typeCode) {
-    this.typeCode = typeCode;
+  public void setParent(DrugDirections parent) {
+    this.parent = parent;
   }
 }

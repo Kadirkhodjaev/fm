@@ -3624,7 +3624,7 @@ public class SRepImp implements SRep {
 					"				 (Select Sum(c.Card + c.Transfer + c.Cash) From Patient_Pays c Where c.patient_id = t.id And c.PayType = 'pay') Paid, " +
 					"				 (Select Sum(c.Card + c.Transfer + c.Cash) From Patient_Pays c Where c.patient_id = t.id And c.PayType = 'ret') returned, " +
 					"				 (Select Sum(c.Summ) From Cash_Discounts c Where c.patient = t.id And c.ambStat = 'STAT') discount, " +
-					"				 (Select Sum(c.rasxod * f.price / d.dropCount) From drug_write_off_rows f, hn_date_patient_rows c, hn_drugs d where f.Id = d.writeOffRows_Id And d.id = c.drug_Id And c.patient_Id = t.id) ddd " +
+					"				 (Select Sum(c.rasxod * f.price / d.dropCount) From drug_out_rows f, hn_date_patient_rows c, hn_drugs d where f.Id = d.outRow_id And d.id = c.drug_Id And c.patient_Id = t.id) ddd " +
 					"   From Patients t " +
 					"  Where t.state != 'ARCH' "+
 					" Order By t.date_begin "

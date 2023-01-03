@@ -156,8 +156,8 @@
                 ${drug.drug.name}
             </td>
             <td class="right" style="padding-right:7px">${drug.rasxod}</td>
-            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.hndrug.writeOffRows.price / drug.hndrug.dropCount}" type = "number"/></td>
-            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.rasxod * drug.hndrug.writeOffRows.price / drug.hndrug.dropCount}" type = "number"/></td>
+            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.hndrug.outRow.price / drug.hndrug.dropCount}" type = "number"/></td>
+            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.rasxod * drug.hndrug.outRow.price / drug.hndrug.dropCount}" type = "number"/></td>
           </tr>
         </c:forEach>
         <c:if test="${drugSums > 0}">

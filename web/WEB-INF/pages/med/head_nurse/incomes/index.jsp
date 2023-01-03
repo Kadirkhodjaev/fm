@@ -53,7 +53,6 @@
           <th>Создания</th>
           <th>Отправка</th>
           <th>Подтверждения</th>
-          <th>Распаковка</th>
           <th style="width:40px">Удалить</th>
         </tr>
         </thead>
@@ -79,17 +78,6 @@
             <td align="center" style="width:150px">${obj.c7}</td>
             <td align="center" style="width:150px">${obj.c8}</td>
             <td align="center" style="width:150px">${obj.c9}</td>
-            <td align="center" style="width:80px">
-              <c:if test="${obj.c10 == 'N'}">
-                <img src="/res/imgs/red.gif">
-              </c:if>
-              <c:if test="${obj.c10 == 'Y'}">
-                <img src="/res/imgs/green.gif">
-              </c:if>
-              <c:if test="${obj.c10 == 'D'}">
-                <img src="/res/imgs/yellow.gif">
-              </c:if>
-            </td>
             <td class="center">
               <c:if test="${obj.c5 == 'ENT'}">
                 <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.ib})"><i class="fa fa-minus"></i></button>

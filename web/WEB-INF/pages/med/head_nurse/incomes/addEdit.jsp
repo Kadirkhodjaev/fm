@@ -31,7 +31,7 @@
         <tr>
           <td style="text-align:right;font-weight:bold;vertical-align: middle">Рег № <i class="required">*</i>:</td>
           <td>
-            <input type="text" class="form-control center" id="write_off_reg_num" name="reg_num" value="${obj.regNum}"/>
+            <input type="text" class="form-control center" id="out_reg_num" name="reg_num" value="${obj.regNum}"/>
           </td>
           <td style="text-align:right;font-weight:bold;vertical-align: middle">Рег дата <i class="required">*</i>:</td>
           <td>
@@ -42,7 +42,7 @@
         <tr>
           <td style="text-align:right;font-weight:bold;vertical-align: middle">Получатель <i class="required">*</i>:</td>
           <td colspan="3">
-            <select class="form-control" required name="direction" id="write_off_direction">
+            <select class="form-control" required name="direction" id="out_direction">
               <c:forEach items="${directions}" var="cc">
                 <option <c:if test="${obj.direction.id == cc.direction.id}">selected</c:if> value="${cc.direction.id}">${cc.direction.name}</option>
               </c:forEach>
@@ -85,12 +85,7 @@
               Ед. изм.
             </td>
             <td>
-              <select class="form-control" style="width:100%" required name="measure_id">
-                <option></option>
-                <c:forEach items="${measures}" var="cc">
-                  <option value="${cc.id}">${cc.name}</option>
-                </c:forEach>
-              </select>
+              <select class="form-control" style="width:100%" required id="measure_id" name="measure_id"></select>
             </td>
           </tr>
         </table>
@@ -106,11 +101,15 @@
   <div class="panel panel-info" style="width: 80%; margin: auto">
     <div class="panel-heading">
       Записи
+      <c:if test="${obj.state == 'CON' && fn:length(rows) > 0}">
+        <button  class="btn btn-sm btn-info" onclick="updateDrop()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-check"></i> Принять на склад</button>
+      </c:if>
     </div>
     <div class="panel-body">
       <table class="table miniGrid">
         <thead>
           <tr>
+            <th style="width:30px">#</th>
             <th>Наименование</th>
             <th>Количество заявки</th>
             <th>Ед. изм.</th>
@@ -123,6 +122,14 @@
         <tbody>
           <c:forEach items="${rows}" var="row" varStatus="loop">
             <tr>
+              <td class="center">
+                <c:if test="${row.hndrug != null && row.hndrug > 0}">
+                  <img src="/res/imgs/green.gif">
+                </c:if>
+                <c:if test="${!(row.hndrug != null && row.hndrug > 0)}">
+                  <img src="/res/imgs/red.gif">
+                </c:if>
+              </td>
               <td>${row.drug.name}</td>
               <td style="width:150px; text-align:right"><fmt:formatNumber value = "${row.claimCount}" type = "number"/></td>
               <td style="width:150px;">${row.measure.name}</td>
@@ -140,113 +147,13 @@
     <!-- /.panel-body -->
   </div>
 </c:if>
-<c:if test="${obj.state == 'CON' && fn:length(rows) > 0}">
-  <div class="panel panel-info" style="width: 80%; margin: auto">
-    <div class="panel-heading">
-      Распаковка
-      <button  class="btn btn-sm btn-info" onclick="updateDrop()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-refresh"></i> Распаковка</button>
-    </div>
-    <div class="panel-body">
-      <table class="table miniGrid">
-        <thead>
-        <tr>
-          <th>#</th>
-          <th>Наименование</th>
-          <th>Получено</th>
-          <th>Количественный учет</th>
-          <th>Итого</th>
-          <th>Ед. изм.</th>
-          <th>#</th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:forEach items="${drops}" var="row" varStatus="loop">
-          <tr style="<c:if test="${!row.active}">color:red; font-weight: bold</c:if> ">
-            <td class="center" style="width:40px">
-              <c:if test="${fn:length(row.list) > 1}">
-                <button title="Создать новую запись" onclick="copyRow(${row.id}, ${loop.index})" class="btn btn-success btn-sm" style="height:24px; padding:3px 5px;"><b class="fa fa-plus"></b></button>
-              </c:if>
-            </td>
-            <td id="drug_name_${loop.index}">
-                ${row.name}
-            </td>
-            <td style="width:150px; text-align:center">
-              <input class="form-control right" type="number" value="${row.claimCount}" id="drug_count_${loop.index}" disabled/>
-            </td>
-            <td style="width: 250px" class="center">
-              <c:if test="${fn:length(row.list) > 1}">
-                <select class="form-control" id="drug_counter_${row.id}">
-                  <c:forEach items="${row.list}" var="ds" varStatus="loop">
-                    <option <c:if test="${ds.ib == row.extraId}">selected</c:if> value="${ds.ib}">${ds.c1} - ${ds.c3}</option>
-                  </c:forEach>
-                </select>
-              </c:if>
-              <c:if test="${!(fn:length(row.list) > 1)}">
-                ${row.list[0].c1} - ${row.list[0].c3}
-              </c:if>
-            </td>
-            <td style="width:150px" class="right">
-              <c:if test="${!row.active}">Выбор</c:if>
-              <fmt:formatNumber value = "${row.drugCount}" type = "number"/>
-            </td>
-            <td style="width:80px">
-              ${row.fio}
-            </td>
-            <td class="center" style="width:40px">
-              <c:if test="${fn:length(row.list) > 1}">
-                <button title="Сохранить" onclick="saveRow(${row.id})" class="btn btn-success btn-sm" style="height:24px; padding:3px 5px;"><b class="fa fa-check"></b></button>
-              </c:if>
-            </td>
-          </tr>
-        </c:forEach>
-        </tbody>
-      </table>
-    </div>
-    <!-- /.panel-body -->
-  </div>
-</c:if>
-<a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Разделение препарата</h4>
-      </div>
-      <div class="modal-body">
-        <div class="center" style="margin-bottom:10px">
-          <h3 id="drug_name" style="margin:auto"></h3>
-        </div>
-        <form id="addEditForms" name="addEditForms">
-          <input type="hidden" name="id" id="fact_id" value=""/>
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Кол-во:</td>
-              <td>
-                <input type="text" disabled id="fact_count" class="form-control right" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Кол-во для разделения*:</td>
-              <td>
-                <input type="number" id="drop_count" class="form-control right" name="drug_count" onchange="setDropCount(this)" value="0"/>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveLineDrop()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
-    </div>
-    <!-- /.modal-content -->
-  </div>
-  <!-- /.modal-dialog -->
-</div>
 <script>
+  let measures = [];
+  <c:forEach items="${measures}" var="m">
+    measures.push({drug: ${m.drug}, id: ${m.measure.id}, name: '${m.measure.name}'});
+  </c:forEach>
   function saveAct() {
-    if($('#write_off_reg_num').val() == '' || $('#reg_date').val() == '' || !($('#write_off_direction').val() > 0)) {
+    if($('#out_reg_num').val() == '' || $('#reg_date').val() == '' || !($('#out_direction').val() > 0)) {
       alert('Не заполнены обязательные поля');
       return;
     }
@@ -266,7 +173,7 @@
     });
   }
   function saveActRow() {
-    if(parseFloat($('#drug_count').val()) > 0) {
+    if(parseFloat($('#drug_count').val()) > 0 && parseFloat($('#measure_id').val()) > 0) {
       $.ajax({
         url: '/head_nurse/incomes/row/save.s',
         method: 'post',
@@ -282,7 +189,7 @@
         }
       });
     } else {
-      alert('Не правильный формат данных поле "Количество"');
+      alert('Не правильный формат данных поле "Количество"/"Ед.изм."');
     }
   }
   function delActRow(id) {
@@ -305,6 +212,11 @@
   }
   function setDrugCount(dom) {
     $('#drug_count').attr('disabled', !(dom.value > 0));
+    $('#measure_id').html('');
+    let ms = measures.filter(obj => obj.drug == dom.value);
+    for(let i in ms) {
+      $('#measure_id').append('<option value="' + ms[i].id + '">' + ms[i].name + '</option>')
+    }
   }
   function confirmIncome() {
     if(confirm('Вы действительно хотите подтвердить заявку?')) {
@@ -360,7 +272,7 @@
     }
   }
   function updateDrop() {
-    if(confirm('Вы действительно хотите обновить распаковку?')) {
+    if(confirm('Вы действительно хотите принять данный приход на склад?')) {
       $.ajax({
         url: '/head_nurse/incomes/drop.s',
         method: 'post',
