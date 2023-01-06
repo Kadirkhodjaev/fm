@@ -51,32 +51,31 @@ public class CMn {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      Double saldo = DB.getSum(conn, "Select Sum(price * drugCount) From Drug_Saldos");
       //
-      Double income_in = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
+      Double income_in = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       //
-      Double income_period = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
+      Double income_period = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
       Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
       //
-      model.addAttribute("saldo_in", saldo + income_in - out_in);
+      model.addAttribute("saldo_in", income_in - out_in);
       model.addAttribute("income_sum", income_period);
       model.addAttribute("outcome_sum", out_period);
-      model.addAttribute("saldo_out", saldo + income_in - out_in + income_period - out_period);
+      model.addAttribute("saldo_out", income_in - out_in + income_period - out_period);
       //
-      Double hnSaldoOut = DB.getSum(conn, "Select Sum((t.drugCount - t.rasxod) * c.price / t.dropCount) From Hn_Drugs t, Drug_Out_Rows c Where c.id = t.outRow_Id And t.drugCount - t.rasxod > 0");
+      Double hnSaldoOut = DB.getSum(conn, "Select Sum((t.drugCount - t.rasxod) * c.price) From Hn_Drugs t, Drug_Out_Rows c Where c.id = t.outRow_Id And t.drugCount - t.rasxod > 0");
       Double hnDayOut = DB.getSum(conn, "Select sum(t.summ) From ( " +
-        " Select ifnull(sum(t.rasxod * f.price / c.dropCount), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_Id And date(t.crOn) = CURRENT_DATE() " +
+        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_Id And date(t.crOn) = CURRENT_DATE() " +
         " union all " +
-        " Select ifnull(sum(t.rasxod * f.price / c.dropCount), 0) summ From hn_date_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_id And date(t.crOn) = CURRENT_DATE() " +
+        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_id And date(t.crOn) = CURRENT_DATE() " +
         " ) t ");
-      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount/c.dropCount) * f.price, 0) summ From hn_drugs c, drug_out_rows f where f.id = c.outRow_id And date(c.crOn) = CURRENT_DATE()");
+      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount) * f.price, 0) summ From hn_drugs c, drug_out_rows f where f.id = c.outRow_id And date(c.crOn) = CURRENT_DATE()");
       model.addAttribute("hn_saldo_in", hnSaldoOut - hnDayIn + hnDayOut);
       model.addAttribute("hn_day_in", hnDayIn);
       model.addAttribute("hn_day_out", hnDayOut);
       model.addAttribute("hn_saldo_out", hnSaldoOut);
       ps = conn.prepareStatement(
-        "Select t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear, Sum(t.rasxod * w.price / d.dropCount) Summ, count(*) " +
+        "Select t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear, Sum(t.rasxod * w.price) Summ, count(*) " +
         "      From hn_date_patient_rows t, Patients c, hn_drugs d, drug_out_rows w " +
         "     Where t.patient_id = c.id " +
         "       and t.drug_Id = d.id " +
@@ -143,21 +142,14 @@ public class CMn {
         "       Round(Sum(f.summ), 2) saldo_in_sum, " +
         "       0 cin, 0 sin, 0 cout, 0 sout " +
         "  From (Select t.drug_id,   " +
-        "               Sum(t.blockCount) counter,  " +
-        "               Sum(t.blockCount * t.price) summ " +
+        "               Sum(t.counter) counter,  " +
+        "               Sum(t.counter * t.countprice) summ " +
         "     From drug_act_drugs t, drug_acts c " +
         "     Where c.id = t.act_Id  " +
         "       And c.regDate <= ? " +
         "     Group By t.drug_id " +
         "    Union All " +
-        "    Select t.drug_id, " +
-        "           Sum(t.drugCount) counter, " +
-        "           Sum(t.price * t.drugCount) summ " +
-        "      From Drug_Saldos t " +
-        "      Where '2020-12-01' < ? " +
-        "      Group By t.drug_id " +
-        "    Union All " +
-        "    Select f.drug_id, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ " +
+        "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
         "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
         "     Where a.id = f.outRow_id  " +
         "       And d.Id = c.doc_Id  " +
@@ -166,7 +158,7 @@ public class CMn {
         "       And d.date <= ? " +
         "     Group By f.drug_id " +
         "    Union All " +
-        "    Select f.drug_id, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ " +
+        "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
         "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
         "     Where a.id = f.outRow_id " +
         "       And d.Id = c.doc_Id  " +
@@ -183,8 +175,8 @@ public class CMn {
         "       Round(Sum(f.cout), 2) cout,  " +
         "       Round(Sum(f.sout), 2) sout  " +
         "  From (Select t.drug_id,   " +
-        "        Sum(t.blockCount) cin,  " +
-        "        Sum(t.blockCount * t.price) sin, " +
+        "        Sum(t.counter) cin,  " +
+        "        Sum(t.counter * t.countprice) sin, " +
         "        0 cout, " +
         "        0 sout " +
         "     From drug_act_drugs t, drug_acts c " +
@@ -192,7 +184,7 @@ public class CMn {
         "       And c.regDate Between ? And ? " +
         "     Group By t.drug_id " +
         "    Union All " +
-        "    Select f.drug_id, 0, 0, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ " +
+        "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
         "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
         "     Where a.id = f.outRow_id  " +
         "       And d.Id = c.doc_Id  " +
@@ -201,7 +193,7 @@ public class CMn {
         "       And d.date Between ? And ? " +
         "     Group By f.drug_id " +
         "    Union All " +
-        "    Select f.drug_id, 0, 0, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ " +
+        "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
         "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
         "     Where a.id = f.outRow_id " +
         "       And d.Id = c.doc_Id  " +
@@ -216,12 +208,11 @@ public class CMn {
       ps.setString(2, Util.dateDB(startDate));
       ps.setString(3, Util.dateDB(startDate));
       ps.setString(4, Util.dateDB(startDate));
-      ps.setString(5, Util.dateDB(startDate));
-      ps.setString(6, Util.dateDB(endDate));
-      ps.setString(7, Util.dateDB(startDate));
-      ps.setString(8, Util.dateDB(endDate));
-      ps.setString(9, Util.dateDB(startDate));
-      ps.setString(10, Util.dateDB(endDate));
+      ps.setString(5, Util.dateDB(endDate));
+      ps.setString(6, Util.dateDB(startDate));
+      ps.setString(7, Util.dateDB(endDate));
+      ps.setString(8, Util.dateDB(startDate));
+      ps.setString(9, Util.dateDB(endDate));
       rs = ps.executeQuery();
       List<ObjList> rows = new ArrayList<ObjList>();
       while (rs.next()) {
@@ -353,7 +344,7 @@ public class CMn {
           "       f.saldo_sum,  " +
           "       Round(f.out_count / case when f.diff <=0 Then 1 Else f.diff End, 2) avgCount,  " +
           "       Round(f.out_sum / case when f.diff <=0 Then 1 Else f.diff End, 2) avgSum,  " +
-          "       Case When f.out_count > 0 Then Round(f.saldo_count / (f.out_count / f.diff), 2) else 0 End weekCount  " +
+          "       Case When f.out_count > 0 Then Round(ifnull(f.saldo_count, 0) / (f.out_count / case when ifnull(f.diff, 0) = 0 then 1 else ifnull(f.diff, 1) end), 2) else 0 End weekCount  " +
           "  From (Select f.drug_id,  " +
           "               (Select timestampdiff(WEEK, ifnull(min(c.regDate), '2020-12-01'), CURRENT_DATE()) From drug_acts c, drug_act_drugs t Where t.drug_id = f.drug_id And c.id = t.act_Id) diff,  " +
           "               (Select date(ifnull(min(c.regDate), '2020-12-01')) From drug_acts c, drug_act_drugs t Where t.drug_id = f.drug_id And c.id = t.act_Id) minDate,  " +
@@ -361,7 +352,7 @@ public class CMn {
           "               Round(Sum(f.summ), 2) out_sum,  " +
           "               Round(Sum(f.saldo_count), 2) saldo_count,  " +
           "               Round(Sum(f.saldo_sum), 2) saldo_sum  " +
-          "          From (Select f.drug_id, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ, 0 saldo_count, 0 saldo_sum  " +
+          "          From (Select f.drug_id, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ, 0 saldo_count, 0 saldo_sum  " +
           "                  From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a   " +
           "                  Where a.id = f.outRow_id   " +
           "                    And d.Id = c.doc_Id   " +
@@ -369,7 +360,7 @@ public class CMn {
           "                    And f.outRow_id > 0  " +
           "                  Group By f.drug_id  " +
           "                Union All  " +
-          "                Select f.drug_id, Sum(c.rasxod / f.dropCount) counter, Sum(c.rasxod * a.price / f.dropCount) summ, 0 saldo_count, 0 saldo_sum  " +
+          "                Select f.drug_id, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ, 0 saldo_count, 0 saldo_sum  " +
           "                  From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
           "                  Where a.id = f.outRow_id  " +
           "                    And d.Id = c.doc_Id   " +
@@ -379,20 +370,13 @@ public class CMn {
           "                Union All  " +
           "                Select t.drug_id,  " +
           "                       0, 0,  " +
-          "                       Sum(t.blockCount),   " +
-          "                       Sum(t.blockCount * t.price)  " +
+          "                       Sum(t.counter),   " +
+          "                       Sum(t.counter * t.countprice)  " +
           "                  From drug_act_drugs t, drug_acts c  " +
           "                  Where c.id = t.act_Id   " +
           "                  Group By t.drug_id  " +
           "                Union All  " +
-          "                Select t.drug_id,  " +
-          "                       0, 0,  " +
-          "                       Sum(t.drugCount),   " +
-          "                       Sum(t.drugCount * t.price)  " +
-          "                  From Drug_Saldos t  " +
-          "                  Group By t.drug_id  " +
-          "                Union All  " +
-          "                Select f.drug_id, 0, 0, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ  " +
+          "                Select f.drug_id, 0, 0, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ  " +
           "                  From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a   " +
           "                  Where a.id = f.outRow_id   " +
           "                    And d.Id = c.doc_Id   " +
@@ -400,7 +384,7 @@ public class CMn {
           "                    And f.outRow_id > 0  " +
           "                  Group By f.drug_id  " +
           "                Union All  " +
-          "                Select f.drug_id, 0, 0, -Sum(c.rasxod / f.dropCount) counter, -Sum(c.rasxod * a.price / f.dropCount) summ  " +
+          "                Select f.drug_id, 0, 0, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ  " +
           "                  From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
           "                  Where a.id = f.outRow_id  " +
           "                    And d.Id = c.doc_Id   " +
@@ -452,36 +436,11 @@ public class CMn {
     try {
       cn = DB.getConnection();
       ps = cn.prepareStatement(
-        "Select t.drugCount,   " +
-          "         t.price,   " +
-          "         t.drugCount * t.price summ " +
-          "    From Drug_Saldos t  " +
-          "    Where t.drug_id = ? ");
-      ps.setInt(1, id);
-      rs = ps.executeQuery();
-      while (rs.next()) {
-        ObjList r = new ObjList();
-        r.setC1(rs.getString("drugCount"));
-        r.setC2(rs.getString("price"));
-        r.setC3(rs.getString("summ"));
-        //
-        summ += rs.getDouble("summ");
-        cont += rs.getDouble("drugCount");
-        //
-        rows.add(r);
-      }
-      m.addAttribute("saldoCount", cont);
-      m.addAttribute("saldoSum", summ);
-      m.addAttribute("saldos", rows);
-      rows = new ArrayList<ObjList>();
-      summ = 0D;
-      cont = 0D;
-      ps = cn.prepareStatement(
         "Select f.name, " +
           "         c.regDate,   " +
-          "         t.blockCount,   " +
-          "         t.price,   " +
-          "         t.blockCount * t.price summ " +
+          "         t.counter,   " +
+          "         t.countprice,   " +
+          "         t.counter * t.countprice summ " +
           "    From drug_act_drugs t, drug_acts c, drug_s_contracts d, drug_s_partners f  " +
           "   Where c.id = t.act_Id   " +
           "     And f.id = d.partner_id " +
@@ -491,14 +450,14 @@ public class CMn {
       rs = ps.executeQuery();
       while (rs.next()) {
         ObjList r = new ObjList();
-        r.setC1(rs.getString("blockCount"));
-        r.setC2(rs.getString("price"));
+        r.setC1(rs.getString("counter"));
+        r.setC2(rs.getString("countprice"));
         r.setC3(rs.getString("summ"));
         r.setC4(Util.dateToString(rs.getDate("regDate")));
         r.setC5(rs.getString("name"));
         //
         summ += rs.getDouble("summ");
-        cont += rs.getDouble("blockCount");
+        cont += rs.getDouble("counter");
         //
         rows.add(r);
       }
@@ -512,7 +471,7 @@ public class CMn {
         " Select concat(ds.surname, ' ', ds.name, ' ', ds.middlename) fio, " +
           "          ff.name, " +
           "          d.date, " +
-          "          c.rasxod, f.dropCount " +
+          "          c.rasxod " +
           "   From patients ds, hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_s_directions ff  " +
           "   Where d.Id = c.doc_Id   " +
           "     And ff.id = d.direction_id" +
@@ -528,9 +487,8 @@ public class CMn {
         r.setC1(rs.getString("fio"));
         r.setC2(Util.dateToString(rs.getDate("date")));
         r.setC3(rs.getString("rasxod"));
-        r.setC4(rs.getString("dropCount"));
         //
-        cont += rs.getDouble("rasxod") / rs.getDouble("dropCount");
+        cont += rs.getDouble("rasxod");
         //
         rows.add(r);
       }
@@ -539,7 +497,7 @@ public class CMn {
       rows = new ArrayList<ObjList>();
       cont = 0D;
       ps = cn.prepareStatement(
-        "Select ff.name receiver, dd.name direction, d.date, c.rasxod, f.dropCount  " +
+        "Select ff.name receiver, dd.name direction, d.date, c.rasxod  " +
           "    From hn_date_rows c, hn_drugs f, hn_dates d, hn_s_directions ff, drug_s_directions dd  " +
           "    Where d.Id = c.doc_Id   " +
           "      And ff.id = d.receiver_id" +
@@ -554,9 +512,8 @@ public class CMn {
         r.setC4(rs.getString("receiver"));
         r.setC1(Util.dateToString(rs.getDate("date")));
         r.setC2(rs.getString("rasxod"));
-        r.setC3(rs.getString("dropCount"));
         //
-        cont += rs.getDouble("rasxod") / rs.getDouble("dropCount");
+        cont += rs.getDouble("rasxod");
         //
         rows.add(r);
       }
@@ -565,7 +522,7 @@ public class CMn {
       rows = new ArrayList<ObjList>();
       cont = 0D;
       ps = cn.prepareStatement(
-        "Select c.fio, t.crOn, t.drugCount, t.dropCount, d.name  " +
+        "Select c.fio, t.crOn, t.drugCount, d.name  " +
           "    From hn_drugs t, users c, drug_s_directions d " +
           "   Where t.outRow_id is null " +
           "     And t.drug_id > 0 " +
@@ -580,9 +537,8 @@ public class CMn {
         r.setC1(rs.getString("fio"));
         r.setC2(Util.dateToString(rs.getDate("crOn")));
         r.setC3(rs.getString("drugCount"));
-        r.setC4(rs.getString("dropCount"));
         //
-        cont += rs.getDouble("drugCount") / rs.getDouble("dropCount");
+        cont += rs.getDouble("drugCount");
         //
         rows.add(r);
       }
@@ -591,7 +547,7 @@ public class CMn {
       rows = new ArrayList<ObjList>();
       cont = 0D;
       ps = cn.prepareStatement(
-        "Select d.name, Sum((t.drugCount - t.rasxod) / t.dropCount) counter  " +
+        "Select d.name, Sum(t.drugCount - t.rasxod) counter  " +
           "    From hn_drugs t, drug_s_directions d " +
           "   Where d.id = t.direction_id " +
           "     And t.drugCount - t.rasxod > 0 " +
@@ -645,13 +601,11 @@ public class CMn {
             "         sum(t.drugCount) prixod, " +
             "         sum(t.rasxod) rasxod, " +
             "         sum(t.drugCount - t.rasxod) diff, " +
-
-            "         sum(f.price * t.drugCount / t.dropCount) prixod_total, " +
-            "         sum(f.price * t.rasxod / t.dropCount)  rasxod_total " +
+            "         sum(f.price * t.drugCount) prixod_total, " +
+            "         sum(f.price * t.rasxod)  rasxod_total " +
             "  From Hn_Drugs t, Drug_s_Names c, Drug_Out_Rows f  " +
             " Where t.direction_Id = ? " +
             "   And c.id = t.drug_id " +
-            //"   And c.id = 3 " +
             "   And f.income_Id > 0 " +
             "   And f.id = t.outRow_id " +
             " Group By t.drug_id");

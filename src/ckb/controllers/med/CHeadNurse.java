@@ -2099,7 +2099,7 @@ public class CHeadNurse {
       drug.setDrug(dDrug.get(Util.getInt(req, "drug")));
 
       drug.setCounter(dDrugCount.get(Util.getInt(req, "counter")));
-      drug.setDrugPrice(DB.getSum(conn, "Select Max(t.price) price From (Select Max(t.price) price From drug_act_drugs t Where t.drug_Id = " + drug.getDrug().getId() + " Union ALL Select Max(t.price) price From drug_saldos t Where t.drug_Id = " + drug.getDrug().getId() + ") t"));
+      drug.setDrugPrice(DB.getSum(conn, "Select Max(t.price) price From (Select Max(t.price) price From drug_act_drugs t Where t.drug_Id = " + drug.getDrug().getId() + ") t"));
       drug.setPrice(drug.getDrug().getPrice() == null ? drug.getDrugPrice() : drug.getDrug().getPrice());
       drug.setServiceCount(Double.parseDouble(Util.get(req, "drug_count")));
       dhnPatientDrug.save(drug);

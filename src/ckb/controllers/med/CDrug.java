@@ -251,10 +251,10 @@ public class CDrug {
     try {
       conn = DB.getConnection();
       //
-      Double income_in = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
+      Double income_in = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       //
-      Double income_period = DB.getSum(conn, "Select Sum(c.price * c.blockCount) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
+      Double income_period = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
       Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
       //
       model.addAttribute("saldo_in", income_in - out_in);
@@ -309,8 +309,6 @@ public class CDrug {
       List<ObjList> rows = new ArrayList<ObjList>();
       ps = conn.prepareStatement(
         "Select t.drug_id, t.summ, t.counter, t.price, c.name From (" +
-          " Select t.drug_Id, t.countprice * (t.count - t.rasxod) summ, t.count - t.rasxod counter, t.countprice Price From Drug_Saldos t Where t.count - t.rasxod > 0 " +
-          " Union ALL " +
           " Select t.Drug_Id, t.countprice * (t.counter - t.rasxod) summ, t.counter - t.rasxod counter, t.countprice Price From drug_act_drugs t Where t.counter - t.rasxod > 0 " +
           " ) t, drug_s_names c " +
           " Where c.Id = t.drug_Id " +
@@ -355,7 +353,7 @@ public class CDrug {
         " Select t.id, " +
           "          c.name, " +
           "          t.drug_id, " +
-          "          t.price * t.blockCount summ, " +
+          "          t.countprice * t.counter summ, " +
           "          t.counter, " +
           "          t.price, " +
           "          t.rasxod " +
@@ -968,7 +966,7 @@ public class CDrug {
           ObjList o = new ObjList();
           o.setC1(a.getId().toString());
           o.setC2((a.getCounter() - a.getRasxod()) + "");
-          o.setC3(a.getPrice().toString());
+          o.setC3(a.getCountPrice().toString());
           o.setC4(a.getBlockCount().toString());
           variuos.add(o);
         }

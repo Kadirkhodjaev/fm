@@ -6,9 +6,10 @@ import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.reports.DReport;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbGroups;
-import ckb.dao.med.amb.DAmbPatientServices;
 import ckb.dao.med.amb.DAmbPatients;
 import ckb.dao.med.drug.dict.manufacturer.DDrugManufacturer;
+import ckb.dao.med.drug.out.DDrugOut;
+import ckb.dao.med.drug.out.DDrugOutRow;
 import ckb.dao.med.eat.dict.menuTypes.DEatMenuType;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
 import ckb.dao.med.lv.bio.DLvBio;
@@ -26,6 +27,7 @@ import ckb.domains.admin.LvPartners;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbGroups;
 import ckb.domains.med.amb.AmbPatients;
+import ckb.domains.med.drug.DrugOuts;
 import ckb.domains.med.drug.dict.DrugManufacturers;
 import ckb.domains.med.eat.dict.EatMenuTypes;
 import ckb.domains.med.head_nurse.HNPatients;
@@ -61,7 +63,6 @@ public class SRepImp implements SRep {
 	@Autowired private DLvPlan dLvPlan;
 	@Autowired private DPatient dPatient;
 	@Autowired private DAmbPatients dAmbPatient;
-	@Autowired private DAmbPatientServices dAmbPatientService;
 	@Autowired private DLvBio dLvBio;
 	@Autowired private DLvCoul dLvCoul;
 	@Autowired private DLvGarmon dLvGarmon;
@@ -71,6 +72,8 @@ public class SRepImp implements SRep {
 	@Autowired private DLvPartner dLvPartner;
 	@Autowired private DDrugManufacturer dDrugManufacturer;
 	@Autowired private DEatMenuType dEatMenuType;
+	@Autowired private DDrugOutRow dDrugOutRow;
+	@Autowired private DDrugOut dDrugOut;
 
 	@Override
 	public void gRep(HttpServletRequest req, Model m) {
@@ -201,6 +204,8 @@ public class SRepImp implements SRep {
 			rep62(req, m);
 		} else if(id == 63) { // Рентген муолажалари (Стат, Амб)
 			rep63(req, m);
+		} else if(id == 64) { // Талабнома (Аптека)
+			rep64(req, m);
 		}
 	}
 	// Амбулаторные услуги - По категориям
@@ -4991,6 +4996,18 @@ public class SRepImp implements SRep {
 		m.addAttribute("rows", rows);
 		// Параметры отчета
 		m.addAttribute("params", params);
+	}
+	// Талабнома (Аптека)
+	private void rep64(HttpServletRequest req, Model m) {
+		try {
+			DrugOuts out = dDrugOut.get(Util.getInt(req, "id"));
+			m.addAttribute("reg_date", Util.dateToString(out.getRegDate()));
+			m.addAttribute("glv", dUser.getGlb(0));
+			m.addAttribute("reg_num", out.getRegNum());
+			m.addAttribute("rows", dDrugOutRow.getList("From DrugOutRows Where doc.id = " + out.getId()));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

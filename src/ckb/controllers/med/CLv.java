@@ -1324,7 +1324,7 @@ public class CLv {
     model.addAttribute("goals", dLvDrugGoal.getList("From LvDrugGoals Order By name"));
     //
     model.addAttribute("counters", dDrugCount.getList("From DrugCount"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs t Where t.id in (Select c.drug.id From DrugActDrugs c Where c.blockCount - rasxod > 0) Or t.id In (Select d.drug.id From DrugSaldos d Where d.drugCount - d.rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0) Order By name"));
+    model.addAttribute("drugs", dDrug.getList("From Drugs t Where t.id in (Select c.drug.id From DrugActDrugs c Where c.counter - rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0) Order By name"));
     Patients pat = dPatient.get(session.getCurPat());
     //
     int temp = Integer.parseInt(Util.get(req, "temp", "0"));

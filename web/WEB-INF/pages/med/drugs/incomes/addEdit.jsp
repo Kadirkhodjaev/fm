@@ -210,13 +210,13 @@
       </tr>
     </thead>
     <c:forEach items="${drugs}" var="drug">
-      <tr>
+      <tr title="Цена за ед.: ${drug.countPrice}">
         <td>${drug.drug.name}</td>
         <td>${drug.manufacturer.name}</td>
         <td class="center"><fmt:formatDate pattern="dd.MM.yyyy" value="${drug.endDate}"/></td>
         <td class="right"><fmt:formatNumber value="${drug.price}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.blockCount}" type = "number"/></td>
-        <td class="right"><fmt:formatNumber value="${drug.price * drug.blockCount}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.countPrice * drug.counter}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.counter}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.rasxod}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.counter - drug.rasxod}" type = "number"/></td>
