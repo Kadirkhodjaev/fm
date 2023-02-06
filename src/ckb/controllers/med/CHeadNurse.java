@@ -1500,7 +1500,7 @@ public class CHeadNurse {
       row.setDoc(dDrugOut.get(Util.getInt(req, "doc")));
       row.setClaimCount(Double.parseDouble(Util.get(req, "drug_count")));
       row.setDrug(dDrug.get(Util.getInt(req, "drug_id")));
-      row.setMeasure(dDrugMeasure.get(Util.getInt(req, "measure_id")));
+      row.setMeasure(row.getDrug().getMeasure());
       row.setCrBy(session.getUserId());
       row.setCrOn(new Date());
       dDrugOutRow.save(row);
@@ -1769,21 +1769,9 @@ public class CHeadNurse {
   protected String dicts(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/dicts.s");
-    if(!session.getCurSubUrl().contains("/head_nurse/dicts/"))
-      session.setCurSubUrl("/head_nurse/dicts/measures.s");
-    if(session.getCurSubUrl().contains("/head_nurse/dicts/drugs.s") && Util.isNotNull(req, "cat"))
-      session.setCurSubUrl("/head_nurse/dicts/drugs.s?cat=" + Util.get(req, "cat"));
+    session.setCurSubUrl("/head_nurse/dicts/directions.s");
     //
     return "/med/head_nurse/dicts/index";
-  }
-
-  @RequestMapping("dicts/measures.s")
-  protected String dicstMeasures(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/head_nurse/dicts/measures.s");
-    //
-    model.addAttribute("list", dDrugMeasure.getAll());
-    return "/med/head_nurse/dicts/measures/index";
   }
 
   @RequestMapping("dicts/directions.s")
@@ -1800,101 +1788,6 @@ public class CHeadNurse {
     arr.append("0)");
     model.addAttribute("directions", dDrugDirection.getList("From DrugDirections Where id in " + arr));
     return "/med/head_nurse/dicts/directions/index";
-  }
-
-  @RequestMapping("dicts/drugs.s")
-  protected String dictDrugs(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    String ct = Util.get(req, "cat");
-    session.setCurSubUrl("/head_nurse/dicts/drugs.s" + (Util.isNotNull(req, "cat") ? "?cat=" + ct : ""));
-    //
-    List<ObjList> list = new ArrayList<ObjList>();
-    List<Drugs> drugs = dDrug.getList("From Drugs Order By name");
-    for(Drugs drug: drugs) {
-      ObjList obj = new ObjList();
-      obj.setC1(drug.getId().toString());
-      obj.setC2(drug.getName());
-      obj.setC3("");
-      List<DrugCount> counters = dDrugCount.getList("From DrugCount Where drug.id = " + drug.getId());
-      /*for(DrugCount dg: counters) {
-        obj.setC3(obj.getC3() + (obj.getC3().equals("") ? "" : " / ") + dg.getDrugCount() + " " + dg.getMeasure().getName());
-      }*/
-      List<DrugDrugCategories> cats = dDrugDrugCategory.getList("From DrugDrugCategories Where drug.id = " + drug.getId());
-      int i=0;
-      String ids = "";
-      for(DrugDrugCategories cat: cats) {
-        obj.setC5((i == 0 ? "" : obj.getC5() + " + ") + cat.getCategory().getName());
-        ids += cat.getCategory().getId() + ",";
-        i++;
-      }
-      obj.setC4(drug.getState());
-      if(ct == null || ct.equals("0")) {
-        list.add(obj);
-      } else {
-        if(ids.contains(ct + ","))
-          list.add(obj);
-      }
-    }
-    m.addAttribute("list", list);
-    m.addAttribute("ct", ct == null ? 0 : Integer.parseInt(ct));
-    m.addAttribute("categories", dDrugCategory.getList("From DrugCategories Order By Id Desc"));
-    return "/med/head_nurse/dicts/drugs/index";
-  }
-
-  @RequestMapping("dicts/drug/info.s")
-  protected String drugInfo(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    //
-    m.addAttribute("obj", dDrug.get(Util.getInt(req, "id")));
-    List<DrugMeasures> measures = dDrugMeasure.getList("From DrugMeasures Order By Id Desc");
-    List<Obj> rows = new ArrayList<Obj>();
-    for(DrugMeasures r: measures) {
-      Obj row = new Obj();
-      row.setId(r.getId());
-      row.setName(r.getName());
-      row.setActive(dDrugDrugMeasure.getCount("From DrugDrugMeasures Where drug = " + Util.get(req, "id") + " And measure.id = " + r.getId()) > 0);
-      rows.add(row);
-    }
-    m.addAttribute("measures", rows);
-    //
-    return "/med/head_nurse/dicts/drugs/addEdit";
-  }
-
-  @RequestMapping(value = "dicts/drug/info.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String drugSave(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      String[] measures = req.getParameterValues("measure");
-      Integer id = Util.getInt(req, "id");
-      for(String measure: measures) {
-        if(dDrugDrugMeasure.getCount("From DrugDrugMeasures Where drug = " + id + " And measure.id = " + measure) == 0) {
-          DrugDrugMeasures dm = new DrugDrugMeasures();
-          dm.setDrug(id);
-          dm.setMeasure(dDrugMeasure.get(Integer.parseInt(measure)));
-          dDrugDrugMeasure.save(dm);
-        }
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "dicts/drug/del.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String drugDel(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      dDrugCount.delete(Util.getInt(req, "id"));
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
   }
 
   @RequestMapping(value = "/dict/delete.s", method = RequestMethod.POST)
@@ -2240,7 +2133,7 @@ public class CHeadNurse {
         ps = conn.prepareStatement(
           " Select d.name, m.name measure, Sum(t.rasxod) summ " +
             " From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m, Hn_Dates f " +
-            " Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.patient_id = ? " +
+            " Where m.id = d.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.patient_id = ? " +
             "   And f.id = t.doc_id " +
             "   And f.state = 'CON' " +
             " Group By d.Name, m.name" +
@@ -2267,7 +2160,7 @@ public class CHeadNurse {
           if(row.getDrug() == null)
             obj.setC3("");
           else
-            obj.setC3(row.getCounter().getMeasure().getName());
+            obj.setC3(row.getDrug().getMeasure().getName());
           list.add(obj);
         }
       }
@@ -2325,7 +2218,7 @@ public class CHeadNurse {
         ps = conn.prepareStatement(
           "Select c.id hndrug, d.id drug_id, d.name, m.id measure_id, m.name measure, ifnull((Select fd.price From drug_out_rows fd where fd.Id = c.outRow_id), 0) price, Sum(t.rasxod) summ " +
             "     From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m, Hn_Dates f " +
-            "     Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.patient_id = ? " +
+            "     Where m.id = d.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.patient_id = ? " +
             "       And f.id = t.doc_id " +
             "       And f.state = 'CON' " +
             "     Group By d.Name " +

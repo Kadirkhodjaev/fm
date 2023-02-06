@@ -22,6 +22,25 @@ public class Drugs extends GenId {
   @Column
   private Date crOn;
 
+  @Column private Double counter;
+  @OneToOne @JoinColumn DrugMeasures measure;
+
+  public Double getCounter() {
+    return counter;
+  }
+
+  public void setCounter(Double counter) {
+    this.counter = counter;
+  }
+
+  public DrugMeasures getMeasure() {
+    return measure;
+  }
+
+  public void setMeasure(DrugMeasures measure) {
+    this.measure = measure;
+  }
+
   public String getName() {
     return name;
   }

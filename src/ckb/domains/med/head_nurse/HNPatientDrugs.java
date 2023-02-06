@@ -10,8 +10,7 @@ import javax.persistence.*;
 @Table(name = "Hn_Patient_Drugs")
 public class HNPatientDrugs extends GenId {
 
-  @OneToOne
-  @JoinColumn(name = "hn_patient") private HNPatients parent;
+  @OneToOne @JoinColumn(name = "hn_patient") private HNPatients parent;
 
   @OneToOne @JoinColumn private Drugs drug;
   @OneToOne @JoinColumn private DrugCount counter;

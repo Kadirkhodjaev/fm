@@ -222,6 +222,7 @@ public class  CApp {
       m.add(new Menu("Касса", "/cashbox/statistic.s", "fa fa-group fa-fw", session.getCurUrl().equals("/cashbox/statistic.s")));
       m.add(new Menu("Медикаменты", "/mn/drugs.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/mn/drugs.s")));
       m.add(new Menu("Анализ склада", "/mn/analys.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/mn/analys.s")));
+      m.add(new Menu("Анализ медикаметов", "/mn/drugs/days.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/mn/drugs/days.s")));
       m.add(new Menu("Рейтинг услуг", "/mn/services.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/mn/services.s")));
       m.add(new Menu("Аптека", "/mn/drugstore.s", "fa fa-group fa-fw", session.getCurUrl().equals("/mn/drugstore.s")));
       m.add(new Menu("Склад", "/mn/stores.s", "fa fa-home fa-fw", session.getCurUrl().equals("/mn/stores.s")));

@@ -124,9 +124,8 @@ public class CAct {
     List<HNPatientDrugs> drugs = dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + Util.getInt(req, "id"));
     //
     for(HNPatientDrugs drug: drugs) {
-      if(drug.getDrugName() == null || drug.getDrugCounter() == null || drug.getDrugPrice() == null || drug.getPrice() == null) {
+      if(drug.getDrugName() == null || drug.getPrice() == null) {
         if(drug.getDrugName() == null) drug.setDrugName(drug.getDrug().getName());
-        if(drug.getDrugCounter() == null) drug.setDrugCounter(drug.getCounter().getDrugCount());
         if(drug.getDrugPrice() == null) drug.setDrugPrice(drug.getPrice());
         dhnPatientDrug.save(drug);
       }
@@ -139,7 +138,7 @@ public class CAct {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      Double drugSum = DB.getSum(conn, "Select Sum(t.price * t.serviceCount / t.drugCounter) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
+      Double drugSum = DB.getSum(conn, "Select Sum(t.price * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
       m.addAttribute("drugSum", drugSum);
       //
       List<HNPatientKdos> services = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + hnPatient.getId());
@@ -870,7 +869,7 @@ public class CAct {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      Double drugSum =  DB.getSum(conn, "Select Sum(t.price * t.serviceCount / t.drugCounter) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
+      Double drugSum =  DB.getSum(conn, "Select Sum(t.price * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
       m.addAttribute("summ", drugSum);
       //
       List<HNPatientKdos> services = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + hnPatient.getId());
@@ -1705,7 +1704,6 @@ public class CAct {
       //
       drug.setPrice(Double.parseDouble(Util.get(req, "price")));
       drug.setServiceCount(Double.parseDouble(Util.get(req, "drug_count")));
-      drug.setDrugCounter(Double.parseDouble(Util.get(req, "counter")));
       drug.setDrugName(Util.get(req, "name"));
       drug.setDrugPrice(drug.getPrice());
       //

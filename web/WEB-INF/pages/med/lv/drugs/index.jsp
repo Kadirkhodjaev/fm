@@ -355,7 +355,7 @@
   var idx = 1, selected = 0;
   var drugs = [], measures = [];
   <c:forEach items="${drugs}" var="d">
-  drugs.push({id: ${d.id}, name: `${d.name}`});
+  drugs.push({id: ${d.id}, name: `${d.name}`, measure: `${d.measure.name}`});
   </c:forEach>
   <c:forEach items="${counters}" var="d">
   measures.push({drug: ${d.drug.id}, id: ${d.measure.id}, name: `${d.measure.name}`});
@@ -474,14 +474,14 @@
     nameDiv.append(drugName);
     var drugDiv = $('<div class="source_code_cln" style="width:100%"></div>');
     var drugId = $('<select class="form-control chzn-select" name="drug_drug" onchange="setMeasure(this, ' + this.idx + ')"><option value="0"></option></select>');
-    for(var dg of drugs) drugId.append($('<option value="' + dg.id + '">' + dg.name + '</option>'));
+    for(var dg of drugs) drugId.append($('<option measure="' + dg.measure + '" value="' + dg.id + '">' + dg.name + '</option>'));
     drugDiv.append(drugId);
     td2.append(nameDiv).append(drugDiv);
     var td3 = $('<td></td>');
     var outInput = $('<input type="number" class="form-control center" value="1" name="out_count"/>');
     td3.append(outInput);
     var td4 = $('<td></td>');
-    var measureInput = $('<select class="form-control measure_select" name="drug_measure"></select>');
+    var measureInput = $('<input class="form-control measure_select" disabled name="drug_measure"/>');
     td4.append(measureInput);
     var td5 = $('<td style="width:30px; text-align:center"></td>');
     var btn = $('<button class="btn btn-sm btn-danger" type="button" style="height:20px;padding:1px 10px" title="Удалить" onclick=\'$("#line_' + this.idx + '").remove()\'><span class="fa fa-minus"></span></button>');
@@ -491,11 +491,7 @@
     $(".chzn-select").chosen();
   }
   function setMeasure(dom, idx) {
-    var elems = measures.filter(obj => obj.drug == dom.value);
-    $('#line_' + idx).find('.measure_select').empty();
-    elems.forEach(obj => {
-      $('#line_' + idx).find('.measure_select').append($('<option value="' + obj.id + '">' + obj.name + '</option>'));
-    });
+    $('#line_' + idx).find('.measure_select').val(dom.options[dom.selectedIndex].getAttribute("measure"));
   }
   function setPeriod() {
     $.ajax({

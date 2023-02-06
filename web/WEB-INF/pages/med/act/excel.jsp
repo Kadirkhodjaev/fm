@@ -78,8 +78,8 @@
         <td align="center" style="border-width: thin; border-color: black; border-style: solid;">${loop.index + 1}</td>
         <td colspan="3" style="border-width: thin; border-color: black; border-style: solid;">${row.drugName}</td>
         <td align="center" style="border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.serviceCount}"/></td>
-        <td align="right" style="border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.price/row.drugCounter}"/></td>
-        <td align="right" style="border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${(row.price/row.drugCounter)*row.serviceCount}"/></td>
+        <td align="right" style="border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.price}"/></td>
+        <td align="right" style="border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.price*row.serviceCount}"/></td>
       </tr>
     </c:forEach>
     <tr style="font-size: 14px">
@@ -162,7 +162,7 @@
         <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
         <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">Стоимость палаты: ${epic.c1}</td>
         <td style="border-width: thin; border-color: black; border-style: solid;text-align: center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${epic.c6}"/></td>
-        <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${epic.c5}"/></td>
+        <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${epic.c5}"/></td>
         <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${epic.c5*epic.c6}"/></td>
       </tr>
     </c:forEach>
@@ -172,7 +172,7 @@
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
       <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">Стоимость палаты: ${obj.patient.dept.name}</td>
       <td style="border-width: thin; border-color: black; border-style: solid;text-align: center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.dayCount}"/></td>
-      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.koykoPrice}"/></td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.koykoPrice}"/></td>
       <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.koykoPrice*obj.dayCount}"/></td>
     </tr>
   </c:if>

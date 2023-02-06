@@ -75,7 +75,7 @@
               <select class="form-control chzn-select" style="width:100%" required name="drug_id" onchange="setDrugCount(this)">
                 <option></option>
                 <c:forEach items="${drugs}" var="cc">
-                  <option value="${cc.id}">${cc.name}</option>
+                  <option value="${cc.id}" measure="${cc.measure.name}">${cc.name}</option>
                 </c:forEach>
               </select>
             </td>
@@ -85,7 +85,7 @@
               Ед. изм.
             </td>
             <td>
-              <select class="form-control" style="width:100%" required id="measure_id" name="measure_id"></select>
+              <input class="form-control" disabled id="measure" value=""/>
             </td>
           </tr>
         </table>
@@ -173,7 +173,7 @@
     });
   }
   function saveActRow() {
-    if(parseFloat($('#drug_count').val()) > 0 && parseFloat($('#measure_id').val()) > 0) {
+    if(parseFloat($('#drug_count').val()) > 0) {
       $.ajax({
         url: '/head_nurse/incomes/row/save.s',
         method: 'post',
@@ -189,7 +189,7 @@
         }
       });
     } else {
-      alert('Не правильный формат данных поле "Количество"/"Ед.изм."');
+      alert('Не правильный формат данных поле "Количество"');
     }
   }
   function delActRow(id) {
@@ -212,11 +212,8 @@
   }
   function setDrugCount(dom) {
     $('#drug_count').attr('disabled', !(dom.value > 0));
-    $('#measure_id').html('');
-    let ms = measures.filter(obj => obj.drug == dom.value);
-    for(let i in ms) {
-      $('#measure_id').append('<option value="' + ms[i].id + '">' + ms[i].name + '</option>')
-    }
+    let mn = dom.options[dom.selectedIndex].getAttribute("measure");
+    $('#measure').val(mn);
   }
   function confirmIncome() {
     if(confirm('Вы действительно хотите подтвердить заявку?')) {

@@ -17,10 +17,8 @@
         <td class="right">Категория: </td>
         <td style="width:200px">
           <select class="form-control" onchange="setPageCat(this)">
-            <option value="0">Все</option>
-            <c:forEach items="${categories}" var="cat">
-              <option <c:if test="${ct == cat.id}">selected</c:if> value="${cat.id}">${cat.name}</option>
-            </c:forEach>
+            <option <c:if test="${ct == 'A'}">selected</c:if> value="A">Активный</option>
+            <option <c:if test="${ct == 'P'}">selected</c:if> value="P">Пассивный</option>
           </select>
         </td>
         <td style="width:110px">
@@ -30,13 +28,11 @@
     </table>
   </div>
   <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
     <div class="table-responsive">
       <table class="miniGrid table table-striped table-bordered">
         <thead>
         <tr>
           <th>#</th>
-          <th>Категории</th>
           <th>Наименование</th>
           <th>Состояние</th>
           <th>Детализация</th>
@@ -44,20 +40,19 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${list}" var="obj">
-          <tr class="" id="row_${obj.c1}" ondblclick="editDrugDict(${obj.c1})" onclick="setRow(${obj.c1})">
-            <td align="center">${obj.c1}</td>
-            <td class="center">${obj.c3}</td>
-            <td id="row_drug_name_${obj.c1}">${obj.c2}</td>
+        <c:forEach items="${drugs}" var="d">
+          <tr class="" <c:if test="${d.counter == null || d.counter == 0}">title="Не корректная настройка кол-во учета" style="color:red"</c:if> id="row_${d.id}" ondblclick="editDrugDict(${d.id})" onclick="setRow(${d.id})">
+            <td align="center">${d.id}</td>
+            <td id="row_drug_name_${d.id}">${d.name}</td>
             <td align="center">
-              <c:if test="${obj.c4 == 'A'}">Активный</c:if>
-              <c:if test="${obj.c4 != 'A'}">Пассивный</c:if>
+              <c:if test="${d.state == 'A'}">Активный</c:if>
+              <c:if test="${d.state != 'A'}">Пассивный</c:if>
             </td>
             <td class="center" width="100px">
-              <button class="btn btn-success btn-sm" style="height:20px;padding:1px 10px" title="Детализация по приходам" onclick="viewDrug(${obj.c1})"><i class="fa fa-list"></i></button>
+              <button class="btn btn-success btn-sm" style="height:20px;padding:1px 10px" title="Детализация по приходам" onclick="viewDrug(${d.id})"><i class="fa fa-list"></i></button>
             </td>
             <td class="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.c1})"><i class="fa fa-minus"></i></button>
+              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${d.id})"><i class="fa fa-minus"></i></button>
             </td>
           </tr>
         </c:forEach>
@@ -104,6 +99,24 @@
                 <input type="checkbox" checked name="state" value="Y"/>
               </td>
             </tr>
+            <tr>
+              <td>Кол-во учет: </td>
+              <td>
+                <input type="number" class="form-control center" name="counter" value="">
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Ед. изм.: </td>
+              <td>
+                <select class="form-control" name="measure">
+                  <c:forEach items="${measures}" var="measure">
+                    <option value="${measure.id}">${measure.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+              <td></td>
+            </tr>
           </table>
         </form>
       </div>
@@ -125,9 +138,7 @@
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
         <h4 class="modal-title" id="newModalLabel">Препарат: <span id="modal_drug_name"></span></h4>
       </div>
-      <div class="modal-body" id="drug_details">
-        dsf sdf sdf
-      </div>
+      <div class="modal-body" id="drug_details"></div>
     </div>
     <!-- /.modal-content -->
   </div>
@@ -147,9 +158,12 @@
       dataType: 'json',
       success: function (res) {
         if (res.success) {
+          $('#table_counter').find('tbody').html('');
           $('*[name=id]').val(res.id);
           $('*[name=category]').val(res.category);
           $('*[name=name]').val(res.name);
+          $('*[name=counter]').val(res.counter);
+          $('*[name=measure]').val(res.measure);
           $('*[name=state]').prop('checked', res.state == 'A');
           var elems = document.getElementsByClassName("cat_checkbox");
           for(var elem of elems) elem.checked = false;

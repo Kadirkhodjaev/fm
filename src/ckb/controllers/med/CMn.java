@@ -423,6 +423,83 @@ public class CMn {
     return "med/mn/analys";
   }
 
+  @RequestMapping("drugs/days.s")
+  protected String drugDays(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/drugs/days.s");
+    Connection cn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String days = Util.get(req, "days", "14");
+    try {
+      cn = DB.getConnection();
+      ps = cn.prepareStatement(
+        "Select t.Drug_Id,  " +
+          "    c.name, " +
+          "    Round(Sum(t.Rasxod), 2) Rasxod, " +
+          "    Round(Sum(t.Rasxod_Sum), 2) Rasxod_Sum, " +
+          "    Round(Sum(t.Rasxod /  " + days + "), 2) Avg_Count, " +
+          "    Round(Sum(t.Rasxod_Sum /  " + days + "), 2) Avg_Sum, " +
+          "    Round(Sum(t.saldo_count), 2) Saldo_Count, " +
+          "    Round(Sum(t.saldo_sum), 2) Saldo_Sum, " +
+          "    Case When Sum(t.Rasxod /  " + days + ") != 0 Then Round(Sum(t.saldo_count) / Sum(t.Rasxod /  " + days + ")) Else 999 End days_count " +
+          "  From ( " +
+          "  Select f.drug_id, Sum(c.rasxod) rasxod, Sum(c.rasxod * a.price) rasxod_sum, 0 saldo_count, 0 saldo_sum   " +
+          "    From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a    " +
+          "   Where a.id = f.outRow_Id    " +
+          "     And d.Id = c.doc_Id    " +
+          "     And c.drug_Id = f.id   " +
+          "     And date(c.date) >= DATE_ADD(NOW(), INTERVAL -" + days + " DAY) " +
+          "     And f.outRow_Id > 0   " +
+          "   Group By f.drug_id " +
+          "  Union All " +
+          "  Select f.drug_id, Sum(c.rasxod) rasxod, Sum(c.rasxod * a.price) rasxod_sum, 0 saldo_count, 0 saldo_sum   " +
+          "   From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a   " +
+          "   Where a.id = f.outRow_Id   " +
+          "    And d.Id = c.doc_Id    " +
+          "    And c.drug_Id = f.id   " +
+          "     And date(c.crOn) >= DATE_ADD(NOW(), INTERVAL -" + days + " DAY) " +
+          "    And f.outRow_Id > 0   " +
+          "   Group By f.drug_id " +
+          "  Union All " +
+          "  Select t.drug_id,   " +
+          "      0, 0,   " +
+          "      Sum(t.counter - t.rasxod),    " +
+          "      Sum(t.counter * t.countprice - t.rasxod * t.countPrice)   " +
+          "   From drug_act_drugs t, drug_acts c   " +
+          "   Where c.id = t.act_Id " +
+          "   Group By t.drug_id) t, drug_s_names c " +
+          "  Where c.id = t.drug_id " +
+          "    And (t.Rasxod != 0 Or t.saldo_count != 0)" +
+          "  Group By t.Drug_Id Order By c.name");
+      rs = ps.executeQuery();
+      List<ObjList> rows = new ArrayList<ObjList>();
+      while (rs.next()) {
+        ObjList row = new ObjList();
+        row.setC1(rs.getString("drug_id"));
+        row.setC2(rs.getString("name"));
+        row.setC3(rs.getString("rasxod"));
+        row.setC4(rs.getString("rasxod_sum"));
+        row.setC5(rs.getString("Avg_Count"));
+        row.setC6(rs.getString("Avg_Sum"));
+        row.setC7(rs.getString("Saldo_Count"));
+        row.setC8(rs.getString("Saldo_Sum"));
+        row.setC9(rs.getString("days_count"));
+        //
+        rows.add(row);
+      }
+      m.addAttribute("rows", rows);
+      m.addAttribute("days", days);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(cn);
+    }
+    return "med/mn/days";
+  }
+
   @RequestMapping("drug/analys.s")
   protected String drugAnalys(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
@@ -468,6 +545,29 @@ public class CMn {
       summ = 0D;
       cont = 0D;
       ps = cn.prepareStatement(
+        " Select ifnull(Sum(c.rasxod), 0) rasxod " +
+          "   From patients ds, hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_s_directions ff  " +
+          "   Where d.Id = c.doc_Id   " +
+          "     And ff.id = d.direction_id" +
+          "     And c.drug_Id = f.id   " +
+          "     And ds.id = c.patient_id   " +
+          "     And c.rasxod > 0   " +
+          "     And date(ds.Date_Begin) < DATE_ADD(NOW(), INTERVAL -14 DAY) " +
+          "     And f.drug_id = ?");
+      ps.setInt(1, id);
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        if(rs.getDouble("rasxod") > 0) {
+          ObjList r = new ObjList();
+          r.setC1("Предыдущий период ИТОГО");
+          r.setC3(rs.getString("rasxod"));
+          //
+          cont += rs.getDouble("rasxod");
+          //
+          rows.add(r);
+        }
+      }
+      ps = cn.prepareStatement(
         " Select concat(ds.surname, ' ', ds.name, ' ', ds.middlename) fio, " +
           "          ff.name, " +
           "          d.date, " +
@@ -477,8 +577,10 @@ public class CMn {
           "     And ff.id = d.direction_id" +
           "     And c.drug_Id = f.id   " +
           "     And ds.id = c.patient_id   " +
+          "     And c.rasxod > 0   " +
+          "     And date(ds.Date_Begin) between DATE_ADD(NOW(), INTERVAL -14 DAY) And NOW()   " +
           "     And f.drug_id = ?" +
-          "  Order By d.date ");
+          "  Order By d.date Desc");
       ps.setInt(1, id);
       rs = ps.executeQuery();
       while (rs.next()) {

@@ -208,6 +208,7 @@ public class CDrug {
       drug.setPrice(Util.getDouble(req, "price"));
       drug.setBlockCount(Util.getDouble(req, "block_count"));
       drug.setCounter(Util.getDouble(req, "counter"));
+      drug.setMeasure(drug.getDrug().getMeasure());
       drug.setCountPrice(Util.getDouble(req, "price") / (Util.getDouble(req, "counter") / Util.getDouble(req, "block_count")));
       drug.setEndDate(endDate);
       drug.setRasxod(0D);
@@ -636,6 +637,8 @@ public class CDrug {
       if(Util.get(req, "code").equals("drug")) {
         Drugs obj = Util.isNull(req, "id") ? new Drugs() : dDrug.get(Util.getInt(req, "id"));
         obj.setName(Util.get(req, "name"));
+        obj.setCounter(Util.getDouble(req, "counter"));
+        obj.setMeasure(dDrugMeasure.get(Util.getInt(req, "measure")));
         obj.setState(Util.isNull(req, "state") ? "P" : "A");
         if (Util.isNull(req, "id")) {
           obj.setCrBy(session.getUserId());
@@ -661,6 +664,7 @@ public class CDrug {
             ct.setCategory(dDrugCategory.get(Integer.parseInt(cat)));
             dDrugDrugCategory.save(ct);
           }
+
       }
       if(Util.get(req, "code").equals("storage")) {
         DrugStorages obj = Util.isNull(req, "id") ? new DrugStorages() : dDrugStorage.get(Util.getInt(req, "id"));
@@ -743,6 +747,8 @@ public class CDrug {
         Drugs obj = dDrug.get(Util.getInt(req, "id"));
         json.put("id", obj.getId());
         json.put("name", obj.getName());
+        json.put("counter", obj.getCounter());
+        json.put("measure", obj.getMeasure() != null ? obj.getMeasure().getId() : 0);
         json.put("state", obj.getState());
         JSONArray arr = new JSONArray();
         for(DrugDrugCategories d: dDrugDrugCategory.getList("From DrugDrugCategories Where drug.id = " + obj.getId()))
@@ -854,33 +860,10 @@ public class CDrug {
   protected String dicstDrugs(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/drugs/dicts.s");
-    String ct = Util.get(request, "cat");
-    session.setCurSubUrl("/drugs/dict/drugs.s" + (Util.isNotNull(request, "cat") ? "?cat=" + ct : ""));
-    //
-    List<ObjList> list = new ArrayList<ObjList>();
-    List<Drugs> drugs = dDrug.getList("From Drugs Order By Name");
-    for(Drugs drug: drugs) {
-      ObjList obj = new ObjList();
-      obj.setC1(drug.getId().toString());
-      obj.setC2(drug.getName());
-      List<DrugDrugCategories> cats = dDrugDrugCategory.getList("From DrugDrugCategories Where drug.id = " + drug.getId());
-      int i=0;
-      String ids = "";
-      for(DrugDrugCategories cat: cats) {
-        obj.setC3((i == 0 ? "" : obj.getC3() + " + ") + cat.getCategory().getName());
-        ids += cat.getCategory().getId() + ",";
-        i++;
-      }
-      obj.setC4(drug.getState());
-      if(ct == null || ct.equals("0")) {
-        list.add(obj);
-      } else {
-        if(ids.contains(ct + ","))
-          list.add(obj);
-      }
-    }
-    model.addAttribute("list", list);
-    model.addAttribute("ct", ct == null ? 0 : Integer.parseInt(ct));
+    String ct = Util.get(request, "cat", "A");
+    session.setCurSubUrl("/drugs/dict/drugs.s?cat=" + ct);
+    model.addAttribute("drugs", dDrug.getList("From Drugs Where state= '" + ct + "' Order By Name"));
+    model.addAttribute("ct", ct);
     model.addAttribute("categories", dDrugCategory.getList("From DrugCategories Order By Id Desc"));
     model.addAttribute("measures", dDrugMeasure.getList("From DrugMeasures Order By Id Desc"));
     return "/med/drugs/dicts/drugs/index";

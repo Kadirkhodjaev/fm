@@ -1261,12 +1261,16 @@ public class CLv {
   @ResponseBody
   protected String addgoal(HttpServletRequest request, Model model) throws JSONException {
     LvDrugGoals goals = new LvDrugGoals();
-    goals.setName(request.getParameter("goal"));
-    goals.setCode("999");
-    goals.setState("A");
-    goals = dLvDrugGoal.saveAndReturn(goals);
     JSONObject res = new JSONObject();
-    res.put("id", goals.getId());
+    if(Util.isNotNull(request, "goal")) {
+      goals.setName(request.getParameter("goal"));
+      goals.setCode("999");
+      goals.setState("A");
+      goals = dLvDrugGoal.saveAndReturn(goals);
+      res.put("id", goals.getId());
+    } else {
+      res.put("id", 0);
+    }
     return res.toString();
   }
 
@@ -1509,14 +1513,8 @@ public class CLv {
           }
         } else {
           if(row_ids[i].equals("0") || row_ids[i].equals("")) {
-            try {
-              row.setMeasure(dDrugMeasure.get(Integer.parseInt(drug_measures[i])));
-            } catch (Exception e) {
-              json.put("msg", "Нет данных по единице измерении. Обратитесь Старшой медсестре! По медикаменту не установлен Коичественный учет");
-              json.put("success", false);
-              return json.toString();
-            }
             row.setDrug(dDrug.get(Integer.parseInt(drugs[i])));
+            row.setMeasure(row.getDrug().getMeasure());
           }
           row.setExpanse(Double.parseDouble(expenses[i]));
           if(!row_ids[i].equals("0") || (row.getDrug() != null && row.getExpanse() > 0))

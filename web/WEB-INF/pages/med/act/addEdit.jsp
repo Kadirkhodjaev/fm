@@ -72,6 +72,7 @@
   </div>
   <!-- /.panel-body -->
 </div>
+
 <c:if test="${fn:length(epics) > 0}">
   <div class="panel panel-info" style="width: 100%; margin: auto">
     <div class="panel-heading">
@@ -116,6 +117,7 @@
     <!-- /.panel-body -->
   </div>
 </c:if>
+
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
     <span style="font-weight:bold">Медикаменты: <span style="color:red"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${drugSum}" type="number"/></span></span>
@@ -130,7 +132,6 @@
           <th>Наименование</th>
           <th>Стоимость (Аптека)</th>
           <th>Стоимость</th>
-          <th>Кол-ный учет</th>
           <th>Цена за единицу</th>
           <th>Расход</th>
           <th>Сумма</th>
@@ -149,13 +150,12 @@
           <td style="width:150px; text-align:right">
             <input type="number" class="form-control right" onchange="setFieldValue('drug', 'price', ${row.id}, this)" value="${row.price}">
           </td>
-          <td style="width:120px; text-align:center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.drugCounter}" type = "number"/></td>
-          <td style="width:120px; text-align:right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.price / row.drugCounter}" type = "number"/></td>
+          <td style="width:120px; text-align:right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.price}" type = "number"/></td>
           <td style="width:120px; text-align:center">
             <input type="number" class="form-control center" value="${row.serviceCount}" onchange="setFieldValue('drug', 'counter', ${row.id}, this)" >
           </td>
           <td style="width:120px; text-align:right">
-            <input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.serviceCount * row.price / row.drugCounter}" type = "number"/>">
+            <input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.serviceCount * row.price}" type = "number"/>">
           </td>
           <c:if test="${obj.closed != 'Y'}">
             <td style="width:30px;text-align: center" class="center">
@@ -173,7 +173,7 @@
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
     <span style="font-weight:bold">Лабораторные исследования: <span style="color:red"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${labSum}" type="number"/></span></span>
-    <button style="float:right; margin-top:-5px; <c:if test="${not_done}">font-weight:bold; color:red;</c:if>" class="btn btn-default btn-sm" onclick="$('#modal_window').click()"><span class="fa fa-list"></span> Обследовании</button>
+    <button style="float:right; margin-top:-5px; margin-left:5px; <c:if test="${not_done}">font-weight:bold; color:red;</c:if>" class="btn btn-default btn-sm" onclick="$('#modal_window').click()"><span class="fa fa-list"></span> Обследовании</button>
     <c:if test="${obj.closed != 'Y'}">
       <button style="float:right; margin-top:-5px" class="btn btn-success btn-sm" onclick="addService('lab')"><span class="fa fa-plus"></span> Добавить</button>
       <button style="float:right; margin-top:-5px; margin-right:10px;" class="btn btn-info btn-sm" onclick="restoreServiceRow(0, ${obj.id})"><span class="fa fa-refresh"></span> Восстановить</button>
@@ -328,6 +328,7 @@
     <!-- /.panel-body -->
   </div>
 </c:if>
+
 <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
   <div class="modal-dialog" style="width:100%">
@@ -372,6 +373,7 @@
   </div>
   <!-- /.modal-dialog -->
 </div>
+
 <script>
   var labCount = ${fn:length(labs)};
   var kdoCount = ${fn:length(kdos)};

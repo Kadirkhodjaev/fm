@@ -75,23 +75,24 @@
         <tr>
           <th>Наименование</th>
           <th>Производитель</th>
-          <th>Срок годности</th>
+          <th style="width:140px">Срок годности</th>
           <th>Цена</th>
           <th>Количество</th>
           <th>Кол-во единиц</th>
+          <th>Ед.изм.</th>
         </tr>
       </thead>
       <tr>
-        <td style="vertical-align: middle">
-          <select class="form-control chzn-select" required name="drug" onchange="setDrugName(this)">
+        <td style="vertical-align: middle" nowrap>
+          <select class="form-control chzn-select" required name="drug" id="selected_drug_id" onchange="setDrugName(this)">
             <option></option>
             <c:forEach items="${drug_names}" var="cc">
-              <option value="${cc.id}">${cc.name}</option>
+              <option value="${cc.id}" counter="${cc.counter}" measure="${cc.measure.name}">${cc.name} (Кол-во учет: ${cc.counter}; ед.изм.: ${cc.measure.name})</option>
             </c:forEach>
           </select>
           <span data-toggle="modal" data-target="#myModal" class="fa fa-plus hand" title="Добавить новое наименование в реестр" style="position:relative; top:3px"></span>
         </td>
-        <td style="vertical-align: middle">
+        <td style="vertical-align: middle" nowrap>
           <select class="form-control chzn-select" required name="man">
             <option></option>
             <c:forEach items="${mans}" var="cc">
@@ -111,6 +112,9 @@
         </td>
         <td>
           <input type="number" required class="form-control right" onblur="removeVergul(this, 'counter')" id="counter" name="counter" disabled/>
+        </td>
+        <td>
+          <input type="text" required class="form-control left" id="drug_measure" disabled/>
         </td>
         <td id="drug_default_count" class="center"></td>
       </tr>
@@ -204,6 +208,7 @@
         <th>Кол-во единиц</th>
         <th>Расход</th>
         <th>Остаток</th>
+        <th>Ед.изм.</th>
         <c:if test="${obj.state == 'E'}">
           <th style="width:40px">Удалить</th>
         </c:if>
@@ -220,6 +225,7 @@
         <td class="right"><fmt:formatNumber value="${drug.counter}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.rasxod}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.counter - drug.rasxod}" type = "number"/></td>
+        <td class="left">${drug.measure.name}</td>
         <c:if test="${obj.state == 'E'}">
           <td class="center">
             <c:if test="${drug.rasxod == 0}">
@@ -331,13 +337,19 @@
   }
   function removeVergul(dom, code){
     dom.value.replace(',', '.');
+    if(code === 'block_count') {
+      let d = document.getElementById("selected_drug_id");
+      let cn = d.options[d.selectedIndex].getAttribute('counter');
+      $('#counter').val(cn * dom.value);
+    }
   }
   function setDrugName(dom) {
-    //
-    var cn = dom.options[dom.selectedIndex].getAttribute('data_count');
+    var cn = dom.options[dom.selectedIndex].getAttribute('counter');
+    var mn = dom.options[dom.selectedIndex].getAttribute('measure');
     $('#drug_price').attr('disabled', dom.value === '' || cn === 0 || cn === '');
     $('#block_count').attr('disabled', dom.value === '' || cn === 0 || cn === '');
     $('#counter').attr('disabled', dom.value === '' || cn === 0 || cn === '');
+    $('#drug_measure').val(mn);
   }
   function saveDrugForm() {
     if($('#drug-name').val() == '') {

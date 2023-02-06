@@ -130,7 +130,7 @@
         <c:forEach items="${rows}" var="row" varStatus="loop">
           <tr>
             <td>${row.drug.name}</td>
-            <td class="center" style="width:200px">${row.counter.drugCount} ${row.counter.measure.name}</td>
+            <td class="center" style="width:200px">${row.serviceCount} ${row.drug.measure.name}</td>
             <td style="width:150px; text-align:center"><fmt:formatNumber value = "${row.serviceCount}" type = "number"/></td>
             <c:if test="${obj.closed != 'Y'}">
               <td style="width:30px;text-align: center">
