@@ -234,7 +234,8 @@ public class SRepImp implements SRep {
 						"Where t.id = c.patient " +
 						"  And c.service_id = s.id " +
 						"  And s.group_id = ? " +
-						"  And date(t.cron) Between ? And ? " +
+						"  And c.State = 'DONE' " +
+						"  And date(c.crOn) Between ? And ? " +
 						"GROUP BY s.Name, c.Worker_Id " +
 						"Order By c.Worker_id"
 				);
@@ -316,7 +317,7 @@ public class SRepImp implements SRep {
 					(deptId != null ? " And t.Dept_Id = " + deptId : "") +
 					(doctorId != null ? " And t.Lv_Id = " + doctorId : "") +
 					" Union All " +
-					"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
+					"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename, ' (Перевод)') Fio , " +
 					"				 (Select dept.name From Depts dept Where dept.Id = p.Dept_Id) depName, " +
 					"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = e.Room_Id) Palata, " +
 					"				 (Case When e.dateBegin Is Not Null Then DATE_FORMAT(e.dateBegin, '%d.%m.%Y') Else Date_Format(p.Start_Epic_Date, '%d.%m.%Y') End) dateBegin, " +
@@ -332,7 +333,7 @@ public class SRepImp implements SRep {
 					"    AND p.lv_id != 1 " +
 					" 	 And e.patientId = p.Id " +
 					(deptId != null ? " And e.DeptId = " + deptId : "") +
-					(doctorId != null ? " And e.LvId = " + doctorId : "");
+					" And e.LvId = " + doctorId;
 				ps = conn.prepareStatement(
 					sql
 				);
@@ -386,7 +387,7 @@ public class SRepImp implements SRep {
 						(deptId != null ? " And t.Dept_Id = " + deptId : "") +
 						" And t.Lv_Id = " + user.getId() +
 						" Union All " +
-						"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
+						"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename, ' (Перевод)') Fio , " +
 						"				 (Select dept.name From Depts dept Where dept.Id = p.Dept_Id) depName, " +
 						"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = e.Room_Id) Palata, " +
 						"				 (Case When e.dateBegin Is Not Null Then DATE_FORMAT(e.dateBegin, '%d.%m.%Y') Else Date_Format(p.Start_Epic_Date, '%d.%m.%Y') End) dateBegin, " +
@@ -400,6 +401,7 @@ public class SRepImp implements SRep {
 						"  Where e.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
 						"    And date(e.dateEnd) != date(e.dateBegin) " +
 						"    AND p.lv_id != 1 " +
+						" 	 And p.Lv_Id = " + user.getId() +
 						" 	 And e.patientId = p.Id " +
 					(deptId != null ? " And e.DeptId = " + deptId : "");
 					ps = conn.prepareStatement(
@@ -2561,22 +2563,23 @@ public class SRepImp implements SRep {
     try {
       ps = conn.prepareStatement(
         " Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
-          "				 ser.Name Service_Name, " +
-          "  			 Date_Format(t.confDate, '%d.%m.%Y %H:%i') cr_on, " +
-          "        p.birthyear, " +
-          "        (Select con.Name From counteries con WHERE con.id = p.counteryId) Country, " +
-          "        (Select reg.Name From Regions reg WHERE reg.id = p.regionId) Region, " +
-          "        (Select u.fio FROM Users u where u.id = t.worker_id) lv_fio, " +
-          "        p.Address, " +
-          "        p.tel, " +
-          "				 t.diagnoz " +
+          "				 	 ser.Name Service_Name, " +
+          "  			 	 Date_Format(t.confDate, '%d.%m.%Y %H:%i') cr_on, " +
+          "        	 p.birthyear, " +
+          "        	 (Select con.Name From counteries con WHERE con.id = p.counteryId) Country, " +
+          "        	 (Select reg.Name From Regions reg WHERE reg.id = p.regionId) Region, " +
+          "        	 (Select u.fio FROM Users u where u.id = t.worker_id) lv_fio, " +
+          "        	 p.Address, " +
+          "        	 p.tel, " +
+          "				 	 t.diagnoz," +
+					"				   t.state " +
           "   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
           "  Where ser.Id = t.Service_Id " +
-          "    And p.Id = t.Patient " +
+					"    And p.Id = t.Patient " +
           "    And ser.consul = 'Y'" + (cat.equals("") ? "" : " And ser.id = " + cat) +
-          " 	 And date (t.confDate) Between ? and ? " +
+          " 	 And date (t.crOn) Between ? and ? " +
           ("".equals(doctor) ? "" : " And t.worker_id = " + doctor) +
-          " Order By t.confDate "
+          " Order By t.crOn "
       );
       ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
       ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
@@ -2598,6 +2601,7 @@ public class SRepImp implements SRep {
         service.setC2("".equals(service.getC2()) ? rs.getString("tel") : service.getC2() + " " + rs.getString("tel"));
         service.setC3(rs.getString("lv_fio"));
         service.setC4(rs.getString("diagnoz"));
+				service.setC5(rs.getString("state"));
         //
         rows.add(service);
       }

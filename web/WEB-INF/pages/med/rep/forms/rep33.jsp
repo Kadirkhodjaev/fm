@@ -24,6 +24,7 @@
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Муолажа тури</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Шифокор</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Ташхис</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Холати</td>
   </tr>
   <c:forEach items="${rows}" var="service" varStatus="loop">
     <tr>
@@ -35,6 +36,11 @@
       <td style="padding:5px;">${service.c1}</td>
       <td style="padding:5px;">${service.c3}</td>
       <td style="padding:5px;">${service.c4}</td>
+      <td style="padding:5px;">
+        <c:if test="${service.c5 == 'DONE'}">Тасдикланган</c:if>
+        <c:if test="${service.c5 == 'AUTO_DEL'}">Авто учирилган</c:if>
+        <c:if test="${service.c5 != 'AUTO_DEL' && service.c5 != 'DONE'}">Бошка холатлар</c:if>
+      </td>
     </tr>
   </c:forEach>
 </table>

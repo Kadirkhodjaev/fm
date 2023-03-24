@@ -13,6 +13,7 @@ import ckb.domains.admin.Dicts;
 import ckb.domains.med.RoomBookings;
 import ckb.domains.med.dicts.Rooms;
 import ckb.domains.med.patient.PatientWatchers;
+import ckb.domains.med.patient.Patients;
 import ckb.models.ClinicStage;
 import ckb.models.ObjList;
 import ckb.models.Room;
@@ -57,9 +58,14 @@ public class CBooking {
   @RequestMapping("index.s")
   protected String serviceList(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
-    session.setCurUrl("/booking/index.s");
+    session.setCurPat(0);
+    String filter = Util.toUTF8(Util.get(req, "word"));
+    session.setCurUrl("/booking/index.s?word=" + filter);
+    m.addAttribute("filter", filter);
+    Integer history = Integer.parseInt(Util.nvl(req, "history", "0"));
+    m.addAttribute("history", history);
     //region Услуги
-    List<RoomBookings> list = dRoomBooking.getList("From RoomBookings Where state = 'ENT' Order By Id Desc");
+    List<RoomBookings> list = dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' Order By Id Desc");
     m.addAttribute("list", list);
     m.addAttribute("rooms", dRoom.getActives());
     m.addAttribute("lvs", dUser.getLvs());
@@ -76,21 +82,40 @@ public class CBooking {
     JSONObject json = new JSONObject();
     session = SessionUtil.getUser(req);
     try {
-      RoomBookings book = dRoomBooking.get(Util.getInt(req, "id"));
+      Integer history = Integer.parseInt(Util.nvl(req, "history", "0"));
       JSONObject bb = new JSONObject();
-      bb.put("id", book.getId());
-      bb.put("surname", book.getSurname());
-      bb.put("name", book.getName());
-      bb.put("middlename", book.getMiddlename());
-      bb.put("birthyear", book.getBirthyear());
-      bb.put("tel", book.getTel());
-      bb.put("passport", book.getPassportInfo());
-      bb.put("country", book.getCountry().getId());
-      bb.put("sex", book.getSex() != null ? book.getSex().getId() : 0);
-      bb.put("lv", book.getLv() != null ? book.getLv().getId() : 0);
-      bb.put("date_begin", Util.dateToString(book.getDateBegin()));
-      bb.put("dept", book.getDept().getId());
-      bb.put("room", book.getRoom().getId());
+      if(history > 0) {
+        Patients p = dPatient.get(history);
+        bb.put("id", 0);
+        bb.put("surname", p.getSurname());
+        bb.put("name", p.getName());
+        bb.put("middlename", p.getMiddlename());
+        bb.put("birthyear", p.getBirthyear());
+        bb.put("tel", p.getTel());
+        bb.put("passport", p.getPassportInfo());
+        bb.put("country", p.getCounteryId());
+        bb.put("sex", p.getSex() != null ? p.getSex().getId() : 0);
+        bb.put("lv", p.getLv_id() != null ? p.getLv_id() : 0);
+        bb.put("date_begin", Util.dateToString(new Date()));
+        bb.put("dept", 0);
+        bb.put("room", 0);
+        bb.put("history", history);
+      } else {
+        RoomBookings book = dRoomBooking.get(Util.getInt(req, "id"));
+        bb.put("id", book.getId());
+        bb.put("surname", book.getSurname());
+        bb.put("name", book.getName());
+        bb.put("middlename", book.getMiddlename());
+        bb.put("birthyear", book.getBirthyear());
+        bb.put("tel", book.getTel());
+        bb.put("passport", book.getPassportInfo());
+        bb.put("country", book.getCountry().getId());
+        bb.put("sex", book.getSex() != null ? book.getSex().getId() : 0);
+        bb.put("lv", book.getLv() != null ? book.getLv().getId() : 0);
+        bb.put("date_begin", Util.dateToString(book.getDateBegin()));
+        bb.put("dept", book.getDept().getId());
+        bb.put("room", book.getRoom().getId());
+      }
       json.put("data", bb);
       json.put("success", true);
     } catch (Exception e) {
@@ -106,12 +131,15 @@ public class CBooking {
     JSONObject json = new JSONObject();
     session = SessionUtil.getUser(req);
     try {
-      RoomBookings book = Util.isNull(req, "id") ? new RoomBookings() : dRoomBooking.get(Util.getInt(req, "id"));
+      System.out.println(Util.nvl(req, "id", "0"));
+      int id = 0;
+      if(!Util.isNull(req, "id"))
+        id = Util.getInt(req, "id");
+      RoomBookings book = id == 0 ? new RoomBookings() : dRoomBooking.get(id);
       book.setSurname(Util.get(req, "surname").toUpperCase());
       book.setName(Util.get(req, "name").toUpperCase());
       book.setMiddlename(Util.get(req, "middlename", "").toUpperCase());
       book.setBirthyear(Util.getInt(req, "birthyear"));
-      book.setTel(Util.get(req, "tel"));
       book.setTel(Util.get(req, "tel"));
       book.setPassportInfo(Util.get(req, "passport"));
       book.setCountry(dCountery.get(Util.getInt(req, "country")));
@@ -121,11 +149,12 @@ public class CBooking {
       book.setDateBegin(Util.stringToDate(Util.get(req, "date_begin")));
       book.setDept(dDept.get(Util.getInt(req, "dept")));
       book.setRoom(dRoom.get(Util.getInt(req, "room")));
-      if(Util.isNull(req, "id")) {
+      if(id == 0) {
         book.setState("ENT");
         book.setCrBy(session.getUserId());
         book.setCrOn(new Date());
       }
+      book.setHistoryId(Util.isNull(req, "history") ? 0 : Integer.parseInt(Util.nvl(req, "history", "0")));
       dRoomBooking.save(book);
       json.put("success", true);
     } catch (Exception e) {
@@ -337,9 +366,11 @@ public class CBooking {
   @RequestMapping("nurse.s")
   protected String nurse(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
-    session.setCurUrl("/booking/nurse.s");
+    String filter = Util.toUTF8(Util.get(req, "word"));
+    session.setCurUrl("/booking/nurse.s?word=" + filter);
+    m.addAttribute("filter", filter);
     //region Услуги
-    m.addAttribute("list", dRoomBooking.getList("From RoomBookings Where state = 'ENT' Order By date_begin"));
+    m.addAttribute("list", dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' Order By date_begin"));
     //endregion
     return "med/booking/nurse";
   }

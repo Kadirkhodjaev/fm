@@ -5,6 +5,8 @@ import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
 import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
+import ckb.dao.admin.nurse.DNurse;
+import ckb.dao.admin.nurse.DNurseDept;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.reports.DReport;
 import ckb.dao.admin.roles.DRole;
@@ -79,6 +81,8 @@ public class CAdmin {
   @Autowired private DRooms dRooms;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DUserIp dUserIp;
+  @Autowired private DNurse dNurse;
+  @Autowired private DNurseDept dNurseDept;
 
   @RequestMapping({"/users/list.s", "/"})
   protected String userList(HttpServletRequest request, Model model) {
@@ -496,8 +500,17 @@ public class CAdmin {
   protected String amb(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/admin/amb.s");
+    //
+    String page = Util.get(request, "page");
+    if(page == null) page = session.getDateBegin().get("admin_amb_index");
+    if(page == null) page = "0";
+    //
+    HashMap<String, String> dh = session.getDateBegin();
+    dh.put("admin_amb_index", page);
+    session.setDateBegin(dh);
+    //
     List<AmbService> services = new ArrayList<AmbService>();
-    List<AmbServices> list = dAmbServices.getList("From AmbServices t Order By t.state, t.group.id");
+    List<AmbServices> list = dAmbServices.getList("From AmbServices t " + (page.equals("0") ? "" : " Where  group.id = " + page) + " Order By t.state, t.group.id");
     for(AmbServices l:list) {
       AmbService s = new AmbService();
       s.setId(l.getId());
@@ -506,6 +519,8 @@ public class CAdmin {
         services.add(s);
     }
     model.addAttribute("services", services);
+    model.addAttribute("groups", dAmbGroups.getAll());
+    model.addAttribute("page", page);
     return "/admin/amb/index";
   }
 
@@ -886,6 +901,47 @@ public class CAdmin {
   @RequestMapping(value = "/lvpartner/get.s", method = RequestMethod.POST)
   @ResponseBody
   protected String getLvPartner(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      LvPartners rp = dLvPartner.get(Util.getInt(req, "id"));
+      json.put("id", rp.getId());
+      json.put("code", rp.getCode());
+      json.put("fio", rp.getFio());
+      json.put("state", rp.getState());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  //region Ìוהסוסענû
+  @RequestMapping("/nurses.s")
+  protected String nurses(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/admin/nurses.s");
+    //
+    model.addAttribute("rows", dLvPartner.getAll());
+    //
+    return "/admin/nurses/index";
+  }
+
+  @RequestMapping("/nurse/info.s")
+  protected String nurseInfo(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/admin/nurse/info.s");
+    //
+    Nurses nurse = dNurse.get(Util.getInt(req, "id"));
+
+    model.addAttribute("d", nurse);
+    //
+    return "/admin/nurses/info";
+  }
+
+  @RequestMapping(value = "/nurse/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String nurseSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
       LvPartners rp = dLvPartner.get(Util.getInt(req, "id"));

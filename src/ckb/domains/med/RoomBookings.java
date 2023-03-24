@@ -55,6 +55,8 @@ public class RoomBookings extends GenId {
   @Column private Integer crBy;
   @Column private Date crOn;
 
+  @Column(name = "history_patient_id") private Integer historyId;
+
   public String getSurname() {
     return surname;
   }
@@ -173,5 +175,13 @@ public class RoomBookings extends GenId {
 
   public void setCountry(Counteries country) {
     this.country = country;
+  }
+
+  public Integer getHistoryId() {
+    return historyId;
+  }
+
+  public void setHistoryId(Integer historyId) {
+    this.historyId = historyId;
   }
 }

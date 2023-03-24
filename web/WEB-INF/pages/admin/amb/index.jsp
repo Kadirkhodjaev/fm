@@ -9,22 +9,33 @@
   function addAmb() {
     setPage('/admin/addAmb.s');
   }
+  function setGroup(dom) {
+    setPage('/admin/amb.s?page=' + dom.value);
+  }
 </script>
 <style>
   table tr.selected {background: #eee}
 </style>
 <div class="panel panel-info">
   <div class="panel-heading">
-    Список форм
-    <div style="float:right">
-      <button class="btn btn-sm btn-success" type="button" onclick="addAmb()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
-    </div>
-    <select class="form-control" onchange="setGroup(this)">
-      <option value="0">Все</option>
-      <c:forEach items="${groups}" var="g">
-        <option <c:if test="${page == g.id}">selected</c:if> value="${g.id}">${g.name}</option>
-      </c:forEach>
-    </select>
+    <table style="width:100%">
+      <tr>
+        <td>
+          Список амбулаторных услуг
+        </td>
+        <td>
+          <select class="form-control" onchange="setGroup(this)">
+            <option value="0">Все</option>
+            <c:forEach items="${groups}" var="g">
+              <option <c:if test="${page == g.id}">selected</c:if> value="${g.id}">${g.name}</option>
+            </c:forEach>
+          </select>
+        </td>
+        <td class="right">
+          <button class="btn btn-sm btn-success" type="button" onclick="addAmb()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
+        </td>
+      </tr>
+    </table>
   </div>
   </div>
   <div class="panel-body">

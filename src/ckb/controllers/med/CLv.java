@@ -459,7 +459,7 @@ public class CLv {
 
   // Консультация
   @RequestMapping(value = "/consul.s", method = RequestMethod.POST)
-  protected String consul(HttpServletRequest request){
+  protected String consul(HttpServletRequest request) {
     Session session = SessionUtil.getUser(request);
     LvConsuls con = new LvConsuls();
     if(!Req.isNull(request, "id"))
@@ -475,8 +475,10 @@ public class CLv {
       con.setLvId(Req.getInt(request, "lvId"));
       con.setLvName(sUser.getLv(con.getLvId()).getFio());
     }
-    if(!"".equals(con.getLvName()))
+    if(!"".equals(con.getLvName())) {
+      con.setCrOn(new Date());
       dLvConsul.save(con);
+    }
     //
     return "redirect:/lv/consul.s?msgState=1&msgCode=successSave";
   }

@@ -59,7 +59,9 @@
   function setReg(){
     openMainPage('/reg/nurse/index.s?reg=Y', true);
   }
-
+  function setBooking() {
+    openMainPage('/booking/index.s?history=${p.id}', true);
+  }
 </script>
 <table width="100%" height="100%">
   <td id="tdLeftMenu" valign="top" style="border-top:1px solid #eee; background: #f8f8f8">
@@ -92,6 +94,9 @@
               <li class="paginate_button" id="printBtn" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPrint();return false;"><i title="Печать" class="fa fa-print"></i> Печать</a></li>
               <c:if test="${roleId == 3}">
                 <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setReg();return false;"><i title="Печать" class="fa fa-pencil"></i> Регистрация</a></li>
+              </c:if>
+              <c:if test="${roleId == 17}">
+                <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setBooking();return false;"><i title="Бронирование" class="fa fa-pencil"></i> Бронирование</a></li>
               </c:if>
               <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="back();return false;"><i title="Назад" class="fa fa-reply"></i> Назад</a></li>
             </ul>

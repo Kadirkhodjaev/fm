@@ -9,7 +9,17 @@
 </style>
 <div class="panel panel-primary" style="width: 100%; margin: auto">
   <div class="panel-heading">
-    Бронирование койки
+    <table style="margin:0;width:100%">
+      <tr>
+        <td style="font-weight:bold; vertical-align: middle">Бронирование койки</td>
+        <td style="width:220px; padding-right:5px">
+          <input type="text" style="height:30px" class="form-control" placeholder="Поиск..." id="filter_box" value="${filter}">
+        </td>
+        <td style="width:56px">
+          <button class="btn btn-success btn-sm" onclick="setFilter()">Поиск</button>
+        </td>
+      </tr>
+    </table>
   </div>
   <div class="panel-body">
     <%@include file="/incs/msgs/successError.jsp"%>
@@ -54,5 +64,9 @@
 <script>
   function regBooking(id) {
     setPage('/reg/nurse/index.s?booking=' + id);
+  }
+  function setFilter() {
+    var word = document.getElementById("filter_box");
+    setPage('/booking/nurse.s?word=' + decodeURIComponent(word.value));
   }
 </script>

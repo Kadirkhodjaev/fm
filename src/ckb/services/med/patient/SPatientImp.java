@@ -137,8 +137,8 @@ public class SPatientImp implements SPatient {
       RoomBookings bk = dRoomBooking.get(Util.getInt(req, "booking"));
       bk.setState("ARCH");
       //
-      pat.setLv_id(bk.getLv().getId());
-      pat.setLv_dept_id(bk.getLv().getDept().getId());
+      pat.setLv_id(bk.getLv() == null ? null : bk.getLv().getId());
+      pat.setLv_dept_id(bk.getLv() != null ? bk.getLv().getDept().getId() : null);
       dRoomBooking.save(bk);
     }
     return dPatient.saveAndReturn(pat);
@@ -226,18 +226,59 @@ public class SPatientImp implements SPatient {
       pat.setBirthday(p.getBirthday());
     } else if(Util.isNotNull(request, "booking")) {
       RoomBookings bk = dRoomBooking.get(Util.getInt(request, "booking"));
-      pat.setSurname(bk.getSurname());
-      pat.setName(bk.getName());
-      pat.setMiddlename(bk.getMiddlename());
-      pat.setBirthyear(bk.getBirthyear());
-      pat.setTel(bk.getTel());
-      pat.setPassportInfo(bk.getPassportInfo());
-      pat.setCounteryId(bk.getCountry().getId());
-      pat.setSex(bk.getSex());
-      pat.setDept(bk.getDept());
-      pat.setRoom(bk.getRoom());
-      pat.setTime(Util.getCurTime());
-      pat.setDayCount(10);
+      if(bk.getHistoryId() != null && bk.getHistoryId() > 0) {
+        Patients p = dPatient.get(bk.getHistoryId());
+        pat.setClient(p.getClient());
+        pat.setSex(bk.getSex());
+        pat.setSurname(p.getSurname());
+        pat.setName(p.getName());
+        pat.setMiddlename(p.getMiddlename());
+        pat.setBirthyear(p.getBirthyear());
+        pat.setPost(p.getPost());
+        pat.setTel(p.getTel());
+        pat.setWork(p.getWork());
+        pat.setPassportInfo(bk.getPassportInfo());
+        pat.setAddress(p.getAddress());
+        pat.setMetka(p.getMetka());
+        pat.setCat(p.getCat());
+        pat.setTarDate(p.getTarDate());
+        pat.setTemp(p.getTemp());
+        pat.setRost(p.getRost());
+        pat.setVes(p.getVes());
+        pat.setAmbNum(p.getAmbNum());
+        pat.setPitanie(p.getPitanie());
+        pat.setLgotaType(p.getLgotaType());
+        pat.setRedirect(p.getRedirect());
+        pat.setVidPer(p.getVidPer());
+        pat.setDiagnoz(p.getDiagnoz());
+        pat.setTime(Util.getCurTime());
+        pat.setCounteryId(bk.getCountry().getId());
+        pat.setRegionId(p.getRegionId());
+        pat.setBloodGroup(p.getBloodGroup());
+        pat.setResus(p.getResus());
+        pat.setDrugEffect(p.getDrugEffect());
+        pat.setOrientedBy(p.getOrientedBy());
+        pat.setTransport(p.getTransport());
+        pat.setDept(bk.getDept());
+        pat.setLv_id(bk.getLv() != null ? bk.getLv().getId() : p.getLv_id());
+        pat.setLv_dept_id(bk.getLv() != null ? bk.getLv().getDept().getId() : p.getLv_dept_id());
+        pat.setRoom(bk.getRoom());
+        pat.setDayCount(p.getDayCount());
+        pat.setBirthday(p.getBirthday());
+      } else {
+        pat.setSurname(bk.getSurname());
+        pat.setName(bk.getName());
+        pat.setMiddlename(bk.getMiddlename());
+        pat.setBirthyear(bk.getBirthyear());
+        pat.setTel(bk.getTel());
+        pat.setPassportInfo(bk.getPassportInfo());
+        pat.setCounteryId(bk.getCountry().getId());
+        pat.setSex(bk.getSex());
+        pat.setDept(bk.getDept());
+        pat.setRoom(bk.getRoom());
+        pat.setTime(Util.getCurTime());
+        pat.setDayCount(10);
+      }
     } else {
       pat.setTarDate(Util.getCurDate());
       pat.setTime(Util.getCurTime());
@@ -896,7 +937,7 @@ public class SPatientImp implements SPatient {
         row.setDrug(patientDrugRow.getDrug());
         row.setName(patientDrugRow.getSource().equals("own") ? patientDrugRow.getName() : patientDrugRow.getDrug().getName());
         if(!patientDrugRow.getSource().equals("own"))
-          row.setName(row.getName() + " (" + patientDrugRow.getExpanse() + " " + patientDrugRow.getMeasure().getName() + ")");
+          row.setName(row.getName() + " (" + patientDrugRow.getExpanse() + " " + (patientDrugRow.getMeasure() != null ? patientDrugRow.getMeasure().getName() : "") + ")");
         row.setExpanse(patientDrugRow.getExpanse());
         row.setSource(patientDrugRow.getSource());
         row.setState(patientDrugRow.getState());

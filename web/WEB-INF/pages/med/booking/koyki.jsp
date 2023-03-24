@@ -336,7 +336,7 @@
           if (res.success) {
             $('#close-modal').click();
             alert("<ui:message code="successSave"/>");
-            setPage('/booking/index.s');
+            setPage('/booking/koyki.s');
           } else {
             alert(res.msg);
           }

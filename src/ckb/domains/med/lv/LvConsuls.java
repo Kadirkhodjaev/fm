@@ -20,6 +20,7 @@ public class LvConsuls extends GenId {
   @Column private String state;
   @Column private String copied = "N";
   @Column private Date saveDate;
+  @Column private Date crOn;
 
   public Integer getPatientId() {
     return patientId;
@@ -91,5 +92,13 @@ public class LvConsuls extends GenId {
 
   public void setReq(String req) {
     this.req = req;
+  }
+
+  public Date getCrOn() {
+    return crOn;
+  }
+
+  public void setCrOn(Date crOn) {
+    this.crOn = crOn;
   }
 }

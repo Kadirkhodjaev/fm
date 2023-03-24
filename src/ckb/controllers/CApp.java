@@ -90,6 +90,7 @@ public class  CApp {
       m.add(new Menu("Параметры", "/admin/price.s", "fa fa-th fa-fw", session.getCurUrl().equals("/mkb/admin.s")));
       m.add(new Menu("Партнеры", "/admin/lvpartners.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/lvpartners.s")));
       m.add(new Menu("Протокол", "/admin/log.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/log.s")));
+      m.add(new Menu("Медсестры", "/admin/nurses.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/nurses.s")));
     }
     if(roleId == 3) { // Приемное – медсестра
       session.setCurUrl(session.getCurUrl().equals("") ? "/reg/nurse/index.s" : session.getCurUrl());
@@ -206,7 +207,7 @@ public class  CApp {
       m.add(new Menu("Питание", "/head_nurse/eats.s", "fa fa-home fa-fw", session.getCurUrl().equals("/head_nurse/eats.s")));
       m.add(new Menu("Сальдо", "/head_nurse/saldo.s", "fa fa-briefcase fa-fw", session.getCurUrl().equals("/head_nurse/saldo.s")));
       m.add(new Menu("Стационар", "/head_nurse/out/patient.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/patient.s")));
-      m.add(new Menu("Амбулатория", "/head_nurse/out/amb.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/amb.s")));
+      //m.add(new Menu("Амбулатория", "/head_nurse/out/amb.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/amb.s")));
       m.add(new Menu("Расход", "/head_nurse/out.s", "fa fa-file-text fa-users", session.getCurUrl().equals("/head_nurse/out.s")));
       m.add(new Menu("Перевод", "/head_nurse/transfer.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/transfer.s")));
       m.add(new Menu("Приход", "/head_nurse/incomes.s", "fa fa-stack-overflow fa-fw", session.getCurUrl().equals("/head_nurse/incomes.s")));

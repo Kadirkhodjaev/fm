@@ -37,6 +37,8 @@
   <bean id="dRole" class="ckb.dao.admin.roles.DRoleImp" parent="daoImpl"/>
   <bean id="dReport" class="ckb.dao.admin.reports.DReportImp" parent="daoImpl"/>
   <bean id="dDept" class="ckb.dao.admin.depts.DDeptImp" parent="daoImpl"/>
+  <bean id="dNurse" class="ckb.dao.admin.nurse.DNurseImp" parent="daoImpl"/>
+  <bean id="dNurseDept" class="ckb.dao.admin.nurse.DNurseDeptImp" parent="daoImpl"/>
   <bean id="dLvForm1" class="ckb.dao.med.lv.form1.DLvForm1Imp" parent="daoImpl"/>
   <bean id="dLvForm2" class="ckb.dao.med.lv.form2.DLvForm2Imp" parent="daoImpl"/>
   <bean id="dLvForm3" class="ckb.dao.med.lv.form3.DLvForm3Imp" parent="daoImpl"/>

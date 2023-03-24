@@ -9,8 +9,20 @@
 </style>
 <div class="panel panel-primary" style="width: 100%; margin: auto">
   <div class="panel-heading">
-    Бронирование койки
-    <button  class="btn btn-sm btn-success" onclick="addBooking()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
+    <table style="margin:0;width:100%">
+      <tr>
+        <td style="font-weight:bold; vertical-align: middle">Бронирование койки</td>
+        <td style="width:220px; padding-right:5px">
+          <input type="text" style="height:30px" class="form-control" placeholder="Поиск..." id="filter_box" value="${filter}">
+        </td>
+        <td style="width:56px">
+          <button class="btn btn-success btn-sm" onclick="setFilter()">Поиск</button>
+        </td>
+        <td style="width:95px; text-align: right">
+          <button  class="btn btn-sm btn-success" onclick="addBooking()" style=""><i class="fa fa-plus"></i> Добавить</button>
+        </td>
+      </tr>
+    </table>
   </div>
   <div class="panel-body">
     <%@include file="/incs/msgs/successError.jsp"%>
@@ -68,6 +80,7 @@
       <div class="modal-body">
         <form id="addEditForm" name="addEditForm">
           <input type="hidden" name="id" value="" />
+          <input type="hidden" name="history" value="" />
           <table class="table table-bordered">
             <tr>
               <td class="right bold">ФИШ*:</td>
@@ -168,9 +181,39 @@
   <!-- /.modal-dialog -->
 </div>
 <script>
+  <c:if test="${history > 0}">
+    addBooking();
+  </c:if>
+  function setFilter() {
+    var word = document.getElementById("filter_box");
+    setPage('/booking/index.s?word=' + decodeURIComponent(word.value));
+  }
   function addBooking(){
     addEditForm.reset();
-    document.getElementById("modal_window").click();
+    <c:if test="${history > 0}">
+      $.ajax({
+        url: '/booking/get.s',
+        method: 'post',
+        data: 'history=${history}',
+        dataType: 'json',
+        success: function (res) {
+          if (res.success) {
+            document.getElementById("modal_window").click();
+            var data = res.data;
+            for (var e in data) {
+              try {
+                document.getElementsByName(e)[0].value = data[e];
+              } catch (e) {}
+            }
+          } else {
+            alert(res.msg);
+          }
+        }
+      });
+    </c:if>
+    <c:if test="${history == 0}">
+      document.getElementById("modal_window").click();
+    </c:if>
   }
   function editBooking(id) {
     $.ajax({

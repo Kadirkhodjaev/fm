@@ -9,7 +9,7 @@ import ckb.utils.Util;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DUserImp extends DaoImp<Users> implements DUser {
+public class  DUserImp extends DaoImp<Users> implements DUser {
 
   public DUserImp( ) {
     super(Users.class);

@@ -2,6 +2,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <script src="/res/editor/nicEdit.js" type="text/javascript"></script>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
@@ -64,6 +65,14 @@
               <c:if test="${c.state != 'DONE'}">
                 <button type="button" onclick="delConsul('${c.id}')" title="Удалить консультацию" class="btn btn-danger btn-xs"><i class="fa fa-minus"></i></button>
               </c:if>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="3">
+              <span class="bold">Дата и время создания:</span> <fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${c.crOn}"/>
+            </td>
+            <td colspan="5">
+              <span class="bold">Дата и время результата:</span> <fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${c.saveDate}"/>
             </td>
           </tr>
           <c:if test="${c.state == 'DONE'}">

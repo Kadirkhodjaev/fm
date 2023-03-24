@@ -199,6 +199,9 @@
       });
     }
   }
+  function loadPdf() {
+    $('#pdffile').attr('src', 'http://31.135.213.158:8745/result?id=${patient.qrcode}');
+  }
 </script>
 <iframe id="frmDiv" name="frm" class="hidden"></iframe>
 <div class="panel panel-info" style="width: 900px !important; margin: auto">
@@ -228,6 +231,10 @@
       </c:if>
       <c:if test="${patient.state == 'ARCH' && sessionScope.ENV.roleId == 15}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="ambReg()"><i title="Регистрация" class="fa fa-reorder"></i> Регистрация</a></li>
+      </c:if>
+      <c:if test="${patient.state != 'ENT' && sessionScope.ENV.roleId == 15}">
+        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="loadPdf()"><i title="Генерация PDF файла" class="fa fa-reorder"></i> Результаты PDF</a></li>
+        <iframe name="pdffile" id="pdffile" src="about:blank" style="display: none"></iframe>
       </c:if>
     </ul>
   </div>

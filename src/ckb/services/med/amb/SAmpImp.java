@@ -153,6 +153,7 @@ public class SAmpImp implements SAmb {
       p.setTgNumber(pat.getTgNumber());
       p.setLvpartner(pat.getLvpartner());
       p.setClient(pat.getClient());
+      p.setQrcode(pat.getQrcode());
     } else {
       p.setSex(dOpt.get(12));
       p.setTgNumber("998");

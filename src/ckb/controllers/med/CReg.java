@@ -92,7 +92,7 @@ public class CReg {
     List<Rooms> list = dRooms.getActives();
     List<Rooms> rooms = new ArrayList<Rooms>();
     for(Rooms room: list) {
-      Long count = dPatient.getCount("From Patients Where state != 'ARCH' And state != 'ZGV' And room.id = " + room.getId());
+      Long count = dPatient.getCount("From Patients Where state Not In ('ARCH', 'ZGV') And room.id = " + room.getId());
       if(count < room.getKoykoLimit() || room.getAccess().equals("Y"))
         rooms.add(room);
     }
@@ -117,11 +117,12 @@ public class CReg {
       }
     }
     m.addAttribute("planIds", planIds);
-    m.addAttribute("clients", dClient.getList("From Clients Order By surname"));
+    if (Req.isNull(req, "id"))
+      m.addAttribute("clients", dClient.getList("From Clients Order By surname"));
     if (p.getId() == null)
       p.setTarDate(Util.getCurDate());
     Util.makeMsg(req, m);
-    return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "index";
+    return "med/registration/nurse/fm/index";
   }
 
   @RequestMapping(value = "nurse/index.s", method = RequestMethod.POST)

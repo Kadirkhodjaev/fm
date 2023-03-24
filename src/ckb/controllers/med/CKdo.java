@@ -78,7 +78,6 @@ public class CKdo {
       dPatientPlan.save(plan);
       p.setResDate(new Date());
       p.setDone("Y");
-      p.setCrOn(new Date());
       dLvPlan.save(p);
       //dPatientDao.delPlan(p.getId());
     }
