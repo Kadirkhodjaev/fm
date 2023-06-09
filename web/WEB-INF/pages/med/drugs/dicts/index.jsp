@@ -22,6 +22,7 @@
       <li class="<c:if test="${sessionScope.ENV.curSubUrl == '/drugs/dict/measures.s'}">active</c:if>"><a href="#page_measures" data-toggle="tab" onclick="dictPage('measures')" aria-expanded="${sessionScope.ENV.curSubUrl == '/drugs/dict/measures.s'}">Единицы измерения</a></li>
       <li class="<c:if test="${sessionScope.ENV.curSubUrl == '/drugs/dict/directions.s'}">active</c:if>"><a href="#page_directions" data-toggle="tab" onclick="dictPage('directions')" aria-expanded="${sessionScope.ENV.curSubUrl == '/drugs/dict/directions.s'}">Получатели</a></li>
       <li class="<c:if test="${sessionScope.ENV.curSubUrl == '/drugs/dict/manufacturers.s'}">active</c:if>"><a href="#page_manufacturers" data-toggle="tab" onclick="dictPage('manufacturers')" aria-expanded="${sessionScope.ENV.curSubUrl == '/drugs/dict/manufacturers.s'}">Производители</a></li>
+      <li class="<c:if test="${sessionScope.ENV.curSubUrl == '/drugs/dict/rasxodtypes.s'}">active</c:if>"><a href="#page_manufacturers" data-toggle="tab" onclick="dictPage('rasxodtypes')" aria-expanded="${sessionScope.ENV.curSubUrl == '/drugs/dict/rasxodtypes.s'}">Типы расходов</a></li>
     </ul>
     <div class="tab-content">
       <div class="tab-pane active fade in" id="pager"></div>

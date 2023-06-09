@@ -2,12 +2,29 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
+<link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="/res/bs/metisMenu/metisMenu.min.css" rel="stylesheet">
+<link href="/res/bs/sb_admin/css/timeline.css" rel="stylesheet">
+<link href="/res/bs/sb_admin/css/sb-admin-2.css" rel="stylesheet">
+<link href="/res/bs/morrisjs/morris.css" rel="stylesheet">
+<link href="/res/css/styles.css" rel="stylesheet">
+<link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+<link href="/res/tinymce/jquery-te-1.4.0.css" rel="stylesheet">
+
+<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
+<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
+<script src="/res/bs/metisMenu/metisMenu.min.js"></script>
+<script src="/res/bs/morrisjs/morris.min.js"></script>
+<script src="/res/bs/sb_admin/js/sb-admin-2.js"></script>
+<script src="/res/js/common.js"></script>
+<script src="/res/editor/nicEdit.js" type="text/javascript"></script>
+<script src="/res/tinymce/jquery-te-1.4.0.js" type="text/javascript"></script>
 <style>
   .miniGrid thead tr th {text-align: center; background: #e8e8e8}
   .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
 </style>
 <script>
-  function addStat() {
+  function addStatService() {
     $('#addEditForm').find('*[name=group]').val('');
     $('#addEditForm').find('*[name=id]').val('');
     $('#addEditForm').find('*[name=name]').val('');
@@ -42,7 +59,7 @@
               </c:forEach>
             </select>
           </td>
-          <td style="width:80px"><button class="btn btn-sm btn-success" type="button" onclick="addStat()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button></td>
+          <td style="width:80px"><button class="btn btn-sm btn-success" type="button" onclick="addStatService()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button></td>
         </tr>
       </table>
     </div>
@@ -202,6 +219,10 @@
                 <input type="checkbox" name="priced" value="Y"/>
               </td>
             </tr>
+            <tr>
+              <td class="right bold">Пользователи:</td>
+              <td class="left" id="kdo_users"></td>
+            </tr>
           </table>
         </form>
       </div>
@@ -270,6 +291,7 @@
           $('*[name=group]').val(res.group);
           $('*[name=room]').val(res.room);
           $('*[name=fizei]').val(res.fizei);
+          $('#kdo_users').html(res.users);
           $('*[name=necKdo]').prop('checked', res.necKdo == 'Y');
           $('*[name=state]').prop('checked', res.state == 'A');
           if(res.kdoType === 4) {

@@ -76,10 +76,10 @@
         <div class="list-group">
           <div class="list-group">
             <a href="#" onclick="window.open('/lv/stat.s?stat=1'); return false;" class="list-group-item">
-              <i class="fa fa-print fa-fw"></i> Список всех обследований на сегодня
+              <i class="fa fa-print fa-fw"></i> Список всех обследования на сегодня
             </a>
             <a href="#" onclick="window.open('/lv/stat.s?stat=2'); return false;" class="list-group-item">
-              <i class="fa fa-print fa-fw"></i> Список всех обследований на завтра
+              <i class="fa fa-print fa-fw"></i> Список всех обследования на завтра
             </a>
             <a href="#" onclick="window.open('/lv/stat.s?stat=3'); return false;" class="list-group-item">
               <i class="fa fa-print fa-fw"></i> Список всех назначений на сегодня

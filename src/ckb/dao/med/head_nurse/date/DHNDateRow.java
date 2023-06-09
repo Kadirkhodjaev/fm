@@ -4,4 +4,5 @@ import ckb.dao.Dao;
 import ckb.domains.med.head_nurse.HNDateRows;
 
 public interface DHNDateRow extends Dao<HNDateRows> {
+  Double getHDRasxod(int hndrug);
 }

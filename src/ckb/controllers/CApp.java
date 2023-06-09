@@ -4,9 +4,11 @@ import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.roles.DRole;
 import ckb.dao.admin.users.DUser;
+import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.med.amb.DAmbGroups;
 import ckb.dao.med.lv.consul.DLvConsul;
 import ckb.domains.admin.Roles;
+import ckb.domains.admin.UserDrugLines;
 import ckb.domains.admin.Users;
 import ckb.models.Login;
 import ckb.models.Menu;
@@ -16,6 +18,7 @@ import ckb.session.SessionUtil;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.apache.commons.io.FileUtils;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
@@ -26,6 +29,7 @@ import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -43,13 +47,14 @@ import java.util.zip.ZipOutputStream;
 @RequestMapping("/")
 public class  CApp {
 
-  @Autowired SUser sUser;
-  @Autowired DUser dUser;
-  @Autowired DRole dRole;
-  @Autowired DLvConsul dLvConsul;
-  @Autowired DParam dParam;
-  @Autowired DDept dDept;
-  @Autowired DAmbGroups dAmbGroups;
+  @Autowired private SUser sUser;
+  @Autowired private DUser dUser;
+  @Autowired private DRole dRole;
+  @Autowired private DLvConsul dLvConsul;
+  @Autowired private DParam dParam;
+  @Autowired private DDept dDept;
+  @Autowired private DAmbGroups dAmbGroups;
+  @Autowired private DUserDrugLine dUserDrugLine;
   /*@Autowired private DKdos dKdo;
   @Autowired private DAmbServices dAmbService;
   @Autowired private DKdoChoosen dKdoChoosen;
@@ -90,7 +95,7 @@ public class  CApp {
       m.add(new Menu("Параметры", "/admin/price.s", "fa fa-th fa-fw", session.getCurUrl().equals("/mkb/admin.s")));
       m.add(new Menu("Партнеры", "/admin/lvpartners.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/lvpartners.s")));
       m.add(new Menu("Протокол", "/admin/log.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/log.s")));
-      m.add(new Menu("Медсестры", "/admin/nurses.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/nurses.s")));
+      //m.add(new Menu("Медсестры", "/admin/nurses.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/nurses.s")));
     }
     if(roleId == 3) { // Приемное – медсестра
       session.setCurUrl(session.getCurUrl().equals("") ? "/reg/nurse/index.s" : session.getCurUrl());
@@ -140,7 +145,7 @@ public class  CApp {
       session.setCurUrl(session.getCurUrl().equals("") ? "/drugs/acts.s" : session.getCurUrl());
       m.add(new Menu("Детализация", "/drugs/details.s", "fa fa-group fa-fw", session.getCurUrl().equals("/drugs/details.s")));
       m.add(new Menu("Склад", "/drugs/sklad.s", "fa fa-group fa-fw", session.getCurUrl().equals("/drugs/sklad.s")));
-      m.add(new Menu("Сальдо", "/drugs/saldo.s", "fa fa-group fa-fw", session.getCurUrl().equals("/drugs/saldo.s")));
+      //m.add(new Menu("Сальдо", "/drugs/saldo.s", "fa fa-group fa-fw", session.getCurUrl().equals("/drugs/saldo.s")));
       m.add(new Menu("Приход", "/drugs/acts.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/drugs/acts.s")));
       m.add(new Menu("Расход", "/drugs/out.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/drugs/out.s")));
       //m.add(new Menu("Архив заявок", "/drugs/claims/archive.s", "fa fa-archive fa-edit", session.getCurUrl().equals("/drugs/claims/archive.s")));
@@ -203,16 +208,26 @@ public class  CApp {
     if(roleId == 19) { // Старшая медсестра
       session.setCurUrl(session.getCurUrl().equals("") ? "/head_nurse/incomes.s" : session.getCurUrl());
       Users user = dUser.get(session.getUserId());
+      List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+      boolean isTransfer = false;
+      for(UserDrugLines line: lines) {
+        if(line.getDirection().getTransfer() != null && line.getDirection().getTransfer().equals("Y")) {
+          isTransfer = true;
+        }
+      }
       m.add(new Menu("Статистика", "/head_nurse/stat.s", "fa fa-home fa-fw", session.getCurUrl().equals("/head_nurse/stat.s")));
-      m.add(new Menu("Питание", "/head_nurse/eats.s", "fa fa-home fa-fw", session.getCurUrl().equals("/head_nurse/eats.s")));
+      if(user.isMainNurse())
+        m.add(new Menu("Питание", "/head_nurse/eats.s", "fa fa-home fa-fw", session.getCurUrl().equals("/head_nurse/eats.s")));
       m.add(new Menu("Сальдо", "/head_nurse/saldo.s", "fa fa-briefcase fa-fw", session.getCurUrl().equals("/head_nurse/saldo.s")));
-      m.add(new Menu("Стационар", "/head_nurse/out/patient.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/patient.s")));
+      if(user.isMainNurse())
+        m.add(new Menu("Стационар", "/head_nurse/out/patient.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/patient.s")));
       //m.add(new Menu("Амбулатория", "/head_nurse/out/amb.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/amb.s")));
       m.add(new Menu("Расход", "/head_nurse/out.s", "fa fa-file-text fa-users", session.getCurUrl().equals("/head_nurse/out.s")));
-      m.add(new Menu("Перевод", "/head_nurse/transfer.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/transfer.s")));
+      if(isTransfer || session.getUserId() == 1)
+        m.add(new Menu("Перевод", "/head_nurse/transfer.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/transfer.s")));
       m.add(new Menu("Приход", "/head_nurse/incomes.s", "fa fa-stack-overflow fa-fw", session.getCurUrl().equals("/head_nurse/incomes.s")));
-      m.add(new Menu("Справочники", "/head_nurse/dicts.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/dicts.s")));
-      m.add(new Menu("Пациенты", "/head_nurse/total/patients.s", "fa fa-barcode fa-fw", session.getCurUrl().equals("/head_nurse/total/patients.s")));
+      if(user.isMainNurse())
+        m.add(new Menu("Пациенты", "/head_nurse/total/patients.s", "fa fa-barcode fa-fw", session.getCurUrl().equals("/head_nurse/total/patients.s")));
     }
     if(roleId == 20) {
       session.setCurUrl(session.getCurUrl().equals("") ? "/act/index.s" : session.getCurUrl());
@@ -297,6 +312,25 @@ public class  CApp {
   protected String out(HttpServletRequest req) throws Exception {
     SessionUtil.kill(req);
     return "redirect:/login.s";
+  }
+
+  @RequestMapping(value = "/user_login.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String loginPost(HttpServletRequest request) {
+    JSONObject json = new JSONObject();
+    try {
+      Session session = sUser.login(request);
+      if(session == null) {
+        json.put("msg", "Ошибка в паре логин - Пароль!");
+        json.put("success", false);
+        return json.toString();
+      }
+      SessionUtil.setUser(request, session);
+      json.put("success", true);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return json.toString();
   }
 
   @RequestMapping(value = "test.s", method = RequestMethod.POST)

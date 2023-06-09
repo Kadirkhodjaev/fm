@@ -20,7 +20,7 @@
 <f:form method="post" id="services">
   <div class="panel panel-info" style="width: 100% !important; margin: auto">
     <div class="panel-heading">
-      Список обследовании
+      Список обследования
       <div style="float:right">
         <button class="btn btn-sm btn-success" onclick="saveServices()" type="button" title="Сохранить" style="margin-top: -5px"><i class="fa fa-check"></i> Сохранить</button>
         <button class="btn btn-sm" type="button" onclick="openMainPage('/amb/reg.s?id=${id}')" style="margin-top: -5px"><i class="fa fa-reply"></i> Назад</button>

@@ -1,10 +1,7 @@
 package ckb.domains.med;
 
 import ckb.domains.GenId;
-import ckb.domains.admin.Counteries;
-import ckb.domains.admin.Depts;
-import ckb.domains.admin.SelOpts;
-import ckb.domains.admin.Users;
+import ckb.domains.admin.*;
 import ckb.domains.med.dicts.Rooms;
 
 import javax.persistence.*;
@@ -49,6 +46,8 @@ public class RoomBookings extends GenId {
   @OneToOne
   @JoinColumn(name = "Room_Id")
   private Rooms room;
+
+  @OneToOne @JoinColumn private Dicts bron;
 
   @Column private String state;
 
@@ -183,5 +182,13 @@ public class RoomBookings extends GenId {
 
   public void setHistoryId(Integer historyId) {
     this.historyId = historyId;
+  }
+
+  public Dicts getBron() {
+    return bron;
+  }
+
+  public void setBron(Dicts bron) {
+    this.bron = bron;
   }
 }

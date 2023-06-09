@@ -9,6 +9,9 @@
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
     Рейтинг препаратов
+    <c:if test="${sessionScope.ENV.userId == 1}">
+      <button  class="btn btn-sm btn-success" onclick="window.open('dch/checker.s', '_blank')" style="float:right;margin-top:-5px">Проверка расходов</button>
+    </c:if>
   </div>
   <table class="table table-bordered">
     <tr>
@@ -55,7 +58,7 @@
         <fmt:parseNumber var = "c7" type = "number" value = "${rw.c7}" />
         <fmt:parseNumber var = "c8" type = "number" value = "${rw.c8}" />
         <fmt:parseNumber var = "c9" type = "number" value = "${rw.c9}" />
-        <tr <c:if test="${c2 < 0 || c3 < 0 || c4 < 0 || c5 < 0 || c6 < 0 || c7 < 0 || c8 < 0 || c9 < 0}">style="background:red;color:white; font-weight:bold"</c:if>>
+        <tr title="${rw.c10}" <c:if test="${c2 < 0 || c4 < 0 || c6 < 0 || c8 < 0}">style="background:red;color:white; font-weight:bold"</c:if>>
           <td>${rw.c1}</td>
           <td class="right"><fmt:formatNumber value="${rw.c2}" type="number"/></td>
           <td class="right"><fmt:formatNumber value="${rw.c3}" type="number"/></td>

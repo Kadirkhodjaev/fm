@@ -5,4 +5,6 @@ import ckb.domains.med.head_nurse.HNDatePatientRows;
 
 public interface DHNDatePatientRow extends Dao<HNDatePatientRows> {
   void delByDoc(int id);
+
+  Double getHDRasxod(int hndrug);
 }

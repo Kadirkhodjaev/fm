@@ -48,6 +48,7 @@
           <th style="width:150px">Год рождения</th>
           <th style="width:250px">Отд / Пал</th>
           <th style="width:150px">Статус</th>
+          <th style="width:150px">Статус кассы</th>
         </tr>
         </thead>
         <tbody>
@@ -75,6 +76,10 @@
             <td class="center">
               <c:if test="${obj.closed != 'Y'}">Открыт</c:if>
               <c:if test="${obj.closed == 'Y'}">Закрыт</c:if>
+            </td>
+            <td class="center">
+              <c:if test="${obj.patient.paid != 'CLOSED'}">Открыт</c:if>
+              <c:if test="${obj.patient.paid == 'CLOSED'}">Закрыт</c:if>
             </td>
           </tr>
         </c:forEach>

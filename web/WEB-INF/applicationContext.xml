@@ -186,6 +186,7 @@
   <bean id="dHnDatePatient" class="ckb.dao.med.head_nurse.date.DHNDatePatientImp" parent="daoImpl"/>
   <bean id="dHnDrug" class="ckb.dao.med.head_nurse.drug.DHNDrugImp" parent="daoImpl"/>
   <bean id="dHnDirection" class="ckb.dao.med.head_nurse.direction.DHNDirectionImp" parent="daoImpl"/>
+  <bean id="dHnDirectionLink" class="ckb.dao.med.head_nurse.direction.DHNDirectionLinkImp" parent="daoImpl"/>
   <bean id="dhnOper" class="ckb.dao.med.head_nurse.date.DHNOperImp" parent="daoImpl"/>
 
   <!-- Service outs -->
@@ -233,6 +234,7 @@
   <bean id="sAmp" class="ckb.services.med.amb.SAmpImp" scope="singleton"/>
   <bean id="sRep" class="ckb.services.med.rep.SRepImp" scope="singleton"/>
   <bean id="sClient" class="ckb.services.med.client.SClientImp" scope="singleton"/>
+  <bean id="sDrug" class="ckb.services.med.drug.SDrugImp" scope="singleton"/>
 
 
   <bean id="cleansoftDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">

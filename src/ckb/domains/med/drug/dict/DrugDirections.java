@@ -18,6 +18,7 @@ public class DrugDirections extends GenId {
   @Column private Date crOn;
 
   @Column private String shock;
+  @Column private String transfer;
 
   public String getName() {
     return name;
@@ -57,5 +58,13 @@ public class DrugDirections extends GenId {
 
   public void setShock(String shock) {
     this.shock = shock;
+  }
+
+  public String getTransfer() {
+    return transfer;
+  }
+
+  public void setTransfer(String transfer) {
+    this.transfer = transfer;
   }
 }

@@ -17,7 +17,7 @@
 
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
-    <span style="font-weight:bold" title="ID: ${obj.patient.id}">Реквизиты пациента: ${obj.patient.surname} ${obj.patient.name} ${obj.patient.middlename} - <fmt:formatDate pattern="dd.MM.yyyy" value="${obj.patient.dateBegin}"/></span>
+    <span style="font-weight:bold" title="HNPATIENT: ${obj.id} PATIENT_ID: ${obj.patient.id}">Реквизиты пациента: №${obj.patient.yearNum} ${obj.patient.surname} ${obj.patient.name} ${obj.patient.middlename} - <fmt:formatDate pattern="dd.MM.yyyy" value="${obj.patient.dateBegin}"/></span>
     <button  class="btn btn-sm" onclick="setPage('/act/index.s')" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-backward"></i> Назад</button>
     <button class="btn btn-info btn-sm" style="float:right;margin-top:-5px; margin-left:10px" onclick="excel()"><span class="fa fa-file-excel-o"></span> Excel</button>
     <c:if test="${obj.state == 'C' || (obj.closed != 'Y' && obj.state == 'D')}">
@@ -28,6 +28,9 @@
     </c:if>
     <c:if test="${obj.closed != 'Y'}">
       <button  class="btn btn-sm btn-success" onclick="savePatient()" style="float:right;margin-top:-5px;"><i class="fa fa-save"></i> Сохранить</button>
+    </c:if>
+    <c:if test="${obj.closed == 'Y' && obj.patient.paid == 'CLOSED'}">
+      <button  class="btn btn-sm btn-success" onclick="openCash()" style="float:right;margin-top:-5px;"><i class="fa fa-repeat"></i> Открыть кассу</button>
     </c:if>
   </div>
   <div class="panel-body">
@@ -173,7 +176,7 @@
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
     <span style="font-weight:bold">Лабораторные исследования: <span style="color:red"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${labSum}" type="number"/></span></span>
-    <button style="float:right; margin-top:-5px; margin-left:5px; <c:if test="${not_done}">font-weight:bold; color:red;</c:if>" class="btn btn-default btn-sm" onclick="$('#modal_window').click()"><span class="fa fa-list"></span> Обследовании</button>
+    <button style="float:right; margin-top:-5px; margin-left:5px; <c:if test="${not_done}">font-weight:bold; color:red;</c:if>" class="btn btn-default btn-sm" onclick="$('#modal_window').click()"><span class="fa fa-list"></span> Обследования</button>
     <c:if test="${obj.closed != 'Y'}">
       <button style="float:right; margin-top:-5px" class="btn btn-success btn-sm" onclick="addService('lab')"><span class="fa fa-plus"></span> Добавить</button>
       <button style="float:right; margin-top:-5px; margin-right:10px;" class="btn btn-info btn-sm" onclick="restoreServiceRow(0, ${obj.id})"><span class="fa fa-refresh"></span> Восстановить</button>
@@ -379,6 +382,25 @@
   var kdoCount = ${fn:length(kdos)};
   var consulCount = ${fn:length(consuls)};
   var drugCount = ${fn:length(drugs)};
+
+  function openCash(id){
+    if(confirm('Вы действительно хотите удалить открыть кассу?')) {
+      $.ajax({
+        url: '/act/patient/cash.s',
+        method: 'post',
+        data: 'id=${obj.id}',
+        dataType: 'json',
+        success: function (res) {
+          if (res.success) {
+            alert("<ui:message code="successSave"/>");
+            parent.setPage('/act/info.s?id=${obj.id}');
+          } else {
+            alert(res.msg);
+          }
+        }
+      });
+    }
+  }
 
   function delPlan(id){
     if(confirm('Вы действительно хотите удалить?')) {

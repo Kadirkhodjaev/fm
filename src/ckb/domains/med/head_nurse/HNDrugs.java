@@ -24,6 +24,7 @@ public class HNDrugs extends GenId {
 
   @Column private Integer transfer;
   @Column private Integer transfer_hndrug_id;
+  @Column private Integer history;
 
   @Column private Integer crBy;
   @Column private Date crOn;
@@ -114,5 +115,13 @@ public class HNDrugs extends GenId {
 
   public void setPrice(Double price) {
     this.price = price;
+  }
+
+  public Integer getHistory() {
+    return history;
+  }
+
+  public void setHistory(Integer history) {
+    this.history = history;
   }
 }

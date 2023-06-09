@@ -49,7 +49,7 @@
   <table style="margin:auto; width:100%;" cellspacing="0" cellpadding="0">
     <tr>
       <td colspan="4" style="text-align: center; font-weight: bold;">
-        Список обследований по состояниям
+        Список обследования по состояниям
       </td>
     </tr>
     <tr>

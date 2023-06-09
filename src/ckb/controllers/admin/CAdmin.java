@@ -36,6 +36,7 @@ import ckb.models.ObjList;
 import ckb.services.admin.user.SUser;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -51,6 +52,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -533,6 +537,12 @@ public class CAdmin {
     if(Util.isNotNull(req, "id")) {
       model.addAttribute("ser", dAmbServices.get(Util.getInt(req, "id")));
       model.addAttribute("rows", dAmbServiceFields.byService(Util.getInt(req, "id")));
+      StringBuilder users = new StringBuilder();
+      for(AmbServiceUsers rw: dAmbServiceUsers.getList("From AmbServiceUsers Where service = " + Util.get(req, "id"))) {
+        Users u = dUser.get(rw.getUser());
+        users.append(u.getFio()).append("; ");
+      }
+      model.addAttribute("users", users.toString());
     }
     return "/admin/amb/add";
   }
@@ -702,6 +712,9 @@ public class CAdmin {
   @ResponseBody
   protected String statGeyKdo(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
     try {
       Kdos d = dKdo.get(Util.getInt(req, "id"));
       json.put("name", d.getName());
@@ -721,10 +734,22 @@ public class CAdmin {
       json.put("room", d.getRoom());
       json.put("fizei", d.getFizei());
       json.put("form", d.getFormId());
+      StringBuilder users = new StringBuilder();
+      conn = DB.getConnection();
+      ps = conn.prepareStatement("Select a.fio From User_Kdo_Types t, Kdos c, Users a Where a.id = t.users_id And c.kdo_type = t.kdoTypes_Id And c.id = " + d.getId());
+      rs = ps.executeQuery();
+      while(rs.next()) {
+        users.append(rs.getString("fio")).append("; ");
+      }
+      json.put("users", users);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
     }
     return json.toString();
   }

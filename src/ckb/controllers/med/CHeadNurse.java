@@ -8,14 +8,11 @@ import ckb.dao.med.amb.DAmbDrugDate;
 import ckb.dao.med.amb.DAmbDrugRow;
 import ckb.dao.med.amb.DAmbPatients;
 import ckb.dao.med.dicts.rooms.DRooms;
-import ckb.dao.med.drug.dict.categories.DDrugCategory;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
-import ckb.dao.med.drug.dict.drugs.category.DDrugDrugCategory;
 import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.drug.dict.drugs.measure.DDrugDrugMeasure;
-import ckb.dao.med.drug.dict.measures.DDrugMeasure;
 import ckb.dao.med.drug.out.DDrugOut;
 import ckb.dao.med.drug.out.DDrugOutRow;
 import ckb.dao.med.eat.dict.menuTypes.DEatMenuType;
@@ -39,7 +36,7 @@ import ckb.domains.med.amb.AmbPatients;
 import ckb.domains.med.dicts.Rooms;
 import ckb.domains.med.drug.DrugOutRows;
 import ckb.domains.med.drug.DrugOuts;
-import ckb.domains.med.drug.dict.*;
+import ckb.domains.med.drug.dict.DrugDirectionDeps;
 import ckb.domains.med.eat.dict.EatMenuTypes;
 import ckb.domains.med.eat.dict.EatTables;
 import ckb.domains.med.head_nurse.*;
@@ -54,6 +51,7 @@ import ckb.models.ObjList;
 import ckb.models.PatientList;
 import ckb.models.eat.EatMenuTable;
 import ckb.services.med.amb.SAmb;
+import ckb.services.med.drug.SDrug;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
@@ -88,7 +86,6 @@ public class CHeadNurse {
   @Autowired private DHNPatient dhnPatient;
   @Autowired private DHNPatientDrug dhnPatientDrug;
   @Autowired private DHNDateAmbRow dhnDateAmbRow;
-  @Autowired private DDrugMeasure dDrugMeasure;
   @Autowired private DDrugCount dDrugCount;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DPatient dPatient;
@@ -107,8 +104,6 @@ public class CHeadNurse {
   @Autowired private DHNDateRow dhnDateRow;
   @Autowired private DDrugDrugMeasure dDrugDrugMeasure;
   @Autowired private DHNDatePatient dhnDatePatient;
-  @Autowired private DDrugDrugCategory dDrugDrugCategory;
-  @Autowired private DDrugCategory dDrugCategory;
   @Autowired private DDrugDirectionDep dDrugDirectionDep;
   @Autowired private DAmbPatients dAmbPatient;
   @Autowired private SAmb sAmb;
@@ -124,337 +119,7 @@ public class CHeadNurse {
 
   @Autowired private DDept dDept;
   @Autowired private DRooms dRoom;
-  //endregion
-
-  //region OUT_AMB_PATIENT
-  @RequestMapping("out/amb.s")
-  protected String outAmbPatient(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/head_nurse/out/amb.s");
-    Users user = dUser.get(session.getUserId());
-    //
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
-    StringBuilder arr = new StringBuilder("(");
-    for(UserDrugLines line: lines) {
-      arr.append(line.getDirection().getId()).append(",");
-    }
-    arr.append("0)");
-    //
-    Calendar end = Calendar.getInstance();
-    end.setTime(new Date());
-    end.add(Calendar.DATE, 2);
-    //
-    String db = session.getDateBegin().get("hn_amb_out");
-    if(db == null) db = "01" + Util.getCurDate().substring(2);
-    String de = session.getDateEnd().get("hn_amb_out");
-    if(de == null) de = Util.dateToString(end.getTime());
-    //
-    String startDate = Util.get(req, "period_start", db);
-    String endDate = Util.get(req, "period_end", de);
-    //
-    HashMap<String, String> dh = session.getDateBegin();
-    dh.put("hn_amb_out", startDate);
-    session.setDateBegin(dh);
-    dh = session.getDateEnd();
-    dh.put("hn_amb_out", endDate);
-    session.setDateEnd(dh);
-    //
-    if(user.isMainNurse())
-      m.addAttribute("rows", dhnDate.getList("From HNDates Where typeCode = 'AMB' And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc"));
-    else
-      m.addAttribute("rows", dhnDate.getList("From HNDates Where typeCode = 'AMB' And direction.id in " + arr + " And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc"));
-    //
-    m.addAttribute("period_start", startDate);
-    m.addAttribute("period_end", endDate);
-    return "/med/head_nurse/out/amb/index";
-  }
-
-  @RequestMapping("out/amb/save.s")
-  protected String outAmbSave(HttpServletRequest req, Model model) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/head_nurse/out/amb/save.s?id=" + Util.getInt(req, "id"));
-    //
-    List<HNDateAmbRows> rows = new ArrayList<HNDateAmbRows>();
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
-    StringBuilder arr = new StringBuilder("(");
-    for(UserDrugLines line: lines) {
-      arr.append(line.getDirection().getId()).append(",");
-    }
-    arr.append("0)");
-    double drugSum = 0, drugSums = 0;
-    try {
-      //
-      HNDates obj = Util.getInt(req, "id") > 0 ? dhnDate.get(Util.getInt(req, "id")) : new HNDates();
-      if(Util.getInt(req, "id") == 0) { obj.setId(0); obj.setDate(new Date()); }
-      if(Util.getInt(req, "id") > 0) {
-        rows = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.id = " + obj.getId());
-        model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And t.direction.id = " + obj.getDirection().getId() + " Order BY t.drug.name"));
-        model.addAttribute("drug_exist", dAmbDrug.getCount("From AmbDrugs Where patient.id = " + obj.getPatient().getId()) > 0);
-        for(HNDateAmbRows drug: rows) {
-          if(drug.getDoc().getPaid().equals("N"))
-            drugSum += drug.getRasxod() * drug.getHndrug().getPrice();
-          drugSums += drug.getRasxod() * drug.getHndrug().getPrice();
-        }
-      }
-      model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
-      model.addAttribute("rows", rows);
-      model.addAttribute("drugSum", drugSums);
-      model.addAttribute("notPaidSum", drugSum);
-      model.addAttribute("patients", dAmbPatient.getList("From AmbPatients Where state != 'ARCH' Order By surname"));
-      model.addAttribute("obj", obj);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    //
-    return "/med/head_nurse/out/amb/addEdit";
-  }
-
-  @RequestMapping(value = "out/amb/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      String id = Util.nvl(req, "id", "0");
-      HNDates obj = id.equals("0") || id.equals("") ? new HNDates() : dhnDate.get(Integer.parseInt(id));
-      obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
-      obj.setPatient(dAmbPatient.get(Util.getInt(req, "patient")));
-      if(obj.getId() == null) {
-        obj.setCrBy(dUser.get(session.getUserId()));
-        obj.setCrOn(new Date());
-        obj.setDate(Util.stringToDate(Util.get(req, "doc_date")));
-        obj.setState("ENT");
-        obj.setPaid("N");
-        if(obj.getDate().before(Util.stringToDate(Util.getCurDate()))) {
-          json.put("success", false);
-          json.put("msg", "Дата операции не может быть меньше текущей даты");
-          return json.toString();
-        }
-      }
-      obj.setTypeCode("AMB");
-      dhnDate.saveAndReturn(obj);
-      json.put("id", obj.getId());
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "out/amb/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbDelete(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    Connection conn = null;
-    try {
-      conn = DB.getConnection();
-      HNDates date = dhnDate.get(Util.getInt(req, "id"));
-      List<HNDateAmbRows> rows = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.id = " + date.getId());
-      for(HNDateAmbRows row: rows) {
-        HNDrugs drug = row.getHndrug();
-        drug.setRasxod(drug.getRasxod() - row.getRasxod());
-        dhnDrug.save(drug);
-        dhnDateAmbRow.delete(row.getId());
-      }
-      AmbPatients patient = date.getPatient();
-      Double summ = DB.getSum(conn, "Select Sum(t.price) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('PAID', 'DONE', 'DEL', 'AUTO_DEL')");
-      Double count = DB.getSum(conn, "Select Count(*) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('DONE', 'DEL', 'AUTO_DEL')");
-      if (summ > 0) {
-        patient.setState("CASH");
-      } else {
-        if (count == 0) {
-          patient.setState("DONE");
-        } else {
-          patient.setState("WORK");
-        }
-      }
-      dAmbPatient.save(patient);
-      dhnDate.delete(date.getId());
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    } finally {
-      DB.done(conn);
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "out/row/amb/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbRowSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      HNDateAmbRows row = new HNDateAmbRows();
-      row.setHndrug(dhnDrug.get(Util.getInt(req, "id")));
-      row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
-      row.setRasxod(Double.parseDouble(Util.get(req, "rasxod")));
-      row.setDate(row.getDoc().getDate());
-      row.setPatient(row.getDoc().getPatient());
-      row.setDrug(row.getHndrug().getDrug());
-      row.setCrBy(session.getUserId());
-      row.setCrOn(new Date());
-      dhnDateAmbRow.save(row);
-      HNDrugs drug = row.getHndrug();
-      drug.setRasxod(drug.getRasxod() + row.getRasxod());
-      dhnDrug.save(drug);
-      AmbPatients patient = row.getPatient();
-      patient.setState("CASH");
-      dAmbPatient.save(patient);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "out/amb/row/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbRowDelete(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    Connection conn = null;
-    try {
-      conn = DB.getConnection();
-      HNDateAmbRows row = dhnDateAmbRow.get(Util.getInt(req, "id"));
-      HNDates doc = row.getDoc();
-      HNDrugs drug = row.getHndrug();
-      drug.setRasxod(drug.getRasxod() - row.getRasxod());
-      dhnDrug.save(drug);
-      dhnDateAmbRow.delete(row.getId());
-      if(dhnDateAmbRow.getCount("From HNDateAmbRows Where doc.id = " + doc.getId()) == 0) {
-        AmbPatients patient = doc.getPatient();
-        Double summ = DB.getSum(conn, "Select Sum(t.price) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('PAID', 'DONE', 'DEL', 'AUTO_DEL')");
-        Double count = DB.getSum(conn, "Select Count(*) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('DONE', 'DEL', 'AUTO_DEL')");
-        if (summ > 0) {
-          patient.setState("CASH");
-        } else {
-          if (count == 0) {
-            patient.setState("DONE");
-          } else {
-            patient.setState("WORK");
-          }
-        }
-        dAmbPatient.save(patient);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    } finally {
-      DB.done(conn);
-    }
-    return json.toString();
-  }
-
-  @RequestMapping("out/amb/drugs.s")
-  protected String outAmbDrugs(HttpServletRequest req, Model m) {
-    HNDates doc = dhnDate.get(Util.getInt(req, "doc"));
-    Date minDate = dAmbDrugDate.minDate(doc.getPatient().getId());
-    Date maxDate = dAmbDrugDate.maxDate(doc.getPatient().getId());
-    if(minDate != null) {
-      long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
-      long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
-      m.addAttribute("dates", Util.getDateList(minDate, (int) (diff)));
-    }
-    m.addAttribute("doc", doc);
-    m.addAttribute("drugs", sAmb.getDrugs(doc.getPatient().getId()));
-    return "/med/head_nurse/out/amb/drugs";
-  }
-
-  @RequestMapping("out/amb/addDrug.s")
-  protected String outAmbAddDrug(HttpServletRequest req, Model m) {
-    m.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr")+ " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + Util.getInt(req, "id")));
-    //
-    return "/med/head_nurse/out/amb/addDrug";
-  }
-
-  @RequestMapping("out/amb/addDateDrugs.s")
-  protected String outAmbAddDrugs(HttpServletRequest req, Model m) {
-    Integer patient = Util.getInt(req, "id");
-    Date minDate = dAmbDrugDate.minDate(patient);
-    Date maxDate = dAmbDrugDate.maxDate(patient);
-    //
-    long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
-    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
-    List<String> dates = Util.getListDates(minDate, (int) (diff));
-    String d = "";
-    for(String dt: dates) {
-      if(dt.contains(Util.get(req, "dt")))
-        d = dt;
-    }
-    //
-    List<AmbDrugDates> dds = dAmbDrugDate.getList("From AmbDrugDates Where checked = 1 And ambDrug.patient.id = " + Util.get(req, "id") + " And date = '" + Util.dateDB(d) + "'");
-    List<Obj> drugs = new ArrayList<Obj>();
-    for(AmbDrugDates dd: dds) {
-      List<AmbDrugRows> rows = dAmbDrugRow.getList("From AmbDrugRows Where ambDrug.id = " + dd.getAmbDrug().getId());
-      for (AmbDrugRows row : rows) {
-        if (!row.getSource().equals("own")) {
-          Obj obj = new Obj();
-          obj.setId(row.getDrug().getId());
-          obj.setName(row.getDrug().getName());
-          List<HNDrugs> ffs = dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr") + " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + row.getDrug().getId());
-          List<ObjList> list = new ArrayList<ObjList>();
-          for (HNDrugs ff : ffs) {
-            ObjList o = new ObjList();
-            o.setC1(ff.getId().toString());
-            o.setC2(ff.getDrug().getName() + " (Остаток: " + (ff.getDrugCount() - ff.getRasxod()) + ")");
-            o.setC3(ff.getMeasure().getName());
-            o.setC4((ff.getDrugCount() - ff.getRasxod()) + "");
-            o.setC5(row.getRasxod().toString());
-            list.add(o);
-          }
-          obj.setList(list);
-          if(list.size() > 0)
-            drugs.add(obj);
-        }
-      }
-    }
-    m.addAttribute("drugs", drugs);
-    //
-    return "/med/head_nurse/out/amb/addDrugs";
-  }
-
-  @RequestMapping(value = "out/row/amb/saves.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbRowSaves(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      //
-      String[] ids = req.getParameterValues("ids");
-      if(ids != null) {
-        for (String id : ids) {
-          String hid = Util.get(req, "drug_" + id);
-          String rasxod = Util.get(req, "drug_count_" + id);
-          if (hid != null && rasxod != null && !hid.equals("") && !rasxod.equals("") && Double.parseDouble(rasxod) > 0) {
-            HNDateAmbRows row = new HNDateAmbRows();
-            row.setHndrug(dhnDrug.get(Integer.parseInt(hid)));
-            row.setDrug(row.getHndrug().getDrug());
-            row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
-            row.setRasxod(Double.parseDouble(rasxod));
-            row.setDate(row.getDoc().getDate());
-            row.setPatient(row.getDoc().getPatient());
-            row.setCrBy(session.getUserId());
-            row.setCrOn(new Date());
-            dhnDateAmbRow.save(row);
-            HNDrugs drug = row.getHndrug();
-            drug.setRasxod(drug.getRasxod() + row.getRasxod());
-            dhnDrug.save(drug);
-          }
-        }
-      }
-      //
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
+  @Autowired private SDrug sDrug;
   //endregion
 
   //region OUT_PATIENT
@@ -462,7 +127,6 @@ public class CHeadNurse {
   protected String outPatient(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out/patient.s");
-    Users user = dUser.get(session.getUserId());
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     StringBuilder arr = new StringBuilder("(");
@@ -490,10 +154,7 @@ public class CHeadNurse {
     dh.put("hn_pat_out", endDate);
     session.setDateEnd(dh);
     //
-    if(user.isMainNurse())
-      m.addAttribute("rows", dhnDate.getList("From HNDates Where typeCode = 'STAT' And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By date Desc"));
-    else
-      m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And typeCode = 'STAT' And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By date Desc"));
+    m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And typeCode = 'STAT' And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By date Desc"));
     //
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
@@ -593,28 +254,6 @@ public class CHeadNurse {
     return json.toString();
   }
 
-  @RequestMapping(value = "saldo/edit.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String saldoEdit(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      HNDrugs drug = dhnDrug.get(Util.getInt(req, "id"));
-      if(!(drug.getDrugCount() - Double.parseDouble(Util.nvl(req, "counter", "0")) >= 0) || Double.parseDouble(Util.nvl(req, "counter", "0")) > drug.getDrugCount()) {
-        json.put("success", false);
-        json.put("msg", "Проверьте правильности данных. Остаток не может быть меньше 0");
-        return json.toString();
-      }
-      drug.setRasxod(drug.getDrugCount() - Double.parseDouble(Util.nvl(req, "counter", "0")));
-      dhnDrug.save(drug);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
   @RequestMapping(value = "out/patient/delete.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outPatientDelete(HttpServletRequest req) throws JSONException {
@@ -622,12 +261,8 @@ public class CHeadNurse {
     try {
       int id = Util.getInt(req, "id");
       List<HNDatePatientRows> rows = dhnDatePatientRow.getList("From HNDatePatientRows Where doc.id = " + id);
-      for(HNDatePatientRows row: rows) {
-        HNDrugs drug = row.getDrug();
-        drug.setRasxod(drug.getRasxod() - row.getRasxod());
-        dhnDrug.save(drug);
-        dhnDatePatientRow.delete(row.getId());
-      }
+      if(rows.size() > 0)
+        return Util.err(json, "Нельзя удалить документ! Документ имеет записи");
       dhnDate.delete(id);
       json.put("success", true);
     } catch (Exception e) {
@@ -657,27 +292,28 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
+      double rasxod = Double.parseDouble(Util.get(req, "rasxod"));
       if(Util.isNull(req, "edit")) {
         HNDatePatientRows row = new HNDatePatientRows();
         row.setDrug(dhnDrug.get(Util.getInt(req, "id")));
         row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
-        row.setRasxod(Double.parseDouble(Util.get(req, "rasxod")));
+        row.setRasxod(rasxod);
         row.setDate(row.getDoc().getDate());
         row.setPatient(dPatient.get(Util.getInt(req, "patient")));
         row.setMeasure(row.getDrug().getMeasure());
         row.setCrBy(session.getUserId());
         row.setCrOn(new Date());
+        sDrug.hndrug_rasxod(row.getDrug().getId(), row.getRasxod());
         dhnDatePatientRow.save(row);
-        HNDrugs drug = row.getDrug();
-        drug.setRasxod(drug.getRasxod() + row.getRasxod());
-        dhnDrug.save(drug);
       } else {
         HNDatePatientRows row = dhnDatePatientRow.get(Util.getInt(req, "id"));
-        HNDrugs saldo = row.getDrug();
-        saldo.setRasxod(saldo.getRasxod() - row.getRasxod() + Double.parseDouble(Util.get(req, "rasxod")));
-        dhnDrug.save(saldo);
-        row.setRasxod(Double.parseDouble(Util.get(req, "rasxod")));
-        dhnDatePatientRow.save(row);
+        sDrug.hndrug_rasxod(row.getDrug().getId(), rasxod - row.getRasxod());
+        if(rasxod == 0) {
+          dhnDatePatientRow.delete(row.getId());
+        } else {
+          row.setRasxod(rasxod);
+          dhnDatePatientRow.save(row);
+        }
       }
       json.put("success", true);
     } catch (Exception e) {
@@ -709,10 +345,8 @@ public class CHeadNurse {
             row.setMeasure(row.getDrug().getMeasure());
             row.setCrBy(session.getUserId());
             row.setCrOn(new Date());
+            sDrug.hndrug_rasxod(row.getDrug().getId(), row.getRasxod());
             dhnDatePatientRow.save(row);
-            HNDrugs drug = row.getDrug();
-            drug.setRasxod(drug.getRasxod() + row.getRasxod());
-            dhnDrug.save(drug);
           }
         }
       }
@@ -730,13 +364,13 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     HNDates doc = dhnDate.get(Util.getInt(req, "id"));
     m.addAttribute("doc", doc);
-    m.addAttribute("pat", dPatient.get(Util.getInt(req, "patient")));
-    Users user = dUser.get(session.getUserId());
-    if(user.isMainNurse()) {
-      m.addAttribute("drugs", dhnDatePatientRow.getList("From HNDatePatientRows Where doc.id = " + doc.getId() + " And patient.id = " + Util.get(req, "patient")));
-    } else {
-      m.addAttribute("drugs", dhnDatePatientRow.getList("From HNDatePatientRows Where drug.direction.id = " + doc.getDirection().getId() + " And doc.id = " + doc.getId() + " And patient.id = " + Util.get(req, "patient")));
-    }
+    Patients pat = dPatient.get(Util.getInt(req, "patient"));
+    m.addAttribute("pat", pat);
+    Calendar end = Calendar.getInstance();
+    end.setTime(new Date());
+    end.add(Calendar.DATE, -3);
+    m.addAttribute("canReturn", (pat.getPaid() == null || !pat.getPaid().equals("CLOSED")) && "CON".equals(doc.getState()) && doc.getDate().after(end.getTime()));
+    m.addAttribute("drugs", dhnDatePatientRow.getList("From HNDatePatientRows Where drug.direction.id = " + doc.getDirection().getId() + " And doc.id = " + doc.getId() + " And patient.id = " + Util.get(req, "patient")));
     //
     return "/med/head_nurse/out/patient/list";
   }
@@ -876,14 +510,10 @@ public class CHeadNurse {
     JSONObject json = new JSONObject();
     try {
       HNDatePatients dp = dhnDatePatient.get(Util.getInt(req, "id"));
-      if(dhnDatePatientRow.getCount("From HNDatePatientRows Where doc.id = " + dp.getDate().getId() + " And patient.id = " + dp.getPatient().getId()) == 0) {
-        dhnDatePatient.delete(dp.getId());
-        json.put("msg", "Данные успешно сохранены");
-        json.put("success", true);
-      } else {
-        json.put("msg", "Нельзя удалить данные! По данному пациенту существует списание препаратов");
-        json.put("success", false);
-      }
+      if(dhnDatePatientRow.getCount("From HNDatePatientRows Where doc.id = " + dp.getDate().getId() + " And patient.id = " + dp.getPatient().getId()) != 0)
+        return Util.err(json, "Нельзя удалить данные! По данному пациенту существует списание препаратов");
+      dhnDatePatient.delete(dp.getId());
+      json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
@@ -898,9 +528,7 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     try {
       HNDatePatientRows row = dhnDatePatientRow.get(Util.getInt(req, "id"));
-      HNDrugs drug = row.getDrug();
-      drug.setRasxod(drug.getRasxod() - row.getRasxod());
-      dhnDrug.save(drug);
+      sDrug.hndrug_rasxod(row.getDrug().getId(), -row.getRasxod());
       dhnDatePatientRow.delete(row.getId());
       json.put("success", true);
     } catch (Exception e) {
@@ -1011,7 +639,7 @@ public class CHeadNurse {
     dh.put("hn_out", endDate);
     session.setDateEnd(dh);
     //
-    m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And typeCode = 'OUT' Order By date Desc"));
+    m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And typeCode = 'OUT' Order By date Desc"));
     //
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
@@ -1043,7 +671,8 @@ public class CHeadNurse {
       }
       model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And direction.id = " + (obj.getId() == 0 ? 0 : obj.getDirection().getId())  + " Order By t.drug.name"));
       model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
-      model.addAttribute("receivers", dhnDirection.getAll());
+
+      model.addAttribute("receivers", dhnDirection.getList("From HNDirections t Where Exists (Select 1 From HNDirectionLinks c where c.rasxod = t.id And c.direction in " + arr + ")"));
       model.addAttribute("rows", dhnDateRow.getList("From HNDateRows Where doc.id = " + obj.getId()));
       model.addAttribute("obj", obj);
     } catch (Exception e) {
@@ -1108,23 +737,20 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
+      double rasxod = Double.parseDouble(Util.get(req, "rasxod"));
       if(Util.isNull(req, "edit")) {
         HNDateRows row = new HNDateRows();
         row.setDrug(dhnDrug.get(Util.getInt(req, "id")));
         row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
-        row.setRasxod(Double.parseDouble(Util.get(req, "rasxod")));
+        row.setRasxod(rasxod);
         row.setCrBy(session.getUserId());
         row.setCrOn(new Date());
+        sDrug.hndrug_rasxod(row.getDrug().getId(), row.getRasxod());
         dhnDateRow.save(row);
-        HNDrugs drug = row.getDrug();
-        drug.setRasxod(drug.getRasxod() + row.getRasxod());
-        dhnDrug.save(drug);
       } else {
         HNDateRows row = dhnDateRow.get(Util.getInt(req, "id"));
-        HNDrugs saldo = row.getDrug();
-        saldo.setRasxod(saldo.getRasxod() - row.getRasxod() + Double.parseDouble(Util.get(req, "rasxod")));
-        dhnDrug.save(saldo);
-        row.setRasxod(Double.parseDouble(Util.get(req, "rasxod")));
+        sDrug.hndrug_rasxod(row.getDrug().getId(), rasxod - row.getRasxod());
+        row.setRasxod(rasxod);
         dhnDateRow.save(row);
       }
       json.put("success", true);
@@ -1142,9 +768,7 @@ public class CHeadNurse {
     JSONObject json = new JSONObject();
     try {
       HNDateRows row = dhnDateRow.get(Util.getInt(req, "id"));
-      HNDrugs saldo = row.getDrug();
-      saldo.setRasxod(saldo.getRasxod() - row.getRasxod());
-      dhnDrug.save(saldo);
+      sDrug.hndrug_rasxod(row.getDrug().getId(), -row.getRasxod());
       dhnDateRow.delete(row.getId());
       json.put("success", true);
     } catch (Exception e) {
@@ -1162,9 +786,7 @@ public class CHeadNurse {
       int id = Util.getInt(req, "id");
       List<HNDateRows> rows = dhnDateRow.getList("From HNDateRows Where doc.id = " + id);
       for(HNDateRows row: rows) {
-        HNDrugs drug = row.getDrug();
-        drug.setRasxod(drug.getRasxod() - row.getRasxod());
-        dhnDrug.save(drug);
+        sDrug.hndrug_rasxod(row.getDrug().getId(), -row.getRasxod());
         dhnDateRow.delete(row.getId());
       }
       dhnDate.delete(id);
@@ -1250,16 +872,6 @@ public class CHeadNurse {
     arr.append("0)");
     //
     List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.equals("") ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
-    /*for(HNDrugs drug: drugs) {
-      if(drug.getOutRow() != null && drug.getOutRow().getIncome() != null) {
-        Calendar db = new GregorianCalendar();
-        db.setTime(drug.getOutRow().getIncome().getEndDate());
-        Calendar de = new GregorianCalendar();
-        de.setTime(new Date());
-        int yb = db.get(Calendar.YEAR) - de.get(Calendar.YEAR);
-        int mb = db.get(Calendar.MONTH) - de.get(Calendar.MONTH);
-      }
-    }*/
     m.addAttribute("rows", drugs);
     m.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
     m.addAttribute("receivers", lines);
@@ -1270,68 +882,27 @@ public class CHeadNurse {
     return "/med/head_nurse/saldo/index";
   }
 
-  @RequestMapping(value = "saldo/counter.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String saldoCounter(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      JSONArray rows = new JSONArray();
-      List<DrugCount> counts = dDrugCount.getList("From DrugCount Where drug.id = " + Util.getInt(req, "id"));
-      for(DrugCount count: counts) {
-        JSONObject obj = new JSONObject();
-        obj.put("id", count.getId());
-        obj.put("drug_count", count.getDrugCount());
-        obj.put("measure_id", count.getMeasure().getId());
-        obj.put("measure", count.getMeasure().getName());
-        rows.put(obj);
-      }
-      json.put("rows", rows);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
+  @RequestMapping("saldo/excel.s")
+  protected String saldo_excel(HttpServletRequest req, Model m) {
+    Session session = SessionUtil.getUser(req);
+    String page_code = Util.get(req, "code", "saldo");
+    String filter = Util.toUTF8(Util.get(req, "filter", ""));
+    String direction = Util.get(req, "direction", "0");
+    //
+    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    StringBuilder arr = new StringBuilder("(");
+    for(UserDrugLines line: lines) {
+      if(direction.equals("0") || direction.equals(""))
+        arr.append(line.getDirection().getId()).append(",");
+      else if(direction.equals(line.getDirection().getId().toString()))
+        arr.append(line.getDirection().getId()).append(",");
     }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "saldo/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String saldoSave(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      HNDrugs drug = new HNDrugs();
-      drug.setDrug(dDrug.get(Util.getInt(req, "id")));
-      drug.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
-      drug.setOutRow(null);
-      drug.setMeasure(drug.getMeasure());
-      drug.setDrugCount(drug.getDrugCount());
-      drug.setRasxod(0D);
-      drug.setCrBy(session.getUserId());
-      drug.setCrOn(new Date());
-      dhnDrug.save(drug);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "saldo/row/del.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String saldoRowDel(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      dhnDrug.delete(Util.getInt(req, "id"));
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
+    arr.append("0)");
+    //
+    List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.equals("") ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
+    m.addAttribute("rows", drugs);
+    m.addAttribute("header_title", "Остаток на " + Util.getCurDate() + " " + Util.getCurTime());
+    return "/med/head_nurse/saldo/excel";
   }
   //endregion
 
@@ -1555,7 +1126,6 @@ public class CHeadNurse {
   protected String shock(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/transfer.s");
-    Users user = dUser.get(session.getUserId());
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     StringBuilder arr = new StringBuilder("(");
@@ -1583,10 +1153,7 @@ public class CHeadNurse {
     dh.put("hn_shock", endDate);
     session.setDateEnd(dh);
     //
-    if(user.isMainNurse())
-      m.addAttribute("rows", dhnDate.getList("From HNOpers Where date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By crOn Desc"));
-    else
-      m.addAttribute("rows", dhnDate.getList("From HNOpers Where (parent.id in " + arr + " Or direction.id in " + arr + ") And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By crOn Desc"));
+    m.addAttribute("rows", dhnDate.getList("From HNOpers Where (parent.id in " + arr + " Or direction.id in " + arr + ") And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By crOn Desc"));
     //
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
@@ -1614,8 +1181,14 @@ public class CHeadNurse {
       HNOpers obj = Util.getInt(req, "id") > 0 ? dhnOper.get(Util.getInt(req, "id")) : new HNOpers();
       if(Util.getInt(req, "id") == 0) { obj.setId(0); obj.setDate(new Date()); }
       model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And direction.id = " + (obj.getId() == 0 ? 0 : obj.getParent().getId())  + " Order By t.drug.name"));
-      model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
-      model.addAttribute("shocks", dDrugDirection.getAll());
+      if(session.getUserId() == 1)
+        model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where direction.state = 'A' And user.id = " + session.getUserId()));
+      else
+        model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where direction.state = 'A' And direction.transfer = 'Y' And user.id = " + session.getUserId()));
+      if(session.getUserId() == 1)
+        model.addAttribute("shocks", dDrugDirection.getList("From DrugDirections Where state = 'A'"));
+      else
+        model.addAttribute("shocks", dDrugDirection.getList("From DrugDirections Where state = 'A' And transfer = 'Y'"));
       model.addAttribute("rows", dhnDateRow.getList("From HNDrugs Where transfer = " + obj.getId()));
       model.addAttribute("obj", obj);
     } catch (Exception e) {
@@ -1639,11 +1212,8 @@ public class CHeadNurse {
       HNOpers obj = id.equals("0") || id.equals("") ? new HNOpers() : dhnOper.get(Integer.parseInt(id));
       obj.setParent(dDrugDirection.get(Util.getInt(req, "parent")));
       obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
-      if(obj.getParent().getId().equals(obj.getDirection().getId())) {
-        json.put("msg", "Склад и получатель не может быть одинаковым");
-        json.put("success", false);
-        return json.toString();
-      }
+      if(obj.getParent().getId().equals(obj.getDirection().getId()))
+        return Util.err(json, "Склад и получатель не может быть одинаковым");
       obj.setCrBy(dUser.get(session.getUserId()));
       obj.setCrOn(new Date());
       obj.setDate(Util.stringToDate(Util.get(req, "doc_date")));
@@ -1671,10 +1241,8 @@ public class CHeadNurse {
       row.setDirection(dhnOper.get(Util.getInt(req, "doc")).getDirection());
       row.setDrugCount(Double.parseDouble(Util.get(req, "rasxod")));
       row.setRasxod(0D);
+      sDrug.hndrug_rasxod(Util.getInt(req, "id"), row.getDrugCount());
       dhnDrug.save(row);
-      HNDrugs drug = dhnDrug.get(Util.getInt(req, "id"));
-      drug.setRasxod(drug.getRasxod() + row.getDrugCount());
-      dhnDrug.save(drug);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1690,14 +1258,9 @@ public class CHeadNurse {
     JSONObject json = new JSONObject();
     try {
       HNDrugs row = dhnDrug.get(Util.getInt(req, "id"));
-      if(row.getRasxod() > 0) {
-        json.put("success", false);
-        json.put("msg", "Нельзя удалить запись существуют расходные операции");
-        return json.toString();
-      }
-      HNDrugs saldo = dhnDrug.get(row.getTransfer_hndrug_id());
-      saldo.setRasxod(saldo.getRasxod() - row.getDrugCount());
-      dhnDrug.save(saldo);
+      if(row.getRasxod() > 0)
+        return Util.err(json, "Нельзя удалить запись существуют расходные операции");
+      sDrug.hndrug_rasxod(row.getTransfer_hndrug_id(), -row.getDrugCount());
       dhnDrug.delete(row.getId());
       json.put("success", true);
     } catch (Exception e) {
@@ -1713,18 +1276,9 @@ public class CHeadNurse {
     JSONObject json = new JSONObject();
     try {
       int id = Util.getInt(req, "id");
-      List<HNDrugs> rows = dhnDrug.getList("From HNDrugs Where parent_id = " + id);
-      for(HNDrugs row: rows) {
-        if(row.getRasxod() > 0) {
-          json.put("success", false);
-          json.put("msg", "Нельзя удалить запись существуют расходные операции");
-          return json.toString();
-        }
-        HNDrugs drug = dhnDrug.get(row.getTransfer_hndrug_id());
-        drug.setRasxod(drug.getRasxod() - row.getDrugCount());
-        dhnDrug.save(drug);
-        dhnDrug.delete(row.getId());
-      }
+      List<HNDrugs> rows = dhnDrug.getList("From HNDrugs Where transfer = " + id);
+      if(rows.size() > 0)
+        return Util.err(json, "Нельзя удалить документ. Сначала удалите детализацию");
       dhnOper.delete(id);
       json.put("success", true);
     } catch (Exception e) {
@@ -1744,11 +1298,8 @@ public class CHeadNurse {
     ResultSet rs = null;
     try {
       HNOpers doc = dhnOper.get(Util.getInt(req, "id"));
-      if(dhnDrug.getCount("From HNDrugs Where transfer = " + doc.getId()) == 0) {
-        json.put("success", false);
-        json.put("msg", "Нельзя подтвердить документ без записи");
-        return json.toString();
-      }
+      if(dhnDrug.getCount("From HNDrugs Where transfer = " + doc.getId()) == 0)
+        return Util.err(json, "Нельзя подтвердить документ без записи");
       doc.setState("CON");
       dhnOper.save(doc);
       json.put("success", true);
@@ -1759,282 +1310,6 @@ public class CHeadNurse {
       DB.done(rs);
       DB.done(ps);
       DB.done(conn);
-    }
-    return json.toString();
-  }
-  //endregion
-
-  //region DICTS
-  @RequestMapping("dicts.s")
-  protected String dicts(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/head_nurse/dicts.s");
-    session.setCurSubUrl("/head_nurse/dicts/directions.s");
-    //
-    return "/med/head_nurse/dicts/index";
-  }
-
-  @RequestMapping("dicts/directions.s")
-  protected String dicstDirection(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/head_nurse/dicts/directions.s");
-    //
-    model.addAttribute("list", dhnDirection.getAll());
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
-    StringBuilder arr = new StringBuilder("(");
-    for(UserDrugLines line: lines) {
-      arr.append(line.getDirection().getId()).append(",");
-    }
-    arr.append("0)");
-    model.addAttribute("directions", dDrugDirection.getList("From DrugDirections Where id in " + arr));
-    return "/med/head_nurse/dicts/directions/index";
-  }
-
-  @RequestMapping(value = "/dict/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String deleteDict(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      if(Util.get(req, "code").equals("direction")) dhnDirection.delete(Util.getInt(req, "id"));
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "/dict/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String save(HttpServletRequest req) throws JSONException {
-    Session session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      if(Util.get(req, "code").equals("direction")) {
-        HNDirections obj = Util.isNull(req, "id") ? new HNDirections() : dhnDirection.get(Util.getInt(req, "id"));
-        obj.setName(Util.get(req, "name"));
-        obj.setState(Util.isNull(req, "state") ? "P" : "A");
-        if (Util.isNull(req, "id")) {
-          obj.setCrBy(session.getUserId());
-          obj.setCrOn(new Date());
-        }
-        dhnDirection.save(obj);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "/dict/get.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String getDict(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      if(Util.get(req, "code").equals("direction")) {
-        HNDirections obj = dhnDirection.get(Util.getInt(req, "id"));
-        json.put("id", obj.getId());
-        json.put("name", obj.getName());
-        json.put("state", obj.getState());
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-  //endregion
-
-  //region PATIENT
-  @RequestMapping("patients.s")
-  protected String patients(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/head_nurse/patients.s");
-    String setFilter = Util.get(req, "set");
-    String filter = session.getFilters().get("hn_patient_filter");
-    if(setFilter != null || filter == null || filter.equals("")) filter = Util.toUTF8(Util.get(req, "filter", "")).toUpperCase();
-    Calendar start = Calendar.getInstance();
-    start.setTime(new Date());
-    start.add(Calendar.DATE, -4);
-    Calendar end = Calendar.getInstance();
-    end.setTime(new Date());
-    end.add(Calendar.DATE, 2);
-    //
-    String db = session.getDateBegin().get("hn_pat");
-    if(db == null) db = Util.dateToString(start.getTime());
-    String de = session.getDateEnd().get("hn_pat");
-    if(de == null) de = Util.dateToString(end.getTime());
-    //
-    String startDate = Util.get(req, "period_start", db);
-    String endDate = Util.get(req, "period_end", de);
-    //
-    HashMap<String, String> dh = session.getDateBegin();
-    dh.put("hn_pat", startDate);
-    session.setDateBegin(dh);
-    dh = session.getDateEnd();
-    dh.put("hn_pat", endDate);
-    session.setDateEnd(dh);
-    HashMap<String, String> fl = session.getFilters();
-    fl.put("hn_patient_filter", filter);
-    session.setFilters(fl);
-    String where = "";
-    if(!filter.equals("")) {
-      where = " (Upper(patient.surname) like '%" + filter + "%' Or Upper(patient.name) like '%" + filter + "%' Or Upper(patient.middlename) like '%" + filter + "%' Or Upper(patient.yearNum) like '%" + filter + "%') And ";
-    }
-    //
-    m.addAttribute("list", dhnPatient.getList("From HNPatients t Where " + where + " (t.dateEnd = null Or t.dateEnd = '' Or t.dateEnd Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "') Order By t.id Desc"));
-    m.addAttribute("period_start", startDate);
-    m.addAttribute("period_end", endDate);
-    m.addAttribute("filter_word", filter);
-    //
-    return "/med/head_nurse/patients/index";
-  }
-
-  @RequestMapping("patient/info.s")
-  protected String addPatients(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    String id = Util.get(req, "id");
-    session.setCurUrl("/head_nurse/patient/info.s?id=" + id);
-    //
-    m.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
-    m.addAttribute("counters", dDrugCount.getAll());
-    m.addAttribute("rows", dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + id));
-    m.addAttribute("obj", dhnPatient.get(Integer.parseInt(id)));
-    //
-    return "/med/head_nurse/patients/addEdit";
-  }
-
-  @RequestMapping(value = "patient/filter.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String patientFilter(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    JSONArray list = new JSONArray();
-    try {
-      String fio = Util.get(req, "fio");
-      List<Patients> patients = dPatient.getList("From Patients Where lower(surname) like '%" + fio + "%' Or lower(name) like '%" + fio + "%' Or lower(middlename) like '%" + fio + "%'");
-      for(Patients pat: patients) {
-        JSONObject obj = new JSONObject();
-        obj.put("id", pat.getId());
-        obj.put("fio", pat.getSurname() + " " + pat.getName() + " " + pat.getMiddlename());
-        obj.put("start_date", Util.dateToString(pat.getDateBegin()));
-        obj.put("end_date", Util.dateToString(pat.getDateEnd()));
-        obj.put("birth_year", pat.getBirthyear());
-        obj.put("palata", pat.getRoom().getName());
-        //
-        list.put(obj);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    json.put("patients", list);
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String patientSave(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      HNPatients hnPatient = new HNPatients();
-      hnPatient.setPatient(dPatient.get(Util.getInt(req, "patient")));
-      if(Util.isNotNull(req, "id")) {
-        hnPatient = dhnPatient.get(Util.getInt(req, "id"));
-      } else {
-        hnPatient.setDateEnd(hnPatient.getPatient().getDateEnd());
-        hnPatient.setDayCount(10);
-        hnPatient.setState("E");
-        hnPatient.setClosed("N");
-      }
-      //
-      dhnPatient.saveAndReturn(hnPatient);
-      json.put("id", hnPatient.getId());
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String deletePatient(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      dhnPatientDrug.deletePatient(Util.getInt(req, "id"));
-      dhnPatient.delete(Util.getInt(req, "id"));
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/drug/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String patientDrugSave(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    Connection conn = null;
-    try {
-      conn = DB.getConnection();
-      HNPatientDrugs drug = new HNPatientDrugs();
-      drug.setParent(dhnPatient.get(Util.getInt(req, "parent")));
-      drug.setDrug(dDrug.get(Util.getInt(req, "drug")));
-
-      drug.setCounter(dDrugCount.get(Util.getInt(req, "counter")));
-      drug.setDrugPrice(DB.getSum(conn, "Select Max(t.price) price From (Select Max(t.price) price From drug_act_drugs t Where t.drug_Id = " + drug.getDrug().getId() + ") t"));
-      drug.setPrice(drug.getDrug().getPrice() == null ? drug.getDrugPrice() : drug.getDrug().getPrice());
-      drug.setServiceCount(Double.parseDouble(Util.get(req, "drug_count")));
-      dhnPatientDrug.save(drug);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    } finally {
-      DB.done(conn);
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/drug/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String patientDrugDelete(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      if(session.getUserId() == 1)
-        dhnPatientDrug.delete(Util.getInt(req, "id"));
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/confirm.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String patientConfirm(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
-      pat.setState("C");
-      dhnPatient.save(pat);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
     }
     return json.toString();
   }
@@ -2358,9 +1633,9 @@ public class CHeadNurse {
     session.setDateEnd(dh);
     List<NurseEats> list;
     if(session.getUserId() == 1)
-      list = dNurseEat.getList("From NurseEats Where actDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By Id Desc");
+      list = dNurseEat.getList("From NurseEats Where date(actDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By Id Desc");
     else
-      list = dNurseEat.getList("From NurseEats Where actDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And crBy.id = " + session.getUserId() + " Order By Id Desc");
+      list = dNurseEat.getList("From NurseEats Where date(actDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And crBy.id = " + session.getUserId() + " Order By Id Desc");
     List<ObjList> objLists = new ArrayList<ObjList>();
     for(NurseEats l : list) {
       ObjList obj = new ObjList();
@@ -2634,6 +1909,524 @@ public class CHeadNurse {
         json.put("success", false);
         json.put("msg", "Нельзя подтвердить документ без записи");
       }
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+  //endregion
+
+
+
+
+
+
+
+
+  //region OUT_AMB_PATIENT
+  @RequestMapping("out/amb.s")
+  protected String outAmbPatient(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/head_nurse/out/amb.s");
+    //
+    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    StringBuilder arr = new StringBuilder("(");
+    for(UserDrugLines line: lines) {
+      arr.append(line.getDirection().getId()).append(",");
+    }
+    arr.append("0)");
+    //
+    Calendar end = Calendar.getInstance();
+    end.setTime(new Date());
+    end.add(Calendar.DATE, 2);
+    //
+    String db = session.getDateBegin().get("hn_amb_out");
+    if(db == null) db = "01" + Util.getCurDate().substring(2);
+    String de = session.getDateEnd().get("hn_amb_out");
+    if(de == null) de = Util.dateToString(end.getTime());
+    //
+    String startDate = Util.get(req, "period_start", db);
+    String endDate = Util.get(req, "period_end", de);
+    //
+    HashMap<String, String> dh = session.getDateBegin();
+    dh.put("hn_amb_out", startDate);
+    session.setDateBegin(dh);
+    dh = session.getDateEnd();
+    dh.put("hn_amb_out", endDate);
+    session.setDateEnd(dh);
+    //
+    m.addAttribute("rows", dhnDate.getList("From HNDates Where typeCode = 'AMB' And direction.id in " + arr + " And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc"));
+    //
+    m.addAttribute("period_start", startDate);
+    m.addAttribute("period_end", endDate);
+    return "/med/head_nurse/out/amb/index";
+  }
+
+  @RequestMapping("out/amb/save.s")
+  protected String outAmbSave(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/head_nurse/out/amb/save.s?id=" + Util.getInt(req, "id"));
+    //
+    List<HNDateAmbRows> rows = new ArrayList<HNDateAmbRows>();
+    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    StringBuilder arr = new StringBuilder("(");
+    for(UserDrugLines line: lines) {
+      arr.append(line.getDirection().getId()).append(",");
+    }
+    arr.append("0)");
+    double drugSum = 0, drugSums = 0;
+    try {
+      //
+      HNDates obj = Util.getInt(req, "id") > 0 ? dhnDate.get(Util.getInt(req, "id")) : new HNDates();
+      if(Util.getInt(req, "id") == 0) { obj.setId(0); obj.setDate(new Date()); }
+      if(Util.getInt(req, "id") > 0) {
+        rows = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.id = " + obj.getId());
+        model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And t.direction.id = " + obj.getDirection().getId() + " Order BY t.drug.name"));
+        model.addAttribute("drug_exist", dAmbDrug.getCount("From AmbDrugs Where patient.id = " + obj.getPatient().getId()) > 0);
+        for(HNDateAmbRows drug: rows) {
+          if(drug.getDoc().getPaid().equals("N"))
+            drugSum += drug.getRasxod() * drug.getHndrug().getPrice();
+          drugSums += drug.getRasxod() * drug.getHndrug().getPrice();
+        }
+      }
+      model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
+      model.addAttribute("rows", rows);
+      model.addAttribute("drugSum", drugSums);
+      model.addAttribute("notPaidSum", drugSum);
+      model.addAttribute("patients", dAmbPatient.getList("From AmbPatients Where state != 'ARCH' Order By surname"));
+      model.addAttribute("obj", obj);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    //
+    return "/med/head_nurse/out/amb/addEdit";
+  }
+
+  @RequestMapping(value = "out/amb/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String outAmbSave(HttpServletRequest req) throws JSONException {
+    session = SessionUtil.getUser(req);
+    JSONObject json = new JSONObject();
+    try {
+      String id = Util.nvl(req, "id", "0");
+      HNDates obj = id.equals("0") || id.equals("") ? new HNDates() : dhnDate.get(Integer.parseInt(id));
+      obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
+      obj.setPatient(dAmbPatient.get(Util.getInt(req, "patient")));
+      if(obj.getId() == null) {
+        obj.setCrBy(dUser.get(session.getUserId()));
+        obj.setCrOn(new Date());
+        obj.setDate(Util.stringToDate(Util.get(req, "doc_date")));
+        obj.setState("ENT");
+        obj.setPaid("N");
+        if(obj.getDate().before(Util.stringToDate(Util.getCurDate()))) {
+          json.put("success", false);
+          json.put("msg", "Дата операции не может быть меньше текущей даты");
+          return json.toString();
+        }
+      }
+      obj.setTypeCode("AMB");
+      dhnDate.saveAndReturn(obj);
+      json.put("id", obj.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "out/amb/delete.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String outAmbDelete(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    Connection conn = null;
+    try {
+      conn = DB.getConnection();
+      HNDates date = dhnDate.get(Util.getInt(req, "id"));
+      List<HNDateAmbRows> rows = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.id = " + date.getId());
+      for(HNDateAmbRows row: rows) {
+        sDrug.hndrug_rasxod(row.getHndrug().getId(), -row.getRasxod());
+        dhnDateAmbRow.delete(row.getId());
+      }
+      AmbPatients patient = date.getPatient();
+      Double summ = DB.getSum(conn, "Select Sum(t.price) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('PAID', 'DONE', 'DEL', 'AUTO_DEL')");
+      Double count = DB.getSum(conn, "Select Count(*) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('DONE', 'DEL', 'AUTO_DEL')");
+      if (summ > 0) {
+        patient.setState("CASH");
+      } else {
+        if (count == 0) {
+          patient.setState("DONE");
+        } else {
+          patient.setState("WORK");
+        }
+      }
+      dAmbPatient.save(patient);
+      dhnDate.delete(date.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    } finally {
+      DB.done(conn);
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "out/row/amb/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String outAmbRowSave(HttpServletRequest req) throws JSONException {
+    session = SessionUtil.getUser(req);
+    JSONObject json = new JSONObject();
+    try {
+      HNDateAmbRows row = new HNDateAmbRows();
+      row.setHndrug(dhnDrug.get(Util.getInt(req, "id")));
+      row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
+      row.setRasxod(Double.parseDouble(Util.get(req, "rasxod")));
+      row.setDate(row.getDoc().getDate());
+      row.setPatient(row.getDoc().getPatient());
+      row.setDrug(row.getHndrug().getDrug());
+      row.setCrBy(session.getUserId());
+      row.setCrOn(new Date());
+      sDrug.hndrug_rasxod(row.getHndrug().getId(), row.getRasxod());
+      dhnDateAmbRow.save(row);
+      AmbPatients patient = row.getPatient();
+      patient.setState("CASH");
+      dAmbPatient.save(patient);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "out/amb/row/delete.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String outAmbRowDelete(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    Connection conn = null;
+    try {
+      conn = DB.getConnection();
+      HNDateAmbRows row = dhnDateAmbRow.get(Util.getInt(req, "id"));
+      HNDates doc = row.getDoc();
+      sDrug.hndrug_rasxod(row.getHndrug().getId(), -row.getRasxod());
+      dhnDateAmbRow.delete(row.getId());
+      if(dhnDateAmbRow.getCount("From HNDateAmbRows Where doc.id = " + doc.getId()) == 0) {
+        AmbPatients patient = doc.getPatient();
+        Double summ = DB.getSum(conn, "Select Sum(t.price) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('PAID', 'DONE', 'DEL', 'AUTO_DEL')");
+        Double count = DB.getSum(conn, "Select Count(*) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('DONE', 'DEL', 'AUTO_DEL')");
+        if (summ > 0) {
+          patient.setState("CASH");
+        } else {
+          if (count == 0) {
+            patient.setState("DONE");
+          } else {
+            patient.setState("WORK");
+          }
+        }
+        dAmbPatient.save(patient);
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    } finally {
+      DB.done(conn);
+    }
+    return json.toString();
+  }
+
+  @RequestMapping("out/amb/drugs.s")
+  protected String outAmbDrugs(HttpServletRequest req, Model m) {
+    HNDates doc = dhnDate.get(Util.getInt(req, "doc"));
+    Date minDate = dAmbDrugDate.minDate(doc.getPatient().getId());
+    Date maxDate = dAmbDrugDate.maxDate(doc.getPatient().getId());
+    if(minDate != null) {
+      long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
+      long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
+      m.addAttribute("dates", Util.getDateList(minDate, (int) (diff)));
+    }
+    m.addAttribute("doc", doc);
+    m.addAttribute("drugs", sAmb.getDrugs(doc.getPatient().getId()));
+    return "/med/head_nurse/out/amb/drugs";
+  }
+
+  @RequestMapping("out/amb/addDrug.s")
+  protected String outAmbAddDrug(HttpServletRequest req, Model m) {
+    m.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr")+ " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + Util.getInt(req, "id")));
+    //
+    return "/med/head_nurse/out/amb/addDrug";
+  }
+
+  @RequestMapping("out/amb/addDateDrugs.s")
+  protected String outAmbAddDrugs(HttpServletRequest req, Model m) {
+    Integer patient = Util.getInt(req, "id");
+    Date minDate = dAmbDrugDate.minDate(patient);
+    Date maxDate = dAmbDrugDate.maxDate(patient);
+    //
+    long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
+    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
+    List<String> dates = Util.getListDates(minDate, (int) (diff));
+    String d = "";
+    for(String dt: dates) {
+      if(dt.contains(Util.get(req, "dt")))
+        d = dt;
+    }
+    //
+    List<AmbDrugDates> dds = dAmbDrugDate.getList("From AmbDrugDates Where checked = 1 And ambDrug.patient.id = " + Util.get(req, "id") + " And date = '" + Util.dateDB(d) + "'");
+    List<Obj> drugs = new ArrayList<Obj>();
+    for(AmbDrugDates dd: dds) {
+      List<AmbDrugRows> rows = dAmbDrugRow.getList("From AmbDrugRows Where ambDrug.id = " + dd.getAmbDrug().getId());
+      for (AmbDrugRows row : rows) {
+        if (!row.getSource().equals("own")) {
+          Obj obj = new Obj();
+          obj.setId(row.getDrug().getId());
+          obj.setName(row.getDrug().getName());
+          List<HNDrugs> ffs = dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr") + " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + row.getDrug().getId());
+          List<ObjList> list = new ArrayList<ObjList>();
+          for (HNDrugs ff : ffs) {
+            ObjList o = new ObjList();
+            o.setC1(ff.getId().toString());
+            o.setC2(ff.getDrug().getName() + " (Остаток: " + (ff.getDrugCount() - ff.getRasxod()) + ")");
+            o.setC3(ff.getMeasure().getName());
+            o.setC4((ff.getDrugCount() - ff.getRasxod()) + "");
+            o.setC5(row.getRasxod().toString());
+            list.add(o);
+          }
+          obj.setList(list);
+          if(list.size() > 0)
+            drugs.add(obj);
+        }
+      }
+    }
+    m.addAttribute("drugs", drugs);
+    //
+    return "/med/head_nurse/out/amb/addDrugs";
+  }
+
+  @RequestMapping(value = "out/row/amb/saves.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String outAmbRowSaves(HttpServletRequest req) throws JSONException {
+    session = SessionUtil.getUser(req);
+    JSONObject json = new JSONObject();
+    try {
+      //
+      String[] ids = req.getParameterValues("ids");
+      if(ids != null) {
+        for (String id : ids) {
+          String hid = Util.get(req, "drug_" + id);
+          String rasxod = Util.get(req, "drug_count_" + id);
+          if (hid != null && rasxod != null && !hid.equals("") && !rasxod.equals("") && Double.parseDouble(rasxod) > 0) {
+            HNDateAmbRows row = new HNDateAmbRows();
+            row.setHndrug(dhnDrug.get(Integer.parseInt(hid)));
+            row.setDrug(row.getHndrug().getDrug());
+            row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
+            row.setRasxod(Double.parseDouble(rasxod));
+            row.setDate(row.getDoc().getDate());
+            row.setPatient(row.getDoc().getPatient());
+            row.setCrBy(session.getUserId());
+            row.setCrOn(new Date());
+            sDrug.hndrug_rasxod(row.getHndrug().getId(), row.getRasxod());
+            dhnDateAmbRow.save(row);
+          }
+        }
+      }
+      //
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+  //endregion
+
+  //region PATIENT
+  @RequestMapping("patients.s")
+  protected String patients(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/head_nurse/patients.s");
+    String setFilter = Util.get(req, "set");
+    String filter = session.getFilters().get("hn_patient_filter");
+    if(setFilter != null || filter == null || filter.equals("")) filter = Util.toUTF8(Util.get(req, "filter", "")).toUpperCase();
+    Calendar start = Calendar.getInstance();
+    start.setTime(new Date());
+    start.add(Calendar.DATE, -4);
+    Calendar end = Calendar.getInstance();
+    end.setTime(new Date());
+    end.add(Calendar.DATE, 2);
+    //
+    String db = session.getDateBegin().get("hn_pat");
+    if(db == null) db = Util.dateToString(start.getTime());
+    String de = session.getDateEnd().get("hn_pat");
+    if(de == null) de = Util.dateToString(end.getTime());
+    //
+    String startDate = Util.get(req, "period_start", db);
+    String endDate = Util.get(req, "period_end", de);
+    //
+    HashMap<String, String> dh = session.getDateBegin();
+    dh.put("hn_pat", startDate);
+    session.setDateBegin(dh);
+    dh = session.getDateEnd();
+    dh.put("hn_pat", endDate);
+    session.setDateEnd(dh);
+    HashMap<String, String> fl = session.getFilters();
+    fl.put("hn_patient_filter", filter);
+    session.setFilters(fl);
+    String where = "";
+    if(!filter.equals("")) {
+      where = " (Upper(patient.surname) like '%" + filter + "%' Or Upper(patient.name) like '%" + filter + "%' Or Upper(patient.middlename) like '%" + filter + "%' Or Upper(patient.yearNum) like '%" + filter + "%') And ";
+    }
+    //
+    m.addAttribute("list", dhnPatient.getList("From HNPatients t Where " + where + " (t.dateEnd = null Or t.dateEnd = '' Or t.dateEnd Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "') Order By t.id Desc"));
+    m.addAttribute("period_start", startDate);
+    m.addAttribute("period_end", endDate);
+    m.addAttribute("filter_word", filter);
+    //
+    return "/med/head_nurse/patients/index";
+  }
+
+  @RequestMapping("patient/info.s")
+  protected String addPatients(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    String id = Util.get(req, "id");
+    session.setCurUrl("/head_nurse/patient/info.s?id=" + id);
+    //
+    m.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
+    m.addAttribute("counters", dDrugCount.getAll());
+    m.addAttribute("rows", dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + id));
+    m.addAttribute("obj", dhnPatient.get(Integer.parseInt(id)));
+    //
+    return "/med/head_nurse/patients/addEdit";
+  }
+
+  @RequestMapping(value = "patient/filter.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String patientFilter(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    JSONArray list = new JSONArray();
+    try {
+      String fio = Util.get(req, "fio");
+      List<Patients> patients = dPatient.getList("From Patients Where lower(surname) like '%" + fio + "%' Or lower(name) like '%" + fio + "%' Or lower(middlename) like '%" + fio + "%'");
+      for(Patients pat: patients) {
+        JSONObject obj = new JSONObject();
+        obj.put("id", pat.getId());
+        obj.put("fio", pat.getSurname() + " " + pat.getName() + " " + pat.getMiddlename());
+        obj.put("start_date", Util.dateToString(pat.getDateBegin()));
+        obj.put("end_date", Util.dateToString(pat.getDateEnd()));
+        obj.put("birth_year", pat.getBirthyear());
+        obj.put("palata", pat.getRoom().getName());
+        //
+        list.put(obj);
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    json.put("patients", list);
+    return json.toString();
+  }
+
+  @RequestMapping(value = "patient/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String patientSave(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      HNPatients hnPatient = new HNPatients();
+      hnPatient.setPatient(dPatient.get(Util.getInt(req, "patient")));
+      if(Util.isNotNull(req, "id")) {
+        hnPatient = dhnPatient.get(Util.getInt(req, "id"));
+      } else {
+        hnPatient.setDateEnd(hnPatient.getPatient().getDateEnd());
+        hnPatient.setDayCount(10);
+        hnPatient.setState("E");
+        hnPatient.setClosed("N");
+      }
+      //
+      dhnPatient.saveAndReturn(hnPatient);
+      json.put("id", hnPatient.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "patient/delete.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String deletePatient(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      dhnPatientDrug.deletePatient(Util.getInt(req, "id"));
+      dhnPatient.delete(Util.getInt(req, "id"));
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "patient/drug/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String patientDrugSave(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    Connection conn = null;
+    try {
+      conn = DB.getConnection();
+      HNPatientDrugs drug = new HNPatientDrugs();
+      drug.setParent(dhnPatient.get(Util.getInt(req, "parent")));
+      drug.setDrug(dDrug.get(Util.getInt(req, "drug")));
+
+      drug.setCounter(dDrugCount.get(Util.getInt(req, "counter")));
+      drug.setDrugPrice(DB.getSum(conn, "Select Max(t.price) price From (Select Max(t.price) price From drug_act_drugs t Where t.drug_Id = " + drug.getDrug().getId() + ") t"));
+      drug.setPrice(drug.getDrug().getPrice() == null ? drug.getDrugPrice() : drug.getDrug().getPrice());
+      drug.setServiceCount(Double.parseDouble(Util.get(req, "drug_count")));
+      dhnPatientDrug.save(drug);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    } finally {
+      DB.done(conn);
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "patient/drug/delete.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String patientDrugDelete(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      if(session.getUserId() == 1)
+        dhnPatientDrug.delete(Util.getInt(req, "id"));
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "patient/confirm.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String patientConfirm(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
+      pat.setState("C");
+      dhnPatient.save(pat);
+      json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());

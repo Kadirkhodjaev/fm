@@ -41,10 +41,10 @@
               </tr>
             </table>
             <a href="#" onclick="openRep(3); return false;" class="list-group-item">
-              <i class="fa fa-print fa-fw"></i> Список всех обследований на дату
+              <i class="fa fa-print fa-fw"></i> Список всех обследования на дату
             </a>
             <a href="#" onclick="openRep(4); return false;" class="list-group-item">
-              <i class="fa fa-print fa-fw"></i> Список всех обследований на завтра (НЮ)
+              <i class="fa fa-print fa-fw"></i> Список всех обследования на завтра (НЮ)
             </a>
           </div>
         </div>

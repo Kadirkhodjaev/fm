@@ -60,7 +60,7 @@
     <div class="panel-heading">
       План обследования
       <div style="float:right">
-        <button class="hidden" id="planResult" type="button" onclick="setLocation('/lv/plan.s')" title="Результаты всех обследовании" style="margin-top: -5px"><i class="fa fa-flask"></i> Результаты</button>
+        <button class="hidden" id="planResult" type="button" onclick="setLocation('/lv/plan.s')" title="Результаты всех обследования" style="margin-top: -5px"><i class="fa fa-flask"></i> Результаты</button>
         <button class="hidden" type="button" onclick="setLocation('/lv/plan/kdos.s')" title="Добавить новое обследование" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
         <button class="hidden" id="saveBtn" type="submit"><i class="fa fa-check"></i> Сохранить</button>
       </div>

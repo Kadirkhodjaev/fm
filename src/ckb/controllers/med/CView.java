@@ -368,7 +368,7 @@ public class CView {
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/vypiska";
   }
 
-  // План обследовании
+  // План обследования
   @RequestMapping("/plan/index.s")
   protected String planIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);

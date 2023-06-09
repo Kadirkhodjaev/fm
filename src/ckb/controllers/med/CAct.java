@@ -25,6 +25,7 @@ import ckb.domains.med.head_nurse.HNPatients;
 import ckb.domains.med.lv.*;
 import ckb.domains.med.patient.PatientPays;
 import ckb.domains.med.patient.PatientWatchers;
+import ckb.domains.med.patient.Patients;
 import ckb.models.ObjList;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
@@ -994,6 +995,11 @@ public class CAct {
       pat.setState("D");
       pat.setClosed("Y");
       dhnPatient.save(pat);
+      Patients p = pat.getPatient();
+      if(!p.getState().equals("LV") && pat.getPaySum() == 0) {
+        p.setPaid("CLOSED");
+        dPatient.save(p);
+      }
       //
       json.put("success", true);
     } catch (Exception e) {
@@ -1009,6 +1015,26 @@ public class CAct {
     JSONObject json = new JSONObject();
     try {
       HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
+      pat.setClosed("N");
+      dhnPatient.save(pat);
+      //
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "patient/cash.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String openCash(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
+      Patients p = pat.getPatient();
+      p.setPaid(null);
+      dPatient.save(p);
       pat.setClosed("N");
       dhnPatient.save(pat);
       //

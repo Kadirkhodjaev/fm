@@ -22,6 +22,8 @@
         <tr>
           <th>#</th>
           <th>Наименование</th>
+          <th>Экстренный шкаф?</th>
+          <th>Перевод?</th>
           <th>Состояние</th>
           <th style="width:40px">Удалить</th>
         </tr>
@@ -32,6 +34,14 @@
             <td align="center">${obj.id}</td>
             <td>
               <a href="#" onclick="editDrugDict(${obj.id});return false">${obj.name}</a>
+            </td>
+            <td align="center">
+              <c:if test="${obj.shock == 'Y'}">Да</c:if>
+              <c:if test="${obj.shock != 'Y'}">Нет</c:if>
+            </td>
+            <td align="center">
+              <c:if test="${obj.transfer == 'Y'}">Да</c:if>
+              <c:if test="${obj.transfer != 'Y'}">Нет</c:if>
             </td>
             <td align="center">
               <c:if test="${obj.state == 'A'}">Активный</c:if>
@@ -90,6 +100,16 @@
                 <input type="checkbox" checked name="shock" value="Y"/>
               </td>
             </tr>
+            <tr>
+              <td class="right bold">Перевод?:</td>
+              <td class="left">
+                <input type="checkbox" checked name="transfer" value="Y"/>
+              </td>
+            </tr>
+            <tr>
+              <td class="right bold">Пользователи:</td>
+              <td class="left" id="direction_users"></td>
+            </tr>
           </table>
         </form>
       </div>
@@ -118,8 +138,10 @@
         if (res.success) {
           $('*[name=id]').val(res.id);
           $('*[name=name]').val(res.name);
+          $('#direction_users').html(res.users);
           $('*[name=state]').prop('checked', res.state == 'A');
           $('*[name=shock]').prop('checked', res.shock == 'Y');
+          $('*[name=transfer]').prop('checked', res.transfer == 'Y');
           var elems = document.getElementsByClassName("dep_checkbox");
           for(var elem of elems) elem.checked = false;
           for(var obj of res.deps) document.getElementById("dep_" + obj).checked = true;

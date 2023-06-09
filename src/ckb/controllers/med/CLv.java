@@ -817,7 +817,7 @@ public class CLv {
   //endregion
 
   //region PLAN
-  // Результаты всех обследовании
+  // Результаты всех обследования
   @RequestMapping("/plan.s")
   protected String plan(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -831,7 +831,7 @@ public class CLv {
     return "/med/lv/plan/results";
   }
 
-  // План обследовании
+  // План обследования
   @RequestMapping("/plan/index.s")
   protected String planIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -884,7 +884,7 @@ public class CLv {
     return "redirect:/lv/plan/index.s?msgState=1&msgCode=successSave";
   }
 
-  // План обследовании
+  // План обследования
   @RequestMapping("/plan/kdos.s")
   protected String kdos(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -906,7 +906,7 @@ public class CLv {
     return "/med/lv/plan/kdos";
   }
 
-  // План обследовании
+  // План обследования
   @RequestMapping("/plan/selBioFields.s")
   protected String selBioFields(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -1330,7 +1330,7 @@ public class CLv {
     model.addAttribute("goals", dLvDrugGoal.getList("From LvDrugGoals Order By name"));
     //
     model.addAttribute("counters", dDrugCount.getList("From DrugCount"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs t Where t.id in (Select c.drug.id From DrugActDrugs c Where c.counter - rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0) Order By name"));
+    model.addAttribute("drugs", dDrug.getList("From Drugs t Where t.id in (Select c.drug.id From DrugActDrugs c Where c.counter - rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0 And f.direction.shock = 'N') Order By name"));
     Patients pat = dPatient.get(session.getCurPat());
     //
     int temp = Integer.parseInt(Util.get(req, "temp", "0"));

@@ -33,7 +33,11 @@ public class SUserImp implements SUser {
   @Override
   public Session login(HttpServletRequest request) {
     Session session = null;
-    Users user = dUser.getByLoginPassword(Req.get(request, "login"), Req.get(request, "password"));
+    Users user;
+    if(Util.isNull(request, "session_user_id"))
+      user = dUser.getByLoginPassword(Req.get(request, "login"), Req.get(request, "password"));
+    else
+      user = dUser.get(Util.getInt(request, "session_user_id"));
     if (user != null) {
       session = new Session();
       String ip = request.getRemoteAddr();

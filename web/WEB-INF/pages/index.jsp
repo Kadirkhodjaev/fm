@@ -174,7 +174,6 @@
          <td style="width: 350px">
            <a href="/setRole.s?id=0">
              <img src="/res/imgs/logo_forux.jpg" style="height:40px; margin-top:2px"/>
-             <!--i class="fa fa-user-md fa-3x"></i><span>${clinicName}</span-->
            </a>
          </td>
          <td>&nbsp;</td>

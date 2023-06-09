@@ -79,7 +79,7 @@
           <th>Цена</th>
           <th>Количество</th>
           <th>Кол-во единиц</th>
-          <th>Ед.изм.</th>
+          <th>Цена за единицу</th>
         </tr>
       </thead>
       <tr>
@@ -114,7 +114,7 @@
           <input type="number" required class="form-control right" onblur="removeVergul(this, 'counter')" id="counter" name="counter" disabled/>
         </td>
         <td>
-          <input type="text" required class="form-control left" id="drug_measure" disabled/>
+          <input type="number" required class="form-control right" id="one_price" value="" name="one_price" disabled/>
         </td>
         <td id="drug_default_count" class="center"></td>
       </tr>
@@ -206,6 +206,7 @@
         <th>Кол-во</th>
         <th>Сумма прихода</th>
         <th>Кол-во единиц</th>
+        <th>Цена за единицу</th>
         <th>Расход</th>
         <th>Остаток</th>
         <th>Ед.изм.</th>
@@ -216,13 +217,21 @@
     </thead>
     <c:forEach items="${drugs}" var="drug">
       <tr title="Цена за ед.: ${drug.countPrice}">
-        <td>${drug.drug.name}</td>
+        <td>
+          <c:if test="${drug.rasxod == 0}">
+            <a href="#" onclick="editDrug(this, '${drug.id}','${drug.price}', '${drug.blockCount}', '${drug.countPrice}', '${drug.counter}')">${drug.drug.name} (Кол-во учет: ${drug.drug.counter} Ед.изм.: ${drug.measure.name})</a>
+          </c:if>
+          <c:if test="${drug.rasxod != 0}">
+            ${drug.drug.name} (Кол-во учет: ${drug.drug.counter} Ед.изм.: ${drug.measure.name})
+          </c:if>
+        </td>
         <td>${drug.manufacturer.name}</td>
         <td class="center"><fmt:formatDate pattern="dd.MM.yyyy" value="${drug.endDate}"/></td>
         <td class="right"><fmt:formatNumber value="${drug.price}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.blockCount}" type = "number"/></td>
-        <td class="right"><fmt:formatNumber value="${drug.countPrice * drug.counter}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.blockCount * drug.price}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.counter}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.countPrice}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.rasxod}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.counter - drug.rasxod}" type = "number"/></td>
         <td class="left">${drug.measure.name}</td>
@@ -236,12 +245,91 @@
       </tr>
     </c:forEach>
   </table>
+  <a href="#" data-toggle="modal" data-target="#editDrugModal" id="edit_drug" class="hidden"></a>
+  <div class="modal fade" tabindex="-1" id="editDrugModal" role="dialog" aria-labelledby="modalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog" style="width:1000px">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+          <h4 class="modal-title" id="modalLabel">Реквизиты препарата: <span id="edit_drug_name"></span></h4>
+        </div>
+        <div class="modal-body">
+          <form id="editDrugForm" name="editDrugForm">
+            <input type="hidden" name="id" value="" />
+            <table class="table table-bordered">
+              <tr>
+                <td class="right bold">Стоимость блока*:</td>
+                <td>
+                  <input type="number" class="form-control" required name="price_block" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td class="right bold">Кол-во блоков*:</td>
+                <td>
+                  <input type="number" class="form-control" required name="count_block" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td class="right bold">Стоимость единицы*:</td>
+                <td>
+                  <input type="number" class="form-control" required name="price_drug" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td class="right bold">Кол-во единиц*:</td>
+                <td>
+                  <input type="number" class="form-control" required name="count_drug" value=""/>
+                </td>
+              </tr>
+            </table>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" onclick="save_editDrug()">Сохранить</button>
+          <button type="button" class="btn btn-default" id="edit-drug-close" data-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
 </c:if>
 <script>
   const cupboards = [];
   <c:forEach items="${cupboards}" var="cupboard">
     cupboards.push({id:${cupboard.id}, name:'${cupboard.name}', storage:${cupboard.storage.id}});
   </c:forEach>
+
+  function editDrug(dom, id, price_block, count_block, price_drug, count_drug) {
+    console.log()
+    $('#edit_drug_name').html($(dom).html());
+    $('#editDrugForm input[name=id]').val(id);
+    $('#editDrugForm input[name=price_block]').val(price_block);
+    $('#editDrugForm input[name=count_block]').val(count_block);
+    $('#editDrugForm input[name=price_drug]').val(price_drug);
+    $('#editDrugForm input[name=count_drug]').val(count_drug);
+    $('#edit_drug').click();
+  }
+  function save_editDrug() {
+    $.ajax({
+      url: '/drugs/act/drug/update.s',
+      method: 'post',
+      data: $('#editDrugForm').serialize(),
+      dataType: 'json',
+      success: function (res) {
+        if (res.success) {
+          alert("<ui:message code="successSave"/>");
+          $('#edit-drug-close').click();
+          $('.modal-backdrop').remove();
+          $('body').removeClass('modal-open');
+          setPage('/drugs/act/addEdit.s?id=${obj.id}');
+        } else {
+          alert(res.msg);
+        }
+      }
+    });
+  }
+
   function saveDrugAct(){
     if($('#reg_num').val() == '' || $('#reg_date').val() == '') {
       alert('Заполните все обязательные поля');
@@ -296,7 +384,7 @@
   function addActDrug(){
     var isOk = true;
     $('#act-drug-form').find('input, select').each(function(idx, elem){
-      if(elem.name !== '' && elem.hasAttribute('required') && elem.value === '') {
+      if(elem.name !== '' && elem.hasAttribute('required') && (elem.value === '' || elem.value == null)) {
         alert('Заполните все обязательные поля');
         isOk = false;
         return false;
@@ -342,6 +430,11 @@
       let cn = d.options[d.selectedIndex].getAttribute('counter');
       $('#counter').val(cn * dom.value);
     }
+    let price = document.getElementById("drug_price").value;
+    let bc = document.getElementById("block_count").value;
+    let count = document.getElementById("counter").value;
+    if(price > 0 && bc > 0 && count > 0)
+      document.getElementById("one_price").value = Math.round((price / (count / bc)) * 100) / 100;
   }
   function setDrugName(dom) {
     var cn = dom.options[dom.selectedIndex].getAttribute('counter');
@@ -349,7 +442,7 @@
     $('#drug_price').attr('disabled', dom.value === '' || cn === 0 || cn === '');
     $('#block_count').attr('disabled', dom.value === '' || cn === 0 || cn === '');
     $('#counter').attr('disabled', dom.value === '' || cn === 0 || cn === '');
-    $('#drug_measure').val(mn);
+    $('#one_price').attr('disabled', dom.value === '' || cn === 0 || cn === '');
   }
   function saveDrugForm() {
     if($('#drug-name').val() == '') {

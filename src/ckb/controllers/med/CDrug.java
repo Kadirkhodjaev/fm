@@ -1,6 +1,7 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.depts.DDept;
+import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.med.drug.act.DDrugAct;
 import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.categories.DDrugCategory;
@@ -18,8 +19,13 @@ import ckb.dao.med.drug.dict.storages.DDrugStorage;
 import ckb.dao.med.drug.drugsaldo.DDrugSaldo;
 import ckb.dao.med.drug.out.DDrugOut;
 import ckb.dao.med.drug.out.DDrugOutRow;
+import ckb.dao.med.head_nurse.direction.DHNDirection;
+import ckb.dao.med.head_nurse.direction.DHNDirectionLink;
+import ckb.domains.admin.UserDrugLines;
 import ckb.domains.med.drug.*;
 import ckb.domains.med.drug.dict.*;
+import ckb.domains.med.head_nurse.HNDirectionLinks;
+import ckb.domains.med.head_nurse.HNDirections;
 import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.session.Session;
@@ -66,6 +72,9 @@ public class CDrug {
   @Autowired private DDept dDept;
   @Autowired private DDrugDirectionDep dDrugDirectionDep;
   @Autowired private DDrugManufacturer dDrugManufacturer;
+  @Autowired private DHNDirection dhnDirection;
+  @Autowired private DHNDirectionLink dhnDirectionLink;
+  @Autowired private DUserDrugLine dUserDrugLine;
 
   //region INCOMES
   @RequestMapping("/acts.s")
@@ -182,11 +191,15 @@ public class CDrug {
         json.put("msg", "Поля цена имеет не правильный формат");
       }
       if(Util.isNotDouble(req, "block_count")) {
-        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поля кол-во имеет не правильный формат");
+        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поле кол-во имеет не правильный формат");
+        isErr = true;
+      }
+      if(Util.isNotDouble(req, "one_price")) {
+        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поле Цена за единицу имеет не правильный формат");
         isErr = true;
       }
       if(Util.isNull(req, "counter") || Util.isNotDouble(req, "counter")) {
-        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поля Кол-во единиц имеет не правильный формат");
+        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поле Кол-во единиц имеет не правильный формат");
         isErr = true;
       }
       if(endDate.before(new Date()) || endDate.equals(new Date())) {
@@ -209,7 +222,7 @@ public class CDrug {
       drug.setBlockCount(Util.getDouble(req, "block_count"));
       drug.setCounter(Util.getDouble(req, "counter"));
       drug.setMeasure(drug.getDrug().getMeasure());
-      drug.setCountPrice(Util.getDouble(req, "price") / (Util.getDouble(req, "counter") / Util.getDouble(req, "block_count")));
+      drug.setCountPrice(Util.getDouble(req, "one_price"));
       drug.setEndDate(endDate);
       drug.setRasxod(0D);
       drug.setCrBy(session.getUserId());
@@ -229,6 +242,25 @@ public class CDrug {
     JSONObject json = new JSONObject();
     try {
       dDrugActDrug.delete(Util.getInt(req, "id"));
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/act/drug/update.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String actDrugUpdate(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      DrugActDrugs drug = dDrugActDrug.get(Util.getInt(req, "id"));
+      drug.setPrice(Util.getDouble(req, "price_block"));
+      drug.setBlockCount(Util.getDouble(req, "count_block"));
+      drug.setCountPrice(Util.getDouble(req, "price_drug"));
+      drug.setCounter(Util.getDouble(req, "count_drug"));
+      dDrugActDrug.save(drug);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -529,6 +561,7 @@ public class CDrug {
       }
       if(Util.get(req, "code").equals("storage")) dDrugStorage.delete(Util.getInt(req, "id"));
       if(Util.get(req, "code").equals("direction")) dDrugDirection.delete(Util.getInt(req, "id"));
+      if(Util.get(req, "code").equals("rasxodtype")) dhnDirection.delete(Util.getInt(req, "id"));
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -570,6 +603,7 @@ public class CDrug {
         obj.setName(Util.get(req, "name"));
         obj.setState(Util.isNull(req, "state") ? "P" : "A");
         obj.setShock(Util.isNull(req, "shock") ? "N" : "Y");
+        obj.setTransfer(Util.isNull(req, "transfer") ? "N" : "Y");
         if (Util.isNull(req, "id")) {
           obj.setCrBy(session.getUserId());
           obj.setCrOn(new Date());
@@ -676,6 +710,29 @@ public class CDrug {
         }
         dDrugStorage.save(obj);
       }
+      if(Util.get(req, "code").equals("rasxodtype")) {
+        HNDirections obj = Util.isNull(req, "id") ? new HNDirections() : dhnDirection.get(Util.getInt(req, "id"));
+        obj.setName(Util.get(req, "name"));
+        obj.setState(Util.isNull(req, "state") ? "P" : "A");
+        if (Util.isNull(req, "id")) {
+          obj.setCrBy(session.getUserId());
+          obj.setCrOn(new Date());
+        }
+        dhnDirection.save(obj);
+        List<HNDirectionLinks> links = dhnDirectionLink.getList("From HNDirectionLinks Where rasxod = " + obj.getId());
+        for(HNDirectionLinks link: links) {
+          dhnDirectionLink.delete(link.getId());
+        }
+        List<DrugDirections> directions = dDrugDirection.getList("From DrugDirections Order By id");
+        for(DrugDirections d: directions) {
+          if(Util.isNotNull(req, "direction_" + d.getId())) {
+            HNDirectionLinks f = new HNDirectionLinks();
+            f.setRasxod(obj.getId());
+            f.setDirection(d.getId());
+            dhnDirectionLink.save(f);
+          }
+        }
+      }
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -707,10 +764,15 @@ public class CDrug {
         json.put("name", obj.getName());
         json.put("state", obj.getState());
         json.put("shock", obj.getShock());
+        json.put("transfer", obj.getTransfer());
         JSONArray arr = new JSONArray();
         for(DrugDirectionDeps d: dDrugDirectionDep.getList("From DrugDirectionDeps Where direction.id = " + obj.getId()))
           arr.put(d.getDept().getId());
         json.put("deps", arr);
+        StringBuilder users = new StringBuilder();
+        for(UserDrugLines user: dUserDrugLine.getList("From UserDrugLines Where user.id != 1 And direction.id = " + obj.getId()))
+          users.append(user.getUser().getFio()).append("; ");
+        json.put("users", users.toString());
       }
       if(Util.get(req, "code").equals("contract")) {
         DrugContracts obj = dDrugContract.get(Util.getInt(req, "id"));
@@ -768,12 +830,32 @@ public class CDrug {
         json.put("count", obj.getDrugCount());
         json.put("price", obj.getPrice());
       }
+      if(Util.get(req, "code").equals("rasxodtype")) {
+        HNDirections obj = dhnDirection.get(Util.getInt(req, "id"));
+        json.put("id", obj.getId());
+        json.put("name", obj.getName());
+        json.put("state", obj.getState().equals("A"));
+        List<HNDirectionLinks> links = dhnDirectionLink.getList("From HNDirectionLinks Where rasxod = " + obj.getId());
+        for(HNDirectionLinks d: links) {
+          json.put("direction_" + d.getDirection(), true);
+        }
+      }
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
     }
     return json.toString();
+  }
+
+  @RequestMapping("dict/rasxodtypes.s")
+  protected String dicstDirection(HttpServletRequest request, Model model){
+    Session session = SessionUtil.getUser(request);
+    session.setCurSubUrl("/drugs/dict/rasxodtypes.s");
+    //
+    model.addAttribute("list", dhnDirection.getAll());
+    model.addAttribute("rows", dDrugDirection.getList("From DrugDirections Order By id"));
+    return "/med/drugs/dicts/rasxodtypes/index";
   }
 
   @RequestMapping("/dict/categories.s")

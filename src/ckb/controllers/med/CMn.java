@@ -127,7 +127,7 @@ public class CMn {
     try {
       cn = DB.getConnection();
       ps = cn.prepareStatement(
-        "Select c.Name, " +
+        "Select c.id, c.Name, " +
         "    Sum(f.saldo_in) saldo_in, " +
         "    Sum(f.saldo_in_sum) saldo_in_sum, " +
         "    Sum(f.cin) cin, " +
@@ -146,7 +146,7 @@ public class CMn {
         "               Sum(t.counter * t.countprice) summ " +
         "     From drug_act_drugs t, drug_acts c " +
         "     Where c.id = t.act_Id  " +
-        "       And c.regDate <= ? " +
+        "       And date(c.regDate) <= ? " +
         "     Group By t.drug_id " +
         "    Union All " +
         "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
@@ -155,7 +155,7 @@ public class CMn {
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
         "       And f.outRow_id > 0 " +
-        "       And d.date <= ? " +
+        "       And date(d.date) < ? " +
         "     Group By f.drug_id " +
         "    Union All " +
         "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
@@ -164,7 +164,7 @@ public class CMn {
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
         "       And f.outRow_id > 0 " +
-        "       And d.date <= ? " +
+        "       And date(d.date) < ? " +
         "     Group By f.drug_id) f " +
         "Group By f.drug_id " +
         "Union All " +
@@ -181,7 +181,7 @@ public class CMn {
         "        0 sout " +
         "     From drug_act_drugs t, drug_acts c " +
         "     Where c.id = t.act_Id  " +
-        "       And c.regDate Between ? And ? " +
+        "       And date(c.regDate) Between ? And ? " +
         "     Group By t.drug_id " +
         "    Union All " +
         "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
@@ -190,7 +190,7 @@ public class CMn {
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
         "       And f.outRow_id > 0 " +
-        "       And d.date Between ? And ? " +
+        "       And date(d.date) Between ? And ? " +
         "     Group By f.drug_id " +
         "    Union All " +
         "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
@@ -199,11 +199,12 @@ public class CMn {
         "       And d.Id = c.doc_Id  " +
         "       And c.drug_Id = f.id  " +
         "       And f.outRow_id > 0 " +
-        "       And d.date Between ? And ? " +
+        "       And date(d.date) Between ? And ? " +
         "     Group By f.drug_id) f " +
         "Group By f.drug_id ) f, drug_s_names c " +
         "Where c.id = f.drug_id " +
-        "Group By c.name ");
+        "  And c.state = 'A' " +
+        "Group By c.id, c.name ");
       ps.setString(1, Util.dateDB(startDate));
       ps.setString(2, Util.dateDB(startDate));
       ps.setString(3, Util.dateDB(startDate));
@@ -226,6 +227,7 @@ public class CMn {
         row.setC7(rs.getString("sout"));
         row.setC8(rs.getString("saldo_out"));
         row.setC9(rs.getString("saldo_out_sum"));
+        row.setC10(rs.getString("id"));
         //
         rows.add(row);
       }
@@ -393,6 +395,7 @@ public class CMn {
           "                  Group By f.drug_id) f  " +
           "          Group By f.drug_id) f, drug_s_names a  " +
           "  Where a.id = f.drug_id " +
+          "    And a.state = 'A' " +
           "  Order By a.name ");
       rs = ps.executeQuery();
       List<ObjList> rows = new ArrayList<ObjList>();
@@ -470,6 +473,7 @@ public class CMn {
           "   Where c.id = t.act_Id " +
           "   Group By t.drug_id) t, drug_s_names c " +
           "  Where c.id = t.drug_id " +
+          "    And c.state = 'A' " +
           "    And (t.Rasxod != 0 Or t.saldo_count != 0)" +
           "  Group By t.Drug_Id Order By c.name");
       rs = ps.executeQuery();

@@ -71,6 +71,7 @@ public class CBooking {
     m.addAttribute("lvs", dUser.getLvs());
     m.addAttribute("depts", dDept.getAll());
     m.addAttribute("countries", dCountery.getCounteries());
+    m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
     sForm.setSelectOptionModel(m, 1, "sex");
     //endregion
     return "med/booking/index";
@@ -115,6 +116,8 @@ public class CBooking {
         bb.put("date_begin", Util.dateToString(book.getDateBegin()));
         bb.put("dept", book.getDept().getId());
         bb.put("room", book.getRoom().getId());
+        bb.put("author", book.getCrBy() > 0 ? dUser.get(book.getCrBy()).getFio() : "");
+        bb.put("bron", book.getBron() != null ? book.getBron().getId() : 0);
       }
       json.put("data", bb);
       json.put("success", true);
@@ -131,11 +134,17 @@ public class CBooking {
     JSONObject json = new JSONObject();
     session = SessionUtil.getUser(req);
     try {
-      System.out.println(Util.nvl(req, "id", "0"));
       int id = 0;
       if(!Util.isNull(req, "id"))
         id = Util.getInt(req, "id");
       RoomBookings book = id == 0 ? new RoomBookings() : dRoomBooking.get(id);
+      if(id != 0 && session.getUserId() != 1) {
+        if(session.getUserId() != book.getCrBy()) {
+          json.put("success", false);
+          json.put("msg", "ƒанна€ запись создана другим пользовател€м");
+          return json.toString();
+        }
+      }
       book.setSurname(Util.get(req, "surname").toUpperCase());
       book.setName(Util.get(req, "name").toUpperCase());
       book.setMiddlename(Util.get(req, "middlename", "").toUpperCase());
@@ -149,6 +158,7 @@ public class CBooking {
       book.setDateBegin(Util.stringToDate(Util.get(req, "date_begin")));
       book.setDept(dDept.get(Util.getInt(req, "dept")));
       book.setRoom(dRoom.get(Util.getInt(req, "room")));
+      book.setBron(Util.isNotNull(req, "bron") && !Util.get(req, "bron").equals("0") && Util.getInt(req, "bron") > 0 ? dDict.get(Util.getInt(req, "bron")) : null);
       if(id == 0) {
         book.setState("ENT");
         book.setCrBy(session.getUserId());
@@ -354,7 +364,13 @@ public class CBooking {
     JSONObject json = new JSONObject();
     session = SessionUtil.getUser(req);
     try {
-      dRoomBooking.delete(Util.getInt(req, "id"));
+      RoomBookings book = dRoomBooking.get(Util.getInt(req, "id"));
+      if(session.getUserId() != book.getCrBy() && session.getUserId() != 1) {
+        json.put("success", false);
+        json.put("msg", "ƒанна€ запись создана другим пользовател€м");
+        return json.toString();
+      }
+      dRoomBooking.delete(book.getId());
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);

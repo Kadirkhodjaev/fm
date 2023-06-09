@@ -103,6 +103,10 @@
           <td class="bold">Норма по:</td>
           <td><input type="text" value="${ser.normaTo}" class="form-control" name="normaTo"></td>
         </tr>
+        <tr>
+          <td class="bold">Пользователи:</td>
+          <td>${users}</td>
+        </tr>
       </table>
       <fieldset class="default-form">
         <legend>Поля</legend>

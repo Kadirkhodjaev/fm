@@ -77,7 +77,8 @@ public class CPatient {
       if (!Req.isNull(r, "page"))
         query += "&page=" + Req.get(r, "page");
       //
-      return "redirect:/" + session.getCurUrl() + (session.getCurUrl().indexOf("?") > -1 ? "&" : "?") + query;
+      String url = session.getCurUrl() + (session.getCurUrl().indexOf("?") > -1 ? "&" : "?") + query;
+      return "redirect:/" + url;
     } catch (Exception e) {
       logger.error("index.s: " + e.getMessage());
       return null;

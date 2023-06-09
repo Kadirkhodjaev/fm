@@ -1,5 +1,7 @@
 package ckb.utils;
 
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.ui.Model;
 
 import javax.crypto.Cipher;
@@ -367,5 +369,11 @@ public class Util {
 
   public static Double getDouble(HttpServletRequest req, String name) {
     return Double.parseDouble(get(req, name));
+  }
+
+  public static String err(JSONObject json, String msg) throws JSONException {
+    json.put("success", false);
+    json.put("msg", msg);
+    return json.toString();
   }
 }

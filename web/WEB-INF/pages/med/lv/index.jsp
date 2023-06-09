@@ -87,8 +87,8 @@
           <td width="500px" class="right">
             <ul class="pagination">
               <li class="paginate_button" id="statCard" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="window.open('lv/print.s?statcard=Y'); return false;"><i title="Стат карта" class="fa fa-file"></i> Стат карта</a></li>
-              <li class="paginate_button" id="planResultPage" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="window.open('lv/plan.s?new=Y'); return false;"><i title="Результаты всех обследовании" class="fa fa-flask"></i> Результаты</a></li>
-              <li class="paginate_button" id="planResult" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="lvContent.location = '/lv/plan.s';return false;"><i title="Результаты всех обследовании" class="fa fa-flask"></i> Результаты</a></li>
+              <li class="paginate_button" id="planResultPage" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="window.open('lv/plan.s?new=Y'); return false;"><i title="Результаты всех обследования" class="fa fa-flask"></i> Результаты</a></li>
+              <li class="paginate_button" id="planResult" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="lvContent.location = '/lv/plan.s';return false;"><i title="Результаты всех обследования" class="fa fa-flask"></i> Результаты</a></li>
               <li class="paginate_button" id="planAdd" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="lvContent.location = '/lv/plan/kdos.s';return false;"><i title="Добавить новое обследование" class="fa fa-plus"></i> Добавить</a></li>
               <li class="paginate_button" id="saveForm" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="saveForm();return false;"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
               <li class="paginate_button" id="printBtn" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPrint();return false;"><i title="Печать" class="fa fa-print"></i> Печать</a></li>

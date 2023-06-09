@@ -12,7 +12,7 @@
 <f:form method="post">
   <div class="panel panel-info" style="width: 1100px !important; margin: auto">
     <div class="panel-heading">
-      Список обследовании
+      Список обследования
       <div style="float:right">
         <button class="hidden" id="saveBtn" type="submit" title="Сохранить" style="margin-top: -5px"><i class="fa fa-check"></i> Сохранить</button>
         <button class="btn btn-sm" type="button" onclick="setLocation('/lv/plan/index.s')" style="margin-top: -5px"><i class="fa fa-reply"></i> Назад</button>

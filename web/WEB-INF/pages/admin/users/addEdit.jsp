@@ -21,10 +21,22 @@
   $(function() {
     setDirection(true);
   });
+  function authUser() {
+    $.ajax({
+      url: 'user_login.s',
+      method: 'post',
+      data: 'session_user_id=${user.id}',
+      dataType: 'json',
+      success: function (res) {
+        document.location = 'main.s';
+      }
+    });
+    document.location = ''
+  }
 </script>
 <iframe onload="doSave()" src="about:blank" id="frmDiv" name="frm" style="display: none"></iframe>
 <div class="panel panel-info" style="width: 800px; margin: auto">
-  <div class="panel-heading">Реквизиты пользователя</div>
+  <div class="panel-heading" ondblclick="authUser()">Реквизиты пользователя</div>
   <f:form commandName="user" action='/admin/users/addEdit.s' method="post" name='bf' target="frm">
     <div class="panel-body">
       <%@include file="/incs/msgs/successError.jsp"%>

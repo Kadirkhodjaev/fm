@@ -2,43 +2,40 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
 <style>
-    .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-    .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
+  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
+  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
 </style>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script>
-</script>
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
-    Отделении
+    Получатели (Расход)
     <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
     <button  class="btn btn-sm btn-success" onclick="addDrugDict()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
   </div>
   <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
     <div class="table-responsive">
       <table class="miniGrid table table-striped table-bordered">
         <thead>
         <tr>
           <th>#</th>
           <th>Наименование</th>
-          <th>Старшая медсестра</th>
           <th>Состояние</th>
+          <th style="width:40px">Удалить</th>
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${rows}" var="obj">
-          <tr ondblclick="editDrugDict(${obj.id})" class="hover">
+        <c:forEach items="${list}" var="obj">
+          <tr>
             <td align="center">${obj.id}</td>
             <td>
-              ${obj.name}
+              <a href="#" onclick="editDrugDict(${obj.id});return false">${obj.name}</a>
             </td>
             <td align="center">
-              ${obj.nurse.fio}
-            </td>
-            <td class="center">
               <c:if test="${obj.state == 'A'}">Активный</c:if>
               <c:if test="${obj.state != 'A'}">Пассивный</c:if>
+            </td>
+            <td class="center">
+              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.id})"><i class="fa fa-minus"></i></button>
             </td>
           </tr>
         </c:forEach>
@@ -54,32 +51,42 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты кетогорий</h4>
+        <h4 class="modal-title" id="myModalLabel">Реквизиты получателя</h4>
       </div>
       <div class="modal-body">
         <form id="addEditForm" name="addEditForm">
           <input type="hidden" name="id" value="" />
+          <input type="hidden" name="code" value="rasxodtype" />
           <table class="table table-bordered">
             <tr>
               <td class="right bold">Наименование*:</td>
               <td>
-                <input type="text" id="category-name" class="form-control" name="name" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Старшая медсестра*:</td>
-              <td>
-                <select class="form-control" name="user">
-                  <c:forEach items="${users}" var="user">
-                    <option value="${user.id}">${user.fio}</option>
-                  </c:forEach>
-                </select>
+                <input type="text" id="direction-name" class="form-control" name="name" value=""/>
               </td>
             </tr>
             <tr>
               <td class="right bold">Активный?:</td>
               <td class="left">
-                <input type="checkbox" checked name="state" value="A"/>
+                <input type="checkbox" checked name="state" value="Y"/>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="4" class="center bold">Склады</td>
+            </tr>
+            <tr>
+              <td colspan="4">
+                <table style="width:100%" class="table table-bordered">
+                  <c:forEach items="${rows}" var="r">
+                    <tr>
+                      <td class="center">
+                        <input name="direction_${r.id}" type="checkbox" value="${r.id}">
+                      </td>
+                      <td>
+                          ${r.name}
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </table>
               </td>
             </tr>
           </table>
@@ -102,16 +109,20 @@
   function editDrugDict(id) {
     document.getElementById("modal_window").click();
     $.ajax({
-      url: '/admin/dept/get.s',
+      url: '/drugs/dict/get.s',
       method: 'post',
-      data: 'id=' + id,
+      data: 'code=rasxodtype&id=' + id,
       dataType: 'json',
       success: function (res) {
         if (res.success) {
-          $('*[name=id]').val(res.id);
-          $('*[name=name]').val(res.name);
-          $('*[name=user]').val(res.nurse);
-          $('*[name=state]').prop('checked', res.state == 'A');
+          for (var e in res) {
+            try {
+              if(document.getElementsByName(e)[0].type === 'checkbox')
+                document.getElementsByName(e)[0].checked = res[e];
+              else
+                document.getElementsByName(e)[0].value = res[e];
+            } catch (e) {}
+          }
         } else {
           alert(res.msg);
         }
@@ -119,24 +130,41 @@
     });
   }
   function saveDrugForm() {
-    if($('#category-name').val() == '') {
+    if($('#direction-name').val() == '') {
       alert('Наименование не может быть пустым');
       return;
     }
     $.ajax({
-      url: '/admin/dept/save.s',
+      url: '/drugs/dict/save.s',
       method: 'post',
       data: $('#addEditForm').serialize(),
       dataType: 'json',
       success: function (res) {
         if (res.success) {
+          alert("<ui:message code="successSave"/>");
           $('#close-modal').click();
-          alert("Данные успешно сохранены");
-          setPage('/admin/depts.s');
+          setPage('/drugs/dicts.s');
         } else {
           alert(res.msg);
         }
       }
     });
+  }
+  function delDrugRow(id) {
+    if(confirm('Дейтвительно хотите удалить?')) {
+      $.ajax({
+        url: '/drugs/dict/delete.s',
+        method: 'post',
+        data: 'code=rasxodtype&id=' + id,
+        dataType: 'json',
+        success: function (res) {
+          if (res.success) {
+            setPage('/drugs/dicts.s');
+          } else {
+            alert(res.msg);
+          }
+        }
+      });
+    }
   }
 </script>

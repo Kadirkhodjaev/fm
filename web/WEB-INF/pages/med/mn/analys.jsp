@@ -33,13 +33,14 @@
         <th>Кол-во недель</th>
       </tr>
       <c:forEach items="${rows}" var="rw" varStatus="loop">
+        <fmt:parseNumber var = "c3" type = "number" value = "${rw.c3}" />
         <fmt:parseNumber var = "c4" type = "number" value = "${rw.c4}" />
         <fmt:parseNumber var = "c5" type = "number" value = "${rw.c5}" />
         <fmt:parseNumber var = "c6" type = "number" value = "${rw.c6}" />
         <fmt:parseNumber var = "c7" type = "number" value = "${rw.c7}" />
         <fmt:parseNumber var = "c8" type = "number" value = "${rw.c8}" />
         <fmt:parseNumber var = "c9" type = "number" value = "${rw.c9}" />
-        <tr id="row_${rw.ib}" <c:if test="${c4 < 0 || c5 < 0 || c6 < 0 || c7 < 0 || c8 < 0 || c9 < 0}">style="background:red;color:white; font-weight:bold"</c:if> ondblclick="drugAnalys('${rw.ib}', '${rw.c10}')" onclick="setRow(${rw.ib})">
+        <tr id="row_${rw.ib}" <c:if test="${c3 < 0 || c5 < 0 || c7 < 0 || c9 < 0}">style="background:red;color:white; font-weight:bold"</c:if> ondblclick="drugAnalys('${rw.ib}', '${rw.c10}')" onclick="setRow(${rw.ib})">
           <td class="center">${loop.index + 1}</td>
           <td>${rw.c10}</td>
           <td class="center">${rw.c2}</td>

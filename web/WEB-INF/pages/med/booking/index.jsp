@@ -168,6 +168,22 @@
                 <input type="text" autocomplete="off" class="form-control" name="passport" value=""/>
               </td>
             </tr>
+            <tr>
+              <td class="bold right">Брон</td>
+              <td colspan="3">
+                <select name="bron" class="form-control">
+                  <c:forEach items="${watcherTypes}" var="type">
+                    <option value="${type.id}">${type.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="right bold">Автор</td>
+              <td colspan="3">
+                <span id="row_author"></span>
+              </td>
+            </tr>
           </table>
         </form>
       </div>
@@ -230,6 +246,7 @@
               document.getElementsByName(e)[0].value = data[e];
             } catch (e) {}
           }
+          $('#row_author').html(data.author);
         } else {
           alert(res.msg);
         }

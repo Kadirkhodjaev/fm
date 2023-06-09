@@ -112,17 +112,14 @@ public class CNurse {
               "         t.Done_Flag, " +
               "         t.Result_Id, " +
               "         c.id kdo_id " +
-              "    From Lv_Plans t, Kdos c, Patients d " +
+              "    From Lv_Plans t, Kdos c" +
               "   Where t.kdo_id = c.id " +
-              "     And t.patientId = d.id " +
+              "     And t.patientId =  " + d.getId() +
+              "     And Exists (Select 1 From Patients d Where d.id = " + d.getId() + " And d.dept_id = " + (dep == null ? session.getDeptId() : Integer.parseInt(dep)) + ")" +
               "     And t.result_date is null " +
-              "     And t.patientId = ? " +
-              "     And t.kdo_type_id = ? " +
-              "     And d.dept_id = ?"
+              "     And t.patientId = " + d.getId() +
+              "     And t.kdo_type_id =  " + tt.getId()
           );
-          ps.setInt(1, d.getId());
-          ps.setInt(2, tt.getId());
-          ps.setInt(3, dep == null ? session.getDeptId() : Integer.parseInt(dep));
           rc = ps.executeQuery();
           int i = 1;
           while (rc.next()) {
