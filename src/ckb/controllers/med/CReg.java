@@ -4,6 +4,7 @@ package ckb.controllers.med;
 import ckb.dao.admin.countery.DCountery;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
+import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
@@ -64,6 +65,7 @@ public class CReg {
   @Autowired DPatientPays dPatientPays;
   @Autowired DDict dDict;
   @Autowired DClient dClient;
+  @Autowired private DLvPartner dLvPartner;
 
   @RequestMapping("nurse/index.s")
   protected String view(@ModelAttribute("patient") Patients p, HttpServletRequest req, Model m) {
@@ -81,6 +83,7 @@ public class CReg {
     sForm.setSelectOptionModel(m, 1, "lgotaType");
     sForm.setSelectOptionModel(m, 1, "bloodGroup");
     sForm.setSelectOptionModel(m, 1, "pay_type");
+    m.addAttribute("lvpartners", dLvPartner.getList("From LvPartners " + (session.getCurPat() > 0 ? "" : " Where state = 'A' ") + " Order By code"));
     m.addAttribute("watcherPrice", session.getParam("WATCHER_PRICE"));
     m.addAttribute("watchers", dPatientWatchers.byPatient(p.getId()));
     m.addAttribute("curDate", Util.getCurDate());
@@ -388,20 +391,15 @@ public class CReg {
   @RequestMapping(value = "doctor/index.s", method = RequestMethod.POST)
   @ResponseBody
   protected String regDoc(HttpServletRequest req, HttpServletResponse res) throws JSONException {
-    Session session = SessionUtil.getUser(req);
     JSONObject data = new JSONObject();
     res.setContentType("text/plain;charset=UTF-8");
     try {
       String msg = "";
-      if (!session.isParamEqual("CLINIC_CODE", "fm")) {
-        msg = Util.isNull(req, "dept.id") ? "Не заполнено поле - Отделение\n" : "";
-        msg += Util.isNull(req, "palata") ? "Не заполнено поле - Палата\n" : "";
-        msg += Util.isNull(req, "lv_id") ? "Не заполнено поле - Лечащий врач\n" : "";
-      }
       msg += Req.isNull(req, "date_Begin") ? "Не заполнено поле - Дата поступление\n" : "";
       msg += Req.isNull(req, "yearNum") ? "Не заполнено поле - Номер история болезни\n" : "";
-      if (msg.equals(""))
-        if (dPatient.existIbNum(Util.getInt(req, "id"), Util.getNullInt(req, "yearNum"), Util.getNullInt(req, "ordNum")))
+      Patients pat = dPatient.get(Util.getInt(req, "id"));
+      if (msg.equals("") && pat.getYearNum() != Util.getInt(req, "yearNum"))
+        if (dPatient.existIbNum(Util.getInt(req, "id"), Util.getInt(req, "yearNum")))
           msg += "Номер история болезни - такой номер уже существует\n";
       //
       if (msg.equals("")) {

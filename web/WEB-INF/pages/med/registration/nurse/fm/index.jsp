@@ -274,6 +274,16 @@
           <td align="right">Йулланмадаги ташхис:</td>
           <td colspan="3"><f:textarea path="diagnoz" type="text" class="form-control" maxlength="400"/></td>
         </tr>
+        <c:if test="${sessionScope.ENV.roleId == 3}">
+          <tr>
+            <td class="right" nowrap>Йуналтирган мутахасис коди:</td>
+            <td colspan="3">
+              <f:select path="lvpartner.id" class="form-control">
+                <f:option value=""></f:option>
+                <f:options items="${lvpartners}" itemValue="id" itemLabel="code"></f:options>
+              </f:select>
+          </tr>
+        </c:if>
       </table>
     </div>
   </f:form>

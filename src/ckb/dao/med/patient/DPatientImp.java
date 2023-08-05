@@ -4,8 +4,6 @@ import ckb.dao.DaoImp;
 import ckb.domains.med.patient.Patients;
 import ckb.utils.Util;
 
-import java.util.List;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Sardor
@@ -30,21 +28,9 @@ public class DPatientImp extends DaoImp<Patients> implements DPatient {
     Integer yearNum = (Integer) entityManager.createQuery("Select Max(yearNum) From Patients Where yearNum > 0 And YEAR(dateBegin) = YEAR(CURRENT_TIMESTAMP())").getSingleResult();
     return yearNum == null ? 1 : yearNum + 1;
   }
-
   @Override
-  public Integer getNextOtdNum(int deptId) {
-    Integer otdNum = (Integer) entityManager.createQuery("Select Max(otdNum) From Patients Where otdNum > 0 And YEAR(dateBegin) = YEAR(CURRENT_TIMESTAMP()) And dept.id = " + deptId).getSingleResult();
-    return otdNum == null ? 1 : otdNum + 1;
-  }
-
-  @Override
-  public List<Patients> getEatPatients(Integer deptId, String actDate) {
-    return getList("From Patients t Where t.dateEnd Is null");
-  }
-
-  @Override
-  public boolean existIbNum(Integer pId, Integer yearNum, Integer otdNum) {
-    return getCount("From Patients Where id != " + pId + " And yearNum = " + yearNum + " And otdNum = " + otdNum + " And YEAR(dateBegin) = YEAR(CURRENT_TIMESTAMP())") > 0;
+  public boolean existIbNum(Integer pId, Integer yearNum) {
+    return getCount("From Patients Where id != " + pId + " And yearNum = " + yearNum + " And YEAR(dateBegin) = YEAR(CURRENT_TIMESTAMP())") > 0;
   }
 
   @Override

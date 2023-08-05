@@ -58,17 +58,4 @@ public class DFormImp extends DaoImp<Forms> implements DForm {
       return null;
     }
   }
-
-  @Override
-  public List<String> getKdoOpts(int formId, String field) {
-    try {
-      FormFields f = (FormFields) entityManager.createQuery("From FormFields Where form=" + formId + " And field = '" + field + "'").getSingleResult();
-      List<String> list = new ArrayList<String>();
-      for(int i=0;i<f.getOpts().size(); i++)
-        list.add(f.getOpts().get(i).getName());
-      return list;
-    } catch (Exception e) {
-      return null;
-    }
-  }
 }

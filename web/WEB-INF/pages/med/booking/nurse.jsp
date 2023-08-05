@@ -16,7 +16,7 @@
           <input type="text" style="height:30px" class="form-control" placeholder="Поиск..." id="filter_box" value="${filter}">
         </td>
         <td style="width:56px">
-          <button class="btn btn-success btn-sm" onclick="setFilter()">Поиск</button>
+          <button class="btn btn-success btn-sm" onclick="setBookingFilter()">Поиск</button>
         </td>
       </tr>
     </table>
@@ -65,8 +65,9 @@
   function regBooking(id) {
     setPage('/reg/nurse/index.s?booking=' + id);
   }
-  function setFilter() {
+  function setBookingFilter() {
+    alert(11)
     var word = document.getElementById("filter_box");
-    setPage('/booking/nurse.s?word=' + decodeURIComponent(word.value));
+    setPage('/booking/nurse.s?word=' + word.value);
   }
 </script>

@@ -241,7 +241,7 @@ public class Util {
   public static String toUTF8(String str){
     try {
       if(str != null)
-        return new String(str.getBytes("ISO8859-1"), "UTF-8");
+        return new String(str.getBytes("UTF-8"), "ISO8859-1");
       else
         return "";
     } catch (UnsupportedEncodingException e) {

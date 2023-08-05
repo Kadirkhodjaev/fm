@@ -33,15 +33,7 @@
     $('#mainWindow').load(dom.id);
   }
   function setPage(url){
-    $('#mainWindow').load(url, function () {
-      bkLib.onDomLoaded(function() {
-        nicEditors.editors.push(
-          new nicEditor().panelInstance(
-            document.getElementById('id_c2')
-          )
-        );
-      });
-    });
+    $('#mainWindow').load(url);
   }
   function openMainPage(url, isFull) {
     $('#mainWindow').load(url);
@@ -60,27 +52,28 @@
     }catch (e){}
   }
   function setFilter(evt, isInput){
+    let val = encodeURIComponent($('#filterInput').val());
     <c:if test="${isEnterFilter}">
     if((isInput && evt.keyCode == 13) || !isInput) {
       <c:if test="${fn:indexOf(session.curUrl, 'amb') == -1}">
         if ($('#filterInput').val() != '')
-          setPage('/patients/index.s?filter=Y&filterInput=' + $('#filterInput').val());
+          $('#mainWindow').load('/patients/index.s?filter=Y&filterInput=' + val);
         else
-          setPage('/patients/index.s?filter=Y');
+          $('#mainWindow').load('/patients/index.s?filter=Y');
       </c:if>
       <c:if test="${fn:indexOf(session.curUrl, 'amb') != -1}">
         if ($('#filterInput').val() != '')
-          setPage('${session.curUrl}?filter=Y&filterInput=' + $('#filterInput').val());
+          $('#mainWindow').load('${session.curUrl}?filter=Y&filterInput=' + val);
         else
-          setPage('${session.curUrl}?filter=Y');
+          $('#mainWindow').load('${session.curUrl}?filter=Y');
       </c:if>
     }
     </c:if>
     <c:if test="${!isEnterFilter}">
     if ($('#filterInput').val() != '')
-      setPage('/patients/index.s?filter=Y&filterInput=' + $('#filterInput').val());
+      $('#mainWindow').load('/patients/index.s?filter=Y&filterInput=' + val);
     else
-      setPage('/patients/index.s?filter=Y');
+      $('#mainWindow').load('/patients/index.s?filter=Y');
     </c:if>
   }
   function setChangePass(){

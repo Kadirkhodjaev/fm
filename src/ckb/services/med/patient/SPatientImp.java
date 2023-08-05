@@ -1,6 +1,7 @@
 package ckb.services.med.patient;
 
 import ckb.dao.admin.depts.DDept;
+import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
@@ -77,6 +78,7 @@ public class SPatientImp implements SPatient {
   @Autowired private DPatientDrugDate dPatientDrugDate;
   @Autowired private DParam dParam;
   @Autowired private DClient dClient;
+  @Autowired private DLvPartner dLvPartner;
 
   @Override
   public Patients save(HttpServletRequest req) {
@@ -114,6 +116,7 @@ public class SPatientImp implements SPatient {
     pat.setPalata(Util.get(req, "palata"));
     pat.setDayCount(Util.getInt(req, "dayCount"));
     pat.setBloodGroup(Util.isNull(req, "bloodGroup.id") ? null : dOpt.get(Util.getInt(req, "bloodGroup.id")));
+    pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
     pat.setDept(Util.isNull(req, "dept.id") ? null : dDept.get(Util.getInt(req, "dept.id")));
     if(Util.isNotNull(req, "client"))
       pat.setClient(dClient.get(Util.getInt(req, "client")));
@@ -187,6 +190,7 @@ public class SPatientImp implements SPatient {
       pat.setRoom(p.getRoom());
       pat.setDayCount(p.getDayCount());
       pat.setBirthday(p.getBirthday());
+      pat.setLvpartner(p.getLvpartner());
     } else if(!Req.isNull(request, "reg")) {
       Patients p = dPatient.get(SessionUtil.getUser(request).getCurPat());
       pat.setSex(p.getSex());
@@ -403,58 +407,6 @@ public class SPatientImp implements SPatient {
       DB.done(conn);
     }
     return list;
-   /* List<Patients> patients = getList() dPatient.getGridList(grid);
-    for (Patients p : patients) {
-      PatientList pat = new PatientList();
-      // Приемное - медсестра
-      if(session.getRoleId() == 3 && p.getState().equals("PRN"))
-        pat.setShowCheckbox(true);
-      // Приемное - Врач
-      if(session.getRoleId() == 4 && p.getState().equals("PRD"))
-        pat.setShowCheckbox(true);
-      // Цвет иконки
-      pat.setIconUrl("red");
-      // Приемное - медсестра
-      if(session.getRoleId() == 3 && !p.getState().equals("PRN"))
-        pat.setIconUrl("green");
-      // Приемное - Врач
-      if(session.getRoleId() == 4 && p.getState().equals("LV"))
-        pat.setIconUrl("green");
-      if(session.getRoleId() == 5 && p.getState().equals("LV"))
-        pat.setIconUrl("green");
-      if(session.getRoleId() == 5 && p.getState().equals("ZGV"))
-        pat.setIconUrl("red");
-      if(session.getRoleId() == 5 && p.getState().equals("LV") && p.getDateEnd() != null)
-        pat.setShowCheckbox(true);
-      if(session.getRoleId() == 6 && p.getState().equals("ZGV")) {
-        pat.setIconUrl("green");
-        pat.setShowCheckbox(true);
-      }
-      if(session.getRoleId() == 9) {
-        Long conCount = dLvConsul.getCount("From LvConsuls c Where c.patientId = " + p.getId() + " And c.text = null And c.lvId = " + session.getUserId());
-        pat.setIconUrl(conCount > 0 ? "red" : "green");
-      }
-      if(p.getState().equals("ARCH")) {
-        pat.setIconUrl("green");
-        if(session.getRoleId() == 6)
-          pat.setShowCheckbox(true);
-      }
-      // Если это консультация то скрвываем чекбокс
-      if(session.getCurUrl().equals("/patients/consul.s"))
-        pat.setShowCheckbox(false);
-      //
-      pat.setId(p.getId());
-      pat.setFio(Util.nvl(p.getSurname()) + " " + Util.nvl(p.getName()) + " " + Util.nvl(p.getMiddlename()));
-      pat.setBirthYear(p.getBirthyear() != null ? "" + p.getBirthyear() : "");
-      pat.setDateBegin(Util.dateToString(p.getDateBegin()));
-      pat.setIbNum(p.getYearNum() != null ? p.getYearNum() + "" : "");
-      pat.setOtdPal(p.getDept() != null ? p.getDept().getName() + " / " + p.getPalata() : "");
-      pat.setCat(p.getCat() != null ? p.getCat().getName() : "");
-      pat.setMetka(p.getMetka() != null ? p.getMetka().getName() : "");
-      pat.setLv(p.getLv() != null ? dUser.get(p.getLv()).getFio() : "");
-      list.add(pat);
-    }
-    return list;*/
   }
 
   @Override
@@ -519,8 +471,6 @@ public class SPatientImp implements SPatient {
     p.setC35(pat.getC35());
     p.setC36(pat.getC36());
     p.setC37(pat.getC37());
-    /*p.setMkb_id(pat.getMkb_id());
-    p.setMkb(pat.getMkb());*/
     if(p.getYearNum() == null)
       p.setYearNum(dPatient.getNextYearNum());
     else
@@ -529,21 +479,10 @@ public class SPatientImp implements SPatient {
 
   @Override
   public Patients docSave(HttpServletRequest req) {
-    Session session = SessionUtil.getUser(req);
     Patients p = dPatient.get(Util.getInt(req, "id"));
     p.setDateBegin(Util.stringToDate(req.getParameter("date_Begin")));
     p.setDiagnosDate(Util.stringToDate(req.getParameter("diagnos_Date")));
     if(p.getState().equals("PRN")) p.setStartEpicDate(p.getDateBegin());
-    // Фарход мадад шифода ушбу полялар медсестрага олиб чикилган
-    if(!session.isParamEqual("CLINIC_CODE", "fm")) {
-      p.setDept(Util.isNull(req, "dept.id") ? null : dDept.get(Util.getInt(req, "dept.id")));
-      p.setPalata(Util.get(req, "palata"));
-      p.setLv_id(Util.getNullInt(req, "lv_id"));
-      if(p.getLv_id() != null)
-        p.setLv_dept_id(dUser.get(p.getLv_id()).getDept().getId());
-    }
-    /*p.setMkb(Util.get(req, "mkb"));
-    p.setMkb_id(Util.getInt(req, "mkb_id"));*/
     p.setStartDiagnoz(Util.get(req, "startDiagnoz"));
     p.setSopustDBolez(Util.get(req, "sopustDBolez"));
     p.setOslojn(Util.get(req, "oslojn"));

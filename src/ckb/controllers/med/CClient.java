@@ -70,7 +70,7 @@ public class CClient {
       if (!Req.isNull(req,"filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
         if (!Req.isNull(req, "filter"))
-          session.setFilterFio(Util.toUTF8(Req.get(req, "filterInput")));
+          session.setFilterFio(Req.get(req, "filterInput"));
         if (session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +

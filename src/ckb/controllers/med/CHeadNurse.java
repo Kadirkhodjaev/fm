@@ -368,7 +368,7 @@ public class CHeadNurse {
     m.addAttribute("pat", pat);
     Calendar end = Calendar.getInstance();
     end.setTime(new Date());
-    end.add(Calendar.DATE, -3);
+    end.add(Calendar.DATE, -5);
     m.addAttribute("canReturn", (pat.getPaid() == null || !pat.getPaid().equals("CLOSED")) && "CON".equals(doc.getState()) && doc.getDate().after(end.getTime()));
     m.addAttribute("drugs", dhnDatePatientRow.getList("From HNDatePatientRows Where drug.direction.id = " + doc.getDirection().getId() + " And doc.id = " + doc.getId() + " And patient.id = " + Util.get(req, "patient")));
     //
@@ -858,7 +858,7 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/saldo.s");
     String page_code = Util.get(req, "code", "saldo");
-    String filter = Util.toUTF8(Util.get(req, "filter", ""));
+    String filter = Util.get(req, "filter", "");
     String direction = Util.get(req, "direction", "0");
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
@@ -886,7 +886,7 @@ public class CHeadNurse {
   protected String saldo_excel(HttpServletRequest req, Model m) {
     Session session = SessionUtil.getUser(req);
     String page_code = Util.get(req, "code", "saldo");
-    String filter = Util.toUTF8(Util.get(req, "filter", ""));
+    String filter = Util.get(req, "filter", "");
     String direction = Util.get(req, "direction", "0");
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
@@ -1322,7 +1322,7 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/total/patients.s");
     String setFilter = Util.get(req, "set");
     String filter = session.getFilters().get("hn_patient_filter");
-    if(setFilter != null || filter == null || filter.equals("")) filter = Util.toUTF8(Util.get(req, "filter", "")).toUpperCase();
+    if(setFilter != null || filter == null || filter.equals("")) filter = Util.get(req, "filter", "").toUpperCase();
     HashMap<String, String> fl = session.getFilters();
     fl.put("hn_patient_filter", filter);
     session.setFilters(fl);
@@ -2250,7 +2250,7 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/patients.s");
     String setFilter = Util.get(req, "set");
     String filter = session.getFilters().get("hn_patient_filter");
-    if(setFilter != null || filter == null || filter.equals("")) filter = Util.toUTF8(Util.get(req, "filter", "")).toUpperCase();
+    if(setFilter != null || filter == null || filter.equals("")) filter = Util.get(req, "filter", "").toUpperCase();
     Calendar start = Calendar.getInstance();
     start.setTime(new Date());
     start.add(Calendar.DATE, -4);

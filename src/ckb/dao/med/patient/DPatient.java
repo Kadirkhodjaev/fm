@@ -3,8 +3,6 @@ package ckb.dao.med.patient;
 import ckb.dao.Dao;
 import ckb.domains.med.patient.Patients;
 
-import java.util.List;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Sardor
@@ -17,11 +15,7 @@ public interface DPatient extends Dao<Patients> {
 
   Integer getNextYearNum();
 
-  Integer getNextOtdNum(int deptId);
-
-  List<Patients> getEatPatients(Integer deptId, String actDate);
-
-  boolean existIbNum(Integer id, Integer yearNum, Integer otdNum);
+  boolean existIbNum(Integer id, Integer yearNum);
 
   Long getKoykoCount(String s);
 }

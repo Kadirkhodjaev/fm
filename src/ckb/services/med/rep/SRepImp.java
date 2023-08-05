@@ -2638,7 +2638,8 @@ public class SRepImp implements SRep {
 					"         c.Name Service_Name, " +
 					"         'Стац.' service_Type," +
 					"         t.actDate," +
-					"				  t.fizei " +
+					"				  t.fizei," +
+					"				  (Select Count(*) From Lv_Fizio_Dates g Where g.fizio_id = t.Id And g.state = 'Y') Counter" +
 					" From Lv_Fizios t, Kdos c, Patients p, Users u  " +
 					" Where t.Kdo_Id = c.id " +
 					"   And t.patientId = p.id " + (catStat.equals("") ? "" : " And c.id = " + catStat) +
@@ -2652,7 +2653,8 @@ public class SRepImp implements SRep {
 					"        ser.Name Service_Name, " +
 					"				 'Амб' Service_Type, " +
 					"        t.confDate," +
-					"				 0 fizei " +
+					"				 0 fizei," +
+					"			   0 Counter " +
 					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
 					"  Where ser.Id = t.Service_Id " +
 					"    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
@@ -2679,6 +2681,7 @@ public class SRepImp implements SRep {
 				//
 				service.setC4("" + counter);
 				service.setC5(rs.getString("fizei"));
+				service.setC6(rs.getString("counter"));
 				fio = rs.getString("fio");
 				//
 				rows.add(service);

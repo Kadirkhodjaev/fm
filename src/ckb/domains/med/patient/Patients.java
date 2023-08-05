@@ -1,10 +1,7 @@
 package ckb.domains.med.patient;
 
 import ckb.domains.GenId;
-import ckb.domains.admin.Clients;
-import ckb.domains.admin.Depts;
-import ckb.domains.admin.SelOpts;
-import ckb.domains.admin.Users;
+import ckb.domains.admin.*;
 import ckb.domains.med.dicts.Rooms;
 import ckb.utils.Util;
 
@@ -317,6 +314,7 @@ public class Patients extends GenId {
 
   // Флаг физиотерапий: если правда то назначено, не правда то не назначена
   @Column private boolean fizio = false;
+  @OneToOne @JoinColumn private LvPartners lvpartner;
 
   @Column(name="mkb_id")
   private Integer mkb_id;
@@ -1001,5 +999,13 @@ public class Patients extends GenId {
 
   public void setDis_perc(Double dis_perc) {
     this.dis_perc = dis_perc;
+  }
+
+  public LvPartners getLvpartner() {
+    return lvpartner;
+  }
+
+  public void setLvpartner(LvPartners lvpartner) {
+    this.lvpartner = lvpartner;
   }
 }

@@ -29,6 +29,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
@@ -56,18 +57,19 @@ public class CPatient {
   @Autowired DRooms dRoom;
   @Autowired DHNPatient dhnPatient;
 
-  private Logger logger = Logger.getLogger(CPatient.class);
+  private final Logger logger = Logger.getLogger(CPatient.class);
 
   @RequestMapping("/index.s")
-  protected String index(HttpServletRequest r, Model m) {
+  protected RedirectView index(HttpServletRequest r) {
     try {
       session = SessionUtil.getUser(r);
-      r.setCharacterEncoding("Cp1251");
       String query = "grid=1";
       if (!Req.isNull(r, "filter"))
         query = "filter=" + Req.get(r, "filter");
-      if (!Req.isNull(r, "filterInput"))
-        query += "&filterInput=" + Req.get(r, "filterInput");
+      if (!Req.isNull(r, "filterInput")) {
+        query += "&filterInput=" + Util.toUTF8(Req.get(r, "filterInput"));
+        //query += "&filterInput=" + Req.get(r, "filterInput");
+      }
       if (!Req.isNull(r, "action"))
         query += "&action=" + Req.get(r, "action");
       if (!Req.isNull(r, "column"))
@@ -77,8 +79,8 @@ public class CPatient {
       if (!Req.isNull(r, "page"))
         query += "&page=" + Req.get(r, "page");
       //
-      String url = session.getCurUrl() + (session.getCurUrl().indexOf("?") > -1 ? "&" : "?") + query;
-      return "redirect:/" + url;
+      return new RedirectView(session.getCurUrl() + (session.getCurUrl().contains("?") ? "&" : "?") + query);
+      //return "redirect:/" + session.getCurUrl() + (session.getCurUrl().contains("?") ? "&" : "?") + query;
     } catch (Exception e) {
       logger.error("index.s: " + e.getMessage());
       return null;
@@ -127,8 +129,11 @@ public class CPatient {
       // Фильтр
       if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
-        if (!Req.isNull(r, "filter"))
-          session.setFilterFio(Util.toUTF8(Req.get(r, "filterInput")));
+        if (!Req.isNull(r, "filter")) {
+          String filterWord = Req.get(r, "filterInput");
+          //String filterWord = Util.toUTF8(Req.get(r, "filterInput"));
+          session.setFilterFio(filterWord);
+        }
         if (session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +
@@ -222,7 +227,7 @@ public class CPatient {
       if(!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
         if(!Req.isNull(r, "filter"))
-          session.setFilterFio(Util.toUTF8(Req.get(r, "filterInput")));
+          session.setFilterFio(Req.get(r, "filterInput"));
         if(session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +
@@ -237,7 +242,7 @@ public class CPatient {
       if(!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
         if(!Req.isNull(r, "filter"))
-          session.setFilterFio(Util.toUTF8(Req.get(r, "filterInput")));
+          session.setFilterFio(Req.get(r, "filterInput"));
         if(session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +

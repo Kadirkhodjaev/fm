@@ -6,7 +6,6 @@ import ckb.dao.admin.forms.DForm;
 import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.nurse.DNurse;
-import ckb.dao.admin.nurse.DNurseDept;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.reports.DReport;
 import ckb.dao.admin.roles.DRole;
@@ -18,7 +17,6 @@ import ckb.dao.med.amb.DAmbGroups;
 import ckb.dao.med.amb.DAmbServiceFields;
 import ckb.dao.med.amb.DAmbServiceUsers;
 import ckb.dao.med.amb.DAmbServices;
-import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.kdos.DKdoTypes;
 import ckb.dao.med.kdos.DKdos;
@@ -82,11 +80,9 @@ public class CAdmin {
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DUserLog dUserLog;
-  @Autowired private DRooms dRooms;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DUserIp dUserIp;
   @Autowired private DNurse dNurse;
-  @Autowired private DNurseDept dNurseDept;
 
   @RequestMapping({"/users/list.s", "/"})
   protected String userList(HttpServletRequest request, Model model) {
@@ -103,7 +99,7 @@ public class CAdmin {
   protected String addEdit(@ModelAttribute("user") Users user, HttpServletRequest req, Model model) {
     model.addAttribute("deptList", dDept.getAll());
     sUser.createMode(req, user);
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     List<DrugDirections> directions = dDrugDirection.getAll();
     for(DrugDirections direction: directions) {
       ObjList obj = new ObjList();
@@ -122,7 +118,7 @@ public class CAdmin {
   @RequestMapping(value = "/users/addEdit.s", method = RequestMethod.POST)
   protected String addEdit(@ModelAttribute("user") Users user, Errors errors, HttpServletRequest request, Model model) {
     ValidationUtils.rejectIfEmpty(errors, "login", "login.isEmpty", "Password field is empty");
-    // ¬водитс€ пароль но подтверждению не ввели
+    // ¬водитс€ пароль, но подтверждению не ввели
     if(!user.getPassword().equals("") && Req.isNull(request, "confirm_password"))
       errors.rejectValue("password", "confirmNewPassword.isEmpty", "Confirm is null");
     // ¬водитс€ пароль но пороль с подтверждением не совподает
@@ -133,7 +129,7 @@ public class CAdmin {
     ValidationUtils.rejectIfEmpty(errors, "fio", "fio.isEmpty", "Password field is empty");
     if (errors.hasErrors()) {
       model.addAttribute("deptList", dDept.getAll());
-      List<ObjList> list = new ArrayList<ObjList>();
+      List<ObjList> list = new ArrayList<>();
       List<DrugDirections> directions = dDrugDirection.getAll();
       for(DrugDirections direction: directions) {
         ObjList obj = new ObjList();
@@ -174,7 +170,7 @@ public class CAdmin {
   }
 
   @RequestMapping("/users/del.s")
-  protected String del(HttpServletRequest request, Model model) {
+  protected String del(HttpServletRequest request) {
     try {
       dUser.delete(Req.getInt(request, "id"));
       return "redirect:/admin/users/list.s?msgState=1&msgCode=successDelete";
@@ -186,7 +182,7 @@ public class CAdmin {
   @RequestMapping("/users/roles.s")
   protected String userRolesReports(HttpServletRequest request, Model model) {
     Users user = dUser.get(Req.getInt(request, "id"));
-    List<Obj> list = new ArrayList<Obj>();
+    List<Obj> list = new ArrayList<>();
     List<Integer> kdoTypes = dUser.getKdoTypesIds(user.getId());
     boolean isActive;
     for(Roles role : dRole.getAll()) {
@@ -200,7 +196,7 @@ public class CAdmin {
         list.add(new Obj(role.getId(), role.getName(), isActive));
     }
     model.addAttribute("roles", list);
-    list = new ArrayList<Obj>();
+    list = new ArrayList<>();
     List<Reports> reports = dUser.getReports(user.getId());
     for(Reports report : dReport.getAll()) {
       isActive = false;
@@ -211,11 +207,11 @@ public class CAdmin {
         }
       list.add(new Obj(report.getId(), report.getName(), isActive));
     }
-    List<Obj> kdos = new ArrayList<Obj>();
+    List<Obj> kdos = new ArrayList<>();
     for(KdoTypes kdo : dKdoType.getList("From KdoTypes Where state = 'A'"))
       kdos.add(new Obj(kdo.getId(), kdo.getName(), kdoTypes.contains(kdo.getId())));
     model.addAttribute("kdos", kdos);
-    List<Obj> services = new ArrayList<Obj>();
+    List<Obj> services = new ArrayList<>();
     List<AmbServices> ss = dAmbServices.getList("From AmbServices Where group.isGroup = 0 And state = 'A'");
     // √руппируем данные
     List<AmbGroups> groups = dAmbGroups.getAll();
@@ -235,15 +231,15 @@ public class CAdmin {
   @RequestMapping(value = "/users/roles.s", method = RequestMethod.POST)
   protected String setUserRolesReports(HttpServletRequest request, Model model) {
     Users u = dUser.get(Req.getInt(request, "userId"));
-    List<Roles> roles = new ArrayList<Roles>();
-    List<Reports> reports = new ArrayList<Reports>();
-    List<KdoTypes> kdoTypes = new ArrayList<KdoTypes>();
+    List<Roles> roles = new ArrayList<>();
+    List<Reports> reports = new ArrayList<>();
+    List<KdoTypes> kdoTypes = new ArrayList<>();
     String[] roleList = request.getParameterValues("role");
     String[] kdos = request.getParameterValues("kdo");
     String[] services = request.getParameterValues("service");
     String[] reportList = request.getParameterValues("report");
     boolean isKdo = false;
-    u.setKdoTypes(new ArrayList<KdoTypes>());
+    u.setKdoTypes(new ArrayList<>());
     if(reportList != null)
       for (String aReportList : reportList)
         reports.add(dReport.get(Integer.parseInt(aReportList)));
@@ -267,7 +263,7 @@ public class CAdmin {
           su.setService(sId);
           dAmbServiceUsers.save(su);
         } else { //Ћаб
-          List<AmbServices> ds = new ArrayList<AmbServices>();
+          List<AmbServices> ds = new ArrayList<>();
           if(sId < 0)
             ds = dAmbServices.byType(-1 * sId);
           for(AmbServices d: ds) {
@@ -289,7 +285,7 @@ public class CAdmin {
   @RequestMapping("/users/kdos.s")
   protected String kdos(HttpServletRequest request, Model model) {
     Users u = dUser.get(Req.getInt(request, "id"));
-    List<Obj> list = new ArrayList<Obj>();
+    List<Obj> list = new ArrayList<>();
     List<Integer> kdoTypes = dUser.getKdoTypesIds(u.getId());
     for(KdoTypes kdo : dKdoType.getAll())
       list.add(new Obj(kdo.getId(), kdo.getName(), kdoTypes.contains(kdo.getId())));
@@ -301,7 +297,7 @@ public class CAdmin {
   @RequestMapping(value = "/users/kdos.s", method = RequestMethod.POST)
   protected String kdosSave(HttpServletRequest request, Model model) {
     Users u = dUser.get(Req.getInt(request, "userId"));
-    List<KdoTypes> kdoTypes = new ArrayList<KdoTypes>();
+    List<KdoTypes> kdoTypes = new ArrayList<>();
     String[] list = request.getParameterValues("ids");
     for (String l : list)
       kdoTypes.add(dKdoType.get(Integer.parseInt(l)));
@@ -374,7 +370,7 @@ public class CAdmin {
     int id = Req.getInt(request, "id");
     FormFields field = dFormField.get(fieldId);
     List<SelOpts> opts = field.getOpts();
-    List<SelOpts> list = new ArrayList<SelOpts>();
+    List<SelOpts> list = new ArrayList<>();
     for(SelOpts opt : opts)
       if(!opt.getId().equals(id))
         list.add(opt);
@@ -394,7 +390,7 @@ public class CAdmin {
     f.setResFlag("Y");
     f.setTextCols(60);
     f.setTextRows(4);
-    f.setOrd(Integer.parseInt("" + (count+1)));
+    f.setOrd(Integer.parseInt(String.valueOf(count + 1)));
     f.setFieldCode(dFormField.getNextFieldCode(Req.getInt(request, "formId")));
     dFormField.save(f);
   }
@@ -454,7 +450,7 @@ public class CAdmin {
     FormFields field = dFormField.get(fieldId);
     List<SelOpts> opts = field.getOpts();
     SelOpts val = new SelOpts();
-    val.setName(Util.toUTF8(Req.get(request, "val")));
+    val.setName(Req.get(request, "val"));
     if(!val.getName().equals("")) {
       val = dOpt.saveAndReturn(val);
       opts.add(val);
@@ -467,7 +463,7 @@ public class CAdmin {
   protected void addField(HttpServletRequest request){
     int formId = Req.getInt(request, "formId");
     FormFields field = new FormFields();
-    field.setField(Util.toUTF8(Req.get(request, "field")));
+    field.setField(Req.get(request, "field"));
     field.setForm(dForm.get(formId));
     dFormField.save(field);
   }
@@ -513,7 +509,7 @@ public class CAdmin {
     dh.put("admin_amb_index", page);
     session.setDateBegin(dh);
     //
-    List<AmbService> services = new ArrayList<AmbService>();
+    List<AmbService> services = new ArrayList<>();
     List<AmbServices> list = dAmbServices.getList("From AmbServices t " + (page.equals("0") ? "" : " Where  group.id = " + page) + " Order By t.state, t.group.id");
     for(AmbServices l:list) {
       AmbService s = new AmbService();
@@ -736,6 +732,7 @@ public class CAdmin {
       json.put("form", d.getFormId());
       StringBuilder users = new StringBuilder();
       conn = DB.getConnection();
+      assert conn != null;
       ps = conn.prepareStatement("Select a.fio From User_Kdo_Types t, Kdos c, Users a Where a.id = t.users_id And c.kdo_type = t.kdoTypes_Id And c.id = " + d.getId());
       rs = ps.executeQuery();
       while(rs.next()) {

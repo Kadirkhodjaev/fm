@@ -16,8 +16,6 @@ import java.util.List;
 public interface SForm {
   void setSelectOptionModel(Model model, Integer formId, String field);
 
-  void createFieldSelect(Model model, int field, String code, String val);
-
   void createFields(Model model, int formId, Kdos kdo);
 
   List<FormField> createFields(Integer formId, int serviceId);

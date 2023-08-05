@@ -20,6 +20,4 @@ public interface DForm extends Dao<Forms> {
   List<SelOpts> getOpts(int formId, String field);
 
   List<SelOpts> getOpts(int field);
-
-  List<String> getKdoOpts(int formId, String field);
 }

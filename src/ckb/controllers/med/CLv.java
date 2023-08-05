@@ -1705,7 +1705,7 @@ public class CLv {
   @RequestMapping(value = "/drug/temps.s")
   protected String userDrugTemps(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
-    String filter = Util.toUTF8(Util.get(req, "filter", ""));
+    String filter = Util.get(req, "filter", "");
     List<PatientDrug> rows = new ArrayList<PatientDrug>();
     List<PatientDrugTemps> list = dPatientDrugTemp.getList("From PatientDrugTemps Where crBy = " + session.getUserId());
     boolean isOK;

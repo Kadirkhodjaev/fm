@@ -193,7 +193,7 @@ public class  CApp {
       m.add(new Menu("Архив", "/patients/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/archive/list.s")));
     }
     if(roleId == 17) { // Бронирование
-      session.setCurUrl(session.getCurUrl().equals("") ? "/booking/index.s" : session.getCurUrl());
+      session.setCurUrl(session.getCurUrl().equals("") ? "/patients/list.s" : session.getCurUrl());
       m.add(new Menu("Статистика", "/patients/stat.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/patients/stat.s")));
       m.add(new Menu("Койки", "/booking/koyki.s", "fa fa-home fa-fw", session.getCurUrl().equals("/booking/koyki.s")));
       m.add(new Menu("Бронирование", "/booking/index.s", "fa fa-plus fa-fw", session.getCurUrl().equals("/booking/index.s")));

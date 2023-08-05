@@ -124,7 +124,7 @@ public class CAmb {
       if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
         if (!Req.isNull(r, "filter"))
-          session.setFilterFio(Util.toUTF8(Req.get(r, "filterInput")));
+          session.setFilterFio(Req.get(r, "filterInput"));
         if (session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +
@@ -204,7 +204,7 @@ public class CAmb {
       if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
         if (!Req.isNull(r, "filter"))
-          session.setFilterFio(Util.toUTF8(Req.get(r, "filterInput")));
+          session.setFilterFio(Req.get(r, "filterInput"));
         if (session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +

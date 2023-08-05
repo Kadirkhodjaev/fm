@@ -29,7 +29,7 @@
           <input type="text" style="height:30px" class="form-control" placeholder="Поиск..." id="filter_box" value="${filter}">
         </td>
         <td style="width:56px">
-          <button class="btn btn-success btn-sm" onclick="setFilter()">Поиск</button>
+          <button class="btn btn-success btn-sm" onclick="setActFilter()">Поиск</button>
         </td>
       </tr>
     </table>
@@ -96,7 +96,7 @@
     var end = document.getElementById("period_end");
     setPage('/act/index.s?period_start=' + start.value + '&period_end=' + end.value);
   }
-  function setFilter() {
+  function setActFilter() {
     var start = document.getElementById("period_start");
     var end = document.getElementById("period_end");
     var word = document.getElementById("filter_box");

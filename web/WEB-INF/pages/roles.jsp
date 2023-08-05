@@ -4,12 +4,9 @@
   <h1 class="page-header" style="color: #337ab7">Роли</h1>
 </div>
 <div style="clear:both"></div>
-<table style="width: 100%;">
+<div class="row" style="margin-right:50px; margin-left:50px">
   <c:forEach items="${roles}" var="r" varStatus="loop">
-    <c:if test="${loop.first || loop.index % 5 == 0}">
-      <tr><td>&nbsp;</td>
-    </c:if>
-    <td style="width: 300px;padding:0">
+    <div class="col-lg-3">
       <a onclick="setLocation('/setRole.s?id=' + ${r.id}); return false;" href="#">
         <div class="col-lg-11">
           <div class="${r.color}">
@@ -28,9 +25,6 @@
           </div>
         </div>
       </a>
-    </td>
-    <c:if test="${loop.index % 5 == 4 || loop.last}">
-      <td>&nbsp;</td></tr>
-    </c:if>
+    </div>
   </c:forEach>
-</table>
+</div>

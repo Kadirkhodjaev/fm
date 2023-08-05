@@ -59,7 +59,7 @@ public class CBooking {
   protected String serviceList(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurPat(0);
-    String filter = Util.toUTF8(Util.get(req, "word"));
+    String filter = Util.get(req, "word");
     session.setCurUrl("/booking/index.s?word=" + filter);
     m.addAttribute("filter", filter);
     Integer history = Integer.parseInt(Util.nvl(req, "history", "0"));
@@ -382,7 +382,7 @@ public class CBooking {
   @RequestMapping("nurse.s")
   protected String nurse(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
-    String filter = Util.toUTF8(Util.get(req, "word"));
+    String filter = Util.get(req, "word");
     session.setCurUrl("/booking/nurse.s?word=" + filter);
     m.addAttribute("filter", filter);
     //region Услуги

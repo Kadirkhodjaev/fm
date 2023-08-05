@@ -34,19 +34,6 @@ public class SFormImp implements SForm {
   }
 
   @Override
-  public void createFieldSelect(Model model, int field, String code, String val) {
-    StringBuffer sb = new StringBuffer();
-    sb.append("<select class='form-control' name='" + code + "'>");
-    List<SelOpts> ops = dForm.getOpts(field);
-    for(SelOpts op : ops) {
-      if(op.getState().equals("A"))
-        sb.append("<option value='" + op.getName() + "' " + (val.equals(op.getName()) ? "selected" : "") + ">" + op.getName());
-    }
-    sb.append("</select>");
-    model.addAttribute(code + "s", sb.toString());
-  }
-
-  @Override
   public void createFields(Model model, int formId, Kdos kdo) {
     List<FormFields> fields = dFormField.getFiledsByForm(formId);
     for(FormFields f : fields){

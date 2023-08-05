@@ -90,7 +90,7 @@ public class CAct {
     end.add(Calendar.DATE, 2);
     String startDate = Util.get(req, "period_start", Util.dateToString(start.getTime()));
     String endDate = Util.get(req, "period_end", Util.dateToString(end.getTime()));
-    String filter = Util.toUTF8(Util.get(req, "word"));
+    String filter = Util.get(req, "word");
     //
     String where = "";
     if(filter != null) {
