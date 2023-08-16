@@ -321,7 +321,7 @@ public class CReg {
   protected String regDoc(@ModelAttribute("patient") Patients patient, HttpServletRequest req, Model model) {
     session = SessionUtil.getUser(req);
     session.setCurPat(Req.getInt(req, "id"));
-    Patients pat = dPatient.get(session.getCurPat());
+    Patients pat = dPatient.get(Req.getInt(req, "id"));
     session.setCurUrl("/reg/doctor/index.s?id=" + pat.getId());
     model.addAttribute("fio", pat.getSurname() + " " + pat.getName());
     model.addAttribute("lvs", sUser.getLvs());
@@ -332,8 +332,36 @@ public class CReg {
     model.addAttribute("diagnos_Date", Util.dateToString(pat.getDiagnosDate()));
     model.addAttribute("bioCount", dLvPlan.getCount("From LvPlans Where kdo.id = 153 And patientId = " + pat.getId()));
     Util.makeMsg(req, model);
-    String url = "med/registration/doctor/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "index";
-    return url;
+    return "med/registration/doctor/fm/index";
+  }
+
+  @RequestMapping(value = "doctor/index.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String regDoc(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    JSONObject data = new JSONObject();
+    res.setContentType("text/plain;charset=UTF-8");
+    try {
+      String msg = "";
+      msg += Req.isNull(req, "date_Begin") ? "Не заполнено поле - Дата поступление\n" : "";
+      msg += Req.isNull(req, "yearNum") ? "Не заполнено поле - Номер история болезни\n" : "";
+      Patients pat = dPatient.get(Util.getInt(req, "id"));
+      if (msg.equals("") && pat.getYearNum() != null && pat.getYearNum() != Util.getInt(req, "yearNum"))
+        if (dPatient.existIbNum(Util.getInt(req, "id"), Util.getInt(req, "yearNum")))
+          msg += "Номер история болезни - такой номер уже существует\n";
+      //
+      if (msg.equals("")) {
+        Patients p = sPatient.docSave(req);
+        data.put("success", true);
+        data.put("id", p.getId());
+      } else {
+        data.put("success", false);
+        data.put("msg", msg);
+      }
+    } catch (Exception e) {
+      data.put("success", false);
+      data.put("msg", e.getMessage());
+    }
+    return data.toString();
   }
 
   @RequestMapping("doctor/view.s")
@@ -381,35 +409,6 @@ public class CReg {
      }
      dLvPlan.save(plan);
      data.put("success", true);
-    } catch (Exception e) {
-      data.put("success", false);
-      data.put("msg", e.getMessage());
-    }
-    return data.toString();
-  }
-
-  @RequestMapping(value = "doctor/index.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String regDoc(HttpServletRequest req, HttpServletResponse res) throws JSONException {
-    JSONObject data = new JSONObject();
-    res.setContentType("text/plain;charset=UTF-8");
-    try {
-      String msg = "";
-      msg += Req.isNull(req, "date_Begin") ? "Не заполнено поле - Дата поступление\n" : "";
-      msg += Req.isNull(req, "yearNum") ? "Не заполнено поле - Номер история болезни\n" : "";
-      Patients pat = dPatient.get(Util.getInt(req, "id"));
-      if (msg.equals("") && pat.getYearNum() != Util.getInt(req, "yearNum"))
-        if (dPatient.existIbNum(Util.getInt(req, "id"), Util.getInt(req, "yearNum")))
-          msg += "Номер история болезни - такой номер уже существует\n";
-      //
-      if (msg.equals("")) {
-        Patients p = sPatient.docSave(req);
-        data.put("success", true);
-        data.put("id", p.getId());
-      } else {
-        data.put("success", false);
-        data.put("msg", msg);
-      }
     } catch (Exception e) {
       data.put("success", false);
       data.put("msg", e.getMessage());

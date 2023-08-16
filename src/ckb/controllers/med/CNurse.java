@@ -374,7 +374,6 @@ public class CNurse {
           "       Where t.id = c.patientId  " +
           "         And d.fizio_Id = c.id  " +
           "         And t.room_id = r.id  " +
-          "         And t.State != 'ARCH'  " +
           "         And date(d.date) <= ? " +
           "         And d.state = 'Y') t " +
           "   Group By t.Patient, t.Fio"

@@ -102,7 +102,7 @@
   }
 </script>
 <body style="background: white">
-  <div class="panel panel-info" style="width: 800px !important; margin: auto">
+  <div class="panel panel-info" style="width: 1000px !important; margin: auto">
     <div class="panel-heading">
       ${patient.surname} ${patient.name} ${patient.middlename}
       <ul class="pagination" style="float:right; margin-top:-5px">
@@ -153,7 +153,7 @@
         </tr>
       </table>
     </div>
-    <div class="" style="margin-left:-1px; width: 800px !important;">
+    <div class="" style="margin-left:-1px; width: 1000px !important;">
       <div class="center" style="font-weight:bold; font-size:18px">
         ${service.service.name}
       </div>

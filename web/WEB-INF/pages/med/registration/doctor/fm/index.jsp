@@ -8,10 +8,21 @@
   var tab = 1;
   function saveForm() {
     if (checkForm($('form'))) {
-      $('form').submit();
+      $.ajax({
+        url: '/reg/doctor/index.s',
+        method: 'post',
+        data: $('form').serialize(),
+        dataType: 'json',
+        success: function (res) {
+          if(res.success) {
+            alert('<ui:message code="successSave"/>');
+            setPage('${sessionScope.ENV.curUrl}');
+          } else alert(res.msg);
+        }
+      });
     }
   }
-  function saveData(){
+  /*function saveData(){
     try {
       var res = jQuery.parseJSON(frm.document.body.getElementsByTagName("pre")[0].innerText);
       if(res.success) {
@@ -20,8 +31,10 @@
       } else {
         alert(res.msg);
       }
-    } catch (e) {}
-  }
+    } catch (e) {
+      console.log(frm.document.body)
+    }
+  }*/
   function nursePage(){
     tab = 0;
     $('#home').load('/reg/nurse/view.s');
@@ -74,7 +87,6 @@
     }
   }
 </script>
-<iframe name="frm" onload="try {saveData()} catch(e){}" class="hidden"></iframe>
 <div class="panel panel-info">
   <div class="panel-heading">
     Пациент - <b>${fio}</b>

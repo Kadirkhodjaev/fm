@@ -1499,7 +1499,6 @@ public class CLv {
       String[] drugs = req.getParameterValues("drug_drug");
       String[] names = req.getParameterValues("drug_name");
       String[] expenses = req.getParameterValues("out_count");
-      String[] drug_measures = req.getParameterValues("drug_measure");
       String[] dates = req.getParameterValues("dates");
       String[] dateStates = req.getParameterValues("date_state");
       String[] date_states = req.getParameterValues("dt_state");
@@ -1659,7 +1658,6 @@ public class CLv {
   protected String drugTemplateSave(HttpServletRequest req) throws JSONException {
     Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
-    List<PatientDrugRowTemps> rows = new ArrayList<PatientDrugRowTemps>();
     try {
       PatientDrugs d = dPatientDrug.get(Util.getInt(req, "id"));
       List<PatientDrugRows> rws = dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + d.getId());

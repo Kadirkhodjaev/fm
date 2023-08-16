@@ -251,7 +251,7 @@
                 <table width="100%">
                   <tr>
                     <td style="width:90%">
-                      <select id="client-selector" name="client" class="form-control chzn-select" onchange="setClient(this.value)">
+                      <select id="client-selector" data-placeholder="Выбрать клиента" name="client" class="form-control chzn-select" onchange="setClient(this.value)">
                         <option></option>
                         <c:forEach items="${clients}" var="client">
                           <option value="${client.id}">${client.surname} ${client.name} ${client.middlename}</option>
