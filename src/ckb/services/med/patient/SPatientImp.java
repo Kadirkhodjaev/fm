@@ -1047,4 +1047,55 @@ public class SPatientImp implements SPatient {
     }
     return drugs;
   }
+
+  @Override
+  public List<PatientDrug> getDrugsByTypeToDate(Integer curPat, Date operDay, int type) {
+    List<PatientDrug> drugs = new ArrayList<PatientDrug>();
+    List<PatientDrugs> patientDrugs = dPatientDrug.byTypeToDate(curPat, type, operDay);
+    for(PatientDrugs pd: patientDrugs) {
+      PatientDrug drug = new PatientDrug();
+      drug.setId(pd.getId());
+      drug.setPatient(pd.getPatient());
+      drug.setGoal(pd.getGoal());
+      List<PatientDrugRow> rows = new ArrayList<PatientDrugRow>();
+      boolean canDel = true;
+      for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
+        PatientDrugRow row = new PatientDrugRow();
+        row.setName(patientDrugRow.getSource().equals("own") ? patientDrugRow.getName() : patientDrugRow.getDrug().getName());
+        if(!patientDrugRow.getSource().equals("own"))
+          row.setName(row.getName() + (" (" + patientDrugRow.getExpanse() + " " + patientDrugRow.getMeasure().getName() + ")"));
+        row.setExpanse(patientDrugRow.getExpanse());
+        row.setSource(patientDrugRow.getSource());
+        row.setState(patientDrugRow.getState());
+        if(!row.getState().equals("ENT")) canDel = false;
+        rows.add(row);
+      }
+      drug.setInjectionType(pd.getInjectionType());
+      drug.setRows(rows);
+      drug.setCanDel(canDel || rows.isEmpty());
+      List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
+      for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + pd.getId() + " And date(date) = '" + Util.dateDB(Util.dateToString(operDay)) + "'")) {
+        PatientDrugDate date = new PatientDrugDate();
+        date.setDate(dd.getDate());
+        date.setDateMonth(Util.dateToString(dd.getDate()).substring(0, 5));
+        date.setChecked(dd.isChecked());
+        date.setState(dd.getState());
+        dates.add(date);
+      }
+      drug.setDates(dates);
+      drug.setState(pd.getState());
+      String time = "";
+      if(pd.isMorningTime()) time += "Утром" + (pd.isMorningTimeBefore() ? " до еды" : "") + (pd.isMorningTimeAfter() ? " после еды" : "");
+      if(pd.isNoonTime()) time += (time.equals("") ? "" : ", ") + "Днем" + (pd.isNoonTimeBefore() ? " до еды" : "") + (pd.isNoonTimeAfter() ? " после еды" : "");
+      if(pd.isEveningTime()) time += (time.equals("") ? "" : ", ") + "Вечером" + (pd.isEveningTimeBefore() ? " до еды" : "") + (pd.isEveningTimeAfter() ? " после еды" : "");
+      drug.setNote((time.equals("") ? "" : time + "; ") + " " + pd.getNote());
+      drug.setDateBegin(pd.getDateBegin());
+      drug.setDateEnd(pd.getDateEnd());
+      drug.setCrBy(pd.getCrBy());
+      drug.setCrOn(pd.getCrOn());
+      if(!drug.getDates().isEmpty())
+        drugs.add(drug);
+    }
+    return drugs;
+  }
 }

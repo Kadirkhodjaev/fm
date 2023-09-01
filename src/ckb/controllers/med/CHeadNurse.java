@@ -368,7 +368,7 @@ public class CHeadNurse {
     m.addAttribute("pat", pat);
     Calendar end = Calendar.getInstance();
     end.setTime(new Date());
-    end.add(Calendar.DATE, -5);
+    end.add(Calendar.DATE, session.getUserId() == 1 ? -10 : -5);
     m.addAttribute("canReturn", (pat.getPaid() == null || !pat.getPaid().equals("CLOSED")) && "CON".equals(doc.getState()) && doc.getDate().after(end.getTime()));
     m.addAttribute("drugs", dhnDatePatientRow.getList("From HNDatePatientRows Where drug.direction.id = " + doc.getDirection().getId() + " And doc.id = " + doc.getId() + " And patient.id = " + Util.get(req, "patient")));
     //

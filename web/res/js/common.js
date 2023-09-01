@@ -205,3 +205,34 @@ function saveDrugTemplate(id){
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+function closeMedMsg() {
+  $('.med-msg').slideUp(500);
+}
+function openMsg(res) {
+  if(res.success) {
+    openMedMsg("Данные успешно сохранены", true);
+  } else {
+    openMedMsg(res.msg, false);
+  }
+}
+function openMedMsg(msg, isOk) {
+  $('.med-msg').hide();
+  if(isOk || isOk == null) {
+    $('.med-msg').removeClass('error').slideDown(500).find('#med-msg-text').html(msg);
+    setTimeout(() => {
+      $('.med-msg').slideUp(1000);
+    }, 8000)
+  } else {
+    $('.med-msg').addClass('error').slideDown(500).find('#med-msg-text').html(msg);
+    setTimeout(() => {
+      $('.med-msg').slideUp(1000);
+    }, 10000);
+  }
+}
+function errMsg(msg) {
+  $('.med-msg').hide();
+  $('.med-msg').addClass('error').slideDown(500).find('#med-msg-text').html(msg);
+  setTimeout(() => {
+    $('.med-msg').slideUp(1000);
+  }, 10000);
+}

@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public interface SPatient {
@@ -53,4 +54,6 @@ public interface SPatient {
   List<PatientDrug> getDrugsByType(int curPat, int i);
 
   List<PatientDrug> getDrugsByType(int curPat, int type, boolean isLv);
+
+  List<PatientDrug> getDrugsByTypeToDate(Integer patId, Date operDay, int i);
 }

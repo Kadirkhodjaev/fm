@@ -3,21 +3,25 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <script>
-  function doSave() {
-    try {
-      var res = frm.document.getElementById('login').value;
-      $('#mainWindow').html($('#frmDiv').contents().find('html').html());
-    } catch(e){}
+  function saveUser() {
+    $.ajax({
+      url: '/core/user/save.s',
+      method: 'post',
+      data: $('#userForm').serialize(),
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+      }
+    });
   }
   function setDirection(isInit) {
-    var dom = document.getElementById('drugDirection1');
+    var dom = document.getElementById('drugDirection');
     $('input[name=storage]').each((idx, elem) => {
       if(!isInit)
         elem.checked = false;
       elem.disabled = !dom.checked;
     });
   }
-  $('d').html('*').css('font-weight', 'bold').css('color', 'red');
   $(function() {
     setDirection(true);
   });
@@ -33,26 +37,35 @@
     });
     document.location = ''
   }
+  let ipIdx = ${fn:length(ips)};
+  function addIp() {
+    let tr = $('<tr id="ip_' + ipIdx + '"></tr>');
+    let td = $('<td><input type="text" class="form-control center" name="ip" maxlength="15" value=""/></td>');
+    let td1 = $('<td><button class="btn btn-danger btn-xs" type="button" onclick="delIp(' + ipIdx + ')"><b class="fa fa-minus"></b></button></td>');
+    tr.append(td).append(td1);
+    $('#user_ip_list').append(tr);
+    ipIdx++;
+  }
+  function delIp(idx) {
+    $('#ip_' + idx).remove();
+  }
 </script>
-<iframe onload="doSave()" src="about:blank" id="frmDiv" name="frm" style="display: none"></iframe>
-<div class="panel panel-info" style="width: 800px; margin: auto">
+<div class="panel panel-info" style="width: 1200px; margin: auto">
   <div class="panel-heading" ondblclick="authUser()">Реквизиты пользователя</div>
-  <f:form commandName="user" action='/admin/users/addEdit.s' method="post" name='bf' target="frm">
+  <form id="userForm">
     <div class="panel-body">
-      <%@include file="/incs/msgs/successError.jsp"%>
-      <%@include file="/incs/msgs/errors.jsp"%>
-      <f:hidden path="id"/>
+      <input type="hidden" name="id" value="${user.id}"/>
       <div class="table-responsive center">
         <div class="row" style="margin:0">
-          <div class="col-lg-6">
+          <div class="col-lg-8">
             <table class="formTable" style="width: 100%">
               <tr>
                 <td class="right">Логин<d></d>:</td>
-                <td><f:input path="login" class="form-control" type="text" required="true" autocomplete="off"/></td>
+                <td><input name="login" value="${user.login}" class="form-control" type="text" required="true" autocomplete="off"/></td>
               </tr>
               <tr>
-                <td class="right">Пароль<c:if test="${user.id == null}"><d></d></c:if>:</td>
-                <td><f:input path="password" class="form-control" type="password" autocomplete="off"/></td>
+                <td class="right">Пароль<c:if test="${user.id == null}"><req>*</req></c:if>:</td>
+                <td><input name="password" class="form-control" type="password" autocomplete="off"/></td>
               </tr>
               <tr>
                 <td class="right" nowrap>Подтверждения пароля<c:if test="${user.id == null}"><d></d></c:if>:</td>
@@ -60,84 +73,90 @@
               </tr>
               <tr>
                 <td class="right">ФИО<d></d>:</td>
-                <td><f:input path="fio" class="form-control" type="text" required="true" autocomplete="off"/></td>
+                <td><input name="fio" value="${user.fio}" class="form-control" type="text" required="true" autocomplete="off"/></td>
               </tr>
               <tr>
                 <td class="right">Отделение:</td>
                 <td>
-                  <f:select path="dept.id" class="form-control">
+                  <select name="dep" class="form-control">
                     <option></option>
-                    <f:options items="${deptList}" itemValue="id" itemLabel="name"/>
-                  </f:select>
+                    <c:forEach items="${deptList}" var="dep">
+                      <option value="${dep.id}" <c:if test="${dep.id == user.dept.id}">selected</c:if>>${dep.name}</option>
+                    </c:forEach>
+                  </select>
                 </td>
               </tr>
               <tr>
                 <td class="right">Профиль:</td>
-                <td><f:input path="profil" class="form-control" type="text" maxlength="64" autocomplete="off"/></td>
+                <td><input name="profil" value="${user.profil}" class="form-control" type="text" maxlength="64" autocomplete="off"/></td>
               </tr>
               <tr>
                 <td class="right">Лечащий врач?</td>
-                <td style="text-align: left"><f:checkbox path="lv"/></td>
+                <td style="text-align: left"><input type="checkbox" name="lv" value="1" <c:if test="${user.lv}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Активный?</td>
-                <td style="text-align: left"><f:checkbox path="active"/></td>
+                <td style="text-align: left"><input type="checkbox" name="active" value="1" <c:if test="${user.active}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Консультация?</td>
-                <td style="text-align: left"><f:checkbox path="consul"/></td>
+                <td style="text-align: left"><input type="checkbox" name="consul" value="1" <c:if test="${user.consul}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Заведующий отделом?</td>
-                <td style="text-align: left"><f:checkbox path="zavlv"/></td>
+                <td style="text-align: left"><input type="checkbox" name="zavlv" value="1" <c:if test="${user.zavlv}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Админ амб.?</td>
-                <td style="text-align: left"><f:checkbox path="ambAdmin"/></td>
+                <td style="text-align: left"><input type="checkbox" name="ambAdmin" value="1" <c:if test="${user.ambAdmin}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Амб. физиотерапевт?</td>
-                <td style="text-align: left"><f:checkbox path="ambFizio"/></td>
+                <td style="text-align: left"><input type="checkbox" name="ambFizio" value="1" <c:if test="${user.ambFizio}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Директор?</td>
-                <td style="text-align: left"><f:checkbox path="boss"/></td>
+                <td style="text-align: left"><input type="checkbox" name="boss" value="1" <c:if test="${user.boss}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Главный врач?</td>
-                <td style="text-align: left"><f:checkbox path="glb"/></td>
+                <td style="text-align: left"><input type="checkbox" name="glb" value="1" <c:if test="${user.glb}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Главный бухгалтер?</td>
-                <td style="text-align: left"><f:checkbox path="glavbuh"/></td>
+                <td style="text-align: left"><input type="checkbox" name="glavbuh" value="1" <c:if test="${user.glavbuh}">checked</c:if>/></td>
+              </tr>
+              <tr>
+                <td class="right">Процедурный пользователь?</td>
+                <td style="text-align: left"><input type="checkbox" name="procUser" value="1" <c:if test="${user.procUser}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Старшая медсестра?</td>
-                <td style="text-align: left"><f:checkbox path="mainNurse"/></td>
+                <td style="text-align: left"><input type="checkbox" name="mainNurse" value="1" <c:if test="${user.mainNurse}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Заявитель для аптеки?</td>
-                <td style="text-align: left"><f:checkbox path="drugDirection" onchange="setDirection(false)"/></td>
+                <td style="text-align: left"><input type="checkbox" name="drugDirection" id="drugDirection" onchange="setDirection(false)" value="1" <c:if test="${user.drugDirection}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td class="right">Врач физиотерапевт?</td>
-                <td style="text-align: left"><f:checkbox path="docfizio"/></td>
+                <td style="text-align: left"><input type="checkbox" name="docfizio" value="1" <c:if test="${user.docfizio}">checked</c:if>/></td>
               </tr>
               <tr>
                 <td>Стоимость консультаций:</td>
-                <td><f:input path="consul_price" type="number" cssClass="form-control right" autocomplete="off"/></td>
+                <td><input name="consul_price" value="${user.consul_price}" type="number" class="form-control right" autocomplete="off"/></td>
               </tr>
               <tr>
                 <td>Стоимость консультаций (Иностранцы):</td>
-                <td><f:input path="for_consul_price" type="number" cssClass="form-control right" autocomplete="off"/></td>
+                <td><input name="for_consul_price" value="${user.for_consul_price}" type="number" class="form-control right" autocomplete="off"/></td>
               </tr>
               <tr>
                 <td>Реальная стоимость консультаций:</td>
-                <td><f:input path="real_consul_price" type="number" cssClass="form-control right" autocomplete="off"/></td>
+                <td><input name="real_consul_price" value="${user.real_consul_price}" type="number" class="form-control right" autocomplete="off"/></td>
               </tr>
               <tr>
                 <td>Реальная стоимость консультаций (Иностранцы):</td>
-                <td><f:input path="for_real_consul_price" type="number" cssClass="form-control right" autocomplete="off"/></td>
+                <td><input name="for_real_consul_price" value="${user.for_real_consul_price}" type="number" class="form-control right" autocomplete="off"/></td>
               </tr>
               <tr>
                 <td colspan="2">
@@ -165,7 +184,7 @@
               </tr>
             </table>
           </div>
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <h2>Склады</h2>
             <table style="width: 100%" class="table table-bordered table-hover">
               <c:forEach items="${directions}" var="direction">
@@ -180,22 +199,8 @@
       </div>
     </div>
   <div class="panel-footer right">
-    <button type="button" onclick="setPage('/admin/users/list.s')" class="btn btn-sm btn-default"><i class="fa fa-mail-reply"></i> Назад</button>
-    <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-check"></i> Сохранить</button>
+    <button type="button" onclick="setPage('/core/user/list.s')" class="btn btn-sm btn-default"><i class="fa fa-mail-reply"></i> Назад</button>
+    <button type="button" onclick="saveUser()" class="btn btn-sm btn-success"><i class="fa fa-check"></i> Сохранить</button>
   </div>
-  </f:form>
+  </form>
 </div>
-<script>
-  let ipIdx = ${fn:length(ips)};
-  function addIp() {
-    let tr = $('<tr id="ip_' + ipIdx + '"></tr>');
-    let td = $('<td><input type="text" class="form-control center" name="ip" maxlength="15" value=""/></td>');
-    let td1 = $('<td><button class="btn btn-danger btn-xs" type="button" onclick="delIp(' + ipIdx + ')"><b class="fa fa-minus"></b></button></td>');
-    tr.append(td).append(td1);
-    $('#user_ip_list').append(tr);
-    ipIdx++;
-  }
-  function delIp(idx) {
-    $('#ip_' + idx).remove();
-  }
-</script>

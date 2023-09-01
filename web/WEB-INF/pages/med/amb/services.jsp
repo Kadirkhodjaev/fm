@@ -42,7 +42,7 @@
                   <input type="checkbox" id="kdo${k.id}" value="${k.id}" name="ids">
                 </td>
                 <td>
-                  <label for="kdo${k.id}">${k.name} ${k.form_id}</label>
+                  <label for="kdo${k.id}">${k.name}</label>
                 </td>
               </tr>
             </c:forEach>

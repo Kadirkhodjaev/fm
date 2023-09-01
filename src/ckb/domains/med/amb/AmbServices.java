@@ -20,6 +20,7 @@ public class AmbServices extends GenId {
   @Column private String ei;
   @Column private String normaFrom;
   @Column private String normaTo;
+  @Column private int ord = 99;
 
   public AmbGroups getGroup() {
     return group;
@@ -107,5 +108,13 @@ public class AmbServices extends GenId {
 
   public void setNormaTo(String normaTo) {
     this.normaTo = normaTo;
+  }
+
+  public int getOrd() {
+    return ord;
+  }
+
+  public void setOrd(int ord) {
+    this.ord = ord;
   }
 }

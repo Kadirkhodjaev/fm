@@ -5,18 +5,17 @@
 <script src="/res/js/common.js"></script>
 <script>
   var ln = '${fn:length(rows)}';
-  function doSaved() {
+  function saveAmb() {
     if (checkForm($('#bf'))) {
       $.ajax({
-        url: '/admin/addAmb.s',
+        url: '/core/amb/service/save.s',
         method: 'post',
         data: $('#bf').serialize(),
         dataType: 'json',
         success: function (res) {
-          if (res.success) {
-            alert('Данные успешно сохранены');
-            setPage('/admin/amb.s');
-          }
+          openMsg(res)
+          if (res.success)
+            setPage('/core/amb/services.s');
         }
       });
     }
@@ -37,7 +36,8 @@
   <div class="panel-heading">
     Реквизиты услуги
     <ul class="pagination" style="float:right; margin-top:-5px">
-      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="doSaved()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
+      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPage('/core/amb/services.s')" title="Назад"><i class="fa fa-backward"></i> Назад</a></li>
+      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="saveAmb()" title="Сохранить"><i class="fa fa-save"></i> Сохранить</a></li>
     </ul>
   </div>
   <hidden path="id"/>
@@ -86,6 +86,10 @@
               </c:forEach>
             </select>
           </td>
+        </tr>
+        <tr>
+          <td class="bold">Очередность: </td>
+          <td><input type="number" class="form-control center" name="ord" value="${ser.ord}"/></td>
         </tr>
         <tr class="default-form">
           <td class="bold">Поле диагноз?:</td>

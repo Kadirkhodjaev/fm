@@ -569,65 +569,121 @@ public class SRepImp implements SRep {
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
-    params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
+		String cat = Util.get(req, "cat");
+    params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate) + " Категория: " + (cat.equals("1") ? "Амбулатория" : "Стационар");
     List<Users> doctors = new ArrayList<Users>();
     if (!req.getParameter("doctor").equals("")) {
       Integer doctorId = Util.getInt(req, "doctor");
       Users doctor = dUser.get(doctorId);
       doctors.add(doctor);
-    } else
-      doctors = dUser.getList(
-        "Select t From Users t, AmbServiceUsers s, AmbServices c " +
-          "	Where t.id = s.user " +
-          "	  And s.service = c.id " +
-          "		And c.consul = 'Y'");
+    } else {
+			if(cat.equals("1")) {
+				doctors = dUser.getList(
+					"Select t From Users t, AmbServiceUsers s, AmbServices c " +
+						"	Where t.id = s.user " +
+						"	  And s.service = c.id " +
+						"		And c.consul = 'Y'");
+			} else {
+				doctors = dUser.getAll();
+			}
+		}
     try {
 			Double total = 0D;
-			for (Users doctor : doctors) {
-        List<ObjList> patients = new ArrayList<ObjList>();
-        Rep1 r = new Rep1();
-        r.setGroupName(doctor.getFio());
-        ps = conn.prepareStatement(
-          "Select Date_Format(t.confDate, '%d.%m.%Y') CrOn," +
-            "				 Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
-            "				 ser.Name Service_Name, " +
-            "				 ser.Price Price, " +
-            "				 gr.Name Group_Name" +
-            "   From Amb_Patient_Services t, Amb_Services ser, Amb_Groups gr, Amb_Patients p " +
-            "  Where ser.Id = t.Service_Id " +
-            "    And p.Id = t.Patient " +
-            "		 And gr.Id = ser.Group_Id " +
-            "		 And t.crBy = " + doctor.getId() +
-            " 	 And date (t.confDate) Between ? AND ? " +
-            "  Order By t.confDate "
-        );
-        ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
-        ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
-        rs = ps.executeQuery();
-        Integer counter = 0;
-        Double summ = 0D;
-        while (rs.next()) {
-          counter++;
-          ObjList service = new ObjList();
-          service.setC1(rs.getString(1));
-          service.setC2(rs.getString(2));
-          service.setC3(rs.getString(3));
-          service.setC4("" + rs.getDouble(4));
-          summ += rs.getDouble(4);
-          service.setC5(rs.getString(5));
-          patients.add(service);
-        }
-        // Итого по врачу
-        ObjList service = new ObjList();
-        service.setC1("Кол-во направлении: " + counter);
-        service.setC2("" + summ);
-        total += summ;
-        service.setC6("TOTAL");
-        patients.add(service);
-        r.setServices(patients);
-        if(r.getServices() != null && r.getServices().size() > 1)
-          rows.add(r);
-      }
+			if(cat.equals("1")) {
+				for (Users doctor : doctors) {
+					List<ObjList> patients = new ArrayList<ObjList>();
+					Rep1 r = new Rep1();
+					r.setGroupName(doctor.getFio());
+					ps = conn.prepareStatement(
+						"Select Date_Format(t.confDate, '%d.%m.%Y') CrOn," +
+							"				 Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
+							"				 ser.Name Service_Name, " +
+							"				 ser.Price Price, " +
+							"				 gr.Name Group_Name" +
+							"   From Amb_Patient_Services t, Amb_Services ser, Amb_Groups gr, Amb_Patients p " +
+							"  Where ser.Id = t.Service_Id " +
+							"    And p.Id = t.Patient " +
+							"		 And gr.Id = ser.Group_Id " +
+							"		 And t.crBy = " + doctor.getId() +
+							" 	 And date (t.confDate) Between ? AND ? " +
+							"  Order By t.confDate "
+					);
+					ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+					ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+					rs = ps.executeQuery();
+					Integer counter = 0;
+					Double summ = 0D;
+					while (rs.next()) {
+						counter++;
+						ObjList service = new ObjList();
+						service.setC1(rs.getString(1));
+						service.setC2(rs.getString(2));
+						service.setC3(rs.getString(3));
+						service.setC4("" + rs.getDouble(4));
+						summ += rs.getDouble(4);
+						service.setC5(rs.getString(5));
+						patients.add(service);
+					}
+					// Итого по врачу
+					ObjList service = new ObjList();
+					service.setC1("Кол-во направлении: " + counter);
+					service.setC2("" + summ);
+					total += summ;
+					service.setC6("TOTAL");
+					patients.add(service);
+					r.setServices(patients);
+					if (r.getServices() != null && r.getServices().size() > 1)
+						rows.add(r);
+				}
+			} else {
+				for (Users doctor : doctors) {
+					List<ObjList> patients = new ArrayList<ObjList>();
+					Rep1 r = new Rep1();
+					r.setGroupName(doctor.getFio());
+					ps = conn.prepareStatement(
+						"Select Date_Format(t.result_date, '%d.%m.%Y') CrOn," +
+							"				  Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
+							"				  ser.Name Service_Name, " +
+							"				  t.Price Price, " +
+							"				  gr.Name Group_Name" +
+							"    From Lv_Plans t, Kdos ser, Kdo_Types gr, Patients p " +
+							"   Where ser.Id = t.kdo_Id " +
+							"     And p.Id = t.PatientId " +
+							"		  And gr.Id = ser.Kdo_Type " +
+							"     And t.price > 0 " +
+							"	    And t.done_flag = 'Y' " +
+							"		  And t.userId = " + doctor.getId() +
+							" 	  And date (t.result_date) Between ? AND ? " +
+							"   Order By ser.Kdo_Type, t.result_date "
+					);
+					ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+					ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+					rs = ps.executeQuery();
+					Integer counter = 0;
+					Double summ = 0D;
+					while (rs.next()) {
+						counter++;
+						ObjList service = new ObjList();
+						service.setC1(rs.getString(1));
+						service.setC2(rs.getString(2));
+						service.setC3(rs.getString(3));
+						service.setC4("" + rs.getDouble(4));
+						summ += rs.getDouble(4);
+						service.setC5(rs.getString(5));
+						patients.add(service);
+					}
+					// Итого по врачу
+					ObjList service = new ObjList();
+					service.setC1("Кол-во направлении: " + counter);
+					service.setC2("" + summ);
+					total += summ;
+					service.setC6("TOTAL");
+					patients.add(service);
+					r.setServices(patients);
+					if (r.getServices() != null && r.getServices().size() > 1)
+						rows.add(r);
+				}
+			}
       if(rows.size() > 0) {
 				List<ObjList> patients = new ArrayList<ObjList>();
 				Rep1 r = new Rep1();

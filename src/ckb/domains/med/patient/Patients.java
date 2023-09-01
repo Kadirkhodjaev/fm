@@ -1008,4 +1008,8 @@ public class Patients extends GenId {
   public void setLvpartner(LvPartners lvpartner) {
     this.lvpartner = lvpartner;
   }
+
+  public String getFio() {
+    return this.surname + " " + this.name + " " + this.middlename;
+  }
 }

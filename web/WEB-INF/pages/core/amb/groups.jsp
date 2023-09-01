@@ -7,7 +7,7 @@
 </style>
 <script>
   function addAmb() {
-    setPage('/admin/addStatGroup.s');
+    setPage('/core/amb/group/save.s');
   }
 </script>
 <style>
@@ -15,7 +15,7 @@
 </style>
 <div class="panel panel-info">
   <div class="panel-heading">
-    Список стационарных групп
+    Список амбулаторных групп
     <div style="float:right">
       <button class="btn btn-sm btn-success" type="button" onclick="addAmb()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
     </div>
@@ -32,18 +32,18 @@
         </thead>
         <tbody>
         <c:forEach items="${groups}" var="g" varStatus="loop">
-          <tr>
+          <tr ondblclick="setPage('/core/amb/group/save.s?id=${g.id}');return false;">
             <td style="vertical-align: middle" class="center">${loop.index + 1}</td>
             <td style="vertical-align: middle">
-              <a href="#" onclick="setPage('/admin/addStatGroup.s?id=${g.id}');return false;">${g.name}</a>
+              <a href="#" onclick="setPage('/core/amb/group/save.s?id=${g.id}');return false;">${g.name}</a>
             </td>
             <td style="vertical-align: middle; text-align: center">
-              <c:if test="${g.groupState != 'N'}">Да</c:if>
-              <c:if test="${g.groupState == 'N'}">Нет</c:if>
+              <c:if test="${g.group}">Да</c:if>
+              <c:if test="${!g.group}">Нет</c:if>
             </td>
             <td style="vertical-align: middle; text-align: center">
-              <c:if test="${g.state == 'A'}">Активный</c:if>
-              <c:if test="${g.state != 'A'}">Пассивный</c:if>
+              <c:if test="${g.active}">Активный</c:if>
+              <c:if test="${!g.active}">Пассивный</c:if>
             </td>
           </tr>
         </c:forEach>

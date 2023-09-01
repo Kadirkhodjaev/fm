@@ -6,14 +6,16 @@
   function doSave() {
     if (checkForm($('#bf'))) {
       $.ajax({
-        url: '/admin/addGroup.s',
+        url: '/core/stat/group/save.s',
         method: 'post',
         data: $('#bf').serialize(),
         dataType: 'json',
         success: function (res) {
+          openMsg(res);
           if (res.success) {
-            alert('Данные успешно сохранены');
-            setPage('/admin/ambGroups.s');
+            setPage('/core/stat/groups.s');
+          } else {
+            alert(res.msg);
           }
         }
       });
@@ -41,11 +43,11 @@
         </tr>
         <tr>
           <td class="bold">Группа?:</td>
-          <td><input type="checkbox" value="A" name="group" <c:if test="${ser.group}">checked</c:if>></td>
+          <td><input type="checkbox" value="Y" name="group" <c:if test="${ser.groupState == 'Y'}">checked</c:if>></td>
         </tr>
         <tr>
           <td class="bold">Активный?:</td>
-          <td><input type="checkbox" value="A" name="active" <c:if test="${ser.active}">checked</c:if>></td>
+          <td><input type="checkbox" value="A" name="active" <c:if test="${ser.state == 'A'}">checked</c:if>></td>
         </tr>
       </table>
     </form>

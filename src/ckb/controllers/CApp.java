@@ -17,13 +17,11 @@ import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.Req;
 import ckb.utils.Util;
-import org.apache.commons.io.FileUtils;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -34,8 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -70,9 +70,19 @@ public class  CApp {
   @Autowired private DAmbPatientPays dAmbPatientPay;*/
 
   @RequestMapping({"/main.s", "/"})
-  protected String main(HttpServletRequest request, Model model) {
+  protected String main(HttpServletRequest req, Model model) {
     //
-    Session session = SessionUtil.getUser(request);
+    Session session = SessionUtil.getUser(req);
+    Users user = dUser.get(session.getUserId());
+    //
+    List<Menu> m = new ArrayList<>();
+    if(user.isProcUser()) {
+      session.setCurUrl(session.getCurUrl() == null ? "/proc/palatas.s" : session.getCurUrl());
+      m.add(new Menu("Палаты", "/proc/palatas.s", "fa fa-users fa-fw", session.getCurUrl().equals("/proc/palatas.s")));
+      model.addAttribute("openPage", session.getCurUrl());
+      model.addAttribute("menuList", m);
+      return "proc/index";
+    }
     List<Roles> userRoles = sUser.getUserRoles(session.getUserId());
     if(userRoles.size() == 1 && session.getRoleId() == 0) {
       session.setRoleId(userRoles.get(0).getId());
@@ -80,22 +90,20 @@ public class  CApp {
       session.setCurUrl("");
     }
     int roleId = session.getRoleId();
-    List<Menu> m = new ArrayList<Menu>();
     if(roleId == 1) { // Администрирование
-      session.setCurUrl(session.getCurUrl().equals("") ? "/admin/users/list.s" : session.getCurUrl());
-      m.add(new Menu("Пользователи", "/admin/users/list.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/users/list.s")));
-      m.add(new Menu("Формы", "/admin/forms/list.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/admin/forms/list.s")));
-      m.add(new Menu("Амб группы", "/admin/ambGroups.s", "fa fa-list-alt fa-fw", session.getCurUrl().equals("/admin/ambGroups.s")));
-      m.add(new Menu("Амб услуги", "/admin/amb.s", "fa fa-plus fa-fw", session.getCurUrl().equals("/admin/amb.s")));
-      m.add(new Menu("Стат группы", "/admin/statGroups.s", "fa fa-list-alt fa-fw", session.getCurUrl().equals("/admin/statGroups.s")));
-      m.add(new Menu("Стат услуги", "/admin/stat/services.s", "fa fa-list-alt fa-fw", session.getCurUrl().equals("/admin/stat/services.s")));
-      m.add(new Menu("Детали лаб", "/admin/stat/kdoDetails.s", "fa fa-th fa-fw", session.getCurUrl().equals("/admin/stat/kdoDetails.s")));
-      m.add(new Menu("МКБ", "/mkb/admin.s", "fa fa-th fa-fw", session.getCurUrl().equals("/mkb/admin.s")));
-      m.add(new Menu("Отделении", "/admin/depts.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/admin/depts.s")));
-      m.add(new Menu("Параметры", "/admin/price.s", "fa fa-th fa-fw", session.getCurUrl().equals("/mkb/admin.s")));
-      m.add(new Menu("Партнеры", "/admin/lvpartners.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/lvpartners.s")));
-      m.add(new Menu("Протокол", "/admin/log.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/log.s")));
-      //m.add(new Menu("Медсестры", "/admin/nurses.s", "fa fa-users fa-fw", session.getCurUrl().equals("/admin/nurses.s")));
+      session.setCurUrl(session.getCurUrl().equals("") ? "/core/user/list.s" : session.getCurUrl());
+      m.add(new Menu("Пользователи", "/core/user/list.s", "fa fa-users fa-fw", session));
+      m.add(new Menu("Формы", "/core/form/list.s", "fa fa-edit fa-fw", session));
+      m.add(new Menu("Амб группы", "/core/amb/groups.s", "fa fa-list-alt fa-fw", session));
+      m.add(new Menu("Амб услуги", "/core/amb/services.s", "fa fa-plus fa-fw", session));
+      m.add(new Menu("Стат группы", "/core/stat/groups.s", "fa fa-list-alt fa-fw", session));
+      m.add(new Menu("Стат услуги", "/core/stat/services.s", "fa fa-list-alt fa-fw", session));
+      m.add(new Menu("Детали лаб", "/core/stat/details.s", "fa fa-th fa-fw", session));
+      m.add(new Menu("МКБ", "/mkb/admin.s", "fa fa-th fa-fw", session));
+      m.add(new Menu("Отделении", "/admin/depts.s", "fa fa-th-list fa-fw", session));
+      m.add(new Menu("Параметры", "/admin/price.s", "fa fa-th fa-fw", session));
+      m.add(new Menu("Партнеры", "/admin/lvpartners.s", "fa fa-users fa-fw", session));
+      m.add(new Menu("Протокол", "/admin/log.s", "fa fa-users fa-fw", session));
     }
     if(roleId == 3) { // Приемное – медсестра
       session.setCurUrl(session.getCurUrl().equals("") ? "/reg/nurse/index.s" : session.getCurUrl());
@@ -182,7 +190,6 @@ public class  CApp {
       m.add(new Menu("Архив", "/amb/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/amb/archive.s")));
     }
     if(roleId == 16) { // Физиотерапия
-      Users user = dUser.get(session.getUserId());
       if(user.isDocfizio()) {
         session.setCurUrl(session.getCurUrl().equals("") ? "/patients/list.s" : session.getCurUrl());
         m.add(new Menu("Пациенты", "/patients/list.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/patients/list.s")));
@@ -207,7 +214,6 @@ public class  CApp {
     }
     if(roleId == 19) { // Старшая медсестра
       session.setCurUrl(session.getCurUrl().equals("") ? "/head_nurse/incomes.s" : session.getCurUrl());
-      Users user = dUser.get(session.getUserId());
       List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
       boolean isTransfer = false;
       for(UserDrugLines line: lines) {
@@ -338,25 +344,6 @@ public class  CApp {
     Iterator<String> req = request.getFileNames();
     List<MultipartFile> files = request.getFiles("files");
     return "redirect:/login.s";
-  }
-
-  /**
-   * Загрузка браузера на машину пользователя
-   * @param response - формирование ответа клиенту
-   * @param request - HTTP запрос пользователя
-   */
-  @RequestMapping(value = "downloadBrowser.s")
-  protected void downloadBrowser(HttpServletResponse response, HttpServletRequest request){
-    String url = request.getSession().getServletContext().getRealPath("") + "/res/browsers/chrome.exe";
-    File file = new File(url);
-    response.setContentType("application/x-msdownload");
-    response.setContentLength((int) file.length());
-    response.setHeader("Content-Disposition","attachment; filename=chrome.exe");
-    try {
-      FileCopyUtils.copy(FileUtils.readFileToByteArray(file), response.getOutputStream());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
   @Scheduled(fixedRate=5000)

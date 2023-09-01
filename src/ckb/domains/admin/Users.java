@@ -64,6 +64,7 @@ public class Users extends GenId {
   @Column private boolean boss = false;
   @Column private boolean drugDirection = false;
   @Column private boolean mainNurse = false;
+  @Column private boolean procUser = false;
 
   @Column private Double consul_price;
   @Column private Double for_consul_price;
@@ -272,5 +273,13 @@ public class Users extends GenId {
 
   public void setDocfizio(boolean docfizio) {
     this.docfizio = docfizio;
+  }
+
+  public boolean isProcUser() {
+    return procUser;
+  }
+
+  public void setProcUser(boolean procUser) {
+    this.procUser = procUser;
   }
 }

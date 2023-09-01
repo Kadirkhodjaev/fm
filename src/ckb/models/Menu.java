@@ -1,5 +1,7 @@
 package ckb.models;
 
+import ckb.session.Session;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Sardor
@@ -14,6 +16,13 @@ public class Menu {
     this.name = name;
     this.icon = icon;
     state = isActive ? "active" : "";
+  }
+
+  public Menu(String name, String url, String icon, Session session) {
+    this.url = url;
+    this.name = name;
+    this.icon = icon;
+    state = session.getCurUrl().equals(url) ? "active" : "";
   }
 
   public Menu(Integer ord, String name, String url, String icon, boolean isActive) {

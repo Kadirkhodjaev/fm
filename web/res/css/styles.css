@@ -43,3 +43,55 @@
   -ms-user-select: none;
   user-select: none;
 }
+
+.med-msg {
+  font-weight:bold;
+  color:white;
+  position:absolute;
+  text-align: center;
+  right:10px;
+  min-width: 300px;
+  background: #4cae4c;
+  z-index: 9999999999;
+  border-radius: 5px;
+  top:5px
+}
+.med-msg table tr td {
+  padding:10px
+}
+.med-msg.error {
+  background: #d43f3a;
+}
+.med-msg .close-msg {
+  font-weight:normal;
+  cursor:pointer;
+  border:none;
+  background: transparent;
+  text-decoration: none;
+  border-radius: 0 5px 5px 0;
+  user-select: none;
+}
+.med-msg .close-msg:hover {
+  font-weight:bold
+}
+
+.margin-top-5 {
+  margin-top:-5px;
+}
+
+.float-left {
+  float:left
+}
+
+.float-right {
+  float:right
+}
+
+.clearboth {
+  clear:both
+}
+
+req {
+  color:red;
+  font-weight:bold
+}

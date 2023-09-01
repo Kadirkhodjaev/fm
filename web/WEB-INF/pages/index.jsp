@@ -160,6 +160,16 @@
   #tdLeftMenu {width: 200px; border-right: 1px solid #eee}
 </style>
 <body style="min-width: 900px" onkeydown="callKeyDown(event)">
+<div class="med-msg" style="display: none">
+  <table style="width:100%">
+    <tr>
+      <td id="med-msg-text" style="overflow: hidden"></td>
+      <td style="width:35px;border-left: 1px solid #ababab;cursor: pointer" onclick="closeMedMsg()">
+        <div class="close-msg" title="Закрыть">X</div>
+      </td>
+    </tr>
+  </table>
+</div>
 <div id="wrapper">
   <div class="banner">
      <table>

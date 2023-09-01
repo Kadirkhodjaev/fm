@@ -3,41 +3,47 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <script>
   function removeElem(dom, fieldId){
-    $('#frm').load('/admin/forms/fields/removeVal.s?fieldId=' + fieldId + '&id=' + dom.value);
-    for(var i=0;i<dom.options.length;i++) {
-      if(dom.value == dom.options[i].value){
-        dom.options[i] = null;
+    $.ajax({
+      url: '/core/form/fields/removeVal.s',
+      method: 'post',
+      data: 'fieldId=' + fieldId + '&id=' + dom.value,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success)
+          for(var i=0;i<dom.options.length;i++)
+            if(dom.value == dom.options[i].value)
+              dom.options[i] = null;
       }
-    }
+    });
   }
   function addVal(fieldId) {
-    $('#myModal').load('/admin/forms/fields/vals.s?fieldId=' + fieldId);
+    $('#myModal').load('/core/form/fields/vals.s?fieldId=' + fieldId);
     $('#modalBtn').click();
   }
   function saveVal(id){
     $.ajax({
-      url  : '/admin/forms/fields/upd.s',
-      type : 'post',
-      data : 'id='+id+'&' + $('#form'+id).serialize(),
-      complete : function(){
-        if($('#val'+id).val() == '') {
-          alert('Данные успешно сохранены');
-        } else {
-          setLocation('/main.s');
-        }
+      url: '/core/form/fields/upd.s',
+      method: 'post',
+      data: 'id='+id+'&' + $('#form'+id).serialize(),
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(!res.success) setLocation('/main.s');
       }
     });
-    //$('#frm').load('/admin/forms/fields/saveVal.s?id=' + id + '&val=' + $('#val' + id).val(), function(){setLocation('/main.s')});
   }
   function addField(){
-    var dom = $('input[name=field]');
-    if(dom.val().length > 0){
+    let dom = $('input[name=field]');
+    if(dom.val().length > 0) {
       $.ajax({
-        url  : '/admin/forms/fields/add.s',
-        type : 'post',
-        data : 'formId=${form.id}&field=' + dom.val(),
-        complete : function(){
-          setLocation('/main.s');
+        url: '/core/form/fields/add.s',
+        method: 'post',
+        data: 'formId=${form.id}&field=' + dom.val(),
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success) setLocation('/main.s');
         }
       });
     }
@@ -47,11 +53,18 @@
        $('#form' + formId + ' * input[name=maxLength]').val('255');
     if(val == 'text')
       $('#form' + formId + ' * input[name=maxLength]').val('32');
-
   }
-  function removeField(id){
-    $('#frm').load('/admin/forms/removeField.s?id=' + id);
-    setLocation('/main.s');
+  function removeField(id) {
+    $.ajax({
+      url: '/core/form/removeField.s',
+      method: 'post',
+      data: 'id=' + id,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success) setLocation('/main.s');
+      }
+    });
   }
   $(document).ready(function(){
     $('#addField').focus();
@@ -63,7 +76,6 @@
 <div class="panel panel-info">
   <div class="panel-heading">Список полей формы - ${form.name}</div>
   <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
     <div class="table-responsive">
       <div class="table-responsive">
       </div>

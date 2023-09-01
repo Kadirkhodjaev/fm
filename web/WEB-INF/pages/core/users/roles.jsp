@@ -2,8 +2,17 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <script>
   function doSave(){
-    $('#closeBtn').click();
-    bf.submit();
+    $.ajax({
+      url: 'core/user/roles.s',
+      method: 'post',
+      data: $('#user_roles').serialize(),
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success)
+          $('#closeBtn').click();
+      }
+    });
   }
   function setCheck(name, id){
     var dom = document.getElementById(name + id);
@@ -71,13 +80,13 @@
     dom.checked = !dom.checked;
   }
 </script>
-<div class="modal-dialog" style="width: 800px">
+<div class="modal-dialog" style="width: 1200px">
   <div class="modal-content">
-    <form action="/admin/users/roles.s" target="frm" method="post" name="bf">
+    <form id="user_roles">
       <input type="hidden" value="${user.id}" name="userId" />
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Пользовательские роли и отчеты</h4>
+        <h4 class="modal-title" id="myModalLabel">Пользовательские роли и отчеты - <b>${user.fio}</b></h4>
       </div>
       <div class="modal-body">
         <table style="width: 100%">

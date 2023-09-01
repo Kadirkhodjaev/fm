@@ -20,27 +20,30 @@
     });
   </c:if>
 </script>
-<div class="container">
+<div class="container" style="margin-top:calc(100vh - 80vh)">
   <div class="row">
-    <div class="col-md-4 col-md-offset-4">
-      <div class="login-panel panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title"><ui:message code="auth"/></h3>
+    <div style="text-align: center">
+      <img src="/res/imgs/logo_forux.jpg" style="height:40px;margin-lefT:-20px"/>
+    </div>
+    <div style="text-align: center">
+      <h2 class="text-success">Добро пожаловать</h2>
+    </div>
+    <div class="col-md-6 col-md-offset-3">
+      <div class="login-panel panel panel-default" style="margin-top:50px;border-radius: 15px">
+        <div class="panel-heading" style="border-top-left-radius: 20px;border-top-right-radius: 15px;font-size: 20px">
+          <ui:message code="auth"/>
         </div>
         <div class="panel-body">
           <f:form role='form' method='POST' action='/login.s' commandName='loginForm' name='bufferForm'>
             <%@include file="/incs/msgs/errors.jsp"%>
             <fieldset>
               <div class="form-group">
-                <f:input path='login' type='text' cssStyle="height: 34px; font-size:14px" class='form-control' placeholder='${login}' value='' autofocus="true" autocomplete="on"/>
+                <f:input path='login' type='text' cssStyle="height: 50px; font-size:20px" class='form-control' placeholder='${login}' value='' autofocus="true" autocomplete="on"/>
               </div>
               <div class="form-group">
-                <f:input path='password' type='password' cssStyle="height: 34px; font-size:14px" class='form-control' placeholder='${password}' value='' autofocus="true" autocomplete="on"/>
+                <f:input path='password' type='password' cssStyle="height: 50px; font-size:20px" class='form-control' placeholder='${password}' value='' autofocus="true" autocomplete="on"/>
               </div>
-              <div class="form-group" style="text-align: right">
-                <a href="/downloadBrowser.s"><img src="/res/imgs/chrom.gif" style="width: 20px; height: 20px"/>Скачать браузер</a>
-              </div>
-              <button type="submit" class="btn btn-lg btn-success btn-block"><ui:message code="enter"/></button>
+              <button type="submit" class="btn btn-lg btn-success btn-block" style="height:55px"><ui:message code="enter"/></button>
             </fieldset>
           </f:form>
         </div>

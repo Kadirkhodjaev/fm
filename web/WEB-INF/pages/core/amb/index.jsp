@@ -7,10 +7,10 @@
 </style>
 <script>
   function addAmb() {
-    setPage('/admin/addAmb.s');
+    setPage('/core/amb/service/save.s');
   }
   function setGroup(dom) {
-    setPage('/admin/amb.s?page=' + dom.value);
+    setPage('/core/amb/service/save.s?page=' + dom.value);
   }
 </script>
 <style>
@@ -39,7 +39,6 @@
   </div>
   </div>
   <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
     <div class="table-responsive">
       <table class="miniGrid table table-striped table-bordered">
         <thead>
@@ -58,7 +57,7 @@
             <td style="vertical-align: middle" class="center">${s.id}</td>
             <td style="vertical-align: middle">${s.service.group.name}</td>
             <td style="vertical-align: middle">
-              <a href="#" onclick="setPage('/admin/addAmb.s?id=${s.service.id}');return false;">${s.service.name}</a>
+              <a href="#" onclick="setPage('/core/amb/service/save.s?id=${s.service.id}');return false;">${s.service.name}</a>
             </td>
             <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.service.price}" type = "number"/></td>
             <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.service.for_price}" type = "number"/></td>

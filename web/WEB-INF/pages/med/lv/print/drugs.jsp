@@ -15,7 +15,7 @@
   НАЗНАЧЕНИЕ
 </p>
 <p style="width:95%; margin: auto; text-align: center;padding: 5px">
-  <b>Пациент:</b> ${pat.surname} ${pat.name} ${pat.middlename}
+  <b>Пациент:</b> №${pat.yearNum} - ${pat.surname} ${pat.name} ${pat.middlename}
   &nbsp;&nbsp;<b>Год рождения:</b> ${pat.birthyear}
   &nbsp;&nbsp;<b>Отделение:</b> ${pat.dept.name}
   &nbsp;&nbsp;<b>Палата:</b> ${pat.room.name}
@@ -94,7 +94,7 @@
   НАЗНАЧЕНИЕ
 </p>
 <p style="width:95%; margin: auto; text-align: center;padding: 5px">
-  <b>Пациент:</b> ${pat.surname} ${pat.name} ${pat.middlename}
+  <b>Пациент:</b> №${pat.yearNum} - ${pat.surname} ${pat.name} ${pat.middlename}
   &nbsp;&nbsp;<b>Год рождения:</b> ${pat.birthyear}
   &nbsp;&nbsp;<b>Отделение:</b> ${pat.dept.name}
   &nbsp;&nbsp;<b>Палата:</b> ${pat.room.name}

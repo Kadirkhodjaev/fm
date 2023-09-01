@@ -52,7 +52,7 @@
       <table style="width:400px">
         <tr>
           <td>
-            <select class="form-control" onchange="setPage('admin/stat/services.s?group=' + this.value)" id="sel_kdo_group">
+            <select class="form-control" onchange="setPage('core/stat/service/save.s?group=' + this.value)" id="sel_kdo_group">
               <option value="0">Все</option>
               <c:forEach items="${groups}" var="g">
                 <option <c:if test="${g.id == group}">selected</c:if> value="${g.id}">${g.name}</option>
@@ -238,25 +238,23 @@
 <script>
   function saveStatKdo() {
     if($('#kdo-name').val() == '') {
-      alert('Наименование не может быть пустым');
+      errMsg('Наименование не может быть пустым');
       return;
     }
     if($('#kdo_group').val() == '' || $('#kdo_group').val() == null) {
-      alert('Группа не может быть пустым');
+      errMsg('Группа не может быть пустым');
       return;
     }
     $.ajax({
-      url: '/admin/stat/kdoSave.s',
+      url: '/core/stat/service/save.s',
       method: 'post',
       data: $('#addEditForm').serialize(),
       dataType: 'json',
       success: function (res) {
+        openMsg(res);
         if (res.success) {
           $('#close-modal').click();
-          alert("<ui:message code="successSave"/>");
-          setPage('/admin/stat/services.s?group=' + $('#sel_kdo_group').val());
-        } else {
-          alert(res.msg);
+          setPage('/core/stat/service/save.s?group=' + $('#sel_kdo_group').val());
         }
       }
     });
@@ -271,7 +269,7 @@
   function editDict(id) {
     document.getElementById("modal_window").click();
     $.ajax({
-      url: '/admin/stat/getKdo.s',
+      url: '/core/stat/kdo/get.s',
       method: 'post',
       data: 'id=' + id,
       dataType: 'json',
@@ -305,7 +303,7 @@
             $('.form777').hide();
           }
         } else {
-          alert(res.msg);
+          errMsg(res.msg);
         }
       }
     });

@@ -12,6 +12,6 @@ public class DAmbServicesImp extends DaoImp<AmbServices> implements DAmbServices
 
   @Override
   public List<AmbServices> byType(int type) {
-    return getList("From AmbServices Where state = 'A' And group.id = " + type);
+    return getList("From AmbServices Where state = 'A' And group.id = " + type + " Order By ord");
   }
 }

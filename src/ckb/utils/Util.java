@@ -371,9 +371,22 @@ public class Util {
     return Double.parseDouble(get(req, name));
   }
 
+  public static Double getDouble(HttpServletRequest req, String name, Double def) {
+    try {
+      if(Util.isNull(req, name)) return def;
+      return Double.parseDouble(get(req, name));
+    } catch (Exception e) {
+      return def;
+    }
+  }
+
   public static String err(JSONObject json, String msg) throws JSONException {
     json.put("success", false);
     json.put("msg", msg);
     return json.toString();
+  }
+
+  public static boolean getCheckbox(HttpServletRequest req, String name) {
+    return req.getParameter(name) != null;
   }
 }

@@ -19,10 +19,6 @@ public interface SUser {
 
   List<Roles> getUserRoles(int userId);
 
-  void createMode(HttpServletRequest request, Users user);
-
-  Users save(Users user);
-
   List<Users> getLvs();
 
   Users getLv(Integer lvId);

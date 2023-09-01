@@ -5,14 +5,22 @@
     var dom = document.getElementById('valCheckBox' + id);
     dom.checked = !dom.checked;
   }
-  function doSave(){
+  function doSave() {
     var vals = '';
     $('.valCheckBox').each(function(){
       if($(this).is(":checked"))
         vals += 'val=' + $(this).val() + '&';
     });
-    $('#frm').load('/admin/forms/fields/addVals.s?fieldId=${fieldId}&' + vals);
-    setLocation('/main.s');
+    $.ajax({
+      url: '/core/form/fields/addVals.s',
+      method: 'post',
+      data: 'fieldId=${fieldId}&' + vals,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success) setLocation('main.s')
+      }
+    });
   }
 </script>
 <div class="modal-dialog" style="width: 800px">
