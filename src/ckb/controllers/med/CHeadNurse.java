@@ -24,10 +24,7 @@ import ckb.dao.med.head_nurse.patient.DHNPatient;
 import ckb.dao.med.head_nurse.patient.drugs.DHNPatientDrug;
 import ckb.dao.med.nurse.eat.DNurseEatPatient;
 import ckb.dao.med.nurse.eat.DNurseEats;
-import ckb.dao.med.patient.DPatient;
-import ckb.dao.med.patient.DPatientDrugDate;
-import ckb.dao.med.patient.DPatientDrugRow;
-import ckb.dao.med.patient.DPatientEat;
+import ckb.dao.med.patient.*;
 import ckb.domains.admin.UserDrugLines;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbDrugDates;
@@ -42,10 +39,7 @@ import ckb.domains.med.eat.dict.EatTables;
 import ckb.domains.med.head_nurse.*;
 import ckb.domains.med.nurse.eat.NurseEatPatients;
 import ckb.domains.med.nurse.eat.NurseEats;
-import ckb.domains.med.patient.PatientDrugDates;
-import ckb.domains.med.patient.PatientDrugRows;
-import ckb.domains.med.patient.PatientEats;
-import ckb.domains.med.patient.Patients;
+import ckb.domains.med.patient.*;
 import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.models.PatientList;
@@ -92,6 +86,7 @@ public class CHeadNurse {
   @Autowired private DDrugOut dDrugOut;
   @Autowired private DDrugOutRow dDrugOutRow;
   @Autowired private DDrugDirection dDrugDirection;
+  @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugDate dPatientDrugDate;
   @Autowired private DPatientDrugRow dPatientDrugRow;
   @Autowired private DUser dUser;
@@ -379,49 +374,74 @@ public class CHeadNurse {
   protected String outPatientAddDrug(HttpServletRequest req, Model m) {
     m.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr")+ " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + Util.getInt(req, "id")));
     //
+    PatientDrugs drug = dPatientDrug.get(Util.getInt(req, "pd"));
+    PatientDrugRows row = dPatientDrugRow.get(Util.getInt(req, "row"));
+    m.addAttribute("counter", (drug.isMorningTime() ? row.getExpanse() : 0) + (drug.isNoonTime() ? row.getExpanse() : 0) + (drug.isEveningTime() ? row.getExpanse() : 0));
     return "/med/head_nurse/out/patient/addDrug";
   }
 
   @RequestMapping("out/patient/addDateDrugs.s")
   protected String outPatientAddDrugs(HttpServletRequest req, Model m) {
-    Date minDate = dPatientDrugDate.minDate(Util.getInt(req, "id"));
-    Date maxDate = dPatientDrugDate.maxDate(Util.getInt(req, "id"));
-    //
-    long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
-    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
-    List<String> dates = Util.getListDates(minDate, (int) (diff));
-    String d = "";
-    for(String dt: dates) {
-      if(dt.contains(Util.get(req, "dt")))
-        d = dt;
-    }
-    //
-    List<PatientDrugDates> dds = dPatientDrugDate.getList("From PatientDrugDates Where checked = 1 And patientDrug.patient.id = " + Util.get(req, "id") + " And date = '" + Util.dateDB(d) + "'");
-    List<Obj> drugs = new ArrayList<Obj>();
-    for(PatientDrugDates dd: dds) {
-      List<PatientDrugRows> rows = dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + dd.getPatientDrug().getId());
-      for(PatientDrugRows row: rows) {
-        if(!row.getSource().equals("own")) {
-          Obj obj = new Obj();
-          obj.setId(row.getDrug().getId());
-          obj.setName(row.getDrug().getName());
-          List<HNDrugs> ffs = dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr")+ " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + row.getDrug().getId());
-          List<ObjList> list = new ArrayList<ObjList>();
-          for(HNDrugs ff: ffs) {
-            ObjList o = new ObjList();
-            o.setC1(ff.getId().toString());
-            o.setC2(ff.getDrug().getName() + " (Остаток: " + (ff.getDrugCount() - ff.getRasxod()) + ")");
-            o.setC3(ff.getMeasure().getName());
-            o.setC4((ff.getDrugCount() - ff.getRasxod()) + "");
-            o.setC5(row.getExpanse().toString());
-            list.add(o);
-          }
-          obj.setList(list);
-          drugs.add(obj);
-        }
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      Date minDate = dPatientDrugDate.minDate(Util.getInt(req, "id"));
+      Date maxDate = dPatientDrugDate.maxDate(Util.getInt(req, "id"));
+      //
+      long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
+      long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
+      List<String> dates = Util.getListDates(minDate, (int) (diff));
+      String d = "";
+      for (String dt : dates) {
+        if (dt.contains(Util.get(req, "dt")))
+          d = dt;
       }
+      //
+      List<PatientDrugDates> dds = dPatientDrugDate.getList("From PatientDrugDates Where checked = 1 And patientDrug.patient.id = " + Util.get(req, "id") + " And date = '" + Util.dateDB(d) + "'");
+      List<Obj> drugs = new ArrayList<>();
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select g.drug_Id, " +
+          "       d.Name Drug_Name, " +
+          "       Sum((Case When t.morningTime = 1 Then g.expanse Else 0 End) + (Case When t.noonTime = 1 Then g.expanse Else 0 End) + (Case When t.eveningTime = 1 Then g.expanse Else 0 End)) Rasxod " +
+          "  From Patient_Drugs t, Patient_Drug_Dates c, Patient_Drug_Rows g, Drug_s_Names d " +
+          " Where t.patient_Id = " + Util.get(req, "id") +
+          "   And c.patientDrug_Id = t.id " +
+          "   And g.patientDrug_Id = t.id " +
+          "   And date(c.date) = '" + Util.dateDB(d) + "' " +
+          "   And c.checked = 1 " +
+          "   And g.source != 'own' " +
+          "   And d.id = g.drug_Id " +
+          " Group By g.drug_Id, d.Name"
+      );
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Obj obj = new Obj();
+        obj.setId(rs.getInt("drug_id"));
+        obj.setName(rs.getString("drug_name"));
+        List<HNDrugs> ffs = dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr") + " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + obj.getId());
+        List<ObjList> list = new ArrayList<ObjList>();
+        for (HNDrugs ff : ffs) {
+          ObjList o = new ObjList();
+          o.setC1(ff.getId().toString());
+          o.setC2(obj.getName() + " (Остаток: " + (ff.getDrugCount() - ff.getRasxod()) + ")");
+          o.setC3(ff.getMeasure().getName());
+          o.setC4((ff.getDrugCount() - ff.getRasxod()) + "");
+          o.setC5("" + rs.getDouble("rasxod"));
+          list.add(o);
+        }
+        obj.setList(list);
+        drugs.add(obj);
+      }
+      m.addAttribute("drugs", drugs);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
     }
-    m.addAttribute("drugs", drugs);
     //
     return "/med/head_nurse/out/patient/addDrugs";
   }

@@ -112,7 +112,6 @@
       success: function (res) {
         $('#error_text').hide();
         if (res.success) {
-          console.log(res.rows)
           $('#out_rows').find('tbody').html('');
           $('#drug_name').html(res.name);
           $('#drug_price').html(res.price);

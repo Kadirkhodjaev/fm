@@ -128,4 +128,17 @@ public abstract class DaoImp<T extends GenId> implements Dao<T> {
     return entityManager.createQuery(grid.getSql()).setFirstResult(startPos).setMaxResults(grid.getPageSize()).getResultList();
   }
 
+
+  @Override
+  public T obj(String  sql) {
+    System.out.println(sql);
+    try {
+      return (T) entityManager.createQuery(sql).getSingleResult();
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+
+
 }

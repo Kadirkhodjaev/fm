@@ -251,7 +251,7 @@ public class CBooking {
               }
             }
           }
-          ps = conn.prepareStatement("Select * From Room_Bookings t Where date(t.date_begin) >= date(CURRENT_TIMESTAMP()) And t.state != 'ARCH' And room_id = " + room.getId());
+          ps = conn.prepareStatement("Select * From Room_Bookings t Where t.state != 'ARCH' And room_id = " + room.getId());
           rs = ps.executeQuery();
           while (rs.next()) {
             if(Util.isNotNull(req,"emptyDate")) {
@@ -270,7 +270,7 @@ public class CBooking {
             obj.setC10(room.getName() + " - " + room.getRoomType().getName());
             list.add(obj);
           }
-          if(list.size() == 0) emptyCount++;
+          if(list.isEmpty()) emptyCount++;
           rr.setPatients(list);
           stageRooms.add(rr);
           DB.done(ps);

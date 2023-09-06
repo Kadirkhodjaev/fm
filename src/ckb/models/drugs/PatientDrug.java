@@ -33,6 +33,21 @@ public class PatientDrug {
   private boolean eveningTimeBefore;
   private boolean eveningTimeAfter;
 
+  private boolean morningTimeDone;
+  private Integer morningTimeDoneBy;
+  private Date morningTimeDoneOn;
+  private boolean noonTimeDone;
+  private Integer noonTimeDoneBy;
+  private Date noonTimeDoneOn;
+  private boolean eveningTimeDone;
+  private Integer eveningTimeDoneBy;
+  private Date eveningTimeDoneOn;
+  private Integer dateId;
+
+  private boolean timeDone;
+  private String timeDoneBy;
+  private Date timeDoneOn;
+
   private boolean canDel;
 
   private Date dateBegin;
@@ -231,5 +246,109 @@ public class PatientDrug {
 
   public void setDs(List<HNDates> ds) {
     this.ds = ds;
+  }
+
+  public boolean isTimeDone() {
+    return timeDone;
+  }
+
+  public void setTimeDone(boolean timeDone) {
+    this.timeDone = timeDone;
+  }
+
+  public String getTimeDoneBy() {
+    return timeDoneBy;
+  }
+
+  public void setTimeDoneBy(String timeDoneBy) {
+    this.timeDoneBy = timeDoneBy;
+  }
+
+  public Date getTimeDoneOn() {
+    return timeDoneOn;
+  }
+
+  public void setTimeDoneOn(Date timeDoneOn) {
+    this.timeDoneOn = timeDoneOn;
+  }
+
+  public boolean isMorningTimeDone() {
+    return morningTimeDone;
+  }
+
+  public void setMorningTimeDone(boolean morningTimeDone) {
+    this.morningTimeDone = morningTimeDone;
+  }
+
+  public Integer getMorningTimeDoneBy() {
+    return morningTimeDoneBy;
+  }
+
+  public void setMorningTimeDoneBy(Integer morningTimeDoneBy) {
+    this.morningTimeDoneBy = morningTimeDoneBy;
+  }
+
+  public Date getMorningTimeDoneOn() {
+    return morningTimeDoneOn;
+  }
+
+  public void setMorningTimeDoneOn(Date morningTimeDoneOn) {
+    this.morningTimeDoneOn = morningTimeDoneOn;
+  }
+
+  public boolean isNoonTimeDone() {
+    return noonTimeDone;
+  }
+
+  public void setNoonTimeDone(boolean noonTimeDone) {
+    this.noonTimeDone = noonTimeDone;
+  }
+
+  public Integer getNoonTimeDoneBy() {
+    return noonTimeDoneBy;
+  }
+
+  public void setNoonTimeDoneBy(Integer noonTimeDoneBy) {
+    this.noonTimeDoneBy = noonTimeDoneBy;
+  }
+
+  public Date getNoonTimeDoneOn() {
+    return noonTimeDoneOn;
+  }
+
+  public void setNoonTimeDoneOn(Date noonTimeDoneOn) {
+    this.noonTimeDoneOn = noonTimeDoneOn;
+  }
+
+  public boolean isEveningTimeDone() {
+    return eveningTimeDone;
+  }
+
+  public void setEveningTimeDone(boolean eveningTimeDone) {
+    this.eveningTimeDone = eveningTimeDone;
+  }
+
+  public Integer getEveningTimeDoneBy() {
+    return eveningTimeDoneBy;
+  }
+
+  public void setEveningTimeDoneBy(Integer eveningTimeDoneBy) {
+    this.eveningTimeDoneBy = eveningTimeDoneBy;
+  }
+
+  public Date getEveningTimeDoneOn() {
+    return eveningTimeDoneOn;
+  }
+
+  public void setEveningTimeDoneOn(Date eveningTimeDoneOn) {
+    this.eveningTimeDoneOn = eveningTimeDoneOn;
+  }
+
+  public Integer getDateId() {
+    return dateId;
+  }
+
+  public void setDateId(Integer dateId) {
+    this.dateId = dateId;
   }
 }

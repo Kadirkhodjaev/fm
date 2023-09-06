@@ -938,12 +938,13 @@ public class SPatientImp implements SPatient {
     }
     drug.setRows(rows);
     List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
-    for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + id)) {
+    for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + id + " Order By date")) {
       PatientDrugDate date = new PatientDrugDate();
       date.setId(dd.getId());
       date.setDate(dd.getDate());
       date.setChecked(dd.isChecked());
       date.setState(dd.getState());
+      date.setDisabled(dd.isMorningTimeDone() || dd.isNoonTimeDone() || dd.isEveningTimeDone());
       dates.add(date);
     }
     drug.setDates(dates);
@@ -959,7 +960,7 @@ public class SPatientImp implements SPatient {
     drug.setNoonTimeAfter(pd.isNoonTimeAfter());
     drug.setEveningTimeBefore(pd.isEveningTimeBefore());
     drug.setEveningTimeAfter(pd.isEveningTimeAfter());
-
+    //
     drug.setNote(pd.getNote());
     drug.setDateBegin(pd.getDateBegin());
     drug.setDateEnd(pd.getDateEnd());
@@ -1030,6 +1031,12 @@ public class SPatientImp implements SPatient {
         date.setDateMonth(Util.dateToString(dd.getDate()).substring(0, 5));
         date.setChecked(dd.isChecked());
         date.setState(dd.getState());
+        date.setDisabled(dd.isMorningTimeDone() || dd.isNoonTimeDone() || dd.isEveningTimeDone());
+        //
+        date.setMorningDone(dd.isMorningTimeDone());
+        date.setNoonDone(dd.isNoonTimeDone());
+        date.setEveningDone(dd.isEveningTimeDone());
+        //
         dates.add(date);
       }
       drug.setDates(dates);
@@ -1049,9 +1056,9 @@ public class SPatientImp implements SPatient {
   }
 
   @Override
-  public List<PatientDrug> getDrugsByTypeToDate(Integer curPat, Date operDay, int type) {
+  public List<PatientDrug> getDrugsByTypeToDate(Integer curPat, Date operDay, int type, String tm) {
     List<PatientDrug> drugs = new ArrayList<PatientDrug>();
-    List<PatientDrugs> patientDrugs = dPatientDrug.byTypeToDate(curPat, type, operDay);
+    List<PatientDrugs> patientDrugs = dPatientDrug.byTypeToDate(curPat, type, operDay, tm);
     for(PatientDrugs pd: patientDrugs) {
       PatientDrug drug = new PatientDrug();
       drug.setId(pd.getId());
@@ -1076,10 +1083,26 @@ public class SPatientImp implements SPatient {
       List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
       for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + pd.getId() + " And date(date) = '" + Util.dateDB(Util.dateToString(operDay)) + "'")) {
         PatientDrugDate date = new PatientDrugDate();
+        drug.setDateId(dd.getId());
         date.setDate(dd.getDate());
         date.setDateMonth(Util.dateToString(dd.getDate()).substring(0, 5));
         date.setChecked(dd.isChecked());
         date.setState(dd.getState());
+        if(tm.equals("1") && dd.isMorningTimeDone()) {
+          drug.setTimeDone(dd.isMorningTimeDone());
+          drug.setTimeDoneBy(dUser.get(dd.getMorningTimeDoneBy()).getFio());
+          drug.setTimeDoneOn(dd.getMorningTimeDoneOn());
+        }
+        if (tm.equals("2") && dd.isNoonTimeDone()) {
+          drug.setTimeDone(dd.isNoonTimeDone());
+          drug.setTimeDoneBy(dUser.get(dd.getNoonTimeDoneBy()).getFio());
+          drug.setTimeDoneOn(dd.getNoonTimeDoneOn());
+        }
+        if (tm.equals("3") && dd.isEveningTimeDone()) {
+          drug.setTimeDone(dd.isEveningTimeDone());
+          drug.setTimeDoneBy(dUser.get(dd.getEveningTimeDoneBy()).getFio());
+          drug.setTimeDoneOn(dd.getEveningTimeDoneOn());
+        }
         dates.add(date);
       }
       drug.setDates(dates);

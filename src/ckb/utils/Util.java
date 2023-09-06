@@ -389,4 +389,8 @@ public class Util {
   public static boolean getCheckbox(HttpServletRequest req, String name) {
     return req.getParameter(name) != null;
   }
+
+  public static String dateDB(Date date) {
+    return dateDB(dateToString(date));
+  }
 }

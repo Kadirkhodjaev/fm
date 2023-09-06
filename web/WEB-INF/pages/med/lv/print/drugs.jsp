@@ -57,7 +57,7 @@
       </tr>
       <tr>
         <c:forEach var="i" begin="1" end="${fn:length(dates)}" step="1" varStatus="loop">
-          <td style="border:1px solid #ababab">&nbsp;</td>
+          <td style="border:1px solid #ababab; vertical-align:middle; text-align:center">&nbsp;<c:forEach items="${drug.dates}" var="date"><c:if test="${date.dateMonth == dates[i-1] && date.disabled}">+</c:if></c:forEach>&nbsp;</td>
         </c:forEach>
       </tr>
     </c:forEach>
@@ -138,7 +138,7 @@
       </tr>
       <tr>
         <c:forEach var="i" begin="1" end="${fn:length(dates)}" step="1" varStatus="loop">
-          <td style="border:1px solid #ababab">&nbsp;</td>
+          <td style="border:1px solid #ababab; vertical-align:middle; text-align:center">&nbsp;<c:forEach items="${drug.dates}" var="date"><c:if test="${date.dateMonth == dates[i-1] && date.disabled}">+</c:if></c:forEach>&nbsp;</td>
         </c:forEach>
       </tr>
     </c:forEach>

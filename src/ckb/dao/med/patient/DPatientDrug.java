@@ -12,5 +12,5 @@ public interface DPatientDrug extends Dao<PatientDrugs> {
 
   List<PatientDrugs> byType(int curPat, int type);
 
-  List<PatientDrugs> byTypeToDate(Integer curPat, int type, Date operDay);
+  List<PatientDrugs> byTypeToDate(Integer curPat, int type, Date operDay, String time);
 }

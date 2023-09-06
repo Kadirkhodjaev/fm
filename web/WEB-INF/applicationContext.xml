@@ -148,6 +148,7 @@
   <bean id="dDicts" class="ckb.dao.admin.dicts.DDictImp" parent="daoImpl"/>
   <bean id="dRooms" class="ckb.dao.med.dicts.rooms.DRoomsImp" parent="daoImpl"/>
   <bean id="dPatientDrug" class="ckb.dao.med.patient.DPatientDrugImp" parent="daoImpl"/>
+  <bean id="dPatientDrugExp" class="ckb.dao.med.patient.DPatientDrugExpImp" parent="daoImpl"/>
   <bean id="dPatientDrugRow" class="ckb.dao.med.patient.DPatientDrugRowImp" parent="daoImpl"/>
   <bean id="dPatientDrugDate" class="ckb.dao.med.patient.DPatientDrugDateImp" parent="daoImpl"/>
   <bean id="dPatientDrugTemp" class="ckb.dao.med.patient.DPatientDrugTempImp" parent="daoImpl"/>

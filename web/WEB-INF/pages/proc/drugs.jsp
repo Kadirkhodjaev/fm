@@ -7,6 +7,29 @@
     let cur = Number($('#' + type).val());
     if(cur === 0 && pm < 0) return;
     $('#' + type).val(cur + pm);
+    $.ajax({
+      url: '/proc/patient/drug/exp.s',
+      method: 'post',
+      data: 'patient=${pat.id}&time=${time}&oper_day=${oper_day}&code=' + type + '&val=' + (cur + pm),
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+      }
+    });
+  }
+  function setDrugState(id) {
+    $.ajax({
+      url: '/proc/patient/drug/done.s',
+      method: 'post',
+      data: 'id=' + id + '&time=${time}',
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success) {
+          $('#home').load('/proc/patient/drugs.s?id=${pat.id}&oper_day=' + $('#oper_day').val());
+        }
+      }
+    });
   }
 </script>
 <c:if test="${fn:length(ines) > 0}">
@@ -36,7 +59,15 @@
             </c:forEach>
           </b> (${drug.note})<c:if test="${drug.injectionType != null}"> - ${drug.injectionType.name}</c:if>
         </td>
-        <td style="border:1px solid #ababab; text-align: center">+</td>
+        <td style="border:1px solid #ababab; text-align: center; padding:2px" nowrap>
+          <c:if test="${!drug.timeDone}">
+            <button class="btn btn-success btn-sm" onclick="setDrugState(${drug.dateId})"><b class="fa fa-check"></b></button>
+          </c:if>
+          <c:if test="${drug.timeDone}">
+            <div>${drug.timeDoneBy}</div>
+            <div><fmt:formatDate pattern = "HH:mm" value = "${drug.timeDoneOn}"/></div>
+          </c:if>
+        </td>
       </tr>
     </c:forEach>
     <tr class="hover">
@@ -44,9 +75,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('spirt', -1)">-</button></td>
-            <td><input style="width:30px" type="text" class="center" readonly value="0" id="spirt"/></td>
-            <td><button style="width:35px" onclick="setIterator('spirt', 1)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('spirt', -0.5)">-</button></td>
+            <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("spirt") == null ? 0 : exps.get("spirt")}" id="spirt"/></td>
+            <td><button style="width:35px" onclick="setIterator('spirt', 0.5)">+</button></td>
           </tr>
         </table>
       </td>
@@ -56,9 +87,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('vata', -1)">-</button></td>
-            <td><input style="width:30px" type="text" class="center" readonly value="0" id="vata"/></td>
-            <td><button style="width:35px" onclick="setIterator('vata', 1)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('vata', -0.5)">-</button></td>
+            <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("vata") == null ? 0 : exps.get("vata")}" id="vata"/></td>
+            <td><button style="width:35px" onclick="setIterator('vata', 0.5)">+</button></td>
           </tr>
         </table>
       </td>
@@ -68,9 +99,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('spric', -1)">-</button></td>
-            <td><input style="width:30px" type="text" class="center" readonly value="0" id="spric"/></td>
-            <td><button style="width:35px" onclick="setIterator('spric', 1)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('spric', -0.5)">-</button></td>
+            <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("spric") == null ? 0 : exps.get("spric")}" id="spric"/></td>
+            <td><button style="width:35px" onclick="setIterator('spric', 0.5)">+</button></td>
           </tr>
         </table>
       </td>
@@ -80,9 +111,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('sistema', -1)">-</button></td>
-            <td><input style="width:30px" type="text" class="center" readonly value="0" id="sistema"/></td>
-            <td><button style="width:35px" onclick="setIterator('sistema', 1)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('sistema', -0.5)">-</button></td>
+            <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("sistema") == null ? 0 : exps.get("sistema")}" id="sistema"/></td>
+            <td><button style="width:35px" onclick="setIterator('sistema', 0.5)">+</button></td>
           </tr>
         </table>
       </td>
@@ -92,9 +123,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('perchatka', -1)">-</button></td>
-            <td><input style="width:30px" type="text" class="center" readonly value="0" id="perchatka"/></td>
-            <td><button style="width:35px" onclick="setIterator('perchatka', 1)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('perchatka', -0.5)">-</button></td>
+            <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("perchatka") == null ? 0 : exps.get("perchatka")}" id="perchatka"/></td>
+            <td><button style="width:35px" onclick="setIterator('perchatka', 0.5)">+</button></td>
           </tr>
         </table>
       </td>

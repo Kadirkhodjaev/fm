@@ -1574,6 +1574,9 @@ public class CLv {
           drugDate.setPatientDrug(drug);
           drugDate.setDate(Util.stringToDate(date));
           drugDate.setChecked(states.contains(date));
+          drugDate.setMorningTimeDone(false);
+          drugDate.setNoonTimeDone(false);
+          drugDate.setEveningTimeDone(false);
           drugDate.setState("ENT");
           dPatientDrugDate.saveAndReturn(drugDate);
         }
@@ -1618,7 +1621,7 @@ public class CLv {
           return json.toString();
         }
         List<PatientDrugDates> dbDates = dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + drug.getId());
-        for(PatientDrugDates dd: dbDates) dPatientDrugDate.delete(dd.getId());
+        for(PatientDrugDates dd: dbDates) if(!dd.isMorningTimeDone() &&!dd.isNoonTimeDone() && !dd.isEveningTimeDone()) dPatientDrugDate.delete(dd.getId());
         for (int i=0;i<date_ids.length;i++) {
           PatientDrugDates drugDate = new PatientDrugDates();
           drugDate.setPatientDrug(drug);

@@ -301,7 +301,6 @@
   </c:forEach>
 
   function editDrug(dom, id, price_block, count_block, price_drug, count_drug) {
-    console.log()
     $('#edit_drug_name').html($(dom).html());
     $('#editDrugForm input[name=id]').val(id);
     $('#editDrugForm input[name=price_block]').val(price_block);

@@ -155,7 +155,7 @@
                     <input type="hidden" name="date_id" value="${date.id}"/>
                     <input type="hidden" name="dt_state" value="${date.state}"/>
                     <input type="hidden" name="dates" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${date.date}" />" />
-                    <input type="checkbox" name="date_state" <c:if test="${date.checked}">checked</c:if> value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${date.date}" />" />
+                    <input type="checkbox" name="date_state" <c:if test="${date.checked}">checked</c:if> <c:if test="${date.disabled}">disabled</c:if> value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${date.date}" />" />
                   </td>
                 </c:forEach>
               </tr>
@@ -183,7 +183,7 @@
         </tr>
         <tr>
           <td class="bold center hover hand" onclick="setCheckbox()"><input type="checkbox" name="morningTimeBefore" <c:if test="${drug.morningTimeBefore}">checked</c:if> /></td>
-          <td class="bold center hover hand" onclick="setCheckbox()"><input type="checkbox" name="morningTimeAfter" <c:if test="${drug.morningTimeAfter}">checked</c:if> /></td>
+          <td class="bold center hover hand" onclick="setCheckbox()"><input type="checkbox" name="morningTimeAfter" <c:if test="${drug.morningTimeAfter}">checked</c:if>  /></td>
           <td class="bold center hover hand" onclick="setCheckbox()"><input type="checkbox" name="noonTimeBefore" <c:if test="${drug.noonTimeBefore}">checked</c:if> /></td>
           <td class="bold center hover hand" onclick="setCheckbox()"><input type="checkbox" name="noonTimeAfter" <c:if test="${drug.noonTimeAfter}">checked</c:if> /></td>
           <td class="bold center hover hand" onclick="setCheckbox()"><input type="checkbox" name="eveningTimeBefore" <c:if test="${drug.eveningTimeBefore}">checked</c:if> /></td>
@@ -537,12 +537,16 @@
     var morningStatus = $('input[name=morningTime]').is(':checked');
     var noonStatus = $('input[name=noonTime]').is(':checked');
     var eveningStatus = $('input[name=eveningTime]').is(':checked');
-    $('input[name=morningTimeBefore]').attr('disabled', !morningStatus);
-    $('input[name=morningTimeAfter]').attr('disabled', !morningStatus);
-    $('input[name=noonTimeBefore]').attr('disabled', !noonStatus);
-    $('input[name=noonTimeAfter]').attr('disabled', !noonStatus);
-    $('input[name=eveningTimeBefore]').attr('disabled', !eveningStatus);
-    $('input[name=eveningTimeAfter]').attr('disabled', !eveningStatus);
+    //
+    var dmorningStatus = $('input[name=morningTime]').is(':disabled');
+    var dnoonStatus = $('input[name=noonTime]').is(':disabled');
+    var deveningStatus = $('input[name=eveningTime]').is(':disabled');
+    $('input[name=morningTimeBefore]').attr('disabled', !morningStatus || dmorningStatus);
+    $('input[name=morningTimeAfter]').attr('disabled', !morningStatus || dmorningStatus);
+    $('input[name=noonTimeBefore]').attr('disabled', !noonStatus || dnoonStatus);
+    $('input[name=noonTimeAfter]').attr('disabled', !noonStatus || dnoonStatus);
+    $('input[name=eveningTimeBefore]').attr('disabled', !eveningStatus || deveningStatus);
+    $('input[name=eveningTimeAfter]').attr('disabled', !eveningStatus || deveningStatus);
   }
   function removeDrug(idx, id) {
     if(confirm('Вы действительно хотите удалить выбранную запись?'))
@@ -580,6 +584,10 @@
   function setCheckbox() {
     if(event.target.tagName == 'TD') {
       var elem = event.target.querySelector('INPUT[type=checkbox]');
+      if(elem.disabled && elem.checked) {
+        errMsg('Нельзя отменить медикаменты! Медсестры уже выполнили задание');
+        return;
+      }
       if(!elem.disabled)
         elem.click();
     }

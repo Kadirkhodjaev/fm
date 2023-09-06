@@ -191,10 +191,10 @@ public class  CApp {
     }
     if(roleId == 16) { // Физиотерапия
       if(user.isDocfizio()) {
-        session.setCurUrl(session.getCurUrl().equals("") ? "/patients/list.s" : session.getCurUrl());
+        session.setCurUrl(session.getCurUrl().isEmpty() ? "/patients/list.s" : session.getCurUrl());
         m.add(new Menu("Пациенты", "/patients/list.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/patients/list.s")));
       } else {
-        session.setCurUrl(session.getCurUrl().equals("") ? "/nurses/fizio.s" : session.getCurUrl());
+        session.setCurUrl(session.getCurUrl().isEmpty() ? "/nurses/fizio.s" : session.getCurUrl());
       }
       m.add(new Menu("Постовой", "/nurses/fizio.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/nurses/fizio.s")));
       m.add(new Menu("Архив", "/patients/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/archive/list.s")));

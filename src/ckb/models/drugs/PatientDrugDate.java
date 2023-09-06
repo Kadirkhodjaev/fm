@@ -10,6 +10,11 @@ public class PatientDrugDate {
   private String state;
   private boolean checked;
   private Integer repeat;
+  private boolean disabled;
+
+  private boolean morningDone;
+  private boolean noonDone;
+  private boolean eveningDone;
 
   public Integer getId() {
     return id;
@@ -57,5 +62,37 @@ public class PatientDrugDate {
 
   public void setRepeat(Integer repeat) {
     this.repeat = repeat;
+  }
+
+  public boolean isDisabled() {
+    return disabled;
+  }
+
+  public void setDisabled(boolean disabled) {
+    this.disabled = disabled;
+  }
+
+  public boolean isMorningDone() {
+    return morningDone;
+  }
+
+  public void setMorningDone(boolean morningDone) {
+    this.morningDone = morningDone;
+  }
+
+  public boolean isNoonDone() {
+    return noonDone;
+  }
+
+  public void setNoonDone(boolean noonDone) {
+    this.noonDone = noonDone;
+  }
+
+  public boolean isEveningDone() {
+    return eveningDone;
+  }
+
+  public void setEveningDone(boolean eveningDone) {
+    this.eveningDone = eveningDone;
   }
 }
