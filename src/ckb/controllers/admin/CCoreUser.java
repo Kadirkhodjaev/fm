@@ -68,8 +68,9 @@ public class CCoreUser {
   @RequestMapping("/save.s")
   protected String addEdit(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
-    Users user = dUser.get(Util.getInt(req, "id"));
-    session.setCurUrl("core/user/save.s?id=" + user.getId());
+    Integer id = Util.getInt(req, "id");
+    Users user = dUser.get(id);
+    session.setCurUrl("core/user/save.s?id=" + id);
     model.addAttribute("deptList", dDept.getAll());
     model.addAttribute("user", user);
     List<ObjList> list = new ArrayList<>();
@@ -92,12 +93,12 @@ public class CCoreUser {
   @ResponseBody
   protected String addEdit(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    String id = Util.get(req, "id");
+    String id = Util.get(req, "id", "0");
     try {
-      Users u = id != null ? dUser.get(Integer.parseInt(id)) : new Users();
+      Users u = id.equals("0") || id.isEmpty() ? new Users() : dUser.get(Integer.parseInt(id));
       u.setDept(Util.getNullInt(req, "dep") == null ? null : dDept.get(Util.getInt(req, "dep")));
       u.setFio(Util.get(req, "fio"));
-      if(id == null || !Util.get(req, "password").isEmpty())
+      if(id.equals("0") || id.isEmpty() || !Util.get(req, "password").isEmpty())
         u.setPassword(Util.md5(Util.get(req, "password")));
       u.setLogin(Util.get(req, "login"));
       u.setLv(Util.getCheckbox(req, "lv"));
@@ -119,7 +120,7 @@ public class CCoreUser {
       if(u.getLogin() == null || u.getLogin().isEmpty()) return Util.err(json, "Логин не может быть пустым");
       if(u.getId() == null && (u.getPassword() == null || u.getPassword().isEmpty())) return Util.err(json, "Пароль не может быть пустым");
       if(!Util.isNull(req, "password") && Req.isNull(req, "confirm_password")) return Util.err(json, "Подтверждение пароля не может быть пустым");
-      if(!Util.isNull(req, "password") && !Req.isNull(req, "confirm_password") && !u.getPassword().equals(Req.get(req, "confirm_password"))) return Util.err(json, "Пароль и подтверждение пароля не совподает");
+      if(!Util.isNull(req, "password") && !Req.isNull(req, "confirm_password") && !Util.get(req, "password").equals(Req.get(req, "confirm_password"))) return Util.err(json, "Пароль и подтверждение пароля не совподает");
       if(u.getFio().isEmpty()) return Util.err(json, "ФИО не может быть пустым");
 
       //

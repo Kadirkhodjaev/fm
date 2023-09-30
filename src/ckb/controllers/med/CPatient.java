@@ -7,9 +7,13 @@ import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
 import ckb.dao.med.kdos.DKdoTypes;
 import ckb.dao.med.kdos.DKdos;
+import ckb.dao.med.lv.fizio.DLvFizioDate;
+import ckb.dao.med.lv.fizio.DLvFizioDateH;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.patient.DPatient;
 import ckb.dao.med.patient.DPatientPlan;
+import ckb.domains.med.lv.LvFizioDates;
+import ckb.domains.med.lv.LvFizioDatesH;
 import ckb.domains.med.lv.LvPlans;
 import ckb.domains.med.patient.PatientPlans;
 import ckb.domains.med.patient.Patients;
@@ -56,6 +60,8 @@ public class CPatient {
   @Autowired DDict dDict;
   @Autowired DRooms dRoom;
   @Autowired DHNPatient dhnPatient;
+  @Autowired DLvFizioDate dLvFizioDate;
+  @Autowired DLvFizioDateH dLvFizioDateH;
 
   private final Logger logger = Logger.getLogger(CPatient.class);
 
@@ -427,6 +433,17 @@ public class CPatient {
           p.setState("ARCH");
           dPatient.save(p);
           dPatientPlan.delPatientTempPlans(p.getId());
+          List<LvFizioDates> dates = dLvFizioDate.getList("From LvFizioDates t Where t.fizio.id = " + p.getId());
+          for(LvFizioDates date: dates) {
+            LvFizioDatesH d = new LvFizioDatesH();
+            d.setDate(date.getDate());
+            d.setDone(date.getDone());
+            d.setState(date.getState());
+            d.setFizio(date.getFizio());
+            d.setConfDate(date.getConfDate());
+            dLvFizioDateH.save(d);
+            dLvFizioDate.delete(date.getId());
+          }
         }
         if (session.getRoleId() == 6 && p.getState().equals("CZG") && p.getLv_id() != null) {
           p.setState("LV");

@@ -25,11 +25,15 @@
         <td>${ls.c1}</td>
         <td>${ls.c2}</td>
         <td class="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${ls.c3}"/></td>
+        <td class="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${ls.c4}"/></td>
+        <td class="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${ls.c5}"/></td>
       </tr>
     </c:forEach>
     <tr>
       <td class="bold" colspan="2">ИТОГО</td>
       <td class="bold right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.price}"/></td>
+      <td>&nbsp;</td>
+      <td class="bold right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.claimCount}"/></td>
     </tr>
   </c:forEach>
 </table>

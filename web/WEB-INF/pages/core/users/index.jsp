@@ -30,7 +30,7 @@
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
     Список пользователей
-    <button onclick="setPage('/core/user/save.s')" class="btn btn-sm btn-success margin-top-5" style="float:right"><i class="fa fa-plus"></i> Добавить нового пользователя</button>
+    <button onclick="setPage('/core/user/save.s?id=0')" class="btn btn-sm btn-success margin-top-5" style="float:right"><i class="fa fa-plus"></i> Добавить нового пользователя</button>
   </div>
   <div class="panel-body">
     <div class="table-responsive">

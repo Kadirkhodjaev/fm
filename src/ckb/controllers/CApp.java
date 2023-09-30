@@ -73,6 +73,9 @@ public class  CApp {
   protected String main(HttpServletRequest req, Model model) {
     //
     Session session = SessionUtil.getUser(req);
+    if(session == null) {
+      return "redirect: login.s";
+    }
     Users user = dUser.get(session.getUserId());
     //
     List<Menu> m = new ArrayList<>();

@@ -10,7 +10,7 @@
     setPage('/core/amb/service/save.s');
   }
   function setGroup(dom) {
-    setPage('/core/amb/service/save.s?page=' + dom.value);
+    setPage('/core/amb/services.s?page=' + dom.value);
   }
 </script>
 <style>

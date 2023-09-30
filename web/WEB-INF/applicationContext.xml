@@ -47,6 +47,7 @@
   <bean id="dLvForm6" class="ckb.dao.med.lv.form6.DLvForm6Imp" parent="daoImpl"/>
   <bean id="dLvForm7" class="ckb.dao.med.lv.form7.DLvForm7Imp" parent="daoImpl"/>
   <bean id="dLvFizioDate" class="ckb.dao.med.lv.fizio.DLvFizioDateImp" parent="daoImpl"/>
+  <bean id="dLvFizioDateH" class="ckb.dao.med.lv.fizio.DLvFizioDateHImp" parent="daoImpl"/>
   <bean id="dPatient" class="ckb.dao.med.patient.DPatientImp" parent="daoImpl"/>
   <bean id="dPatientWatcher" class="ckb.dao.med.patient.DPatientWatchersImp" parent="daoImpl"/>
   <bean id="dPatientPays" class="ckb.dao.med.patient.DPatientPaysImp" parent="daoImpl"/>

@@ -99,9 +99,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('spric', -0.5)">-</button></td>
+            <td><button style="width:35px" onclick="setIterator('spric', -1)">-</button></td>
             <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("spric") == null ? 0 : exps.get("spric")}" id="spric"/></td>
-            <td><button style="width:35px" onclick="setIterator('spric', 0.5)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('spric', 1)">+</button></td>
           </tr>
         </table>
       </td>
@@ -111,9 +111,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('sistema', -0.5)">-</button></td>
+            <td><button style="width:35px" onclick="setIterator('sistema', -1)">-</button></td>
             <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("sistema") == null ? 0 : exps.get("sistema")}" id="sistema"/></td>
-            <td><button style="width:35px" onclick="setIterator('sistema', 0.5)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('sistema', 1)">+</button></td>
           </tr>
         </table>
       </td>
@@ -123,9 +123,9 @@
       <td style="border:1px solid #ababab; padding:10px 0">
         <table style="width:100px; margin:auto">
           <tr>
-            <td><button style="width:35px" onclick="setIterator('perchatka', -0.5)">-</button></td>
+            <td><button style="width:35px" onclick="setIterator('perchatka', -1)">-</button></td>
             <td><input style="width:30px" type="text" class="center" readonly value="${exps.get("perchatka") == null ? 0 : exps.get("perchatka")}" id="perchatka"/></td>
-            <td><button style="width:35px" onclick="setIterator('perchatka', 0.5)">+</button></td>
+            <td><button style="width:35px" onclick="setIterator('perchatka', 1)">+</button></td>
           </tr>
         </table>
       </td>

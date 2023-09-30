@@ -595,7 +595,7 @@ public class CLv {
     model.addAttribute("fizios", fizios);
     Date end = dLvFizioDate.getPatientMaxDay(pat.getId());
     if(end != null) {
-      List<LvFizioDates> dates = new ArrayList<LvFizioDates>();
+      List<LvFizioDates> dates = new ArrayList<>();
       int i = 0;
       while (true) {
         LvFizioDates date = new LvFizioDates();
@@ -1278,7 +1278,7 @@ public class CLv {
 
   // Назначение
   @RequestMapping(value = "/drug/index.s", method = RequestMethod.POST)
-  protected String naznachSave(HttpServletRequest req, Model model){
+  protected String naznachSave(HttpServletRequest req){
     Session session = SessionUtil.getUser(req);
     String[] ids = req.getParameterValues("id");
     String[] idx = req.getParameterValues("idx");
@@ -1620,12 +1620,17 @@ public class CLv {
           json.put("success", false);
           return json.toString();
         }
+        List<String> dds = new ArrayList<>();
         List<PatientDrugDates> dbDates = dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + drug.getId());
-        for(PatientDrugDates dd: dbDates) if(!dd.isMorningTimeDone() &&!dd.isNoonTimeDone() && !dd.isEveningTimeDone()) dPatientDrugDate.delete(dd.getId());
+        for(PatientDrugDates dd: dbDates) {
+          if(!dd.isMorningTimeDone() &&!dd.isNoonTimeDone() && !dd.isEveningTimeDone()) dPatientDrugDate.delete(dd.getId());
+          if(dd.isMorningTimeDone() || dd.isNoonTimeDone() || dd.isEveningTimeDone()) dds.add(Util.dateToString(dd.getDate()));
+        }
         for (int i=0;i<date_ids.length;i++) {
           PatientDrugDates drugDate = new PatientDrugDates();
           drugDate.setPatientDrug(drug);
           drugDate.setDate(Util.stringToDate(dates[i]));
+          if(dds.contains(dates[i])) continue;
           if(date_ids[i].equals("0")) {
             drugDate.setChecked(states.contains(dates[i]));
             drugDate.setState("ENT");

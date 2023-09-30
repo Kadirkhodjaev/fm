@@ -27,6 +27,7 @@
         <tr>
           <th>ID</th>
           <th>Наименование</th>
+          <th>Процент бонуса</th>
           <th>Группа</th>
           <th>Состояние</th>
         </thead>
@@ -36,6 +37,9 @@
             <td style="vertical-align: middle" class="center">${loop.index + 1}</td>
             <td style="vertical-align: middle">
               <a href="#" onclick="setPage('/core/amb/group/save.s?id=${g.id}');return false;">${g.name}</a>
+            </td>
+            <td class="center">
+              ${g.partnerProc}
             </td>
             <td style="vertical-align: middle; text-align: center">
               <c:if test="${g.group}">Да</c:if>

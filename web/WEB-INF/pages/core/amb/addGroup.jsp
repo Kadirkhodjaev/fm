@@ -39,6 +39,10 @@
           <td><input type="text" class="form-control" value="${ser.name}" name="name" required></td>
         </tr>
         <tr>
+          <td class="bold">Процент для партнеров:</td>
+          <td><input type="number" class="form-control right" value="${ser.partnerProc}" name="partnerProc" required></td>
+        </tr>
+        <tr>
           <td class="bold">Группа?:</td>
           <td><input type="checkbox" value="A" name="group" <c:if test="${ser.group}">checked</c:if>></td>
         </tr>

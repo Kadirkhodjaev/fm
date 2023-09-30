@@ -314,7 +314,7 @@ public class SPatientImp implements SPatient {
   public List<PatientList> getGridList(Grid grid, Session session) {
     Connection conn = null;
     ResultSet rs = null;
-    List<PatientList> list = new ArrayList<PatientList>();
+    List<PatientList> list = new ArrayList<>();
     if(grid.getRowCount() == 0)
       return list;
     try {
@@ -368,7 +368,7 @@ public class SPatientImp implements SPatient {
           Long conCount = dLvConsul.getCount("From LvConsuls c Where c.patientId = " + rs.getInt("id") + " And (c.text = null Or c.text='') And c.lvId = " + session.getUserId());
           pat.setIconUrl(conCount > 0 ? "red" : "green");
         }
-        // Если это консультация то скрвываем чекбокс
+        // Если это консультация, то скрвываем чекбокс
         if(session.getCurUrl().equals("/patients/consul.s"))
           pat.setShowCheckbox(false);
         if(session.getRoleId() == 16) {
@@ -571,7 +571,7 @@ public class SPatientImp implements SPatient {
   @Override
   public ArrayList<ObjList> getDairies(int curPat) {
     ArrayList<LvDairies> ds = dLvDairy.getByPatientId(curPat);
-    ArrayList<ObjList> list = new ArrayList<ObjList>();
+    ArrayList<ObjList> list = new ArrayList<>();
     for (LvDairies d : ds){
       ObjList o = new ObjList();
       o.setC1(d.getId().toString());
@@ -594,7 +594,7 @@ public class SPatientImp implements SPatient {
   @Override
   public ArrayList<ObjList> getPlans(int curPat) {
     ArrayList<LvPlans> ds = dLvPlan.getByPatientId(curPat);
-    ArrayList<ObjList> list = new ArrayList<ObjList>();
+    ArrayList<ObjList> list = new ArrayList<>();
     for (LvPlans d : ds){
       ObjList o = new ObjList();
       o.setC1(d.getId().toString()); // Идентификатор строки
@@ -859,7 +859,7 @@ public class SPatientImp implements SPatient {
 
   @Override
   public List<PatientDrug> getPatientDrugs(int curPat) {
-    List<PatientDrug> drugs = new ArrayList<PatientDrug>();
+    List<PatientDrug> drugs = new ArrayList<>();
     List<PatientDrugs> patientDrugs = dPatientDrug.byPatient(curPat);
     for(PatientDrugs pd: patientDrugs) {
       PatientDrug drug = new PatientDrug();
@@ -868,7 +868,7 @@ public class SPatientImp implements SPatient {
       drug.setGoal(pd.getGoal());
       drug.setDrugType(pd.getDrugType());
       drug.setInjectionType(pd.getInjectionType());
-      List<PatientDrugRow> rows = new ArrayList<PatientDrugRow>();
+      List<PatientDrugRow> rows = new ArrayList<>();
       boolean canDel = true;
       for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
         PatientDrugRow row = new PatientDrugRow();
@@ -885,8 +885,8 @@ public class SPatientImp implements SPatient {
         rows.add(row);
       }
       drug.setRows(rows);
-      drug.setCanDel(canDel || rows.size() == 0);
-      List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
+      drug.setCanDel(canDel || rows.isEmpty());
+      List<PatientDrugDate> dates = new ArrayList<>();
       for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + pd.getId())) {
         PatientDrugDate date = new PatientDrugDate();
         date.setId(dd.getId());
@@ -921,7 +921,7 @@ public class SPatientImp implements SPatient {
     drug.setGoal(pd.getGoal());
     drug.setDrugType(pd.getDrugType());
     drug.setInjectionType(pd.getInjectionType());
-    List<PatientDrugRow> rows = new ArrayList<PatientDrugRow>();
+    List<PatientDrugRow> rows = new ArrayList<>();
     for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + id)) {
       PatientDrugRow row = new PatientDrugRow();
       row.setId(patientDrugRow.getId());
@@ -937,7 +937,7 @@ public class SPatientImp implements SPatient {
       rows.add(row);
     }
     drug.setRows(rows);
-    List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
+    List<PatientDrugDate> dates = new ArrayList<>();
     for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + id + " Order By date")) {
       PatientDrugDate date = new PatientDrugDate();
       date.setId(dd.getId());
@@ -1001,14 +1001,14 @@ public class SPatientImp implements SPatient {
 
   @Override
   public List<PatientDrug> getDrugsByType(int curPat, int type, boolean isLv) {
-    List<PatientDrug> drugs = new ArrayList<PatientDrug>();
+    List<PatientDrug> drugs = new ArrayList<>();
     List<PatientDrugs> patientDrugs = dPatientDrug.byType(curPat, type);
     for(PatientDrugs pd: patientDrugs) {
       PatientDrug drug = new PatientDrug();
       drug.setId(pd.getId());
       drug.setPatient(pd.getPatient());
       drug.setGoal(pd.getGoal());
-      List<PatientDrugRow> rows = new ArrayList<PatientDrugRow>();
+      List<PatientDrugRow> rows = new ArrayList<>();
       boolean canDel = true;
       for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
         PatientDrugRow row = new PatientDrugRow();
@@ -1024,7 +1024,7 @@ public class SPatientImp implements SPatient {
       drug.setInjectionType(pd.getInjectionType());
       drug.setRows(rows);
       drug.setCanDel(canDel || rows.size() == 0);
-      List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
+      List<PatientDrugDate> dates = new ArrayList<>();
       for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + pd.getId())) {
         PatientDrugDate date = new PatientDrugDate();
         date.setDate(dd.getDate());
@@ -1057,14 +1057,14 @@ public class SPatientImp implements SPatient {
 
   @Override
   public List<PatientDrug> getDrugsByTypeToDate(Integer curPat, Date operDay, int type, String tm) {
-    List<PatientDrug> drugs = new ArrayList<PatientDrug>();
+    List<PatientDrug> drugs = new ArrayList<>();
     List<PatientDrugs> patientDrugs = dPatientDrug.byTypeToDate(curPat, type, operDay, tm);
     for(PatientDrugs pd: patientDrugs) {
       PatientDrug drug = new PatientDrug();
       drug.setId(pd.getId());
       drug.setPatient(pd.getPatient());
       drug.setGoal(pd.getGoal());
-      List<PatientDrugRow> rows = new ArrayList<PatientDrugRow>();
+      List<PatientDrugRow> rows = new ArrayList<>();
       boolean canDel = true;
       for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
         PatientDrugRow row = new PatientDrugRow();
@@ -1080,7 +1080,7 @@ public class SPatientImp implements SPatient {
       drug.setInjectionType(pd.getInjectionType());
       drug.setRows(rows);
       drug.setCanDel(canDel || rows.isEmpty());
-      List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
+      List<PatientDrugDate> dates = new ArrayList<>();
       for(PatientDrugDates dd: dPatientDrugDate.getList("From PatientDrugDates Where patientDrug.id = " + pd.getId() + " And date(date) = '" + Util.dateDB(Util.dateToString(operDay)) + "'")) {
         PatientDrugDate date = new PatientDrugDate();
         drug.setDateId(dd.getId());

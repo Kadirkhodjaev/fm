@@ -361,22 +361,19 @@ public class CNurse {
       DB.done(ps);
       DB.done(rs);
       ps = conn.prepareStatement(
-        "Select t.Patient,  " +
-          "         t.Fio,  " +
-          "         Max(t.room) room,  " +
-          "         Sum(t.Counter) Counter " +
-          "    From ( " +
-          "      Select Concat(t.surname, ' ', t.name, ' ', t.middlename) fio, " +
-          "             t.id patient, " +
-          "             r.name room, " +
-          "             1 Counter " +
-          "        From Patients t, Lv_Fizios c, Lv_Fizio_Dates d, Rooms r " +
-          "       Where t.id = c.patientId  " +
-          "         And d.fizio_Id = c.id  " +
-          "         And t.room_id = r.id  " +
-          "         And date(d.date) <= ? " +
-          "         And d.state = 'Y') t " +
-          "   Group By t.Patient, t.Fio"
+        "Select c.id Patient,  " +
+          "         Concat(c.surname, ' ', c.name, ' ', c.middlename) Fio,  " +
+          "         r.name room  " +
+          "    From Patients c, Rooms r " +
+          "   Where Exists ( " +
+          "      Select 1 " +
+          "        From Lv_Fizios g, Lv_Fizio_Dates d " +
+          "       Where d.fizio_Id = g.id  " +
+          "         And date(d.date) = ? " +
+          "         And g.patientId = c.id " +
+          "         And d.state = 'Y')  " +
+          "    And c.room_id = r.id " +
+          (patId > 0 ? " And c.id = " + patId : " " )
       );
       ps.setString(1, Util.dateDB(dated));
       rs = ps.executeQuery();
@@ -386,29 +383,26 @@ public class CNurse {
         p.setFio(rs.getString("fio"));
         p.setName(rs.getString("room"));
         List<ObjList> rws = new ArrayList<ObjList>();
-        ps = conn.prepareStatement(
-          "Select f.name kdo_name, " +
-            "         c.comment, " +
-            "         d.done, " +
-            "         d.id, " +
-            "         f.id kdo_id, " +
-            "         d.fizio_id, " +
-            "         d.confDate, " +
-            "         f.room, " +
-            "         date(d.date) dated " +
-            "  From Lv_Fizios c, lv_fizio_dates d, Kdos f " +
-            " Where c.patientId = ? " +
-            "   And d.fizio_Id = c.id " +
-            "  And f.Id = c.Kdo_Id " +
-            (room.equals("0") ? "" : " And f.room = '" + room + "'") +
-            (patId > 0 ? " And c.patientId = " + patId : " " ) +
-            (kdoId > 0 ? " And f.id = " + kdoId : " " ) +
-            (status.equals("0") ? "" : (status.equals("0") ? "" : " And d.done = '" + status + "' ")) +
-            "  And d.state = 'Y' " +
-            "  And date(d.date) = ? "
-        );
-        ps.setInt(1, p.getId());
-        ps.setString(2, Util.dateDB(dated));
+        String query = "Select f.name kdo_name, " +
+          "         c.comment, " +
+          "         d.done, " +
+          "         d.id, " +
+          "         f.id kdo_id, " +
+          "         d.fizio_id, " +
+          "         d.confDate, " +
+          "         f.room, " +
+          "         date(d.date) dated " +
+          "  From Lv_Fizios c, lv_fizio_dates d, Kdos f " +
+          " Where c.patientId = " + p.getId() +
+          "   And d.fizio_Id = c.id " +
+          "   And f.Id = c.Kdo_Id " +
+          (room.equals("0") ? "" : " And f.room = '" + room + "'") +
+          (kdoId > 0 ? " And f.id = " + kdoId : " " ) +
+          (status.equals("0") ? "" : (status.equals("0") ? "" : " And d.done = '" + status + "' ")) +
+          "  And d.state = 'Y' " +
+          "  And date(d.date) = ? ";
+        ps = conn.prepareStatement(query);
+        ps.setString(1, Util.dateDB(dated));
         rc = ps.executeQuery();
         while (rc.next()) {
           ObjList row = new ObjList();
@@ -418,28 +412,8 @@ public class CNurse {
           row.setC3(rc.getString("done"));
           row.setC4(Util.dateTimeToString(rc.getTimestamp("confDate")));
           //
-          ps = conn.prepareStatement(
-            "Select d.confDate, " +
-              "         date(d.date) dated " +
-              "    From Lv_Fizio_Dates d " +
-              "   Where d.fizio_Id = ? " +
-              "     And date(d.date) < ? "
-          );
-          ps.setInt(1, rc.getInt("fizio_id"));
-          ps.setString(2, Util.dateDB(dated));
-          rg = ps.executeQuery();
-          String period = "";
-          String conf = "";
-          while (rg.next()) {
-            conf += " " + Util.dateToString(rg.getDate("confDate"));
-            period += " " + Util.dateToString(rg.getDate("dated"));
-          }
-          row.setC5(period);
-          row.setC6(conf);
           row.setC7(rc.getString("room"));
           rws.add(row);
-          DB.done(rg);
-          DB.done(ps);
           if(!kdos.containsKey(rc.getInt("kdo_id")))
             kdos.put(rc.getInt("kdo_id"), dKdo.get(rc.getInt("kdo_id")));
         }

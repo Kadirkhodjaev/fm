@@ -393,4 +393,8 @@ public class Util {
   public static String dateDB(Date date) {
     return dateDB(dateToString(date));
   }
+
+  public static int getInt(HttpServletRequest req, String name, int def) {
+    return req.getParameter(name) == null || req.getParameter(name).isEmpty() ? def : Integer.parseInt(req.getParameter(name));
+  }
 }

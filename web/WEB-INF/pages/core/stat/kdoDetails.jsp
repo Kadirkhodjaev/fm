@@ -19,7 +19,6 @@
     Список стационарных услуг
   </div>
   <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
     <div class="table-responsive">
       <table class="miniGrid table table-striped table-bordered">
         <thead>
@@ -112,7 +111,7 @@
       return;
     }
     $.ajax({
-      url: '/admin/stat/kdoDetails.s',
+      url: '/core/stat/details.s',
       method: 'post',
       data: $('#addEditForm').serialize(),
       dataType: 'json',
@@ -120,7 +119,7 @@
         if (res.success) {
           $('#close-modal').click();
           alert("<ui:message code="successSave"/>");
-          setPage('/admin/stat/kdoDetails.s');
+          setPage('/core/stat/details.s');
         } else {
           alert(res.msg);
         }

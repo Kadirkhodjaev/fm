@@ -1,10 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<script>
-  function setPalataTime(val) {
-    setPage('/proc/palatas.s?time=' + val)
-  }
-</script>
 <div id="page-wrapper" style="margin:0; border:0">
   <div class="row" style="margin:0">
     <div class="col-lg-12">
@@ -13,7 +8,7 @@
           <tr>
             <td>Палаты отделений - ${dep_name}</td>
             <td>
-              <select class="form-control" onchange="setPalataTime(this.value)">
+              <select class="form-control" onchange="setPage('/proc/palatas.s?time=' + this.value)">
                 <option <c:if test="${time==1}">selected</c:if> value="1">Утром</option>
                 <option <c:if test="${time==2}">selected</c:if> value="2">Днем</option>
                 <option <c:if test="${time==3}">selected</c:if> value="3">Вечером</option>

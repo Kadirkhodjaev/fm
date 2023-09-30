@@ -17,6 +17,7 @@ import ckb.dao.med.lv.coul.DLvCoul;
 import ckb.dao.med.lv.fizio.DLvFizio;
 import ckb.dao.med.lv.fizio.DLvFizioDate;
 import ckb.dao.med.lv.garmon.DLvGarmon;
+import ckb.dao.med.lv.plan.DKdoChoosen;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.DPatient;
@@ -74,6 +75,7 @@ public class SRepImp implements SRep {
 	@Autowired private DEatMenuType dEatMenuType;
 	@Autowired private DDrugOutRow dDrugOutRow;
 	@Autowired private DDrugOut dDrugOut;
+	@Autowired private DKdoChoosen dKdoChoosen;
 
 	@Override
 	public void gRep(HttpServletRequest req, Model m) {
@@ -645,12 +647,13 @@ public class SRepImp implements SRep {
 							"				  Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
 							"				  ser.Name Service_Name, " +
 							"				  t.Price Price, " +
-							"				  gr.Name Group_Name" +
+							"				  gr.Name Group_Name," +
+							"				  ser.id kdo_id," +
+							"				  t.id " +
 							"    From Lv_Plans t, Kdos ser, Kdo_Types gr, Patients p " +
 							"   Where ser.Id = t.kdo_Id " +
 							"     And p.Id = t.PatientId " +
 							"		  And gr.Id = ser.Kdo_Type " +
-							"     And t.price > 0 " +
 							"	    And t.done_flag = 'Y' " +
 							"		  And t.userId = " + doctor.getId() +
 							" 	  And date (t.result_date) Between ? AND ? " +
@@ -663,14 +666,69 @@ public class SRepImp implements SRep {
 					Double summ = 0D;
 					while (rs.next()) {
 						counter++;
-						ObjList service = new ObjList();
-						service.setC1(rs.getString(1));
-						service.setC2(rs.getString(2));
-						service.setC3(rs.getString(3));
-						service.setC4("" + rs.getDouble(4));
-						summ += rs.getDouble(4);
-						service.setC5(rs.getString(5));
-						patients.add(service);
+						if(rs.getInt("kdo_id") == 120) {
+							LvPlans pl = dLvPlan.get(rs.getInt("id"));
+							Patients pat = dPatient.get(pl.getPatientId());
+							List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + pl.getKdo().getId() + " And (price > 0 Or for_price > 0)");
+							if (pl.getKdo().getId() == 120) {
+								LvGarmons bio = dLvGarmon.getByPlan(pl.getId());
+								if (bio != null) {
+									for(KdoChoosens choosen: choosens) {
+										Double price = pat.getCounteryId() == 199 ? choosen.getPrice() : choosen.getFor_price();
+										if(price > 0) {
+											ObjList service = new ObjList();
+											service.setC1(rs.getString(1));
+											service.setC2(rs.getString(2));
+											service.setC3(choosen.getName());
+											service.setC5(rs.getString(5));
+											service.setC4("" + price);
+											summ += price;
+											if ("1".equals(choosen.getColName()) && bio.isC1()) { patients.add(service); continue; }
+											if ("2".equals(choosen.getColName()) && bio.isC2()) { patients.add(service); continue; }
+											if ("3".equals(choosen.getColName()) && bio.isC3()) { patients.add(service); continue; }
+											if ("4".equals(choosen.getColName()) && bio.isC4()) { patients.add(service); continue; }
+											if ("5".equals(choosen.getColName()) && bio.isC5()) { patients.add(service); continue; }
+											if ("6".equals(choosen.getColName()) && bio.isC6()) { patients.add(service); continue; }
+											if ("7".equals(choosen.getColName()) && bio.isC7()) { patients.add(service); continue; }
+											if ("8".equals(choosen.getColName()) && bio.isC8()) { patients.add(service); continue; }
+											if ("9".equals(choosen.getColName()) && bio.isC9()) { patients.add(service); continue; }
+											if ("10".equals(choosen.getColName()) && bio.isC10()) { patients.add(service); continue; }
+											if ("11".equals(choosen.getColName()) && bio.isC11()) { patients.add(service); continue; }
+											if ("12".equals(choosen.getColName()) && bio.isC12()) { patients.add(service); continue; }
+											if ("13".equals(choosen.getColName()) && bio.isC13()) { patients.add(service); continue; }
+											if ("14".equals(choosen.getColName()) && bio.isC14()) { patients.add(service); continue; }
+											if ("15".equals(choosen.getColName()) && bio.isC15()) { patients.add(service); continue; }
+											if ("16".equals(choosen.getColName()) && bio.isC16()) { patients.add(service); continue; }
+											if ("17".equals(choosen.getColName()) && bio.isC17()) { patients.add(service); continue; }
+											if ("18".equals(choosen.getColName()) && bio.isC18()) { patients.add(service); continue; }
+											if ("19".equals(choosen.getColName()) && bio.isC19()) { patients.add(service); continue; }
+											if ("20".equals(choosen.getColName()) && bio.isC20()) { patients.add(service); continue; }
+											if ("21".equals(choosen.getColName()) && bio.isC21()) { patients.add(service); continue; }
+											if ("22".equals(choosen.getColName()) && bio.isC22()) { patients.add(service); continue; }
+											if ("23".equals(choosen.getColName()) && bio.isC23()) { patients.add(service); continue; }
+											if ("24".equals(choosen.getColName()) && bio.isC24()) { patients.add(service); continue; }
+											if ("25".equals(choosen.getColName()) && bio.isC25()) { patients.add(service); continue; }
+											if ("26".equals(choosen.getColName()) && bio.isC26()) { patients.add(service); continue; }
+											if ("27".equals(choosen.getColName()) && bio.isC27()) { patients.add(service); continue; }
+											if ("28".equals(choosen.getColName()) && bio.isC28()) { patients.add(service); continue; }
+											if ("29".equals(choosen.getColName()) && bio.isC29()) { patients.add(service); continue; }
+											if ("30".equals(choosen.getColName()) && bio.isC30()) { patients.add(service); continue; }
+										}
+									}
+								}
+							}
+						} else {
+							if(rs.getDouble(4) > 0) {
+								ObjList service = new ObjList();
+								service.setC1(rs.getString(1));
+								service.setC2(rs.getString(2));
+								service.setC3(rs.getString(3));
+								service.setC4("" + rs.getDouble(4));
+								summ += rs.getDouble(4);
+								service.setC5(rs.getString(5));
+								patients.add(service);
+							}
+						}
 					}
 					// Итого по врачу
 					ObjList service = new ObjList();
@@ -2688,22 +2746,25 @@ public class SRepImp implements SRep {
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
 		try {
 			ps = conn.prepareStatement(
-				"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio,  " +
+				"Select p.id, Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio,  " +
 					"         p.birthyear, " +
-					"         Date_Format(t.actDate, '%d.%m.%Y') cr_on, " +
+					"         Date_Format(g.confDate, '%d.%m.%Y') cr_on, " +
 					"         c.Name Service_Name, " +
 					"         'Стац.' service_Type," +
-					"         t.actDate," +
+					"         g.confDate," +
 					"				  t.fizei," +
-					"				  (Select Count(*) From Lv_Fizio_Dates g Where g.fizio_id = t.Id And g.state = 'Y') Counter" +
-					" From Lv_Fizios t, Kdos c, Patients p, Users u  " +
+					"				  Count(*) Counter" +
+					" From Lv_Fizios t, Kdos c, Patients p, Users u, Lv_Fizio_Dates g  " +
 					" Where t.Kdo_Id = c.id " +
 					"   And t.patientId = p.id " + (catStat.equals("") ? "" : " And c.id = " + catStat) +
 					"   And c.kdo_type = 8 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
 					"   And u.id = p.lv_id " +
-					"   And date (t.actDate) Between ? and ? " +
+					"   And g.fizio_id = t.Id " +
+					"   And g.state = 'Y' " +
+					"   And date (g.confDate) Between ? and ? " +
+					" Group By p.id, p.surname, p.name, p.birthyear, c.name, g.confDate, t.fizei " +
 					" UNION ALL " +
-					" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
+					" Select p.id, Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
 					"        p.birthyear, " +
 					"  			 Date_Format(t.confDate, '%d.%m.%Y') cr_on, " +
 					"        ser.Name Service_Name, " +
@@ -2716,7 +2777,7 @@ public class SRepImp implements SRep {
 					"    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
 					"		 And ser.Group_Id in (6, 7) " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
 					" 	 And date (t.confDate) Between ? and ? "+
-					" Order By 6 "
+					" Order By 1, 6 "
 			);
 			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
 			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
@@ -4184,14 +4245,19 @@ public class SRepImp implements SRep {
 				Obj part = new Obj();
 				part.setFio(partner.getCode() + " " + partner.getFio());
 				part.setPrice(0D);
+				part.setClaimCount(0D);
 				ps = conn.prepareStatement(
 					" Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio, " +
 						" 			   s.name, " +
+						"				   f.partnerProc * c.price / 100 summ, " +
+						"				   f.partnerProc, " +
 						"					 c.price " +
-						" From Amb_Patients t, Amb_Patient_Services c, Amb_Services s  " +
+						" From Amb_Patients t, Amb_Patient_Services c, Amb_Services s, Amb_Groups f  " +
 						" Where date (t.reg_date) Between ? And ? " +
+						"   And f.id = s.group_id " +
 						"   And s.id = c.service_id " +
 						"   And c.patient = t.id " +
+						"   And f.partnerProc > 0 " +
 						"   And c.crBy = t.crBy " +
 						"   And t.lvpartner_id = ?" +
 						" Order By t.reg_date"
@@ -4206,7 +4272,10 @@ public class SRepImp implements SRep {
 					service.setC1(rs.getString("fio"));
 					service.setC2(rs.getString("name"));
 					service.setC3(rs.getString("price"));
+					service.setC4(rs.getString("partnerProc"));
+					service.setC5(rs.getString("summ"));
 					part.setPrice(part.getPrice() + rs.getDouble("price"));
+					part.setClaimCount(part.getClaimCount() + rs.getDouble("summ"));
 					services.add(service);
 				}
 				if(services.size() > 0) {
