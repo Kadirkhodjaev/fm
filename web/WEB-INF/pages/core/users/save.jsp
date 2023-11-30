@@ -135,6 +135,10 @@
                 <td style="text-align: left"><input type="checkbox" name="mainNurse" value="1" <c:if test="${user.mainNurse}">checked</c:if>/></td>
               </tr>
               <tr>
+                <td class="right">Расход по стационару(Склад)?</td>
+                <td style="text-align: left"><input type="checkbox" name="statExp" value="1" <c:if test="${user.statExp}">checked</c:if>/></td>
+              </tr>
+              <tr>
                 <td class="right">Заявитель для аптеки?</td>
                 <td style="text-align: left"><input type="checkbox" name="drugDirection" id="drugDirection" onchange="setDirection(false)" value="1" <c:if test="${user.drugDirection}">checked</c:if>/></td>
               </tr>

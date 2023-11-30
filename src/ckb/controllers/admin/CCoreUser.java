@@ -109,6 +109,7 @@ public class CCoreUser {
       u.setAmbAdmin(Util.getCheckbox(req, "ambAdmin"));
       u.setAmbFizio(Util.getCheckbox(req, "ambFizio"));
       u.setMainNurse(Util.getCheckbox(req, "mainNurse"));
+      u.setStatExp(Util.getCheckbox(req, "statExp"));
       u.setProcUser(Util.getCheckbox(req, "procUser"));
       u.setDocfizio(Util.getCheckbox(req, "docfizio"));
       u.setDrugDirection(Util.getCheckbox(req, "drugDirection"));

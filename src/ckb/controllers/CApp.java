@@ -228,7 +228,7 @@ public class  CApp {
       if(user.isMainNurse())
         m.add(new Menu("Питание", "/head_nurse/eats.s", "fa fa-home fa-fw", session.getCurUrl().equals("/head_nurse/eats.s")));
       m.add(new Menu("Сальдо", "/head_nurse/saldo.s", "fa fa-briefcase fa-fw", session.getCurUrl().equals("/head_nurse/saldo.s")));
-      if(user.isMainNurse())
+      if(user.isMainNurse() || user.isStatExp())
         m.add(new Menu("Стационар", "/head_nurse/out/patient.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/patient.s")));
       //m.add(new Menu("Амбулатория", "/head_nurse/out/amb.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/amb.s")));
       m.add(new Menu("Расход", "/head_nurse/out.s", "fa fa-file-text fa-users", session.getCurUrl().equals("/head_nurse/out.s")));
