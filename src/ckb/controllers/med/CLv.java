@@ -1363,8 +1363,10 @@ public class CLv {
           if(tempRow.getSource().equals("own"))
             rw.setName(tempRow.getName());
           else {
-            rw.setDrug(tempRow.getDrug());
-            rw.setName(tempRow.getDrug().getName());
+            if(dDrug.getCount("From Drugs t Where t.id = " + tempRow.getDrug().getId() + " And t.id in (Select c.drug.id From DrugActDrugs c Where c.counter - rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0 And f.direction.shock = 'N')") > 0) {
+              rw.setDrug(tempRow.getDrug());
+              rw.setName(tempRow.getDrug().getName());
+            }
           }
           rw.setExpanse(tempRow.getExpanse());
           rw.setMeasure(tempRow.getMeasure());

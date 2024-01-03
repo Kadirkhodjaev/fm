@@ -14,6 +14,7 @@
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <script src="/res/js/common.js" type="text/javascript"></script>
+<jsp:useBean id="now" class="java.util.Date" />
 
 <iframe name="saldo_excel" class="hidden" src=""></iframe>
 <div class="panel panel-info" style="width: 100%; margin: auto">
@@ -53,7 +54,7 @@
       </thead>
       <tbody>
       <c:forEach items="${rows}" var="row" varStatus="loop">
-        <tr id="row_${row.id}" class="hover" title="ID: ${row.id} DRUG:${row.drug.id} Direction: ${row.direction.id}">
+        <tr id="row_${row.id}" style="<c:if test="${row.outRow.income.endDate < now}">color:red;font-weight:bold;</c:if><c:if test="${row.outRow.income.endDate >= now && row.outRow.income.endDate < month3}">color:blue;font-weight:bold;</c:if>" class="hover" title="ID: ${row.id} DRUG:${row.drug.id} Direction: ${row.direction.id}">
           <td align="center">${loop.index + 1}</td>
           <td>${row.direction.name}</td>
           <td>${row.drug.name}</td>

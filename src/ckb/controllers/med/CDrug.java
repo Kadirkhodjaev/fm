@@ -83,8 +83,9 @@ public class CDrug {
     session.setCurUrl("/drugs/acts.s");
     String startDate = Util.get(request, "period_start", "01" + Util.getCurDate().substring(2));
     String endDate = Util.get(request, "period_end", Util.getCurDate());
+    String partner = Util.get(request, "partner");
     //
-    List<DrugActs> acts = dDrugAct.getList("From DrugActs Where regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By regDate Desc");
+    List<DrugActs> acts = dDrugAct.getList("From DrugActs Where regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (partner != null && !partner.isEmpty() ? " And contract.partner.id = " + partner : "") + " Order By regDate Desc");
     List<ObjList> list = new ArrayList<ObjList>();
     for(DrugActs act : acts) {
       ObjList obj = new ObjList();
@@ -102,9 +103,11 @@ public class CDrug {
       obj.setC6(Util.dateTimeToString(act.getCrOn()));
       list.add(obj);
     }
+    model.addAttribute("partners", dDrugPartner.getList("From DrugPartners Order By name"));
     model.addAttribute("acts", list);
     model.addAttribute("period_start", startDate);
     model.addAttribute("period_end", endDate);
+    model.addAttribute("partner", partner);
     return "/med/drugs/incomes/index";
   }
 
@@ -976,8 +979,9 @@ public class CDrug {
     session.setCurUrl("/drugs/out.s");
     String startDate = Util.get(request, "period_start", "01" + Util.getCurDate().substring(2));
     String endDate = Util.get(request, "period_end", Util.getCurDate());
+    String direction = Util.get(request, "direction");
     //
-    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By regDate Desc, id desc");
+    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (direction != null && !direction.isEmpty() ? "And direction.id = " + direction : "") + " Order By regDate Desc, id desc");
     List<ObjList> list = new ArrayList<ObjList>();
     //
     for(DrugOuts act : acts) {
@@ -1005,6 +1009,8 @@ public class CDrug {
     model.addAttribute("list", list);
     model.addAttribute("period_start", startDate);
     model.addAttribute("period_end", endDate);
+    model.addAttribute("directions", dDrugDirection.getAll());
+    model.addAttribute("direction", direction);
     return "/med/drugs/out/index";
   }
 

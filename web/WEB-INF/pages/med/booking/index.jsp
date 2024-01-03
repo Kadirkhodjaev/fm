@@ -2,6 +2,7 @@
 <%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <script src="/res/datepicker/datetimepicker_css.js"></script>
 <style>
   .miniGrid thead tr th {text-align: center; background: #e8e8e8}
@@ -13,7 +14,7 @@
       <tr>
         <td style="font-weight:bold; vertical-align: middle">Бронирование койки</td>
         <td style="width:220px; padding-right:5px">
-          <input type="text" style="height:30px" class="form-control" placeholder="Поиск..." id="filter_box" value="${filter}">
+          <input type="text" style="height:30px" class="form-control" placeholder="Поиск..." id="filter_box" value="${filter == null ? '' : filter}">
         </td>
         <td style="width:56px">
           <button class="btn btn-success btn-sm" onclick="setFilter()">Поиск</button>
@@ -42,6 +43,35 @@
         </tr>
         </thead>
         <tbody>
+        <c:if test="${fn:length(others) > 0}">
+          <tr>
+            <td colspan="9" style="vertical-align: middle;text-align: center; font-weight: bold">Срок приближается (+5 дней)</td>
+          </tr>
+        </c:if>
+        <c:forEach items="${others}" var="obj" varStatus="loop">
+          <tr >
+            <td>&nbsp;</td>
+            <td align="center">${loop.index + 1}</td>
+            <td>
+              <a href="#" onclick="editBooking(${obj.id})">${obj.surname} ${obj.name} ${obj.middlename}</a>
+            </td>
+            <td align="center">${obj.birthyear}</td>
+            <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateBegin}" /></td>
+            <td align="center">${obj.dept.name} /  ${obj.room.name} - ${obj.room.roomType.name}</td>
+            <td align="center">${obj.lv.fio}</td>
+            <td align="center">
+              <c:if test="${obj.state == 'ENT'}">Введен</c:if>
+            </td>
+            <td align="center">
+              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="removeBooking(${obj.id})"><span class="fa fa-minus"></span></button>
+            </td>
+          </tr>
+        </c:forEach>
+        <c:if test="${fn:length(others) > 0}">
+          <tr>
+            <td colspan="9" style="vertical-align: middle;text-align: center; font-weight: bold">Остальные</td>
+          </tr>
+        </c:if>
         <c:forEach items="${list}" var="obj" varStatus="loop">
           <tr>
             <td>&nbsp;</td>

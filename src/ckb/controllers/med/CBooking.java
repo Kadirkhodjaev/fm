@@ -36,6 +36,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -59,13 +60,22 @@ public class CBooking {
   protected String serviceList(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurPat(0);
-    String filter = Util.get(req, "word");
+    String filter = Util.nvl(req, "word", "");
     session.setCurUrl("/booking/index.s?word=" + filter);
     m.addAttribute("filter", filter);
     Integer history = Integer.parseInt(Util.nvl(req, "history", "0"));
     m.addAttribute("history", history);
     //region Услуги
-    List<RoomBookings> list = dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' Order By Id Desc");
+    List<RoomBookings> list;
+    if(filter.isEmpty()) {
+      Calendar calendar = Calendar.getInstance();
+      calendar.add(Calendar.DATE, 5);
+      List<RoomBookings> others = dRoomBooking.getList("From RoomBookings Where dateBegin Between '" + Util.dateDB(new Date()) + "' And '" + Util.dateDB(calendar.getTime()) + "' And state = 'ENT' Order By dateBegin");
+      m.addAttribute("others", others);
+      list = dRoomBooking.getList("From RoomBookings Where dateBegin Not Between '" + Util.dateDB(new Date()) + "' And '" + Util.dateDB(calendar.getTime()) + "' And state = 'ENT' Order By Id Desc");
+    } else {
+      list = dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' Order By Id Desc");
+    }
     m.addAttribute("list", list);
     m.addAttribute("rooms", dRoom.getActives());
     m.addAttribute("lvs", dUser.getLvs());

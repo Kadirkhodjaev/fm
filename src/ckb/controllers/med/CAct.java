@@ -104,7 +104,7 @@ public class CAct {
   @RequestMapping("info.s")
   protected String info(HttpServletRequest req, Model m) {
     //
-    int lgotaDays = 8;
+    int lgotaDays = 10;
     session = SessionUtil.getUser(req);
     session.setCurUrl("/act/info.s?id=" + Util.get(req, "id"));
     //
@@ -1220,7 +1220,7 @@ public class CAct {
   protected String restorePatientRow(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     session = SessionUtil.getUser(req);
-    int lgotaDays = 8;
+    int lgotaDays = 10;
     //
     Connection conn = null;
     PreparedStatement ps = null;

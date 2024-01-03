@@ -7,7 +7,11 @@
   .miniGrid thead tr th {text-align: center; background: #e8e8e8}
   .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
 </style>
+<link href="/res/choosen/chosen.min.css" rel="stylesheet">
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
+<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
+<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
+<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading" style="padding:0 20px;">
     <table style="margin:0;width:100%">
@@ -23,9 +27,17 @@
           <input name="period_end" id="period_end" type="text" class="form-control datepicker" value="${period_end}"/>
         </td>
         <td style="vertical-align: middle">
-          <button onclick="setCashStat()" class="btn btn-success btn-sm">Поиск</button>
+          <button onclick="setGridFilter()" class="btn btn-success btn-sm">Поиск</button>
         </td>
-        <td align="right" style="vertical-align: middle;">
+        <td style="width:450px">
+          <select class="form-control chzn-select" id="partner" onchange="setGridFilter()">
+            <option value="">Все</option>
+            <c:forEach items="${partners}" var="par">
+              <option <c:if test="${partner == par.id}">selected</c:if> value="${par.id}">${par.name}</option>
+            </c:forEach>
+          </select>
+        </td>
+        <td align="right" style="vertical-align: middle;width:100px">
           <button  class="btn btn-sm btn-success" onclick="addEditDrugAct(0)" style="float:right;"><i class="fa fa-plus"></i> Добавить</button>
         </td>
       </tr>
@@ -75,9 +87,13 @@
   function addEditDrugAct(id){
     setPage('/drugs/act/addEdit.s?id=' + id);
   }
-  function setCashStat(){
+  function setGridFilter(){
     var start = document.getElementById("period_start");
     var end = document.getElementById("period_end");
-    setPage('/drugs/acts.s?period_start=' + start.value + '&period_end=' + end.value);
+    var partner = document.getElementById("partner");
+    setPage('/drugs/acts.s?period_start=' + start.value + '&period_end=' + end.value + '&partner=' + partner.value);
   }
+  $(function(){
+    $(".chzn-select").chosen();
+  });
 </script>
