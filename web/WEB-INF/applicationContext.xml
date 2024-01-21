@@ -36,6 +36,7 @@
   <bean id="dOpt" class="ckb.dao.admin.forms.opts.DOptImp" parent="daoImpl"/>
   <bean id="dRole" class="ckb.dao.admin.roles.DRoleImp" parent="daoImpl"/>
   <bean id="dReport" class="ckb.dao.admin.reports.DReportImp" parent="daoImpl"/>
+  <bean id="dFormLog" class="ckb.dao.admin.forms.DFormLogImp" parent="daoImpl"/>
   <bean id="dDept" class="ckb.dao.admin.depts.DDeptImp" parent="daoImpl"/>
   <bean id="dNurse" class="ckb.dao.admin.nurse.DNurseImp" parent="daoImpl"/>
   <bean id="dNurseDept" class="ckb.dao.admin.nurse.DNurseDeptImp" parent="daoImpl"/>
@@ -237,6 +238,8 @@
   <bean id="sRep" class="ckb.services.med.rep.SRepImp" scope="singleton"/>
   <bean id="sClient" class="ckb.services.med.client.SClientImp" scope="singleton"/>
   <bean id="sDrug" class="ckb.services.med.drug.SDrugImp" scope="singleton"/>
+
+  <bean id="sAmbGrid" class="ckb.services.mo.SAmbGridImp" scope="singleton"/>
 
 
   <bean id="cleansoftDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">

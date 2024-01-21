@@ -20,16 +20,16 @@
     <span style="font-weight:bold" title="HNPATIENT: ${obj.id} PATIENT_ID: ${obj.patient.id}">Реквизиты пациента: №${obj.patient.yearNum} ${obj.patient.surname} ${obj.patient.name} ${obj.patient.middlename} - <fmt:formatDate pattern="dd.MM.yyyy" value="${obj.patient.dateBegin}"/></span>
     <button  class="btn btn-sm" onclick="setPage('/act/index.s')" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-backward"></i> Назад</button>
     <button class="btn btn-info btn-sm" style="float:right;margin-top:-5px; margin-left:10px" onclick="excel()"><span class="fa fa-file-excel-o"></span> Excel</button>
-    <c:if test="${obj.state == 'C' || (obj.closed != 'Y' && obj.state == 'D')}">
+    <c:if test="${(obj.state == 'C' || (obj.closed != 'Y' && obj.state == 'D')) && sessionScope.ENV.userId == 1}">
       <button  class="btn btn-sm btn-primary" onclick="confirmPatient()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-check"></i> Подтвердить</button>
     </c:if>
-    <c:if test="${obj.closed == 'Y' && obj.patient.state == 'LV'}">
+    <c:if test="${(obj.closed == 'Y' && obj.patient.state == 'LV') && sessionScope.ENV.userId == 1}">
       <button  class="btn btn-sm btn-danger" onclick="retPatient()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-retweet"></i> Возобновить</button>
     </c:if>
     <c:if test="${obj.closed != 'Y'}">
       <button  class="btn btn-sm btn-success" onclick="savePatient()" style="float:right;margin-top:-5px;"><i class="fa fa-save"></i> Сохранить</button>
     </c:if>
-    <c:if test="${obj.closed == 'Y' && obj.patient.paid == 'CLOSED'}">
+    <c:if test="${obj.closed == 'Y' && obj.patient.paid == 'CLOSED' && sessionScope.ENV.userId == 1}">
       <button  class="btn btn-sm btn-success" onclick="openCash()" style="float:right;margin-top:-5px;"><i class="fa fa-repeat"></i> Открыть кассу</button>
     </c:if>
   </div>

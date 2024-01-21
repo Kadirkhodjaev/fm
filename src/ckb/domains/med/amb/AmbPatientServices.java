@@ -139,4 +139,16 @@ public class AmbPatientServices extends GenId {
   public void setPay(Integer pay) {
     this.pay = pay;
   }
+
+  public boolean isClosed() {
+    return "DONE".equals(state) || "DEL".equals(state) || "AUTO_DEL".equals(state);
+  }
+
+  public boolean canRepeat() {
+    return "DONE".equals(state) && "Y".equals(service.getConsul()) && !"D".equals(amb_repeat) && !"Y".equals(amb_repeat);
+  }
+
+  public boolean isNoResult() {
+    return result == null || result == 0;
+  }
 }

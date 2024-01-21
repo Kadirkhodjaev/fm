@@ -12,7 +12,6 @@ import ckb.dao.med.lv.garmon.DLvGarmon;
 import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.DPatient;
 import ckb.domains.admin.Depts;
-import ckb.domains.admin.KdoTypes;
 import ckb.domains.admin.Kdos;
 import ckb.domains.admin.Users;
 import ckb.domains.med.lv.*;
@@ -79,14 +78,12 @@ public class CNurse {
         dep = user.getDept().getId().toString();
         model.addAttribute("depts", dDep.getList("From Depts Where id = " + user.getDept().getId()));
       }
-      List<ObjList> rows = new ArrayList<ObjList>();
-      List<KdoTypes> types = dKdoType.getList("From KdoTypes Where state = 'A'");
+      List<ObjList> rows = new ArrayList<>();
       conn = DB.getConnection();
       ps = conn.prepareStatement(
         "Select t.id " +
-          "    From Patients t, Lv_Plans c " +
+          "    From Patients t " +
           "   Where t.state = 'LV' " +
-          "     And c.patientId = t.id " +
           "     And t.dept_id = ? " +
           "   Group By t.id "
       );
@@ -101,212 +98,203 @@ public class CNurse {
         row.setC3(Util.dateToString(d.getDateBegin()));
         row.setC4(d.getYearNum() + "");
         row.setC30(d.getRoom().getName() + "-" + d.getRoom().getRoomType().getName());
-        int k = 0;
-        for (KdoTypes tt : types) {
-          k++;
-          ps = conn.prepareStatement(
-            "Select c.name," +
-              "         t.id, " +
-              "         t.comment, " +
-              "         t.actDate, " +
-              "         t.Done_Flag, " +
-              "         t.Result_Id, " +
-              "         c.id kdo_id " +
-              "    From Lv_Plans t, Kdos c" +
-              "   Where t.kdo_id = c.id " +
-              "     And t.patientId =  " + d.getId() +
-              "     And Exists (Select 1 From Patients d Where d.id = " + d.getId() + " And d.dept_id = " + (dep == null ? session.getDeptId() : Integer.parseInt(dep)) + ")" +
-              "     And t.result_date is null " +
-              "     And t.patientId = " + d.getId() +
-              "     And t.kdo_type_id =  " + tt.getId()
-          );
-          rc = ps.executeQuery();
-          int i = 1;
-          while (rc.next()) {
-            String name = rc.getString("name");
-            if (rc.getInt("kdo_id") == 13) { // Биохимия
-              String st = "";
-              LvBios bio = dLvBio.getByPlan(rc.getInt("id"));
-              if (bio != null) {
-                if (bio.getC1() == 1) st += "Глюкоза крови, ";
-                if (bio.getC2() == 1) st += "Холестерин, ";
-                if (bio.getC3() == 1) st += "Бетта липопротеиды, ";
-                if (bio.getC4() == 1) st += "Общий белок, ";
-                if (bio.getC5() == 1) st += "Мочевина, ";
-                if (bio.getC23() == 1) st += "Fе (железо), ";
-                if (bio.getC8() == 1) st += "Билирубин, ";
-                if (bio.getC7() == 1) st += "Креатинин, ";
-                if (bio.getC13() == 1) st += "Амилаза крови, ";
-                if (bio.getC12() == 1) st += "Трансаминазы-АЛТ, ";
-                if (bio.getC14() == 1) st += "Мочевая кислота, ";
-                if (bio.getC11() == 1) st += "Трансаминазы-АСТ, ";
-                if (bio.getC15() == 1) st += "Сывороточное железо, ";
-                if (bio.getC16() == 1) st += "К-калий, ";
-                if (bio.getC17() == 1) st += "Na - натрий, ";
-                if (bio.getC18() == 1) st += "Са - кальций, ";
-                if (bio.getC19() == 1) st += "Cl - хлор, ";
-                if (bio.getC20() == 1) st += "Phos - фосфор, ";
-                if (bio.getC21() == 1) st += "Mg - магний, ";
-                if (bio.getC24() == 1) st += "Альбумин, ";
-                if (bio.getC25() == 1) st += "Лактатдегидрогеноза, ";
-                if (bio.getC26() == 1) st += "Гамма-глутамилтрансфераза, ";
-                if (bio.getC27() == 1) st += "Шелочная фосфотаза, ";
-                if (bio.getC28() == 1) st += "Тимоловая проба, ";
-                if (bio.getC29() == 1) st += "Креотенин киназа, ";
-                if (st != "") {
-                  st = st.substring(0, st.length() - 1);
-                  name = name + "<br/>" + st;
-                }
+        ps = conn.prepareStatement(
+          "Select t.id, " +
+            "         t.comment, " +
+            "         t.actDate, " +
+            "         t.Done_Flag, " +
+            "         t.Result_Id," +
+            "         t.Kdo_Type_Id," +
+            "         t.Kdo_Id " +
+            "    From Lv_Plans t" +
+            "   Where t.patientId =  " + d.getId() +
+            "     And t.result_date is null "
+        );
+        rc = ps.executeQuery();
+        int i = 0;
+        while (rc.next()) {
+          i++;
+          Kdos kdo = dKdo.get(rc.getInt("kdo_id"));
+          String name = kdo.getName();
+          if (rc.getInt("kdo_id") == 13) { // Биохимия
+            String st = "";
+            LvBios bio = dLvBio.getByPlan(rc.getInt("id"));
+            if (bio != null) {
+              if (bio.getC1() == 1) st += "Глюкоза крови, ";
+              if (bio.getC2() == 1) st += "Холестерин, ";
+              if (bio.getC3() == 1) st += "Бетта липопротеиды, ";
+              if (bio.getC4() == 1) st += "Общий белок, ";
+              if (bio.getC5() == 1) st += "Мочевина, ";
+              if (bio.getC23() == 1) st += "Fе (железо), ";
+              if (bio.getC8() == 1) st += "Билирубин, ";
+              if (bio.getC7() == 1) st += "Креатинин, ";
+              if (bio.getC13() == 1) st += "Амилаза крови, ";
+              if (bio.getC12() == 1) st += "Трансаминазы-АЛТ, ";
+              if (bio.getC14() == 1) st += "Мочевая кислота, ";
+              if (bio.getC11() == 1) st += "Трансаминазы-АСТ, ";
+              if (bio.getC15() == 1) st += "Сывороточное железо, ";
+              if (bio.getC16() == 1) st += "К-калий, ";
+              if (bio.getC17() == 1) st += "Na - натрий, ";
+              if (bio.getC18() == 1) st += "Са - кальций, ";
+              if (bio.getC19() == 1) st += "Cl - хлор, ";
+              if (bio.getC20() == 1) st += "Phos - фосфор, ";
+              if (bio.getC21() == 1) st += "Mg - магний, ";
+              if (bio.getC24() == 1) st += "Альбумин, ";
+              if (bio.getC25() == 1) st += "Лактатдегидрогеноза, ";
+              if (bio.getC26() == 1) st += "Гамма-глутамилтрансфераза, ";
+              if (bio.getC27() == 1) st += "Шелочная фосфотаза, ";
+              if (bio.getC28() == 1) st += "Тимоловая проба, ";
+              if (bio.getC29() == 1) st += "Креотенин киназа, ";
+              if (st != "") {
+                st = st.substring(0, st.length() - 1);
+                name = name + "<br/>" + st;
               }
-            }
-            if (rc.getInt("kdo_id") == 153) { // Биохимия
-              String st = "";
-              LvBios bio = dLvBio.getByPlan(rc.getInt("id"));
-              if (bio != null) {
-                if (bio.getC1() == 1) st += "Умумий оксил, ";
-                if (bio.getC2() == 1) st += "Холестерин, ";
-                if (bio.getC3() == 1) st += "Глюкоза, ";
-                if (bio.getC4() == 1) st += "Мочевина, ";
-                if (bio.getC5() == 1) st += "Креатинин, ";
-                if (bio.getC6() == 1) st += "Билирубин, ";
-                if (bio.getC7() == 1) st += "АЛТ, ";
-                if (bio.getC8() == 1) st += "АСТ, ";
-                if (bio.getC9() == 1) st += "Альфа амилаза, ";
-                if (bio.getC10() == 1) st += "Кальций, ";
-                if (bio.getC11() == 1) st += "Сийдик кислотаси, ";
-                if (bio.getC12() == 1) st += "K – калий, ";
-                if (bio.getC13() == 1) st += "Na – натрий, ";
-                if (bio.getC14() == 1) st += "Fe – темир, ";
-                if (bio.getC15() == 1) st += "Mg – магний, ";
-                if (bio.getC16() == 1) st += "Ишкорий фасфотаза, ";
-                if (bio.getC17() == 1) st += "ГГТ, ";
-                if (bio.getC18() == 1) st += "Гликирланган гемоглобин, ";
-                if (bio.getC19() == 1) st += "РФ, ";
-                if (bio.getC20() == 1) st += "АСЛО, ";
-                if (bio.getC21() == 1) st += "СРБ, ";
-                if (bio.getC22() == 1) st += "RW, ";
-                if (bio.getC23() == 1) st += "Hbs Ag, ";
-                if (bio.getC24() == 1) st += "Гепатит «С» ВГС, ";
-                if (st != "") {
-                  st = st.substring(0, st.length() - 1);
-                  name = name + ": <b>" + st + "</b>";
-                }
-              }
-            }
-            if (rc.getInt("kdo_id") == 56) { // Каулограмма
-              String st = "";
-              LvCouls bio = dLvCoul.getByPlan(rc.getInt("id"));
-              if (bio != null) {
-                if (bio.isC4()) st += "ПТИ, ";
-                if (bio.isC1()) st += "Фибриноген, ";
-                if (bio.isC2()) st += "Тромбин вакти, ";
-                if (bio.isC3()) st += "А.Ч.Т.В. (сек), ";
-                if (st != "") {
-                  st = st.substring(0, st.length() - 1);
-                  name = name + ": <b>" + st + "</b>";
-                }
-              }
-            }
-            if (rc.getInt("kdo_id") == 120) { // Garmon
-              String st = "";
-              LvGarmons bio = dLvGarmon.getByPlan(rc.getInt("id"));
-              if (bio != null) {
-                if (bio.isC1()) st += "ТТГ, ";
-                if (bio.isC2()) st += "Т4, ";
-                if (bio.isC3()) st += "Т3, ";
-                if (bio.isC4()) st += "Анти-ТРО, ";
-                if (st != "") {
-                  st = st.substring(0, st.length() - 1);
-                  name = name + ": <b>" + st + "</b>";
-                }
-              }
-            }
-            if (rc.getInt("kdo_id") == 121) { // Торч
-              String st = "";
-              LvTorchs bio = dLvTorch.getByPlan(rc.getInt("id"));
-              if (bio != null) {
-                if (bio.isC1()) st += "Хламидия, ";
-                if (bio.isC2()) st += "Токсоплазма, ";
-                if (bio.isC3()) st += "ЦМВ, ";
-                if (bio.isC4()) st += "ВПГ, ";
-                if (st != "") {
-                  st = st.substring(0, st.length() - 1);
-                  name = name + ": <b>" + st + "</b>";
-                }
-              }
-            }
-            if (rc.getInt("kdo_id") == 17) { // Торч
-              name += ":" + rc.getString("comment");
-            }
-            name ="<img src=\"/res/imgs/" + (rc.getInt("result_id") > 0 ? "yellow" : "red") + ".gif\"> <b><i>" + Util.dateToString(rc.getDate("actDate")) + "</i></b> - " + name;
-            if (tt.getId() == 1 || tt.getId() == 2) {
-              is1 = true;
-              row.setC11((row.getC11() == null ? "" : row.getC11() + "<br/>") + name);
-            }
-            if (tt.getId() == 3) {
-              is3 = true;
-              row.setC13((row.getC13() == null ? "" : row.getC13() + "<br/>") + name);
-            }
-            if (tt.getId() == 4) {
-              is4 = true;
-              row.setC14((row.getC14() == null ? "" : row.getC14() + "<br/>") + name);
-            }
-            if (tt.getId() == 6) {
-              is6 = true;
-              row.setC16((row.getC16() == null ? "" : row.getC16() + "<br/>") + name);
-            }
-            if (tt.getId() == 10) {
-              is10 = true;
-              row.setC20((row.getC20() == null ? "" : row.getC20() + "<br/>") + name);
-            }
-            if (tt.getId() == 11) {
-              is11 = true;
-              row.setC21((row.getC21() == null ? "" : row.getC21() + "<br/>") + name);
-            }
-            if (tt.getId() == 12) {
-              is12 = true;
-              row.setC22((row.getC22() == null ? "" : row.getC22() + "<br/>") + name);
-            }
-            if (tt.getId() == 13) {
-              is13 = true;
-              row.setC23((row.getC23() == null ? "" : row.getC23() + "<br/>") + name);
-            }
-            if (tt.getId() == 14) {
-              is14 = true;
-              row.setC24((row.getC24() == null ? "" : row.getC24() + "<br/>") + name);
-            }
-            i++;
-          }
-          DB.done(rc);
-          if (k == types.size()) {
-            ps = conn.prepareStatement(
-              " Select t.lvname, t.date actDate " +
-                  "    From Lv_Consuls t, Patients d " +
-                  "   Where t.patientId = d.id " +
-                  "     And t.state != 'DONE' " +
-                  "     And t.patientId = ? " +
-                  "     And d.dept_id = ? "
-            );
-            ps.setInt(1, d.getId());
-            ps.setInt(2, dep == null ? session.getDeptId() : Integer.parseInt(dep));
-            rc = ps.executeQuery();
-            //
-            i = 1;
-            while (rc.next()) {
-              is15 = true;
-              String name ="<b><i>" + rc.getString("actDate") + "</i></b> - " + rc.getString("lvname");
-              row.setC25((row.getC25() == null ? "" : row.getC25() + "<br/>") + name);
-              i++;
             }
           }
-          if(d.isFizio()) {
-             if(dLvFizio.getCount("From LvFizios Where patientId = " + d.getId()) == 0) {
-               is16 = true;
-               row.setC26("Физиотерапия");
-             }
+          if (rc.getInt("kdo_id") == 153) { // Биохимия
+            String st = "";
+            LvBios bio = dLvBio.getByPlan(rc.getInt("id"));
+            if (bio != null) {
+              if (bio.getC1() == 1) st += "Умумий оксил, ";
+              if (bio.getC2() == 1) st += "Холестерин, ";
+              if (bio.getC3() == 1) st += "Глюкоза, ";
+              if (bio.getC4() == 1) st += "Мочевина, ";
+              if (bio.getC5() == 1) st += "Креатинин, ";
+              if (bio.getC6() == 1) st += "Билирубин, ";
+              if (bio.getC7() == 1) st += "АЛТ, ";
+              if (bio.getC8() == 1) st += "АСТ, ";
+              if (bio.getC9() == 1) st += "Альфа амилаза, ";
+              if (bio.getC10() == 1) st += "Кальций, ";
+              if (bio.getC11() == 1) st += "Сийдик кислотаси, ";
+              if (bio.getC12() == 1) st += "K – калий, ";
+              if (bio.getC13() == 1) st += "Na – натрий, ";
+              if (bio.getC14() == 1) st += "Fe – темир, ";
+              if (bio.getC15() == 1) st += "Mg – магний, ";
+              if (bio.getC16() == 1) st += "Ишкорий фасфотаза, ";
+              if (bio.getC17() == 1) st += "ГГТ, ";
+              if (bio.getC18() == 1) st += "Гликирланган гемоглобин, ";
+              if (bio.getC19() == 1) st += "РФ, ";
+              if (bio.getC20() == 1) st += "АСЛО, ";
+              if (bio.getC21() == 1) st += "СРБ, ";
+              if (bio.getC22() == 1) st += "RW, ";
+              if (bio.getC23() == 1) st += "Hbs Ag, ";
+              if (bio.getC24() == 1) st += "Гепатит «С» ВГС, ";
+              if (st != "") {
+                st = st.substring(0, st.length() - 1);
+                name = name + ": <b>" + st + "</b>";
+              }
+            }
+          }
+          if (rc.getInt("kdo_id") == 56) { // Каулограмма
+            String st = "";
+            LvCouls bio = dLvCoul.getByPlan(rc.getInt("id"));
+            if (bio != null) {
+              if (bio.isC4()) st += "ПТИ, ";
+              if (bio.isC1()) st += "Фибриноген, ";
+              if (bio.isC2()) st += "Тромбин вакти, ";
+              if (bio.isC3()) st += "А.Ч.Т.В. (сек), ";
+              if (st != "") {
+                st = st.substring(0, st.length() - 1);
+                name = name + ": <b>" + st + "</b>";
+              }
+            }
+          }
+          if (rc.getInt("kdo_id") == 120) { // Garmon
+            String st = "";
+            LvGarmons bio = dLvGarmon.getByPlan(rc.getInt("id"));
+            if (bio != null) {
+              if (bio.isC1()) st += "ТТГ, ";
+              if (bio.isC2()) st += "Т4, ";
+              if (bio.isC3()) st += "Т3, ";
+              if (bio.isC4()) st += "Анти-ТРО, ";
+              if (st != "") {
+                st = st.substring(0, st.length() - 1);
+                name = name + ": <b>" + st + "</b>";
+              }
+            }
+          }
+          if (rc.getInt("kdo_id") == 121) { // Торч
+            String st = "";
+            LvTorchs bio = dLvTorch.getByPlan(rc.getInt("id"));
+            if (bio != null) {
+              if (bio.isC1()) st += "Хламидия, ";
+              if (bio.isC2()) st += "Токсоплазма, ";
+              if (bio.isC3()) st += "ЦМВ, ";
+              if (bio.isC4()) st += "ВПГ, ";
+              if (st != "") {
+                st = st.substring(0, st.length() - 1);
+                name = name + ": <b>" + st + "</b>";
+              }
+            }
+          }
+          if (rc.getInt("kdo_id") == 17) { // Торч
+            name += ":" + rc.getString("comment");
+          }
+          name ="<img src=\"/res/imgs/" + (rc.getInt("result_id") > 0 ? "yellow" : "red") + ".gif\"> <b><i>" + Util.dateToString(rc.getDate("actDate")) + "</i></b> - " + name;
+          if (rc.getInt("kdo_type_id") == 1 || rc.getInt("kdo_type_id") == 2) {
+            is1 = true;
+            row.setC11((row.getC11() == null ? "" : row.getC11() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 3) {
+            is3 = true;
+            row.setC13((row.getC13() == null ? "" : row.getC13() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 4) {
+            is4 = true;
+            row.setC14((row.getC14() == null ? "" : row.getC14() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 6) {
+            is6 = true;
+            row.setC16((row.getC16() == null ? "" : row.getC16() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 10) {
+            is10 = true;
+            row.setC20((row.getC20() == null ? "" : row.getC20() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 11) {
+            is11 = true;
+            row.setC21((row.getC21() == null ? "" : row.getC21() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 12) {
+            is12 = true;
+            row.setC22((row.getC22() == null ? "" : row.getC22() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 13) {
+            is13 = true;
+            row.setC23((row.getC23() == null ? "" : row.getC23() + "<br/>") + name);
+          }
+          if (rc.getInt("kdo_type_id") == 14) {
+            is14 = true;
+            row.setC24((row.getC24() == null ? "" : row.getC24() + "<br/>") + name);
           }
         }
-        rows.add(row);
+        DB.done(rc);
+        DB.done(ps);
+        ps = conn.prepareStatement(
+          " Select t.lvname, t.date actDate " +
+            "    From Lv_Consuls t " +
+            "   Where t.state != 'DONE' " +
+            "     And t.patientId = ? "
+        );
+        ps.setInt(1, d.getId());
+        rc = ps.executeQuery();
+        //
+        while (rc.next()) {
+          i++;
+          is15 = true;
+          String name ="<b><i>" + rc.getString("actDate") + "</i></b> - " + rc.getString("lvname");
+          row.setC25((row.getC25() == null ? "" : row.getC25() + "<br/>") + name);
+        }
+        if(d.isFizio()) {
+          if(dLvFizio.getCount("From LvFizios Where patientId = " + d.getId()) == 0) {
+            i++;
+            is16 = true;
+            row.setC26("Физиотерапия");
+          }
+        }
+        if(i > 0) rows.add(row);
+        DB.done(rc);
+        DB.done(ps);
       }
       model.addAttribute("dep", Long.parseLong(dep));
       model.addAttribute("is1", is1);
@@ -320,7 +308,7 @@ public class CNurse {
       model.addAttribute("is14", is14);
       model.addAttribute("is15", is15);
       model.addAttribute("is16", is16);
-      model.addAttribute("types", types);
+      model.addAttribute("types", dKdoType.getList("From KdoTypes Where state = 'A'"));
       model.addAttribute("rows", rows);
     } catch (Exception e) {
       e.printStackTrace();

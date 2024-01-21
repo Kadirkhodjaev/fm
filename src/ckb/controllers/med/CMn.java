@@ -1,9 +1,11 @@
 package ckb.controllers.med;
 
+import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbGroups;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.kdos.DKdoTypes;
 import ckb.domains.admin.KdoTypes;
+import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbGroups;
 import ckb.domains.med.drug.dict.DrugDirections;
 import ckb.models.Obj;
@@ -33,6 +35,7 @@ public class CMn {
   @Autowired private DKdoTypes dKdoType;
   @Autowired private DAmbGroups dAmbGroup;
   @Autowired private DDrugDirection dDrugDirection;
+  @Autowired private DUser dUser;
 
   @RequestMapping("index.s")
   protected String patients(HttpServletRequest req, Model m) {
@@ -325,6 +328,85 @@ public class CMn {
       DB.done(cn);
     }
     return "med/mn/kdos";
+  }
+
+  @RequestMapping("/users.s")
+  protected String users(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/users.s");
+    Connection cn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
+    String endDate = Util.get(req, "period_end", Util.getCurDate());
+    try {
+      cn = DB.getConnection();
+      List<Obj> kdoTypes = new ArrayList<Obj>();
+      List<Users> users = dUser.getList("From Users");
+      for(Users user: users) {
+        Obj obj = new Obj();
+        obj.setFio(user.getFio());
+        obj.setPrice(0D);
+        ps = cn.prepareStatement(
+          "Select t.id, c.`name`, Count(*) counter, Sum(t.price) price " +
+            "  From Lv_Plans t, Kdos c " +
+            " Where t.Result_Date Between ? And ? " +
+            "   And c.id = t.Kdo_Id " +
+            "   And t.conf_user = ? " +
+            " Group By c.name");
+        ps.setString(1, Util.dateDB(startDate));
+        ps.setString(2, Util.dateDB(endDate));
+        ps.setInt(3, user.getId());
+        ps.execute();
+        rs = ps.getResultSet();
+        List<ObjList> stats = new ArrayList<ObjList>();
+        while (rs.next()) {
+          ObjList row = new ObjList();
+          row.setC1(rs.getString("id"));
+          row.setC2(rs.getString("name"));
+          row.setC3(rs.getString("counter"));
+          row.setC4(rs.getString("price"));
+          stats.add(row);
+          obj.setPrice(obj.getPrice() + rs.getDouble("price"));
+        }
+        ps = cn.prepareStatement(
+          "Select c.Id, c.name, Count(*) Counter, Sum(t.price) price " +
+            "  From Amb_Patient_Services t, Amb_Services c " +
+            " Where t.confDate Between ? And ? " +
+            "   And c.id = t.service_Id " +
+            "   And c.id = t.service_Id " +
+            "   And t.worker_Id = ? " +
+            " Group By c.Id, c.name");
+        ps.setString(1, Util.dateDB(startDate));
+        ps.setString(2, Util.dateDB(endDate));
+        ps.setInt(3, user.getId());
+        ps.execute();
+        rs = ps.getResultSet();
+        while (rs.next()) {
+          ObjList row = new ObjList();
+          row.setC1(rs.getString("id"));
+          row.setC2("Амбулатория: "+ rs.getString("name"));
+          row.setC3(rs.getString("counter"));
+          row.setC4(rs.getString("price"));
+          stats.add(row);
+          obj.setPrice(obj.getPrice() + rs.getDouble("price"));
+        }
+        if(stats.size() > 0) {
+          obj.setList(stats);
+          kdoTypes.add(obj);
+        }
+      }
+      m.addAttribute("rows", kdoTypes);
+      m.addAttribute("period_start", startDate);
+      m.addAttribute("period_end", endDate);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(cn);
+    }
+    return "med/mn/user_rating";
   }
 
   @RequestMapping("analys.s")
@@ -747,6 +829,66 @@ public class CMn {
       DB.done(cn);
     }
     return "med/mn/stores";
+  }
+
+  @RequestMapping("drug_downtime.s")
+  protected String drug_downtime(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/drug_downtime.s");
+    Connection cn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String order = Util.get(req, "order", "income");
+    String direction = Util.get(req, "direction", "0");
+    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
+    String endDate = Util.get(req, "period_end", Util.getCurDate());
+    if(Util.stringToDate(startDate).after(Util.stringToDate(endDate)))
+      startDate = endDate;
+    try {
+      cn = DB.getConnection();
+      ps = cn.prepareStatement(
+        "Select d.name direction, c.name drug, date(f.regDate) Doc_Date, t.drugCount, t.rasxod, t.drugCount - t.rasxod saldo, date(s.endDate) endDate " +
+          "  From hn_drugs t, Drug_s_Names c, Drug_s_Directions d, Drug_Out_Rows a, Drug_Outs f, Drug_Act_Drugs s " +
+          "Where c.id = t.drug_id " +
+          "  And t.rasxod - t.drugCount <> 0 " +
+          "  And d.id = t.direction_Id " +
+          "  " + (direction.equals("0") ? "" : " And d.id = " + direction) +
+          "  And f.id = a.doc_Id " +
+          "  And a.id = t.outRow_Id " +
+          "  And f.regDate <= DATE_ADD(CURRENT_DATE(), Interval 30 day) " +
+          "  And s.id = a.income_id " +
+          "Order By " + (order.equals("income") ? "f.regDate" : "s.endDate"));
+      /*ps.setString(1, Util.dateDB(startDate));
+      ps.setString(2, Util.dateDB(startDate));*/
+      rs = ps.executeQuery();
+      List<ObjList> rows = new ArrayList<ObjList>();
+      while (rs.next()) {
+        ObjList row = new ObjList();
+        row.setC1(rs.getString("direction"));
+        row.setC2(rs.getString("drug"));
+        row.setC3(Util.dateToString(rs.getDate("doc_date")));
+        row.setC7(Util.dateToString(rs.getDate("enddate")));
+        row.setC4(rs.getString("drugCount"));
+        row.setC5(rs.getString("rasxod"));
+        row.setC6(rs.getString("saldo"));
+        row.setDd(rs.getDate("enddate"));
+        //
+        rows.add(row);
+      }
+      m.addAttribute("rows", rows);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(cn);
+    }
+    m.addAttribute("period_start", startDate);
+    m.addAttribute("period_end", endDate);
+    m.addAttribute("order", order);
+    m.addAttribute("direction", direction);
+    m.addAttribute("directions", dDrugDirection.getAll());
+    return "med/mn/drug_downtime";
   }
 
 }

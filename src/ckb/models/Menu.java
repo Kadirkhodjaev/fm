@@ -22,7 +22,7 @@ public class Menu {
     this.url = url;
     this.name = name;
     this.icon = icon;
-    state = session.getCurUrl().equals(url) ? "active" : "";
+    state = session.getCurUrl().contains(url) ? "active" : "";
   }
 
   public Menu(Integer ord, String name, String url, String icon, boolean isActive) {

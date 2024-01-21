@@ -1,5 +1,6 @@
 package ckb.models;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -18,6 +19,7 @@ public class ObjList {
   private String birthyear;
   private Double price;
   private Long counter;
+  private Date dd;
 
   private String c1;
   private String c2;
@@ -353,5 +355,13 @@ public class ObjList {
 
   public void setList(List<ObjList> list) {
     this.list = list;
+  }
+
+  public Date getDd() {
+    return dd;
+  }
+
+  public void setDd(Date dd) {
+    this.dd = dd;
   }
 }

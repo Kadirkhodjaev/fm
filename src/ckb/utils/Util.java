@@ -12,6 +12,7 @@ import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -396,5 +397,13 @@ public class Util {
 
   public static int getInt(HttpServletRequest req, String name, int def) {
     return req.getParameter(name) == null || req.getParameter(name).isEmpty() ? def : Integer.parseInt(req.getParameter(name));
+  }
+
+  public static String sumFormat(Double val) {
+    if(val == 0) return "0,00";
+    String sum = new DecimalFormat("###,###,###,###,###,###.##").format(val);
+    if(!sum.contains(","))
+      sum = sum + ",00";
+    return sum;
   }
 }

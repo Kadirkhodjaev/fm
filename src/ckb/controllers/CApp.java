@@ -228,8 +228,10 @@ public class  CApp {
       if(user.isMainNurse())
         m.add(new Menu("Питание", "/head_nurse/eats.s", "fa fa-home fa-fw", session.getCurUrl().equals("/head_nurse/eats.s")));
       m.add(new Menu("Сальдо", "/head_nurse/saldo.s", "fa fa-briefcase fa-fw", session.getCurUrl().equals("/head_nurse/saldo.s")));
-      if(user.isMainNurse() || user.isStatExp())
+      if(user.isMainNurse() || user.isStatExp()) {
         m.add(new Menu("Стационар", "/head_nurse/out/patient.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/patient.s")));
+        m.add(new Menu("Новые назначения", "/head_nurse/new_drugs.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/new_drugs.s")));
+      }
       //m.add(new Menu("Амбулатория", "/head_nurse/out/amb.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/head_nurse/out/amb.s")));
       m.add(new Menu("Расход", "/head_nurse/out.s", "fa fa-file-text fa-users", session.getCurUrl().equals("/head_nurse/out.s")));
       if(isTransfer || session.getUserId() == 1)
@@ -249,9 +251,16 @@ public class  CApp {
       m.add(new Menu("Анализ склада", "/mn/analys.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/mn/analys.s")));
       m.add(new Menu("Анализ медикаметов", "/mn/drugs/days.s", "fa fa-th-list fa-fw", session.getCurUrl().equals("/mn/drugs/days.s")));
       m.add(new Menu("Рейтинг услуг", "/mn/services.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/mn/services.s")));
+      m.add(new Menu("Рейтинг по врачам", "/mn/users.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/mn/users.s")));
       m.add(new Menu("Аптека", "/mn/drugstore.s", "fa fa-group fa-fw", session.getCurUrl().equals("/mn/drugstore.s")));
       m.add(new Menu("Склад", "/mn/stores.s", "fa fa-home fa-fw", session.getCurUrl().equals("/mn/stores.s")));
       m.add(new Menu("Стационар", "/patients/stat.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/patients/stat.s")));
+      m.add(new Menu("Склад: Простой", "/mn/drug_downtime.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/patients/stat.s")));
+    }
+    if(roleId == 22) {
+      session.setCurUrl(session.getCurUrl().equals("") ? "/ambs/reg.s" : session.getCurUrl());
+      m.add(new Menu("Регистрация", "/ambs/reg.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Текущие", "/ambs/patients.s", "fa fa-group fa-fw", session));
     }
     model.addAttribute("menuList", m);
     model.addAttribute("lvs", dUser.getLvs());
@@ -259,7 +268,7 @@ public class  CApp {
     model.addAttribute("depts", dDept.getAll());
     model.addAttribute("repList", dUser.getReports(session.getUserId()));
     model.addAttribute("openPage", roleId == 0 ? "/roles.s" : session.getCurUrl().equals("") ? dRole.get(roleId).getUrl() : session.getCurUrl());
-    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13);
+    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22);
     model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10);
     model.addAttribute("isEnterFilter", dParam.byCode("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);

@@ -52,7 +52,7 @@
       <table style="width:400px">
         <tr>
           <td>
-            <select class="form-control" onchange="setPage('core/stat/service/save.s?group=' + this.value)" id="sel_kdo_group">
+            <select class="form-control" onchange="setPage('core/stat/services.s?group=' + this.value)" id="sel_kdo_group">
               <option value="0">Все</option>
               <c:forEach items="${groups}" var="g">
                 <option <c:if test="${g.id == group}">selected</c:if> value="${g.id}">${g.name}</option>

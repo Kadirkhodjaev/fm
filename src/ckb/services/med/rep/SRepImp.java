@@ -3755,7 +3755,8 @@ public class SRepImp implements SRep {
 					"				 (Select Sum(c.Summ) From Cash_Discounts c Where c.patient = t.id And c.ambStat = 'STAT') discount, " +
 					"				 (Select Sum(c.rasxod * f.price) From drug_out_rows f, hn_date_patient_rows c, hn_drugs d where f.Id = d.outRow_id And d.id = c.drug_Id And c.patient_Id = t.id) ddd " +
 					"   From Patients t " +
-					"  Where t.state != 'ARCH' "+
+					"  Where t.state != 'ARCH' " +
+					"   And t.id = 15698 "+
 					" Order By t.date_begin "
 			);
 			rs = ps.executeQuery();
@@ -3773,9 +3774,22 @@ public class SRepImp implements SRep {
 				service.setC4(rs.getString("paid") == null ? "0" : rs.getString("paid"));
 				service.setC5(rs.getString("returned") == null ? "0" : rs.getString("returned"));
 				service.setC6(rs.getString("discount") == null ? "0" : rs.getString("discount"));
-				service.setC10(rs.getString("ddd") == null ? "0" : rs.getString("ddd"));
 				service.setC30("0");
-				Double ser = patientMustPay(req, rs.getInt("id"));
+				Double ser;
+				try {
+					HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where state = 'D' And patient.id = " + rs.getInt("id"));
+					if (hnPatient != null) {
+						ser = hnPatient.getTotalSum();
+						service.setC10("0");
+					} else {
+						service.setC10(rs.getString("ddd") == null ? "0" : rs.getString("ddd"));
+						ser = patientMustPay(req, rs.getInt("id"));
+					}
+				} catch (Exception e) {
+					service.setC10(rs.getString("ddd") == null ? "0" : rs.getString("ddd"));
+					ser = patientMustPay(req, rs.getInt("id"));
+				}
+
 				tSer += ser;
 				service.setC7("" + ser);
 				tPaid += rs.getString("paid") == null ? 0D : rs.getDouble("paid");
@@ -3810,7 +3824,10 @@ public class SRepImp implements SRep {
 	}
 	private Double patientMustPay(HttpServletRequest request, int id) {
 		Session session = SessionUtil.getUser(request);
+		//
+		Double total;
 		Patients pat = dPatient.get(id);
+		//
 		Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
 		Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
 		Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));
@@ -3818,7 +3835,6 @@ public class SRepImp implements SRep {
 		Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
 		Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));
 		//
-		Double total;
 		if(pat.getCounteryId() == 199) { // Узбекистан
 			if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
 				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX_UZB;
@@ -3853,13 +3869,6 @@ public class SRepImp implements SRep {
 				total += plan.getPrice();
 		}
 		//
-		try {
-			HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where state = 'D' And patient.id = " + pat.getId());
-			if (hnPatient != null) {
-				total = hnPatient.getTotalSum();
-			}
-		} catch (Exception e) {}
-		//
 		return total;
 	}
 	// План обследования на след день
@@ -3867,7 +3876,6 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		ResultSet rd = null;
 		String params = "";
 		List<ObjList> rows = new ArrayList<ObjList>();
 		//
@@ -4236,14 +4244,16 @@ public class SRepImp implements SRep {
 		ResultSet rs = null;
 		List<Obj> rows = new ArrayList<Obj>();
 		//
+		String pt = Util.get(req, "cat");
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		double procSum = 0, totalSum = 0;
 		try {
-			List<LvPartners> partners = dLvPartner.getAll();
+			List<LvPartners> partners = pt == null || pt.isEmpty() ? dLvPartner.getAll() : dLvPartner.getList("From LvPartners Where id = " + Integer.parseInt(pt));
 			for(LvPartners partner: partners) {
 				Obj part = new Obj();
-				part.setFio(partner.getCode() + " " + partner.getFio());
+				Double ambCount = DB.getSum(conn, "Select Count(*) From Amb_Patients t Where t.lvpartner_id = " + partner.getId() + " And date (t.reg_date) Between '" + Util.dateDB(Util.get(req, "period_start")) + "' And '" + Util.dateDB(Util.get(req, "period_end")) + "'");
 				part.setPrice(0D);
 				part.setClaimCount(0D);
 				ps = conn.prepareStatement(
@@ -4251,7 +4261,8 @@ public class SRepImp implements SRep {
 						" 			   s.name, " +
 						"				   f.partnerProc * c.price / 100 summ, " +
 						"				   f.partnerProc, " +
-						"					 c.price " +
+						"					 c.price, " +
+						"					 c.crOn " +
 						" From Amb_Patients t, Amb_Patient_Services c, Amb_Services s, Amb_Groups f  " +
 						" Where date (t.reg_date) Between ? And ? " +
 						"   And f.id = s.group_id " +
@@ -4266,7 +4277,7 @@ public class SRepImp implements SRep {
 				ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
 				ps.setInt(3, partner.getId());
 				rs = ps.executeQuery();
-				List<ObjList> services = new ArrayList<ObjList>();
+				List<ObjList> services = new ArrayList<>();
 				while (rs.next()) {
 					ObjList service = new ObjList();
 					service.setC1(rs.getString("fio"));
@@ -4274,11 +4285,47 @@ public class SRepImp implements SRep {
 					service.setC3(rs.getString("price"));
 					service.setC4(rs.getString("partnerProc"));
 					service.setC5(rs.getString("summ"));
+					service.setC6(Util.dateToString(rs.getDate("crOn")));
+					part.setPrice(part.getPrice() + rs.getDouble("price"));
+					part.setClaimCount(part.getClaimCount() + rs.getDouble("summ"));
+					services.add(service);
+				}
+				ps = conn.prepareStatement(
+					" Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio, " +
+						" 			   t.yearNum name, " +
+						"				   0.2 * c.koykoPrice * c.dayCount summ, " +
+						"				   2 partnerProc, " +
+						"					 c.koykoPrice * c.dayCount price, " +
+						"					 t.date_end " +
+						" From Patients t, Hn_Patients c " +
+						"Where t.id = c.patient_id " +
+						"  And date(t.date_end) Between ? And ? " +
+						"  And t.lvpartner_id = ? " +
+						" Order By t.date_end "
+				);
+				ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+				ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+				ps.setInt(3, partner.getId());
+				rs = ps.executeQuery();
+				int statCount = 0;
+				while (rs.next()) {
+					statCount++;
+					ObjList service = new ObjList();
+					service.setC1(rs.getString("fio"));
+					service.setC2("Стационар ИБ №: " + rs.getString("name"));
+					service.setC3(rs.getString("price"));
+					service.setC4(rs.getString("partnerProc"));
+					service.setC5(rs.getString("summ"));
+					service.setC6(Util.dateToString(rs.getDate("date_end")));
 					part.setPrice(part.getPrice() + rs.getDouble("price"));
 					part.setClaimCount(part.getClaimCount() + rs.getDouble("summ"));
 					services.add(service);
 				}
 				if(services.size() > 0) {
+					String count =  "(" + (ambCount > 0 ? " Кол-во амб. пациентов: " + Math.round(ambCount) : "") + (statCount > 0 ? " Кол-во стац. пациентов: " + statCount : "") + " )";
+					part.setFio(partner.getCode() + " " + partner.getFio() + count);
+					procSum += part.getClaimCount();
+					totalSum += part.getPrice();
 					part.setList(services);
 					rows.add(part);
 				}
@@ -4290,6 +4337,8 @@ public class SRepImp implements SRep {
 			DB.done(ps);
 			DB.done(rs);
 		}
+		m.addAttribute("procSum", procSum);
+		m.addAttribute("totalSum", totalSum);
 		m.addAttribute("rows", rows);
 		// Параметры отчета
 		m.addAttribute("params", params);
@@ -4300,8 +4349,8 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		ResultSet rc = null;
-		List<Obj> rows = new ArrayList<Obj>();
-		List<Obj> rows2 = new ArrayList<Obj>();
+		List<Obj> rows = new ArrayList<>();
+		List<Obj> rows2 = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
@@ -4323,7 +4372,7 @@ public class SRepImp implements SRep {
 				Obj ob = new Obj();
 				ob.setName(rs.getString("fio"));
 				ob.setPrice(rs.getDouble("summ"));
-				List<ObjList> srs = new ArrayList<ObjList>();
+				List<ObjList> srs = new ArrayList<>();
 				ps = conn.prepareStatement(
 					" Select s.name, " +
 						"					 c.price " +

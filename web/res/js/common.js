@@ -249,3 +249,7 @@ function errMsg(msg) {
     $('.med-msg').slideUp(1000);
   }, 10000);
 }
+
+function getDOM(id) {
+  return document.getElementById(id);
+}

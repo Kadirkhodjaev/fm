@@ -59,7 +59,8 @@ public class CRep {
       session = SessionUtil.getUser(req);
       Integer id = Util.getInt(req, "repId");
       sRep.gRep(req, m);
-      return "/med/rep/forms/rep" + id;
+      m.addAttribute("excel", Util.get(req, "word"));
+       return "/med/rep/forms/rep" + id;
     } catch (Exception e) {
       return "redirect:/med/rep/home.s";
     }

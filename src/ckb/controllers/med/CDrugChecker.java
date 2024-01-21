@@ -67,6 +67,10 @@ public class CDrugChecker {
             hnDrug.setHistory(1);
             dhnDrug.save(hnDrug);
           }
+          if (hnDrug.getDrugCount() < hnDrug.getRasxod()) {
+            hnDrug.setPrice(rasxod);
+            hnList.add(hnDrug);
+          }
         }
       }
     }

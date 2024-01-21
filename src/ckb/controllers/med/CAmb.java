@@ -4,6 +4,7 @@ import ckb.dao.admin.countery.DCountery;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
+import ckb.dao.admin.forms.DFormLog;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
@@ -13,6 +14,7 @@ import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.drug.dict.measures.DDrugMeasure;
 import ckb.dao.med.template.DTemplate;
+import ckb.domains.admin.FormLogs;
 import ckb.domains.admin.Forms;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.*;
@@ -83,6 +85,7 @@ public class CAmb {
   @Autowired private DClient dClient;
   @Autowired private DParam dParam;
   @Autowired private SRkdo sRkdo;
+  @Autowired private DFormLog dFormLog;
   //endregion
 
   //region PATIENTS
@@ -276,6 +279,10 @@ public class CAmb {
   @RequestMapping("/reg.s")
   protected String reg(@ModelAttribute("patient") AmbPatients p, HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
+    FormLogs log = new FormLogs();
+    log.setStartTime(new Date());
+    log.setUser(session.getUserId());
+    log.setUrl("amb/reg.s");
     boolean isDone = true;
     session.setCurPat(0);
     if (!Req.isNull(req, "id"))
@@ -326,6 +333,8 @@ public class CAmb {
     m.addAttribute("done", isDone && session.getRoleId() == 15 && session.getCurPat() > 0 && ss.size() > 0 && !p.getState().equals("ARCH"));
     m.addAttribute("drug_exist", dAmbDrug.getCount("From AmbDrugs Where patient.id = " + session.getCurPat()) > 0);
     Util.makeMsg(req, m);
+    log.setEndTime(new Date());
+    dFormLog.save(log);
     return "med/amb/reg";
   }
 

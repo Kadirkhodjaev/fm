@@ -5,5 +5,5 @@ import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbServiceUsers;
 
 public interface DAmbServiceUsers extends Dao<AmbServiceUsers> {
-  Users getFirstUser(Integer id);
+  Users getFirstUser(Integer service);
 }

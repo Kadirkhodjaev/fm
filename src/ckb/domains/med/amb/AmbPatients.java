@@ -251,4 +251,12 @@ public class AmbPatients extends GenId {
   public void setQrcode(String qrcode) {
     this.qrcode = qrcode;
   }
+
+  public String getFio() {
+    return surname + " " + name + " " + middlename;
+  }
+
+  public boolean isResident() {
+    return this.counteryId == null || this.counteryId == 199;
+  }
 }

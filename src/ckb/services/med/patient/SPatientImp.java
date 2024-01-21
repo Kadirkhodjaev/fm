@@ -41,6 +41,7 @@ import org.springframework.ui.Model;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
@@ -1118,6 +1119,70 @@ public class SPatientImp implements SPatient {
       drug.setCrOn(pd.getCrOn());
       if(!drug.getDates().isEmpty())
         drugs.add(drug);
+    }
+    return drugs;
+  }
+
+  @Override
+  public List<PatientDrug> getPatientNewDrugs() {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    List<PatientDrug> drugs = new ArrayList<>();
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select t.id " +
+          "     From Patient_Drugs t " +
+          "    Where Exists (Select 1 " +
+          "                    From Patient_Drug_Dates c" +
+          "                   Where c.checked = 1 " +
+          "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
+          "                     And c.patientDrug_id = t.id " +
+          "                     And date(c.date) = date(t.crOn)) " +
+          "      And date(crOn) = CURRENT_DATE() " +
+          "    Order By t.patient_id, t.Id desc ");
+      rs = ps.executeQuery();
+      while(rs.next()) {
+        PatientDrugs pd = dPatientDrug.get(rs.getInt(1));
+        PatientDrug drug = new PatientDrug();
+        drug.setId(pd.getId());
+        drug.setPatient(pd.getPatient());
+        drug.setGoal(pd.getGoal());
+        drug.setDrugType(pd.getDrugType());
+        drug.setInjectionType(pd.getInjectionType());
+        List<PatientDrugRow> rows = new ArrayList<>();
+        for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
+          PatientDrugRow row = new PatientDrugRow();
+          row.setId(patientDrugRow.getId());
+          row.setDrug(patientDrugRow.getDrug());
+          row.setName(patientDrugRow.getSource().equals("own") ? patientDrugRow.getName() : patientDrugRow.getDrug().getName());
+          if(!patientDrugRow.getSource().equals("own"))
+            row.setName(row.getName() + " (" + patientDrugRow.getExpanse() + " " + (patientDrugRow.getMeasure() != null ? patientDrugRow.getMeasure().getName() : "") + ")");
+          row.setExpanse(patientDrugRow.getExpanse());
+          row.setSource(patientDrugRow.getSource());
+          row.setState(patientDrugRow.getState());
+          row.setMeasure(patientDrugRow.getMeasure());
+          rows.add(row);
+        }
+        drug.setRows(rows);
+        String time = "";
+        if(pd.isMorningTime()) time += "Утром" + (pd.isMorningTimeBefore() ? " до еды" : "") + (pd.isMorningTimeAfter() ? " после еды" : "");
+        if(pd.isNoonTime()) time += (time.equals("") ? "" : ", ") + "Днем" + (pd.isNoonTimeBefore() ? " до еды" : "") + (pd.isNoonTimeAfter() ? " после еды" : "");
+        if(pd.isEveningTime()) time += (time.equals("") ? "" : ", ") + "Вечером" + (pd.isEveningTimeBefore() ? " до еды" : "") + (pd.isEveningTimeAfter() ? " после еды" : "");
+        drug.setNote((time.equals("") ? "" : time + "; ") + " " + pd.getNote());
+        drug.setDateBegin(pd.getDateBegin());
+        drug.setDateEnd(pd.getDateEnd());
+        drug.setCrBy(pd.getCrBy());
+        drug.setCrOn(pd.getCrOn());
+        drugs.add(drug);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
     }
     return drugs;
   }

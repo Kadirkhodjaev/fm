@@ -17,8 +17,8 @@ public class DAmbServiceUsersImp extends DaoImp<AmbServiceUsers> implements DAmb
   }
 
   @Override
-  public Users getFirstUser(Integer id) {
-    List<AmbServiceUsers> list = getList("From AmbServiceUsers Where service = " + id);
+  public Users getFirstUser(Integer service) {
+    List<AmbServiceUsers> list = getList("From AmbServiceUsers Where service = " + service);
     if(list.size() > 0)
       return dUser.get(list.get(0).getUser());
     return new Users();

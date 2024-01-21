@@ -227,4 +227,8 @@ public class Session {
   public void setDateEnd(HashMap<String, String> dateEnd) {
     this.dateEnd = dateEnd;
   }
+
+  public boolean isReg() {
+    return roleId == 15;
+  }
 }

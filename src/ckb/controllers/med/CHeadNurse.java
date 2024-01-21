@@ -123,7 +123,8 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out/patient.s");
     //
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    String dr = Util.get(req, "dr", "0");
+    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
       arr.append(line.getDirection().getId()).append(",");
@@ -151,6 +152,9 @@ public class CHeadNurse {
     //
     m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And typeCode = 'STAT' And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By date Desc"));
     //
+    List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    m.addAttribute("directions", directions);
+    m.addAttribute("filter_direction", dr);
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
     return "/med/head_nurse/out/patient/index";
@@ -633,7 +637,8 @@ public class CHeadNurse {
   protected String out(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out.s");
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    String dr = Util.get(req, "dr", "0");
+    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
       arr.append(line.getDirection().getId()).append(",");
@@ -661,6 +666,9 @@ public class CHeadNurse {
     //
     m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And typeCode = 'OUT' Order By date Desc"));
     //
+    List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    m.addAttribute("directions", directions);
+    m.addAttribute("filter_direction", dr);
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
     return "/med/head_nurse/out/index";
@@ -932,7 +940,8 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/incomes.s");
     //
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    String dr = Util.get(req, "dr", "0");
+    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
       arr.append(line.getDirection().getId()).append(",");
@@ -979,6 +988,9 @@ public class CHeadNurse {
       list.add(obj);
     }
     //
+    List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    m.addAttribute("directions", directions);
+    m.addAttribute("filter_direction", dr);
     m.addAttribute("rows", list);
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
@@ -1146,8 +1158,9 @@ public class CHeadNurse {
   protected String shock(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/transfer.s");
+    String dr = Util.get(req, "dr", "0");
     //
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
       arr.append(line.getDirection().getId()).append(",");
@@ -1175,6 +1188,9 @@ public class CHeadNurse {
     //
     m.addAttribute("rows", dhnDate.getList("From HNOpers Where (parent.id in " + arr + " Or direction.id in " + arr + ") And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By crOn Desc"));
     //
+    List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
+    m.addAttribute("directions", directions);
+    m.addAttribute("filter_direction", dr);
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
     return "/med/head_nurse/out/transfer/index";
@@ -2454,6 +2470,18 @@ public class CHeadNurse {
     return json.toString();
   }
   //endregion
+
+  @RequestMapping(value = "new_drugs.s")
+  protected String patientNewDrugs(HttpServletRequest req, Model model) throws JSONException {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/head_nurse/new_drugs.s");
+    try {
+      model.addAttribute("list", sPatient.getPatientNewDrugs());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return "med/head_nurse/new_drugs";
+  }
 
   @RequestMapping(value = "stat.s")
   protected String stat(HttpServletRequest req, Model model) throws JSONException {

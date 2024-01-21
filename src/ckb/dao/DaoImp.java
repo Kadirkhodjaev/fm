@@ -131,7 +131,6 @@ public abstract class DaoImp<T extends GenId> implements Dao<T> {
 
   @Override
   public T obj(String  sql) {
-    System.out.println(sql);
     try {
       return (T) entityManager.createQuery(sql).getSingleResult();
     } catch (Exception e) {
@@ -139,6 +138,8 @@ public abstract class DaoImp<T extends GenId> implements Dao<T> {
     }
   }
 
-
-
+  @Override
+  public List<T> list(String sql){
+    return entityManager.createQuery(sql).getResultList();
+  }
 }

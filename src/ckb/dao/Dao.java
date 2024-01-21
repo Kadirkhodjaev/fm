@@ -64,4 +64,6 @@ public interface Dao<T extends GenId> {
   List<T> getGridList(Grid grid);
 
   T obj(String sql);
+
+  List<T> list(String sql);
 }

@@ -176,4 +176,8 @@ public class Clients extends GenId {
   public void setCrOn(Date crOn) {
     this.crOn = crOn;
   }
+
+  public String getFio() {
+    return surname + " " + name + " " + middlename;
+  }
 }
