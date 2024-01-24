@@ -4,13 +4,11 @@ import ckb.utils.Util;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class AmbGrid {
+public class ClientGrid {
 
   private int startPos = 1;
   private String sql;
   private String order;
-  private String orderCol = "";
-  private String orderType = "";
   private int page = 1;
   private long rowCount = 0;
   private int maxPage = 1;
@@ -32,12 +30,12 @@ public class AmbGrid {
 
   private String filter() {
     String a = "";
-    if(!word.isEmpty()) a = " And (upper(surname) like '%" + word + "%' Or upper(name) like '%" + word + "%' Or upper(middlename) like '%" + word + "%' Or upper(Concat(trim(surname), ' ', trim(name), ' ', trim(middlename))) like '%" + word + "%')";
+    if(!word.isEmpty()) a = " Where (upper(surname) like '%" + word + "%' Or upper(name) like '%" + word + "%' Or upper(middlename) like '%" + word + "%' Or upper(Concat(trim(surname), ' ', trim(name), ' ', trim(middlename))) like '%" + word + "%')";
     return a;
   }
 
   private String orderBy() {
-    return order.isEmpty() ? " " : " " + order;
+    return order == null || order.isEmpty() ? " " : " " + order;
   }
 
   public String select(){
@@ -54,22 +52,6 @@ public class AmbGrid {
 
   public void setOrder(String order) {
     this.order = order;
-  }
-
-  public String getOrderCol() {
-    return orderCol;
-  }
-
-  public void setOrderCol(String orderCol) {
-    this.orderCol = orderCol;
-  }
-
-  public String getOrderType() {
-    return orderType;
-  }
-
-  public void setOrderType(String orderType) {
-    this.orderType = orderType;
   }
 
   public int getPage() {

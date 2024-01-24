@@ -259,4 +259,5 @@ public class AmbPatients extends GenId {
   public boolean isResident() {
     return this.counteryId == null || this.counteryId == 199;
   }
+
 }

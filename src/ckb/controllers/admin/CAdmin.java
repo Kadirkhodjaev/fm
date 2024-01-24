@@ -2,7 +2,6 @@ package ckb.controllers.admin;
 
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DLvPartner;
-import ckb.dao.admin.nurse.DNurse;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserLog;
@@ -32,7 +31,6 @@ public class CAdmin {
   @Autowired private DParam dParam;
   @Autowired private DUserLog dUserLog;
   @Autowired private DLvPartner dLvPartner;
-  @Autowired private DNurse dNurse;
 
   @RequestMapping("/changePass.s")
   protected String changePass(HttpServletRequest request, Model model){
@@ -212,46 +210,4 @@ public class CAdmin {
     }
     return json.toString();
   }
-
-  //region Ìוהסוסענû
-  @RequestMapping("/nurses.s")
-  protected String nurses(HttpServletRequest req, Model model) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/admin/nurses.s");
-    //
-    model.addAttribute("rows", dLvPartner.getAll());
-    //
-    return "/admin/nurses/index";
-  }
-
-  @RequestMapping("/nurse/info.s")
-  protected String nurseInfo(HttpServletRequest req, Model model) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/admin/nurse/info.s");
-    //
-    Nurses nurse = dNurse.get(Util.getInt(req, "id"));
-
-    model.addAttribute("d", nurse);
-    //
-    return "/admin/nurses/info";
-  }
-
-  @RequestMapping(value = "/nurse/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String nurseSave(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      LvPartners rp = dLvPartner.get(Util.getInt(req, "id"));
-      json.put("id", rp.getId());
-      json.put("code", rp.getCode());
-      json.put("fio", rp.getFio());
-      json.put("state", rp.getState());
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
 }

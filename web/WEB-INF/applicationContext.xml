@@ -38,8 +38,6 @@
   <bean id="dReport" class="ckb.dao.admin.reports.DReportImp" parent="daoImpl"/>
   <bean id="dFormLog" class="ckb.dao.admin.forms.DFormLogImp" parent="daoImpl"/>
   <bean id="dDept" class="ckb.dao.admin.depts.DDeptImp" parent="daoImpl"/>
-  <bean id="dNurse" class="ckb.dao.admin.nurse.DNurseImp" parent="daoImpl"/>
-  <bean id="dNurseDept" class="ckb.dao.admin.nurse.DNurseDeptImp" parent="daoImpl"/>
   <bean id="dLvForm1" class="ckb.dao.med.lv.form1.DLvForm1Imp" parent="daoImpl"/>
   <bean id="dLvForm2" class="ckb.dao.med.lv.form2.DLvForm2Imp" parent="daoImpl"/>
   <bean id="dLvForm3" class="ckb.dao.med.lv.form3.DLvForm3Imp" parent="daoImpl"/>
@@ -65,37 +63,14 @@
   <bean id="dF15" class="ckb.dao.med.kdos.forms.f15.DF15Imp" parent="daoImpl"/>
   <bean id="dF16" class="ckb.dao.med.kdos.forms.f16.DF16Imp" parent="daoImpl"/>
   <bean id="dF17" class="ckb.dao.med.kdos.forms.f17.DF17Imp" parent="daoImpl"/>
-  <bean id="dF18" class="ckb.dao.med.kdos.forms.f18.DF18Imp" parent="daoImpl"/>
-  <bean id="dF14" class="ckb.dao.med.kdos.forms.f14.DF14Imp" parent="daoImpl"/>
   <bean id="dF56" class="ckb.dao.med.kdos.forms.f56.DF56Imp" parent="daoImpl"/>
-  <bean id="dF4" class="ckb.dao.med.kdos.forms.f4.DF4Imp" parent="daoImpl"/>
   <bean id="dF1" class="ckb.dao.med.kdos.forms.f1.DF1Imp" parent="daoImpl"/>
-  <bean id="dF5" class="ckb.dao.med.kdos.forms.f5.DF5Imp" parent="daoImpl"/>
-  <bean id="dF2" class="ckb.dao.med.kdos.forms.f2.DF2Imp" parent="daoImpl"/>
   <bean id="dF7" class="ckb.dao.med.kdos.forms.f7.DF7Imp" parent="daoImpl"/>
   <bean id="dF8" class="ckb.dao.med.kdos.forms.f8.DF8Imp" parent="daoImpl"/>
-  <bean id="dF9" class="ckb.dao.med.kdos.forms.f9.DF9Imp" parent="daoImpl"/>
   <bean id="dF10" class="ckb.dao.med.kdos.forms.f10.DF10Imp" parent="daoImpl"/>
   <bean id="dF11" class="ckb.dao.med.kdos.forms.f11.DF11Imp" parent="daoImpl"/>
-  <bean id="dF12" class="ckb.dao.med.kdos.forms.f12.DF12Imp" parent="daoImpl"/>
-  <bean id="dF46" class="ckb.dao.med.kdos.forms.f46.DF46Imp" parent="daoImpl"/>
-  <bean id="dF47" class="ckb.dao.med.kdos.forms.f47.DF47Imp" parent="daoImpl"/>
-  <bean id="dF48" class="ckb.dao.med.kdos.forms.f48.DF48Imp" parent="daoImpl"/>
-  <bean id="dF49" class="ckb.dao.med.kdos.forms.f49.DF49Imp" parent="daoImpl"/>
   <bean id="dF999" class="ckb.dao.med.kdos.forms.f999.DF999Imp" parent="daoImpl"/>
-  <bean id="dF26" class="ckb.dao.med.kdos.forms.f26.DF26Imp" parent="daoImpl"/>
-  <bean id="dF19" class="ckb.dao.med.kdos.forms.f19.DF19Imp" parent="daoImpl"/>
-  <bean id="dF21" class="ckb.dao.med.kdos.forms.f21.DF21Imp" parent="daoImpl"/>
-  <bean id="dF22" class="ckb.dao.med.kdos.forms.f22.DF22Imp" parent="daoImpl"/>
-  <bean id="dF23" class="ckb.dao.med.kdos.forms.f23.DF23Imp" parent="daoImpl"/>
-  <bean id="dF24" class="ckb.dao.med.kdos.forms.f24.DF24Imp" parent="daoImpl"/>
-  <bean id="dF27" class="ckb.dao.med.kdos.forms.f27.DF27Imp" parent="daoImpl"/>
-  <bean id="dF28" class="ckb.dao.med.kdos.forms.f28.DF28Imp" parent="daoImpl"/>
-  <bean id="dF29" class="ckb.dao.med.kdos.forms.f29.DF29Imp" parent="daoImpl"/>
-  <bean id="dF34" class="ckb.dao.med.kdos.forms.f34.DF34Imp" parent="daoImpl"/>
-  <bean id="dF37" class="ckb.dao.med.kdos.forms.f37.DF37Imp" parent="daoImpl"/>
-  <bean id="dF44" class="ckb.dao.med.kdos.forms.f44.DF44Imp" parent="daoImpl"/>
-  <bean id="dCountery" class="ckb.dao.admin.countery.DCounteryImp" parent="daoImpl"/>
+  <bean id="dCountery" class="ckb.dao.admin.countery.DCountryImp" parent="daoImpl"/>
   <bean id="dRegion" class="ckb.dao.admin.region.DRegionImp" parent="daoImpl"/>
   <bean id="dAmbGroups" class="ckb.dao.med.amb.DAmbGroupsImp" parent="daoImpl"/>
   <bean id="dAmbPatientLinks" class="ckb.dao.med.amb.DAmbPatientLinksImp" parent="daoImpl"/>
@@ -103,23 +78,6 @@
   <bean id="dDrugDirectionDep" class="ckb.dao.med.drug.dict.directions.DDrugDirectionDepImp" parent="daoImpl"/>
   <bean id="dLvPartner" class="ckb.dao.admin.dicts.DLvPartnerImp" parent="daoImpl"/>
   <bean id="dKdoResult" class="ckb.dao.med.kdos.DKdoResultImp" parent="daoImpl"/>
-
-  <bean id="dF20" class="ckb.dao.med.kdos.forms.f20.DF20Imp" parent="daoImpl"/>
-  <bean id="dF25" class="ckb.dao.med.kdos.forms.f25.DF25Imp" parent="daoImpl"/>
-  <bean id="dF30" class="ckb.dao.med.kdos.forms.f30.DF30Imp" parent="daoImpl"/>
-  <bean id="dF31" class="ckb.dao.med.kdos.forms.f31.DF31Imp" parent="daoImpl"/>
-  <bean id="dF32" class="ckb.dao.med.kdos.forms.f32.DF32Imp" parent="daoImpl"/>
-  <bean id="dF33" class="ckb.dao.med.kdos.forms.f33.DF33Imp" parent="daoImpl"/>
-  <bean id="dF35" class="ckb.dao.med.kdos.forms.f35.DF35Imp" parent="daoImpl"/>
-  <bean id="dF36" class="ckb.dao.med.kdos.forms.f36.DF36Imp" parent="daoImpl"/>
-  <bean id="dF38" class="ckb.dao.med.kdos.forms.f38.DF38Imp" parent="daoImpl"/>
-  <bean id="dF39" class="ckb.dao.med.kdos.forms.f39.DF39Imp" parent="daoImpl"/>
-  <bean id="dF40" class="ckb.dao.med.kdos.forms.f40.DF40Imp" parent="daoImpl"/>
-  <bean id="dF41" class="ckb.dao.med.kdos.forms.f41.DF41Imp" parent="daoImpl"/>
-  <bean id="dF42" class="ckb.dao.med.kdos.forms.f42.DF42Imp" parent="daoImpl"/>
-  <bean id="dF43" class="ckb.dao.med.kdos.forms.f43.DF43Imp" parent="daoImpl"/>
-  <bean id="dF45" class="ckb.dao.med.kdos.forms.f45.DF45Imp" parent="daoImpl"/>
-  <bean id="dF54" class="ckb.dao.med.kdos.forms.f54.DF54Imp" parent="daoImpl"/>
   <bean id="dF120" class="ckb.dao.med.kdos.forms.f120.DF120Imp" parent="daoImpl"/>
   <bean id="dF121" class="ckb.dao.med.kdos.forms.f121.DF121Imp" parent="daoImpl"/>
   <bean id="dF152" class="ckb.dao.med.kdos.forms.f152.DF152Imp" parent="daoImpl"/>
@@ -206,14 +164,12 @@
   <bean id="dDrugManufacturer" class="ckb.dao.med.drug.dict.manufacturer.DDrugManufacturerImp" parent="daoImpl"/>
   <bean id="dDrugDirection" class="ckb.dao.med.drug.dict.directions.DDrugDirectionImp" parent="daoImpl"/>
   <bean id="dDrugContract" class="ckb.dao.med.drug.dict.contracts.DDrugContractImp" parent="daoImpl"/>
-  <bean id="dDrugCupboard" class="ckb.dao.med.drug.dict.cupboards.DDrugCupboardImp" parent="daoImpl"/>
   <bean id="dDrug" class="ckb.dao.med.drug.dict.drugs.DDrugImp" parent="daoImpl"/>
   <bean id="dDrugDrugMeasure" class="ckb.dao.med.drug.dict.drugs.measure.DDrugDrugMeasureImp" parent="daoImpl"/>
   <bean id="dDrugCount" class="ckb.dao.med.drug.dict.drugs.counter.DDrugCountImp" parent="daoImpl"/>
   <bean id="dDrugDrugCategory" class="ckb.dao.med.drug.dict.drugs.category.DDrugDrugCategoryImp" parent="daoImpl"/>
   <bean id="dDrugMeasure" class="ckb.dao.med.drug.dict.measures.DDrugMeasureImp" parent="daoImpl"/>
   <bean id="dDrugPartner" class="ckb.dao.med.drug.dict.partners.DDrugPartnerImp" parent="daoImpl"/>
-  <bean id="dDrugStorage" class="ckb.dao.med.drug.dict.storages.DDrugStorageImp" parent="daoImpl"/>
   <bean id="dDrugActDrug" class="ckb.dao.med.drug.actdrug.DDrugActDrugImp" parent="daoImpl"/>
   <bean id="dDrugAct" class="ckb.dao.med.drug.act.DDrugActImp" parent="daoImpl"/>
   <bean id="dDrugSaldo" class="ckb.dao.med.drug.drugsaldo.DDrugSaldoImp" parent="daoImpl"/>
@@ -223,7 +179,6 @@
   <bean id="dRoomBooking" class="ckb.dao.med.bookings.DRoomBookingsImp" parent="daoImpl"/>
   <bean id="dAmbPatientPay" class="ckb.dao.med.amb.DAmbPatientPaysImp" parent="daoImpl"/>
   <bean id="dLvPlanChoosen" class="ckb.dao.med.lv.plan.DKdoChoosenImp" parent="daoImpl"/>
-  <bean id="dCashOperday" class="ckb.dao.med.cashbox.operday.DCashOperdayImp" parent="daoImpl"/>
   <bean id="dCashDiscount" class="ckb.dao.med.cashbox.discount.DCashDiscountImp" parent="daoImpl"/>
 
   <bean id="dClient" class="ckb.dao.med.client.DClientImp" parent="daoImpl"/>
@@ -239,7 +194,7 @@
   <bean id="sClient" class="ckb.services.med.client.SClientImp" scope="singleton"/>
   <bean id="sDrug" class="ckb.services.med.drug.SDrugImp" scope="singleton"/>
 
-  <bean id="sAmbGrid" class="ckb.services.mo.SAmbGridImp" scope="singleton"/>
+  <bean id="sAmbGrid" class="ckb.services.mo.amb.SAmbGridImp" scope="singleton"/>
 
 
   <bean id="cleansoftDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">

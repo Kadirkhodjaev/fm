@@ -1,6 +1,7 @@
 package ckb.session;
 
 import ckb.grid.AmbGrid;
+import ckb.grid.ClientGrid;
 import ckb.models.Grid;
 import org.springframework.web.util.WebUtils;
 
@@ -52,6 +53,15 @@ public class SessionUtil {
       return grid == null ? new AmbGrid() : grid;
     } catch(Exception ex) {
       return new AmbGrid();
+    }
+  }
+
+  public static ClientGrid getClientGrid(HttpServletRequest request, String sessionName){
+    try {
+      ClientGrid grid = (ClientGrid) request.getSession().getAttribute(sessionName);
+      return grid == null ? new ClientGrid() : grid;
+    } catch(Exception ex) {
+      return new ClientGrid();
     }
   }
 

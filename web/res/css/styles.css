@@ -124,8 +124,16 @@ table.p-3>tbody>tr>td {
   width:100px
 }
 
+.wpx-150 {
+  width:150px
+}
+
 .wpx-600 {
   width:600px;
+}
+
+.wpx-1000 {
+  width:1000px;
 }
 
 .display-none {
@@ -143,6 +151,14 @@ table.p-3>tbody>tr>td {
 
 .wpx-1200 {
   width:1200px
+}
+
+.wpx-40 {
+  width:40px
+}
+
+.wpx-1400 {
+  width:1400px
 }
 
 .mb-0 {
@@ -222,4 +238,9 @@ table.p-3>tbody>tr>td {
 }
 .band-counter-2 {
   padding:1px; background:#c7254e; color:white; border-radius: 12px; height:22px;width:22px;
+}
+
+.modal-header .close {
+  font-size:35px;
+  margin-right:5px;
 }

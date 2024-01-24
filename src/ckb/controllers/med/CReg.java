@@ -1,7 +1,7 @@
 package ckb.controllers.med;
 
 
-import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
@@ -53,7 +53,8 @@ public class CReg {
   @Autowired SUser sUser;
   @Autowired DDept dDept;
   @Autowired DPatientLink dPatientLink;
-  @Autowired DCountery dCountery;
+  @Autowired
+  DCountry dCountery;
   @Autowired DRegion dRegion;
   @Autowired DOpt dOpt;
   @Autowired DUser dUser;

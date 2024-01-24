@@ -229,6 +229,6 @@ public class Session {
   }
 
   public boolean isReg() {
-    return roleId == 15;
+    return roleId == 22;
   }
 }

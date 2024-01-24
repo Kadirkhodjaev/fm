@@ -1,6 +1,6 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.forms.opts.DOpt;
@@ -50,7 +50,7 @@ public class CBooking {
   @Autowired private DUser dUser;
   @Autowired private DDept dDept;
   @Autowired private SForm sForm;
-  @Autowired private DCountery dCountery;
+  @Autowired private DCountry dCountery;
   @Autowired private DOpt dOpt;
   @Autowired private DDict dDict;
   @Autowired private DPatient dPatient;

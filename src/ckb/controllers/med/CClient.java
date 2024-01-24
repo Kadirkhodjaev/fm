@@ -1,7 +1,7 @@
 package ckb.controllers.med;
 
 
-import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
@@ -36,7 +36,7 @@ public class CClient {
 
   @Autowired private DClient dClient;
   @Autowired private DOpt dOpt;
-  @Autowired private DCountery dCountry;
+  @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
   @Autowired private DUser dUser;
   @Autowired private SClient sClient;
@@ -100,7 +100,7 @@ public class CClient {
       if (Req.get(req, "action").equals("end"))
         grid.setPage(grid.getMaxPage());
       grid.setSql(sql);
-      grid.setRowCount(sClient.getCount(session, sql));
+      grid.setRowCount(sClient.getCount(sql));
       long tail = grid.getRowCount() % grid.getPageSize();
       grid.setMaxPage(tail == 0 ? Math.round(grid.getRowCount() / grid.getPageSize()) : Math.round(grid.getRowCount() / grid.getPageSize()) + 1);
       grid.setStartPos((grid.getPage() - 1) * grid.getPageSize() + 1);

@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <div class="panel panel-info w-100">
   <div class="panel-heading">
-    <span class="fa fa-users"></span> Список пациентов
+    <span class="fa fa-users"></span> Реестр клиентов
   </div>
   <div class="right pt-5">
     <ul class="pagination mb-0">
@@ -36,29 +36,29 @@
     <table class="table table-striped table-bordered table-hover grid dataTable hand">
       <thead>
       <tr>
-        <th style="width:50px">#</th>
-        <th style="width:50px">&nbsp;</th>
+        <th style="width:50px">№</th>
         <th>ФИО</th>
-        <th style="width:130px">Год рождения</th>
-        <th>Телефон</th>
-        <th>Страна</th>
-        <th>Регион</th>
-        <th style="width:130px">Дата рег.</th>
-        <th style="width:130px">Состояние</th>
+        <th style="width: 150px">Пол</th>
+        <th style="width: 150px">Дата рождения</th>
+        <th style="width: 150px">Документ</th>
+        <th style="width: 150px">Страна</th>
+        <th style="width: 150px">Региод</th>
+        <th style="width: 150px">Телефон.</th>
+        <th style="width: 150px">Дата рег.</th>
       </tr>
       </thead>
       <tbody style="overflow: scroll">
-      <c:forEach items="${patients}" var="p" varStatus="loop">
+      <c:forEach items="${rows}" var="p" varStatus="loop">
         <tr ondblclick="view(${p.id})">
           <td class="center">${loop.index + 1}</td>
-          <td class="center"><img src='/res/imgs/${p.icon}.gif'/></td>
           <td><a href="#" onclick="view(${p.id}); return false;">${p.fio}</a></td>
+          <td class="center">${p.sex}</td>
           <td class="center">${p.birthdate}</td>
-          <td class="center">${p.tel}</td>
+          <td class="center">${p.docSeria} ${p.docNum}</td>
           <td class="center">${p.country}</td>
           <td class="center">${p.region}</td>
+          <td class="center">${p.tel}</td>
           <td class="center">${p.dateReg}</td>
-          <td class="center">${p.state}</td>
         </tr>
       </c:forEach>
       </tbody>
@@ -68,16 +68,15 @@
 <script>
   $(() => {
     <c:if test="${grid.word != ''}">
-      $('#amb-search-field').focus()
+    $('#amb-search-field').focus()
     </c:if>
   })
   function setPageSize(val) {
     setPage('${sessionScope.ENV.curUrl}?action=page_size&page_size=' + val);
   }
   function setWord(val) {
-    if(event.keyCode === 13) {
-      setPage('${sessionScope.ENV.curUrl}?action=search&word=' + encodeURIComponent(val))
-    }
+    if(event.keyCode === 13)
+      setPage('${sessionScope.ENV.curUrl}?action=search&word=' + encodeURIComponent(val));
   }
   function setPageNum(val) {
     setPage('${sessionScope.ENV.curUrl}?action=page_num&page_num=' + val)
@@ -86,6 +85,6 @@
     setPage('${sessionScope.ENV.curUrl}?action=' + code);
   }
   function view(id) {
-    setPage('${view_url}' + id);
+    setPage('/clients/view.s?id=' + id);
   }
 </script>

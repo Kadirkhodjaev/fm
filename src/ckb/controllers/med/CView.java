@@ -1,6 +1,6 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
@@ -92,7 +92,7 @@ public class CView {
   @Autowired private DPatientDrugDate dPatientDrugDate;
   @Autowired private DDept dDep;
   @Autowired private DLvFizioDate dLvFizioDate;
-  @Autowired private DCountery dCountery;
+  @Autowired private DCountry dCountery;
   @Autowired private DRegion dRegion;
   @Autowired private DF13 df13;
   @Autowired private DHNPatient dhnPatient;

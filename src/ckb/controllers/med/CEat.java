@@ -507,8 +507,8 @@ public class CEat {
     session.setCurUrl("/eats/menu/rasxod.s?id=" + claim.getId());
     model.addAttribute("claim", claim);
     //
-    List<ObjList> products = new ArrayList<ObjList>();
-    List<ObjList> eats = new ArrayList<ObjList>();
+    List<ObjList> products = new ArrayList<>();
+    List<ObjList> eats = new ArrayList<>();
     //
     Connection conn = null;
     PreparedStatement ps = null;

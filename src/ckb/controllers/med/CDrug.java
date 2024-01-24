@@ -6,7 +6,6 @@ import ckb.dao.med.drug.act.DDrugAct;
 import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.categories.DDrugCategory;
 import ckb.dao.med.drug.dict.contracts.DDrugContract;
-import ckb.dao.med.drug.dict.cupboards.DDrugCupboard;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
@@ -15,7 +14,6 @@ import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.drug.dict.manufacturer.DDrugManufacturer;
 import ckb.dao.med.drug.dict.measures.DDrugMeasure;
 import ckb.dao.med.drug.dict.partners.DDrugPartner;
-import ckb.dao.med.drug.dict.storages.DDrugStorage;
 import ckb.dao.med.drug.drugsaldo.DDrugSaldo;
 import ckb.dao.med.drug.out.DDrugOut;
 import ckb.dao.med.drug.out.DDrugOutRow;
@@ -58,10 +56,8 @@ public class CDrug {
   @Autowired private DDrugDrugCategory dDrugDrugCategory;
   @Autowired private DDrugCategory dDrugCategory;
   @Autowired private DDrugContract dDrugContract;
-  @Autowired private DDrugCupboard dDrugCupboard;
   @Autowired private DDrugMeasure dDrugMeasure;
   @Autowired private DDrugPartner dDrugPartner;
-  @Autowired private DDrugStorage dDrugStorage;
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DDrugAct dDrugAct;
   @Autowired private DDrugActDrug dDrugActDrug;
@@ -551,7 +547,6 @@ public class CDrug {
     try {
       if(Util.get(req, "code").equals("category")) dDrugCategory.delete(Util.getInt(req, "id"));
       if(Util.get(req, "code").equals("contract")) dDrugContract.delete(Util.getInt(req, "id"));
-      if(Util.get(req, "code").equals("cupboard")) dDrugCupboard.delete(Util.getInt(req, "id"));
       if(Util.get(req, "code").equals("measure")) dDrugMeasure.delete(Util.getInt(req, "id"));
       if(Util.get(req, "code").equals("partner")) dDrugPartner.delete(Util.getInt(req, "id"));
       if(Util.get(req, "code").equals("manufacturer")) dDrugManufacturer.delete(Util.getInt(req, "id"));
@@ -562,7 +557,6 @@ public class CDrug {
         for(DrugCount d: lst) dDrugCount.delete(d.getId());
         dDrug.delete(Util.getInt(req, "id"));
       }
-      if(Util.get(req, "code").equals("storage")) dDrugStorage.delete(Util.getInt(req, "id"));
       if(Util.get(req, "code").equals("direction")) dDrugDirection.delete(Util.getInt(req, "id"));
       if(Util.get(req, "code").equals("rasxodtype")) dhnDirection.delete(Util.getInt(req, "id"));
       json.put("success", true);
@@ -638,17 +632,6 @@ public class CDrug {
         }
         dDrugContract.save(obj);
       }
-      if(Util.get(req, "code").equals("cupboard")) {
-        DrugCupboards obj = Util.isNull(req, "id") ? new DrugCupboards() : dDrugCupboard.get(Util.getInt(req, "id"));
-        obj.setName(Util.get(req, "name"));
-        obj.setStorage(dDrugStorage.get(Util.getInt(req, "storage")));
-        obj.setState(Util.isNull(req, "state") ? "P" : "A");
-        if (Util.isNull(req, "id")) {
-          obj.setCrBy(session.getUserId());
-          obj.setCrOn(new Date());
-        }
-        dDrugCupboard.save(obj);
-      }
       if(Util.get(req, "code").equals("measure")) {
         DrugMeasures obj = Util.isNull(req, "id") ? new DrugMeasures() : dDrugMeasure.get(Util.getInt(req, "id"));
         obj.setName(Util.get(req, "name"));
@@ -702,16 +685,6 @@ public class CDrug {
             dDrugDrugCategory.save(ct);
           }
 
-      }
-      if(Util.get(req, "code").equals("storage")) {
-        DrugStorages obj = Util.isNull(req, "id") ? new DrugStorages() : dDrugStorage.get(Util.getInt(req, "id"));
-        obj.setName(Util.get(req, "name"));
-        obj.setState(Util.isNull(req, "state") ? "P" : "A");
-        if (Util.isNull(req, "id")) {
-          obj.setCrBy(session.getUserId());
-          obj.setCrOn(new Date());
-        }
-        dDrugStorage.save(obj);
       }
       if(Util.get(req, "code").equals("rasxodtype")) {
         HNDirections obj = Util.isNull(req, "id") ? new HNDirections() : dhnDirection.get(Util.getInt(req, "id"));
@@ -787,13 +760,6 @@ public class CDrug {
         json.put("end_date", Util.dateToString(obj.getEndDate()));
         json.put("extra_info", obj.getExtraInfo());
       }
-      if(Util.get(req, "code").equals("cupboard")) {
-        DrugCupboards obj = dDrugCupboard.get(Util.getInt(req, "id"));
-        json.put("id", obj.getId());
-        json.put("storage", obj.getStorage().getId());
-        json.put("name", obj.getName());
-        json.put("state", obj.getState());
-      }
       if(Util.get(req, "code").equals("measure")) {
         DrugMeasures obj = dDrugMeasure.get(Util.getInt(req, "id"));
         json.put("id", obj.getId());
@@ -819,12 +785,6 @@ public class CDrug {
         for(DrugDrugCategories d: dDrugDrugCategory.getList("From DrugDrugCategories Where drug.id = " + obj.getId()))
           arr.put(d.getCategory().getId());
         json.put("cats", arr);
-      }
-      if(Util.get(req, "code").equals("storage")) {
-        DrugStorages obj = dDrugStorage.get(Util.getInt(req, "id"));
-        json.put("id", obj.getId());
-        json.put("name", obj.getName());
-        json.put("state", obj.getState());
       }
       if(Util.get(req, "code").equals("saldo")) {
         DrugSaldos obj = dDrugSaldo.get(Util.getInt(req, "id"));
@@ -907,18 +867,6 @@ public class CDrug {
     return "/med/drugs/dicts/contracts/index";
   }
 
-  @RequestMapping("/dict/cupboards.s")
-  protected String dicstCubboards(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurUrl("/drugs/dicts.s");
-    session.setCurSubUrl("/drugs/dict/cupboards.s");
-    //
-    model.addAttribute("list", dDrugCupboard.getAll());
-    model.addAttribute("storages", dDrugStorage.getList("From DrugStorages Order By Id Desc"));
-    Util.makeMsg(request, model);
-    return "/med/drugs/dicts/cupboards/index";
-  }
-
   @RequestMapping("/dict/measures.s")
   protected String dicstMeasures(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -952,17 +900,6 @@ public class CDrug {
     model.addAttribute("categories", dDrugCategory.getList("From DrugCategories Order By Id Desc"));
     model.addAttribute("measures", dDrugMeasure.getList("From DrugMeasures Order By Id Desc"));
     return "/med/drugs/dicts/drugs/index";
-  }
-
-  @RequestMapping("/dict/storages.s")
-  protected String dicstStorages(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurUrl("/drugs/dicts.s");
-    session.setCurSubUrl("/drugs/dict/storages.s");
-    //
-    model.addAttribute("list", dDrugStorage.getAll());
-    Util.makeMsg(request, model);
-    return "/med/drugs/dicts/storages/index";
   }
 
   @RequestMapping("/dict/drug/incomes.s")

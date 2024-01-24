@@ -206,7 +206,7 @@
 <iframe id="frmDiv" name="frm" class="hidden"></iframe>
 <div class="panel panel-info" style="width: 900px !important; margin: auto">
   <div class="panel-heading">
-    <span title="${patient.id}">Реквизиты пациента</span>
+    <span title="${patient.id}" onclick="setPage('/ambs/reg.s?id=${patient.id}')">Реквизиты пациента</span>
     <ul class="pagination" style="float:right; margin-top:-5px">
       <c:if test="${patient.state != 'ARCH'}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="doSave()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>

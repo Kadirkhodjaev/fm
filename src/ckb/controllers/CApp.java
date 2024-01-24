@@ -259,8 +259,10 @@ public class  CApp {
     }
     if(roleId == 22) {
       session.setCurUrl(session.getCurUrl().equals("") ? "/ambs/reg.s" : session.getCurUrl());
-      m.add(new Menu("Регистрация", "/ambs/reg.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Регистрация", "/ambs/reg.s", "fa fa-edit fa-fw", session));
       m.add(new Menu("Текущие", "/ambs/patients.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Клиенты", "/clients/list.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Архив", "/ambs/archive.s", "fa fa-group fa-fw", session));
     }
     model.addAttribute("menuList", m);
     model.addAttribute("lvs", dUser.getLvs());
@@ -269,7 +271,7 @@ public class  CApp {
     model.addAttribute("repList", dUser.getReports(session.getUserId()));
     model.addAttribute("openPage", roleId == 0 ? "/roles.s" : session.getCurUrl().equals("") ? dRole.get(roleId).getUrl() : session.getCurUrl());
     model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22);
-    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10);
+    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22);
     model.addAttribute("isEnterFilter", dParam.byCode("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);
     model.addAttribute("clinicName", dParam.byCode("CLINIC_NAME"));

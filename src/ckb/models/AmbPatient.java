@@ -5,6 +5,9 @@ public class AmbPatient {
   private int id;
   private String fio;
   private String birthdate;
+  private String tel;
+  private String country;
+  private String region;
   private String dateReg;
   private String state;
   private String icon;
@@ -31,6 +34,30 @@ public class AmbPatient {
 
   public void setBirthdate(String birthdate) {
     this.birthdate = birthdate;
+  }
+
+  public String getTel() {
+    return tel;
+  }
+
+  public void setTel(String tel) {
+    this.tel = tel;
+  }
+
+  public String getCountry() {
+    return country;
+  }
+
+  public void setCountry(String country) {
+    this.country = country;
+  }
+
+  public String getRegion() {
+    return region;
+  }
+
+  public void setRegion(String region) {
+    this.region = region;
   }
 
   public String getDateReg() {

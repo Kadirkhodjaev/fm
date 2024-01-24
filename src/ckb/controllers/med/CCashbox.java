@@ -1,6 +1,6 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
@@ -8,7 +8,6 @@ import ckb.dao.med.amb.DAmbPatientPays;
 import ckb.dao.med.amb.DAmbPatientServices;
 import ckb.dao.med.amb.DAmbPatients;
 import ckb.dao.med.cashbox.discount.DCashDiscount;
-import ckb.dao.med.cashbox.operday.DCashOperday;
 import ckb.dao.med.head_nurse.date.DHNDate;
 import ckb.dao.med.head_nurse.date.DHNDateAmbRow;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
@@ -29,7 +28,6 @@ import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbPatients;
 import ckb.domains.med.amb.AmbResults;
 import ckb.domains.med.cash.CashDiscounts;
-import ckb.domains.med.cash.CashOperdays;
 import ckb.domains.med.head_nurse.HNDateAmbRows;
 import ckb.domains.med.head_nurse.HNDates;
 import ckb.domains.med.head_nurse.HNPatients;
@@ -67,7 +65,7 @@ import java.util.List;
 public class CCashbox {
 
   private Session session = null;
-  @Autowired private DCountery dCountery;
+  @Autowired private DCountry dCountery;
   @Autowired private DRegion dRegion;
   @Autowired private DAmbPatients dAmbPatients;
   @Autowired private DAmbPatientServices dAmbPatientServices;
@@ -78,7 +76,6 @@ public class CCashbox {
   @Autowired private DPatientWatchers dPatientWatchers;
   @Autowired private DPatientPays dPatientPays;
   @Autowired private DLvPlan dLvPlan;
-  @Autowired private DCashOperday dCashOperday;
   @Autowired private DCashDiscount dCashDiscount;
   @Autowired private DLvFizio dLvFizio;
   @Autowired private DLvFizioDate dLvFizioDate;
@@ -93,59 +90,6 @@ public class CCashbox {
   @Autowired private DHNDateAmbRow dhnDateAmbRow;
   @Autowired private DHNDate dhnDate;
   @Autowired private DParam dParam;
-
-
-  @RequestMapping("/operday.s")
-  protected String operday(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/cashbox/operday.s");
-    //
-    List<CashOperdays> operdays = dCashOperday.getList("From CashOperdays Order By Id Desc");
-    m.addAttribute("list", operdays);
-    //
-    return "/med/cashbox/operday";
-  }
-
-  @RequestMapping(value = "/operday.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String operday(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      if(Util.isNull(req, "id")) {
-        CashOperdays operday = new CashOperdays();
-        operday.setState("OPEN");
-        operday.setOperday(Util.getDate(req, "oper_day"));
-        operday.setCrBy(dUser.get(session.getUserId()));
-        operday.setCrOn(new Date());
-        dCashOperday.save(operday);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-      e.printStackTrace();
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "/closeOperday.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String closeOperday(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      CashOperdays operday = dCashOperday.get(Util.getInt(req, "id"));
-      operday.setState("CLOSE");
-      dCashOperday.save(operday);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-      e.printStackTrace();
-    }
-    return json.toString();
-  }
 
   @RequestMapping(value = "/setServicePayState.s", method = RequestMethod.POST)
   @ResponseBody
@@ -237,7 +181,6 @@ public class CCashbox {
     m.addAttribute("services", ss);
     m.addAttribute("drugs", drugs);
     m.addAttribute("ds", ds);
-    m.addAttribute("operDay", dCashOperday.getOpenDay());
     m.addAttribute("discounts", dCashDiscount.amb(pat.getId()));
     m.addAttribute("discountSum", discountSum);
     m.addAttribute("drugSum", drugSum);
@@ -806,7 +749,6 @@ public class CCashbox {
     model.addAttribute("lvs", dUser.getLvs());
     model.addAttribute("country", pat.getCounteryId() != null ? dCountery.get(pat.getCounteryId()).getName() : "");
     model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
-    model.addAttribute("operDay", dCashOperday.getOpenDay());
     model.addAttribute("discounts", dCashDiscount.stat(pat.getId()));
     double paid = 0D;
     for(PatientPays pay: pays) {

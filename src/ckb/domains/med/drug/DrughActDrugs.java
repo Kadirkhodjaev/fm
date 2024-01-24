@@ -13,8 +13,6 @@ public class DrughActDrugs extends GenId {
   @OneToOne @JoinColumn private DrughActs act;
   @OneToOne @JoinColumn private Drugs drug;
   @OneToOne @JoinColumn private DrugMeasures measure;
-  @OneToOne @JoinColumn private DrugStorages storage;
-  @OneToOne @JoinColumn private DrugCupboards cupboard;
   @OneToOne @JoinColumn private DrugManufacturers manufacturer;
 
   @Column private Double price;
@@ -57,22 +55,6 @@ public class DrughActDrugs extends GenId {
 
   public void setMeasure(DrugMeasures measure) {
     this.measure = measure;
-  }
-
-  public DrugStorages getStorage() {
-    return storage;
-  }
-
-  public void setStorage(DrugStorages storage) {
-    this.storage = storage;
-  }
-
-  public DrugCupboards getCupboard() {
-    return cupboard;
-  }
-
-  public void setCupboard(DrugCupboards cupboard) {
-    this.cupboard = cupboard;
   }
 
   public Double getPrice() {

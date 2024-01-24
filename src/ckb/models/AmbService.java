@@ -208,4 +208,8 @@ public class AmbService {
   public void setConfDate(Date confDate) {
     this.confDate = confDate;
   }
+
+  public boolean isClosed() {
+    return "DONE".equals(state) || "DEL".equals(state) || "AUTO_DEL".equals(state);
+  }
 }

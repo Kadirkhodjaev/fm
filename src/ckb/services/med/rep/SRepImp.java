@@ -1,6 +1,6 @@
 package ckb.services.med.rep;
 
-import ckb.dao.admin.countery.DCountery;
+import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.reports.DReport;
@@ -56,7 +56,8 @@ public class SRepImp implements SRep {
 	@Autowired DAmbGroups dAmbGroup;
 	@Autowired DReport dReport;
 	@Autowired DUser dUser;
-	@Autowired DCountery dCountery;
+	@Autowired
+  DCountry dCountery;
 	//
 	@Autowired private DPatientWatchers dPatientWatchers;
 	@Autowired private DLvFizio dLvFizio;
