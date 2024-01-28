@@ -32,14 +32,14 @@ import java.util.List;
 
 public class SAmpImp implements SAmb {
 
-  @Autowired private DAmbPatients dAmpPatients;
-  @Autowired private DAmbPatientServices dAmpPatientServices;
+  @Autowired private DAmbPatient dAmpPatients;
+  @Autowired private DAmbPatientService dAmpPatientServices;
   @Autowired private DAmbPatientLinks dAmbPatientLinks;
   @Autowired private DOpt dOpt;
   @Autowired private DAmbServiceFields dAmbServiceFields;
-  @Autowired private DAmbPatients dAmbPatients;
-  @Autowired private DAmbPatientServices dAmbPatientServices;
-  @Autowired private DAmbResults dAmbResults;
+  @Autowired private DAmbPatient dAmbPatients;
+  @Autowired private DAmbPatientService dAmbPatientServices;
+  @Autowired private DAmbResult dAmbResults;
   @Autowired private DFormField dFormField;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DAmbDrug dAmbDrug;

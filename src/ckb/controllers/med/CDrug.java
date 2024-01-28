@@ -491,7 +491,6 @@ public class CDrug {
   protected String saveSaldo(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      System.out.println("DDD = " + Util.get(req, "id"));
       if(Util.isNotNull(req, "drug") && !Util.get(req, "drug").equals("") && Util.isNotNull(req, "count") && Util.isNotNull(req, "price")) {
         DrugSaldos saldo = new DrugSaldos();
         if (Util.isNotNull(req, "id"))

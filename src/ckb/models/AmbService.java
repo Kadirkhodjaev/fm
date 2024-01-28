@@ -17,6 +17,7 @@ public class AmbService {
   private List<AmbPatientServices> services;
   private String price;
   private String state;
+  private boolean canDelete;
   private Users worker;
   private List<Users> users;
   private AmbResults result;
@@ -211,5 +212,13 @@ public class AmbService {
 
   public boolean isClosed() {
     return "DONE".equals(state) || "DEL".equals(state) || "AUTO_DEL".equals(state);
+  }
+
+  public boolean isCanDelete() {
+    return canDelete;
+  }
+
+  public void setCanDelete(boolean canDelete) {
+    this.canDelete = canDelete;
   }
 }

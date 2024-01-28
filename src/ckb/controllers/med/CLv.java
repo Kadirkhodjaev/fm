@@ -155,8 +155,8 @@ public class CLv {
     m.add(new Menu(9,"Выписка", "/lv/vypiska.s", "fa fa-check fa-fw", false));
     m.add(new Menu(14,"Дополнительные данные", "/lv/extra.s", "fa fa-plus-square fa-fw", false));
     m.add(new Menu(13,"Перевод", "/lv/epic.s", "fa fa-random fa-fw", false));
-    if(dPatientLink.getCount("From PatientLinks Where parent = " + session.getCurPat()) > 0)
-      m.add(new Menu(15, "История", "/lv/history.s", "fa fa-bars fa-fw", false));
+    /*if(dPatientLink.getCount("From PatientLinks Where parent = " + session.getCurPat()) > 0)
+      m.add(new Menu(15, "История", "/lv/history.s", "fa fa-bars fa-fw", false));*/
     //m.add(new Menu(16, "Все документы", "/lv/docs.s", "fa fa-bars fa-fw", false));
     model.addAttribute("menuList", m);
     model.addAttribute("id", id);
@@ -1796,7 +1796,7 @@ public class CLv {
         }
       }
       for(PatientDrugDates date: dates) {
-        if(!date.getState().equals("ENT")) {
+        if(!date.getState().equals("ENT") || date.isEveningTimeDone() || date.isMorningTimeDone() || date.isNoonTimeDone()) {
           isOk = false;
         }
       }
@@ -1875,4 +1875,14 @@ public class CLv {
     return json.toString();
   }
   //endregion
+
+  @RequestMapping(value = "/print_recommend.s")
+  protected String print_recommend(HttpServletRequest request, Model model) {
+    Session session = SessionUtil.getUser(request);
+    Patients pat = dPatient.get(session.getCurPat());
+    model.addAttribute("pat", pat);
+    model.addAttribute("doc", dLvForm4.getByPatient(pat.getId()));
+    model.addAttribute("lv", dUser.get(pat.getLv_id()));
+    return "/med/lv/print/recommend";
+  }
 }

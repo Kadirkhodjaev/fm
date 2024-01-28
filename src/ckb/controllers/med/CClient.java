@@ -6,7 +6,7 @@ import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbPatients;
+import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.client.DClient;
 import ckb.domains.admin.Clients;
 import ckb.models.Grid;
@@ -42,7 +42,7 @@ public class CClient {
   @Autowired private SClient sClient;
   @Autowired private DFormField dFormField;
   @Autowired private SForm sForm;
-  @Autowired private DAmbPatients dAmbPatient;
+  @Autowired private DAmbPatient dAmbPatient;
 
   @RequestMapping("list.s")
   protected String main(HttpServletRequest req, Model model) {

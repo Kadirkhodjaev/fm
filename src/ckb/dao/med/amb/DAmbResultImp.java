@@ -3,8 +3,8 @@ package ckb.dao.med.amb;
 import ckb.dao.DaoImp;
 import ckb.domains.med.amb.AmbResults;
 
-public class DAmbResultsImp extends DaoImp<AmbResults> implements DAmbResults {
-  public DAmbResultsImp() {
+public class DAmbResultImp extends DaoImp<AmbResults> implements DAmbResult {
+  public DAmbResultImp() {
     super(AmbResults.class);
   }
 }

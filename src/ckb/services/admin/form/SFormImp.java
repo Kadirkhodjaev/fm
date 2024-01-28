@@ -2,7 +2,7 @@ package ckb.services.admin.form;
 
 import ckb.dao.admin.forms.DForm;
 import ckb.dao.admin.forms.fields.DFormField;
-import ckb.dao.med.amb.DAmbServices;
+import ckb.dao.med.amb.DAmbService;
 import ckb.domains.admin.FormFields;
 import ckb.domains.admin.Kdos;
 import ckb.domains.admin.SelOpts;
@@ -26,7 +26,8 @@ public class SFormImp implements SForm {
 
   @Autowired DForm dForm;
   @Autowired DFormField dFormField;
-  @Autowired DAmbServices dAmbServices;
+  @Autowired
+  DAmbService dAmbServices;
 
   @Override
   public void setSelectOptionModel(Model model, Integer formId, String field) {

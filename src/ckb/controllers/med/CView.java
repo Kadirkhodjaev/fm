@@ -43,6 +43,7 @@ import ckb.session.SessionUtil;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -483,6 +484,52 @@ public class CView {
   protected String fizioList(HttpServletRequest request, Model model) {
     model.addAttribute("fizios", dKdos.getTypeKdos(8));
     return "/med/lv/fizio/list";
+  }
+
+  @RequestMapping(value = "/fizio/search_templates.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String search_templates(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    JSONArray arr = new JSONArray();
+    try {
+      String code = Util.get(req, "code");
+      String word = Util.get(req, "word");
+      String kdo = Util.get(req, "kdo");
+
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        code.equals("oblast") ?
+        "Select Trim(t.oblast)" +
+          "   From Lv_Fizios t" +
+          "  Where t.kdo_id = " + kdo +
+          "    And t.oblast is not null" +
+          "    And lower(t.oblast) like lower('%" + word.trim() + "%')" +
+          "  Group By Trim(t.oblast)" :
+          "Select Trim(t.comment)" +
+            "   From Lv_Fizios t" +
+            "  Where t.kdo_id = " + kdo +
+            "    And t.comment is not null" +
+            "    And lower(t.comment) like lower('%" + word.trim() + "%')" +
+            "  Group By Trim(t.comment)"
+      );
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        arr.put(rs.getString(1));
+      }
+      json.put("rows", arr);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    return json.toString();
   }
   // Добавить
   @RequestMapping(value = "/fizio/set.s", method = RequestMethod.POST)

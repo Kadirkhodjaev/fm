@@ -5,8 +5,8 @@ import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.reports.DReport;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbGroups;
-import ckb.dao.med.amb.DAmbPatients;
+import ckb.dao.med.amb.DAmbGroup;
+import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.drug.dict.manufacturer.DDrugManufacturer;
 import ckb.dao.med.drug.out.DDrugOut;
 import ckb.dao.med.drug.out.DDrugOutRow;
@@ -53,7 +53,8 @@ import java.util.*;
 
 public class SRepImp implements SRep {
 
-	@Autowired DAmbGroups dAmbGroup;
+	@Autowired
+	DAmbGroup dAmbGroup;
 	@Autowired DReport dReport;
 	@Autowired DUser dUser;
 	@Autowired
@@ -64,7 +65,7 @@ public class SRepImp implements SRep {
 	@Autowired private DLvFizioDate dLvFizioDate;
 	@Autowired private DLvPlan dLvPlan;
 	@Autowired private DPatient dPatient;
-	@Autowired private DAmbPatients dAmbPatient;
+	@Autowired private DAmbPatient dAmbPatient;
 	@Autowired private DLvBio dLvBio;
 	@Autowired private DLvCoul dLvCoul;
 	@Autowired private DLvGarmon dLvGarmon;
@@ -3757,7 +3758,6 @@ public class SRepImp implements SRep {
 					"				 (Select Sum(c.rasxod * f.price) From drug_out_rows f, hn_date_patient_rows c, hn_drugs d where f.Id = d.outRow_id And d.id = c.drug_Id And c.patient_Id = t.id) ddd " +
 					"   From Patients t " +
 					"  Where t.state != 'ARCH' " +
-					"   And t.id = 15698 "+
 					" Order By t.date_begin "
 			);
 			rs = ps.executeQuery();

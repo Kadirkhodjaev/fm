@@ -5,8 +5,8 @@ import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbPatientPays;
-import ckb.dao.med.amb.DAmbPatientServices;
-import ckb.dao.med.amb.DAmbPatients;
+import ckb.dao.med.amb.DAmbPatientService;
+import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.cashbox.discount.DCashDiscount;
 import ckb.dao.med.head_nurse.date.DHNDate;
 import ckb.dao.med.head_nurse.date.DHNDateAmbRow;
@@ -67,8 +67,8 @@ public class CCashbox {
   private Session session = null;
   @Autowired private DCountry dCountery;
   @Autowired private DRegion dRegion;
-  @Autowired private DAmbPatients dAmbPatients;
-  @Autowired private DAmbPatientServices dAmbPatientServices;
+  @Autowired private DAmbPatient dAmbPatients;
+  @Autowired private DAmbPatientService dAmbPatientServices;
   @Autowired private DUser dUser;
   @Autowired private DAmbPatientPays dAmbPatientPay;
   // Stat buyicha

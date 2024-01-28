@@ -2,12 +2,11 @@ package ckb.dao.med.amb;
 
 import ckb.dao.DaoImp;
 import ckb.domains.med.amb.AmbPatientServices;
-import org.aspectj.weaver.ast.And;
 
 import java.util.List;
 
-public class DAmbPatientServicesImp extends DaoImp<AmbPatientServices> implements DAmbPatientServices {
-  public DAmbPatientServicesImp() {
+public class DAmbPatientServiceImp extends DaoImp<AmbPatientServices> implements DAmbPatientService {
+  public DAmbPatientServiceImp() {
     super(AmbPatientServices.class);
   }
 

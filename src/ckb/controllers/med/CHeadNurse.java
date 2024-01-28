@@ -6,7 +6,7 @@ import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.med.amb.DAmbDrug;
 import ckb.dao.med.amb.DAmbDrugDate;
 import ckb.dao.med.amb.DAmbDrugRow;
-import ckb.dao.med.amb.DAmbPatients;
+import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
@@ -100,7 +100,7 @@ public class CHeadNurse {
   @Autowired private DDrugDrugMeasure dDrugDrugMeasure;
   @Autowired private DHNDatePatient dhnDatePatient;
   @Autowired private DDrugDirectionDep dDrugDirectionDep;
-  @Autowired private DAmbPatients dAmbPatient;
+  @Autowired private DAmbPatient dAmbPatient;
   @Autowired private SAmb sAmb;
   @Autowired private DAmbDrug dAmbDrug;
   @Autowired private DAmbDrugDate dAmbDrugDate;
@@ -2472,11 +2472,12 @@ public class CHeadNurse {
   //endregion
 
   @RequestMapping(value = "new_drugs.s")
-  protected String patientNewDrugs(HttpServletRequest req, Model model) throws JSONException {
+  protected String patientNewDrugs(HttpServletRequest req, Model model) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/new_drugs.s");
     try {
-      model.addAttribute("list", sPatient.getPatientNewDrugs());
+      int dep = dUser.get(session.getUserId()).getDept().getId();
+      model.addAttribute("list", sPatient.getPatientNewDrugs(dep));
     } catch (Exception e) {
       e.printStackTrace();
     }

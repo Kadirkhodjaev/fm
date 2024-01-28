@@ -75,7 +75,9 @@
                 <td width="100" align="center">${fizio.fizei}</td>
               </c:if>
               <td width="100" align="right">${fizio.price * (fizio.count == null ? 0 : fizio.count) - (fizio.paidSum != null ? fizio.paidSum : 0)}</td>
-              <td width="250"><input type="text" maxlength="200" class="form-control" name="oblast" value="${fizio.oblast}"/></td>
+              <td width="250">
+                <input type="text" maxlength="200" class="form-control" name="oblast" value="${fizio.oblast}"/>
+              </td>
               <td align="center" nowrap>
                 <select name="count" class="form-control">
                   <c:forEach begin="0" end="20" var="i">

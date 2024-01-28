@@ -5,6 +5,6 @@ import ckb.domains.med.amb.AmbServices;
 
 import java.util.List;
 
-public interface DAmbServices extends Dao<AmbServices> {
+public interface DAmbService extends Dao<AmbServices> {
   List<AmbServices> byType(int i);
 }

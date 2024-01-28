@@ -1,7 +1,7 @@
 package ckb.utils;
 
-import ckb.dao.med.amb.DAmbPatientServices;
-import ckb.dao.med.amb.DAmbPatients;
+import ckb.dao.med.amb.DAmbPatient;
+import ckb.dao.med.amb.DAmbPatientService;
 import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbPatients;
 import org.quartz.Job;
@@ -23,8 +23,8 @@ public class MedScheduler implements Job {
   @Override
   public void execute(final JobExecutionContext ctx) {
     ApplicationContextHolder ach = new ApplicationContextHolder();
-    DAmbPatients dAmbPatient = ach.getContext().getBean(DAmbPatients.class);
-    DAmbPatientServices dAmbPatientServices = ach.getContext().getBean(DAmbPatientServices.class);
+    DAmbPatient dAmbPatient = ach.getContext().getBean(DAmbPatient.class);
+    DAmbPatientService dAmbPatientServices = ach.getContext().getBean(DAmbPatientService.class);
     Calendar calendar = Calendar.getInstance();
     calendar.add(Calendar.DATE, -5);
     try {

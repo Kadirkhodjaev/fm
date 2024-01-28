@@ -72,7 +72,9 @@
   <bean id="dF999" class="ckb.dao.med.kdos.forms.f999.DF999Imp" parent="daoImpl"/>
   <bean id="dCountery" class="ckb.dao.admin.countery.DCountryImp" parent="daoImpl"/>
   <bean id="dRegion" class="ckb.dao.admin.region.DRegionImp" parent="daoImpl"/>
-  <bean id="dAmbGroups" class="ckb.dao.med.amb.DAmbGroupsImp" parent="daoImpl"/>
+  <bean id="dAmbGroups" class="ckb.dao.med.amb.DAmbGroupImp" parent="daoImpl"/>
+  <bean id="dAmbFizioDate" class="ckb.dao.med.amb.DAmbFizioDateImp" parent="daoImpl"/>
+  <bean id="dAmbFizioTemplate" class="ckb.dao.med.amb.DAmbFizioTemplateImp" parent="daoImpl"/>
   <bean id="dAmbPatientLinks" class="ckb.dao.med.amb.DAmbPatientLinksImp" parent="daoImpl"/>
   <bean id="dAmbServiceFields" class="ckb.dao.med.amb.DAmbServiceFieldsImp" parent="daoImpl"/>
   <bean id="dDrugDirectionDep" class="ckb.dao.med.drug.dict.directions.DDrugDirectionDepImp" parent="daoImpl"/>
@@ -96,10 +98,10 @@
   <bean id="dLvTemplate" class="ckb.dao.med.template.DTemplateImp" parent="daoImpl"/>
   <bean id="dLvDrugTemplate" class="ckb.dao.med.template.DDrugTemplateImp" parent="daoImpl"/>
   <!-- AMB -->
-  <bean id="dAmpPatients" class="ckb.dao.med.amb.DAmbPatientsImp" parent="daoImpl"/>
-  <bean id="dAmbPatientServices" class="ckb.dao.med.amb.DAmbPatientServicesImp" parent="daoImpl"/>
-  <bean id="dAmbServices" class="ckb.dao.med.amb.DAmbServicesImp" parent="daoImpl"/>
-  <bean id="dAmbResults" class="ckb.dao.med.amb.DAmbResultsImp" parent="daoImpl"/>
+  <bean id="dAmpPatients" class="ckb.dao.med.amb.DAmbPatientImp" parent="daoImpl"/>
+  <bean id="dAmbPatientServices" class="ckb.dao.med.amb.DAmbPatientServiceImp" parent="daoImpl"/>
+  <bean id="dAmbServices" class="ckb.dao.med.amb.DAmbServiceImp" parent="daoImpl"/>
+  <bean id="dAmbResults" class="ckb.dao.med.amb.DAmbResultImp" parent="daoImpl"/>
   <bean id="dAmbServiceUsers" class="ckb.dao.med.amb.DAmbServiceUsersImp" parent="daoImpl"/>
   <bean id="dAmbDrug" class="ckb.dao.med.amb.DAmbDrugImp" parent="daoImpl"/>
   <bean id="dAmbDrugRow" class="ckb.dao.med.amb.DAmbDrugRowImp" parent="daoImpl"/>

@@ -4,7 +4,7 @@ import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbPatients;
+import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.client.DClient;
 import ckb.dao.med.patient.DPatient;
 import ckb.domains.admin.Clients;
@@ -40,7 +40,7 @@ public class CClients {
   @Autowired private SClient sClient;
   @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
-  @Autowired private DAmbPatients dAmbPatient;
+  @Autowired private DAmbPatient dAmbPatient;
   @Autowired private SForm sForm;
   @Autowired private DPatient dPatient;
   @Autowired private DOpt dOpt;
@@ -90,6 +90,7 @@ public class CClients {
       grid.setStartPos((grid.getPage() - 1) * grid.getPageSize() + 1);
       model.addAttribute("grid", grid);
       model.addAttribute("rows", sClient.rows(grid, session));
+      model.addAttribute("view_url", "/clients/view.s?id=");
       SessionUtil.addSession(req, "CLINIC_CLIENTS", grid);
     } catch (Exception e) {
       e.printStackTrace();

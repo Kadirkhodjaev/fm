@@ -10,7 +10,6 @@ import ckb.domains.admin.Clients;
 import ckb.domains.med.amb.AmbGroups;
 import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbPatients;
-import ckb.domains.med.amb.AmbServices;
 import ckb.grid.AmbGrid;
 import ckb.models.AmbGroup;
 import ckb.models.AmbService;
@@ -18,9 +17,7 @@ import ckb.services.admin.form.SForm;
 import ckb.services.mo.amb.SAmbGrid;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
-import ckb.utils.Req;
 import ckb.utils.Util;
-import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,17 +37,16 @@ import java.util.List;
 public class CAmbPatient {
 
   @Autowired private DLvPartner dLvPartner;
-  @Autowired private DAmbPatients dAmbPatient;
-  @Autowired private DAmbServices dAmbService;
+  @Autowired private DAmbPatient dAmbPatient;
+  @Autowired private DAmbService dAmbService;
   @Autowired private DClient dClient;
   @Autowired private SAmbGrid sAmbGrid;
   @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
-  @Autowired private DAmbServiceUsers dAmbServiceUser;
-  @Autowired private DAmbPatientServices dAmbPatientService;
+  @Autowired private DAmbPatientService dAmbPatientService;
   @Autowired private DUser dUser;
-  @Autowired private DAmbGroups dAmbGroup;
-  @Autowired private DAmbResults dAmbResult;
+  @Autowired private DAmbGroup dAmbGroup;
+  @Autowired private DAmbResult dAmbResult;
   @Autowired private SForm sForm;
 
   @RequestMapping("patients.s")
@@ -119,50 +115,7 @@ public class CAmbPatient {
         client.setRegion(dRegion.get(patient.getRegionId()));
         patient.setClient(client);
       }
-      double entSum = 0, total = 0;
-      if(session.getCurPat() > 0) {
-        List<AmbService> ss = new ArrayList<AmbService>();
-        List<AmbPatientServices> services = dAmbPatientService.getList("From AmbPatientServices Where patient = " + session.getCurPat());
-        for(AmbPatientServices s: services) {
-          AmbService d = new AmbService();
-          d.setId(s.getId());
-          d.setState(s.getState());
-          d.setService(s.getService());
-          d.setWorker(s.getWorker());
-          d.setRepeat(false);
-          d.setResult(s.getResult() == null || s.getResult() == 0 ? null : dAmbResult.get(s.getResult()));
-          d.setConfDate(s.getConfDate());
-          if(session.isReg() && s.canRepeat()) {
-            if((new Date().getTime() - patient.getRegDate().getTime()) / (1000*60*60*24) <= 5)
-              d.setRepeat(true);
-          }
-          if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.isReg() && s.isNoResult()))
-            d.setUsers(dUser.getList("From Users t Where Exists (Select 1 From AmbServiceUsers c Where t.id = c.user And c.service = " + s.getService().getId() + ")"));
-          else
-            d.setUsers(dUser.getList("From Users t Where id = " + s.getWorker().getId()));
-          d.setPrice(Util.sumFormat(s.getPrice()));
-          ss.add(d);
-          if("ENT".equals(s.getState()))
-            entSum += s.getPrice();
-          if("PAID".equals(s.getState()) || "DONE".equals(s.getState()))
-            total += s.getPrice();
-        }
-        model.addAttribute("patient_services", ss);
-        model.addAttribute("service_total", dAmbPatientService.patientTotalSum(session.getCurPat()));
-        //
-        List<AmbGroup> srs = new ArrayList<>();
-        List<AmbGroups> groups = dAmbGroup.list("From AmbGroups t Where t.active = 1 And Exists (From AmbServices c Where c.state = 'A' And c.group.id = t.id)");
-        //
-        for(AmbGroups group: groups) {
-          AmbGroup g = new AmbGroup();
-          g.setGroup(group);
-          g.setServices(dAmbService.list("From AmbServices Where state = 'A' And group.id = " + group.getId() + " Order By ord"));
-          srs.add(g);
-        }
-        model.addAttribute("services", srs);
-      }
-      model.addAttribute("paid_sum", total);
-      model.addAttribute("ent_sum", entSum);
+      if(session.getCurPat() > 0) model.addAttribute("patient_services", dAmbPatientService.getList("From AmbPatientServices Where patient = " + session.getCurPat()));
       model.addAttribute("patient", patient);
       model.addAttribute("isReg", session.isReg());
       model.addAttribute("lvpartners", dLvPartner.getList("From LvPartners " + (session.getCurPat() > 0 ? "" : " Where state = 'A' ") + " Order By code"));
@@ -190,7 +143,7 @@ public class CAmbPatient {
       client.setBirthyear(patient.getBirthyear() != null ? patient.getBirthyear() : client.getBirthyear());
       patient.setClient(client);
       List<AmbService> ss = new ArrayList<AmbService>();
-      List<AmbPatientServices> services = dAmbPatientService.getList("From AmbPatientServices Where patient = " + session.getCurPat());
+      List<AmbPatientServices> services = dAmbPatientService.getList("From AmbPatientServices Where patient = " + id);
       double entSum = 0, total = 0;
       for(AmbPatientServices s: services) {
         AmbService d = new AmbService();
@@ -264,6 +217,7 @@ public class CAmbPatient {
       pat.setTel(Util.get(req, "tel"));
       pat.setCounteryId(c.getCountry().getId());
       pat.setRegionId(c.getRegion().getId());
+      pat.setFizio(Util.nvl(req, "fizio", "N"));
       pat.setPassportInfo(Util.get(req, "passport"));
       pat.setAddress(Util.get(req, "address"));
       pat.setLvpartner(dLvPartner.get(Util.getInt(req, "lvpartner", 0)));
@@ -291,133 +245,12 @@ public class CAmbPatient {
     JSONObject json = new JSONObject();
     Session session = SessionUtil.getUser(req);
     try {
-      AmbPatients pat = dAmbPatient.get(session.getCurPat());
       if(dAmbPatientService.getCount("From AmbPatientServices Where patient = " + session.getCurPat()) > 0)
         return Util.err(json, "Нельзя удалить пациента с услугами! Удалить все услуги");
       dAmbPatient.delete(session.getCurPat());
       json.put("success", true);
     } catch (Exception e) {
       e.printStackTrace();
-      return Util.err(json, e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "service-search.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String service_search(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    Session session = SessionUtil.getUser(req);
-    try {
-      String word = Util.nvl(req, "word");
-      JSONArray arr = new JSONArray();
-      AmbPatients pat = dAmbPatient.get(session.getCurPat());
-      List<AmbServices> services = dAmbService.list("From AmbServices Where state = 'A' And upper(name) like '%" + word + "%' Order By ord");
-      for(AmbServices ser: services) {
-        JSONObject obj = new JSONObject();
-        obj.put("id", ser.getId());
-        obj.put("name", ser.getName());
-        obj.put("price", Util.sumFormat(pat.isResident() ? ser.getPrice() : ser.getFor_price()));
-        arr.put(obj);
-      }
-      json.put("services", arr);
-      json.put("success", true);
-    } catch (Exception e) {
-      e.printStackTrace();
-      return Util.err(json, e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/add-service.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String add_service(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    Session session = SessionUtil.getUser(req);
-    try {
-      int id = Util.getInt(req, "id");
-      AmbPatients pat = dAmbPatient.get(session.getCurPat());
-      AmbPatientServices ser = new AmbPatientServices();
-      AmbServices s = dAmbService.get(id);
-      ser.setCrBy(session.getUserId());
-      ser.setCrOn(new Date());
-      ser.setPatient(pat.getId());
-      ser.setService(s);
-      ser.setPrice(pat.isResident() ? s.getPrice() : s.getFor_price());
-      ser.setState("ENT");
-      ser.setResult(0);
-      ser.setAmb_repeat("N");
-      ser.setWorker(dAmbServiceUser.getFirstUser(s.getId()));
-      dAmbPatientService.save(ser);
-      if("DONE".equals(pat.getState())) {
-        pat.setState("WORK");
-        dAmbPatient.save(pat);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      return Util.err(json, e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/add-services.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String add_services(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    Session session = SessionUtil.getUser(req);
-    try {
-      String[] ids = req.getParameterValues("id");
-      AmbPatients pat = dAmbPatient.get(session.getCurPat());
-      for(String id: ids) {
-        AmbPatientServices ser = new AmbPatientServices();
-        AmbServices s = dAmbService.get(Integer.parseInt(id));
-        ser.setCrBy(session.getUserId());
-        ser.setCrOn(new Date());
-        ser.setPatient(pat.getId());
-        ser.setService(s);
-        ser.setPrice(pat.isResident() ? s.getPrice() : s.getFor_price());
-        ser.setState("ENT");
-        ser.setResult(0);
-        ser.setAmb_repeat("N");
-        ser.setWorker(dAmbServiceUser.getFirstUser(s.getId()));
-        dAmbPatientService.save(ser);
-      }
-      if("DONE".equals(pat.getState())) {
-        pat.setState("WORK");
-        dAmbPatient.save(pat);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      return Util.err(json, e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/del-service.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String del_service(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      int id = Util.getInt(req, "id");
-      AmbPatientServices ser = dAmbPatientService.get(id);
-      if("ENT".equals(ser.getState()))
-        dAmbPatientService.delete(ser.getId());
-      json.put("success", true);
-    } catch (Exception e) {
-      return Util.err(json, e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "patient/repeat-consul.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String repeat_consul(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      int id = Util.getInt(req, "id");
-      AmbPatientServices ser = dAmbPatientService.get(id);
-      json.put("success", true);
-    } catch (Exception e) {
       return Util.err(json, e.getMessage());
     }
     return json.toString();
@@ -441,70 +274,22 @@ public class CAmbPatient {
     return json.toString();
   }
 
-  @RequestMapping(value = "/set-service-lv.s", method = RequestMethod.POST)
+  @RequestMapping(value = "/fizio.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String set_service_lv(HttpServletRequest req) throws JSONException {
+  protected String set_fizio(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
+    Session session = SessionUtil.getUser(req);
     try {
-      AmbPatientServices ser = dAmbPatientService.get(Util.getInt(req, "service"));
-      ser.setWorker(dUser.get(Util.getInt(req, "lv")));
-      dAmbPatientService.save(ser);
+      AmbPatients patient = dAmbPatient.get(session.getCurPat());
+      patient.setFizio("Y");
+      patient.setState("WORK");
+      dAmbPatient.save(patient);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
     }
     return json.toString();
-  }
-
-  @RequestMapping(value = "/patient/repeat-service.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String reiterativeConsul(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    Session session = SessionUtil.getUser(req);
-    try {
-      AmbPatientServices ser = dAmbPatientService.get(Req.getInt(req, "id"));
-      ser.setAmb_repeat("D"); // Повторная консультация
-      dAmbPatientService.save(ser);
-      //
-      AmbPatients pat = dAmbPatient.get(ser.getPatient());
-      pat.setId(null);
-      pat.setCrBy(session.getUserId());
-      pat.setCrOn(new Date());
-      pat.setRegDate(new Date());
-      pat.setState("CASH");
-      pat.setFizio("N");
-      dAmbPatient.saveAndReturn(pat);
-      //
-      ser.setId(null);
-      ser.setState("ENT");
-      ser.setPatient(pat.getId());
-      ser.setAmb_repeat("Y");
-      ser.setCrOn(new Date());
-      ser.setPrice(ser.getPrice() / 2);
-      ser.setResult(0);
-      ser.setCashDate(null);
-      ser.setConfDate(null);
-      ser.setDiagnoz(null);
-      ser.setMsg(null);
-      ser.setCrBy(session.getUserId());
-      dAmbPatientService.save(ser);
-      //
-      json.put("success", true);
-    } catch (Exception e) {
-      return Util.err(json, e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping("/print.s")
-  protected String print(HttpServletRequest req, Model m) {
-    Session session = SessionUtil.getUser(req);
-    AmbPatients pat = dAmbPatient.get(session.getCurPat());
-    m.addAttribute("patient", pat);
-    m.addAttribute("ids", req.getParameter("ids"));
-    //
-    return "med/amb/print";
   }
 
 }

@@ -12,6 +12,7 @@ public class AmbGroups extends GenId {
 
   @Column private String name;
   @Column private boolean isGroup;
+  @Column private boolean isFizio;
   @Column private boolean active;
   @Column private Double partnerProc;
 
@@ -21,6 +22,14 @@ public class AmbGroups extends GenId {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public boolean isFizio() {
+    return isFizio;
+  }
+
+  public void setFizio(boolean fizio) {
+    isFizio = fizio;
   }
 
   public boolean isGroup() {

@@ -1124,7 +1124,7 @@ public class SPatientImp implements SPatient {
   }
 
   @Override
-  public List<PatientDrug> getPatientNewDrugs() {
+  public List<PatientDrug> getPatientNewDrugs(int dep) {
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
@@ -1133,14 +1133,16 @@ public class SPatientImp implements SPatient {
       conn = DB.getConnection();
       ps = conn.prepareStatement(
         "Select t.id " +
-          "     From Patient_Drugs t " +
+          "     From Patient_Drugs t, Patients g " +
           "    Where Exists (Select 1 " +
           "                    From Patient_Drug_Dates c" +
           "                   Where c.checked = 1 " +
           "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
           "                     And c.patientDrug_id = t.id " +
           "                     And date(c.date) = date(t.crOn)) " +
-          "      And date(crOn) = CURRENT_DATE() " +
+          "      And date(crOn) = '2024-01-20' " + // CURRENT_DATE()
+          "      And g.id = t.patient_id " +
+          "      And g.dept_id = " + dep + // CURRENT_DATE()
           "    Order By t.patient_id, t.Id desc ");
       rs = ps.executeQuery();
       while(rs.next()) {

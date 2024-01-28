@@ -5,7 +5,7 @@ import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.roles.DRole;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserDrugLine;
-import ckb.dao.med.amb.DAmbGroups;
+import ckb.dao.med.amb.DAmbGroup;
 import ckb.dao.med.lv.consul.DLvConsul;
 import ckb.domains.admin.Roles;
 import ckb.domains.admin.UserDrugLines;
@@ -53,13 +53,13 @@ public class  CApp {
   @Autowired private DLvConsul dLvConsul;
   @Autowired private DParam dParam;
   @Autowired private DDept dDept;
-  @Autowired private DAmbGroups dAmbGroups;
+  @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DUserDrugLine dUserDrugLine;
   /*@Autowired private DKdos dKdo;
-  @Autowired private DAmbServices dAmbService;
+  @Autowired private DAmbService dAmbService;
   @Autowired private DKdoChoosen dKdoChoosen;
   @Autowired private DPatient dPatient;
-  @Autowired private DAmbPatients dAmbPatient;
+  @Autowired private DAmbPatient dAmbPatient;
   @Autowired private DDrug dDrug;
   @Autowired private DDrugSaldo dDrugSaldo;
   @Autowired private DDrugActDrug dDrugActDrug;
@@ -175,7 +175,6 @@ public class  CApp {
       m.add(new Menu("Справочники", "/eats/dicts.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/eats/dicts.s")));
     }
     if(roleId == 13) { // Касса
-      m.add(new Menu("Опер день", "/cashbox/operday.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/cashbox/operday.s")));
       m.add(new Menu("Статистика", "/cashbox/statistic.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/patients/cashStat.s")));
       m.add(new Menu("Амбулатория", "/amb/home.s", "fa fa-group fa-fw", session.getCurUrl().equals("/amb/home.s")));
       m.add(new Menu("Стационар", "/patients/list.s", "fa fa-group fa-fw", session.getCurUrl().equals("/patients/list.s")));
@@ -264,14 +263,19 @@ public class  CApp {
       m.add(new Menu("Клиенты", "/clients/list.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Архив", "/ambs/archive.s", "fa fa-group fa-fw", session));
     }
+    if(roleId == 23) {
+      session.setCurUrl(session.getCurUrl().equals("") ? "/ambs/doctor/patients.s" : session.getCurUrl());
+      m.add(new Menu("Текущие", "/ambs/doctor/patients.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Архив", "/ambs/doctor/archive.s", "fa fa-group fa-fw", session));
+    }
     model.addAttribute("menuList", m);
     model.addAttribute("lvs", dUser.getLvs());
     model.addAttribute("groups", dAmbGroups.getAll());
     model.addAttribute("depts", dDept.getAll());
     model.addAttribute("repList", dUser.getReports(session.getUserId()));
     model.addAttribute("openPage", roleId == 0 ? "/roles.s" : session.getCurUrl().equals("") ? dRole.get(roleId).getUrl() : session.getCurUrl());
-    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22);
-    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22);
+    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22 || session.getRoleId() == 23);
+    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22 && roleId != 23);
     model.addAttribute("isEnterFilter", dParam.byCode("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);
     model.addAttribute("clinicName", dParam.byCode("CLINIC_NAME"));

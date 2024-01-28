@@ -1,7 +1,7 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbGroups;
+import ckb.dao.med.amb.DAmbGroup;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.kdos.DKdoTypes;
 import ckb.domains.admin.KdoTypes;
@@ -33,7 +33,7 @@ public class CMn {
   private Session session = null;
 
   @Autowired private DKdoTypes dKdoType;
-  @Autowired private DAmbGroups dAmbGroup;
+  @Autowired private DAmbGroup dAmbGroup;
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DUser dUser;
 

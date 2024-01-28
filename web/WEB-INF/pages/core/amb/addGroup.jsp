@@ -47,6 +47,10 @@
           <td><input type="checkbox" value="A" name="group" <c:if test="${ser.group}">checked</c:if>></td>
         </tr>
         <tr>
+          <td class="bold">Физиотерапия?:</td>
+          <td><input type="checkbox" value="A" name="fizio" <c:if test="${ser.fizio}">checked</c:if>></td>
+        </tr>
+        <tr>
           <td class="bold">Активный?:</td>
           <td><input type="checkbox" value="A" name="active" <c:if test="${ser.active}">checked</c:if>></td>
         </tr>

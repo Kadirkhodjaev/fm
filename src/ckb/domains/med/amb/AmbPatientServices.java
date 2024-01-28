@@ -28,6 +28,9 @@ public class AmbPatientServices extends GenId {
   @Column private Date crOn;
   @Column private Date cashDate;
 
+  @Column private String fizioBodyPart;
+  @Column private String fizioComment;
+
   public Integer getPatient() {
     return patient;
   }
@@ -150,5 +153,21 @@ public class AmbPatientServices extends GenId {
 
   public boolean isNoResult() {
     return result == null || result == 0;
+  }
+
+  public String getFizioBodyPart() {
+    return fizioBodyPart;
+  }
+
+  public void setFizioBodyPart(String fizioBodyPart) {
+    this.fizioBodyPart = fizioBodyPart;
+  }
+
+  public String getFizioComment() {
+    return fizioComment;
+  }
+
+  public void setFizioComment(String fizioComment) {
+    this.fizioComment = fizioComment;
   }
 }

@@ -44,6 +44,9 @@
     $('#mkb_id').val(id);
     nicEditors.findEditor('c1').setContent(obos.length > 0 && obos != '<br>' ? obos + ', ' + text : text);
   }
+  function printRecommend() {
+    window.open('/lv/print_recommend.s');
+  }
 </script>
 <div class="panel panel-info" style="width: 800px !important; margin: auto">
   <div class="panel-heading">
@@ -207,6 +210,9 @@
             </a>
             <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c7', 'c7'); return false;">
               <span class="fa fa-plus"></span>
+            </a>
+            <a title="Распечатать рекомендацию" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="printRecommend(); return false;">
+              <span class="fa fa-print"></span>
             </a>
           </td>
         </tr>

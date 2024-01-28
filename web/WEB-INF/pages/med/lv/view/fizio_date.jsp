@@ -48,6 +48,51 @@
         document.getElementById("fizio_" + id + "_" + d).checked = !document.getElementById("fizio_" + id + "_" + d).checked;
     }
   }
+
+  let oblast = [], comments = [];
+  function search_templates(dom, kdo, code) {
+    let div = $('#' + code + '_filter'), elem = $(dom), v = elem.val().toUpperCase();
+    div.width(elem.width() + 150);
+    if(v.length === 0) div.hide();
+    if(v.length > 3) {
+      if(oblast.length === 0) {
+        $.ajax({
+          url: '/view/fizio/search_templates.s',
+          method: 'post',
+          data: 'code=' + code + '&kdo=' + kdo + '&word=' + encodeURIComponent(v),
+          dataType: 'json',
+          success: function (res) {
+            if (res.success) {
+              oblast = res.rows;
+              if(oblast.length > 0) {
+                buildOblast(dom, oblast, code);
+                div.show();
+              }
+            } else openMsg(res);
+          }
+        });
+      } else {
+        let cls = oblast.filter(obj => obj.toUpperCase().indexOf(v) !== -1);
+        buildOblast(dom, cls, code);
+      }
+    } else {
+      oblast = [];
+    }
+  }
+  function buildOblast(dom, cls, code) {
+    let table = $('#' + code + '_filter>table>tbody');
+    table.html('');
+    for(let obj of cls) {
+      let tr = $('<tr></tr>');
+      tr.click(()=> {
+        $('#' + code + '_filter').hide();
+        dom.value = obj;
+      });
+      let fio = $('<td>' + obj + '</td>');
+      tr.append(fio);
+      table.append(tr);
+    }
+  }
 </script>
 <form id="fizioForm" method="post">
   <div class="panel panel-info" style="width: 100% !important; margin: auto">
@@ -111,7 +156,12 @@
                 </c:otherwise>
               </c:choose>
               <td width="100" align="right">${fizio.price * (fizio.count == null ? 0 : fizio.count) - (fizio.paidSum != null ? fizio.paidSum : 0)}</td>
-              <td width="250"><input type="text" maxlength="200" class="form-control" name="oblast" value="${fizio.oblast}"/></td>
+              <td width="250">
+                <input type="text" maxlength="200" class="form-control" onkeyup="search_templates(this, ${fizio.kdo.id}, 'oblast')" name="oblast" value="${fizio.oblast}"/>
+                <div id="oblast_filter" style="display: none; position: absolute; background:white">
+                  <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
+                </div>
+              </td>
               <c:forEach items="${ds[fizio.id]}" var="d">
                 <td onclick="setCheck(event, ${fizio.id}, '<fmt:formatDate pattern="dd.MM.yyyy" value="${d.date}"/>')" class="hand hover" style="vertical-align: middle; text-align: center">
                   <input type="hidden" name="date_${fizio.id}" value="<fmt:formatDate pattern="dd.MM.yyyy" value="${d.date}"/>"/>
@@ -119,7 +169,10 @@
                 </td>
               </c:forEach>
               <td>
-                <input type="text" maxlength="200" class="form-control" name="comment" value="${fizio.comment}"/>
+                <input type="text" maxlength="200" class="form-control" name="comment" onkeyup="search_templates(this, ${fizio.kdo.id}, 'comment')" value="${fizio.comment}"/>
+                <div id="comment_filter" style="display: none; position: absolute; background:white">
+                  <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
+                </div>
               </td>
               <td align="center">
                 <c:if test="${fizio.paid != 'Y'}">

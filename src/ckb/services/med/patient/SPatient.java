@@ -57,5 +57,5 @@ public interface SPatient {
 
   List<PatientDrug> getDrugsByTypeToDate(Integer patId, Date operDay, int i, String time);
 
-  List<PatientDrug> getPatientNewDrugs();
+  List<PatientDrug> getPatientNewDrugs(int dep);
 }

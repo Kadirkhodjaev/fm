@@ -63,13 +63,13 @@ public class CAmb {
   @Autowired private DRegion dRegion;
   @Autowired private SForm sForm;
   @Autowired private DForm dForm;
-  @Autowired private DAmbPatients dAmbPatients;
-  @Autowired private DAmbPatientServices dAmbPatientServices;
-  @Autowired private DAmbServices dAmbServices;
-  @Autowired private DAmbResults dAmbResults;
+  @Autowired private DAmbPatient dAmbPatients;
+  @Autowired private DAmbPatientService dAmbPatientServices;
+  @Autowired private DAmbService dAmbServices;
+  @Autowired private DAmbResult dAmbResults;
   @Autowired private DUser dUser;
   @Autowired private DAmbServiceUsers dAmbServiceUsers;
-  @Autowired private DAmbGroups dAmbGroups;
+  @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DAmbPatientLinks dAmbPatientLinks;
   @Autowired private DTemplate dTemplate;
   @Autowired private DAmbServiceFields dAmbServiceFields;

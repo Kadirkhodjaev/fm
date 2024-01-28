@@ -2,10 +2,10 @@ package ckb.controllers.admin;
 
 import ckb.dao.admin.forms.DForm;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbGroups;
+import ckb.dao.med.amb.DAmbGroup;
+import ckb.dao.med.amb.DAmbService;
 import ckb.dao.med.amb.DAmbServiceFields;
 import ckb.dao.med.amb.DAmbServiceUsers;
-import ckb.dao.med.amb.DAmbServices;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbGroups;
 import ckb.domains.med.amb.AmbServiceFields;
@@ -34,11 +34,11 @@ import java.util.List;
 public class CCoreAmb {
 
   @Autowired private DAmbServiceFields dAmbServiceFields;
-  @Autowired private DAmbServices dAmbServices;
+  @Autowired private DAmbService dAmbServices;
   @Autowired private DAmbServiceUsers dAmbServiceUsers;
   @Autowired private DUser dUser;
   @Autowired private DForm dForm;
-  @Autowired private DAmbGroups dAmbGroups;
+  @Autowired private DAmbGroup dAmbGroups;
 
   @RequestMapping("/services.s")
   protected String amb(HttpServletRequest request, Model model){
@@ -153,6 +153,7 @@ public class CCoreAmb {
       AmbGroups ser = Util.isNull(req, "id") ? new AmbGroups() : dAmbGroups.get(Util.getInt(req, "id"));
       ser.setName(Util.get(req, "name"));
       ser.setGroup(Util.isNotNull(req, "group"));
+      ser.setFizio(Util.isNotNull(req, "fizio"));
       ser.setActive(Util.isNotNull(req, "active"));
       ser.setPartnerProc(Util.getDouble(req, "partnerProc", 0D));
       dAmbGroups.save(ser);

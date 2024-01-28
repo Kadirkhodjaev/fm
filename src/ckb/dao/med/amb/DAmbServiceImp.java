@@ -5,8 +5,8 @@ import ckb.domains.med.amb.AmbServices;
 
 import java.util.List;
 
-public class DAmbServicesImp extends DaoImp<AmbServices> implements DAmbServices {
-  public DAmbServicesImp() {
+public class DAmbServiceImp extends DaoImp<AmbServices> implements DAmbService {
+  public DAmbServiceImp() {
     super(AmbServices.class);
   }
 

@@ -225,7 +225,6 @@
     <c:if test="${serviceTotalSum > 0 || paidSum > 0}">
       <div class="panel-heading">
         Оплата. Итоговая сумма к оплате <span id="totalSumSpan" style="color:red;font-weight:bold"></span>
-        Опер день: <span style="color:red;font-weight:bold"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${operDay}" /></span>
         <c:if test="${patient.state != 'ARCH'}">
           <ul class="pagination" style="float:right; margin-top:-5px">
             <li class="paginate_button" style="display:none" id="discount_add" tabindex="0"><a href="#" onclick="addEditDiscount(0);return false"><i title="Добавить скидку" class="fa fa-plus"></i> Добавить</a></li>
@@ -357,7 +356,6 @@
 
 <script>
   var totalSum = ${serviceTotalSum}, paidSum = ${paidSum}, discountSumm = ${discountSum};
-  const operDay = '<fmt:formatDate pattern = "dd.MM.yyyy" value = "${operDay}" />';
   $(function() {
     $('#totalSumSpan').html('<fmt:formatNumber value = "${serviceTotalSum}" type = "number"/>');
   });
@@ -436,15 +434,11 @@
     }
   }
   function saveForm() {
-    if(operDay === '') {
-      alert('Не существует открытый операционный день кассы!');
-      return;
-    }
     var payType = $('#pay_type').val();
     var transfer = document.getElementById('transferInput'),
       card = document.getElementById('cardInput'),
       cash = document.getElementById('cashInput');
-    var sum = 0, params = 'id=${patient.id}&operDay=' + operDay + '&pay_type=' + payType + '&';
+    var sum = 0, params = 'id=${patient.id}&pay_type=' + payType + '&';
     if (card.value !== '') {sum += parseFloat(card.value); params += 'card=' + card.value + '&';}
     if (cash.value !== '') {sum += parseFloat(cash.value); params += 'cash=' + cash.value + '&';}
     if (transfer.value !== '') {sum += parseFloat(transfer.value); params += 'humo=' + transfer.value + '&';}

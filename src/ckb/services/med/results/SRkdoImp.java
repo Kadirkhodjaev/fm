@@ -2,8 +2,8 @@ package ckb.services.med.results;
 
 import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbPatientServices;
-import ckb.dao.med.amb.DAmbResults;
+import ckb.dao.med.amb.DAmbPatientService;
+import ckb.dao.med.amb.DAmbResult;
 import ckb.dao.med.amb.DAmbServiceFields;
 import ckb.dao.med.kdos.forms.f1.DF1;
 import ckb.dao.med.kdos.forms.f10.DF10;
@@ -67,8 +67,8 @@ public class SRkdoImp implements SRkdo {
   @Autowired DF152 df152;
   @Autowired DF174 df174;
   @Autowired DF999 df999;
-  @Autowired private DAmbPatientServices dAmbPatientServices;
-  @Autowired private DAmbResults dAmbResults;
+  @Autowired private DAmbPatientService dAmbPatientServices;
+  @Autowired private DAmbResult dAmbResults;
   @Autowired private DAmbServiceFields dAmbServiceFields;
 
   @Override

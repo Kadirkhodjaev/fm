@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<div class="panel panel-info w-100">
+<div class="panel panel-info w-100" style="margin-bottom:0">
   <div class="panel-heading">
     <span class="fa fa-users"></span> Список пациентов
   </div>
@@ -32,24 +32,24 @@
       <li class="paginate_button <c:if test="${grid.page == grid.maxPage}">disabled</c:if>" tabindex="0"><a onclick="setNav('end')" href="#"><i class="fa fa-fast-forward"></i>&nbsp;</a></li>
     </ul>
   </div>
-  <div class="table-responsive" style="overflow-y: auto; height: 95%">
-    <table class="table table-striped table-bordered table-hover grid dataTable hand">
+  <div class="grid-block shadow-block">
+    <table class="w-100 table-bordered table-hover grid hand">
       <thead>
-      <tr>
-        <th style="width:50px">#</th>
-        <th style="width:50px">&nbsp;</th>
-        <th>ФИО</th>
-        <th style="width:130px">Год рождения</th>
-        <th>Телефон</th>
-        <th>Страна</th>
-        <th>Регион</th>
-        <th style="width:130px">Дата рег.</th>
-        <th style="width:130px">Состояние</th>
-      </tr>
+        <tr class="table-header-stikcy table-header">
+          <th style="width:50px">#</th>
+          <th style="width:50px">&nbsp;</th>
+          <th>ФИО</th>
+          <th style="width:130px">Год рождения</th>
+          <th>Телефон</th>
+          <th>Страна</th>
+          <th>Регион</th>
+          <th style="width:130px">Дата рег.</th>
+          <th style="width:130px">Состояние</th>
+        </tr>
       </thead>
       <tbody style="overflow: scroll">
       <c:forEach items="${patients}" var="p" varStatus="loop">
-        <tr ondblclick="view(${p.id})">
+        <tr ondblclick="view(${p.id})" onclick="setRow(${loop.index})" id="grid_row_${loop.index}" patient="${p.id}">
           <td class="center">${loop.index + 1}</td>
           <td class="center"><img src='/res/imgs/${p.icon}.gif'/></td>
           <td><a href="#" onclick="view(${p.id}); return false;">${p.fio}</a></td>
@@ -64,13 +64,34 @@
       </tbody>
     </table>
   </div>
+  <div id="service_block" class="overflow-auto">
+    sdasda
+  </div>
 </div>
 <script>
+  let lrw = localStorage.getItem('${sessionScope.ENV.curUrl}_row');
+  let row = lrw == null ? '0' : lrw;
   $(() => {
     <c:if test="${grid.word != ''}">
       $('#amb-search-field').focus()
     </c:if>
+    setRow(row);
+    resizeIt();
   })
+  $(window).resize(() => {
+    resizeIt();
+  })
+  function resizeIt() {
+    $('.grid-block').height($(document).height() / 2);
+    $('#service_block').height($(document).height() - $('.grid-block').height() - 144);
+  }
+  function setRow(idx) {
+    $('#grid_row_' + row).removeClass('selected');
+    $('#service_block').html('').load('/ambs/patient/services.s?grid=1&id=' + $('#grid_row_' + idx).attr('patient'));
+    row = idx;
+    localStorage.setItem('${sessionScope.ENV.curUrl}_row', idx);
+    $('#grid_row_' + idx).addClass('selected');
+  }
   function setPageSize(val) {
     setPage('${sessionScope.ENV.curUrl}?action=page_size&page_size=' + val);
   }

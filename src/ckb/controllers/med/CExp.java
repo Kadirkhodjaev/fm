@@ -1,7 +1,7 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.dicts.DDict;
-import ckb.dao.med.amb.DAmbServices;
+import ckb.dao.med.amb.DAmbService;
 import ckb.dao.med.exp.dict.category.DExpCategory;
 import ckb.dao.med.exp.dict.measure.DExpMeasure;
 import ckb.dao.med.exp.dict.norm.DExpNorm;
@@ -47,7 +47,7 @@ public class CExp {
   @Autowired private DExpNorm dExpNorm;
   @Autowired private DDict dDict;
   //
-  @Autowired private DAmbServices dAmbService;
+  @Autowired private DAmbService dAmbService;
   @Autowired private DKdos dKdo;
   @Autowired private DKdoChoosen dKdoChoosen;
 

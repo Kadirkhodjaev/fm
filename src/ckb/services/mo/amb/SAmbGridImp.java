@@ -2,7 +2,7 @@ package ckb.services.mo.amb;
 
 import ckb.dao.admin.countery.DCountry;
 import ckb.dao.admin.region.DRegion;
-import ckb.dao.med.amb.DAmbPatientServices;
+import ckb.dao.med.amb.DAmbPatientService;
 import ckb.grid.AmbGrid;
 import ckb.models.AmbPatient;
 import ckb.session.Session;
@@ -18,7 +18,7 @@ import java.util.List;
 
 public class SAmbGridImp implements SAmbGrid {
 
-  @Autowired private DAmbPatientServices dAmpPatientService;
+  @Autowired private DAmbPatientService dAmpPatientService;
   @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
 
