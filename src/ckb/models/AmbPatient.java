@@ -11,6 +11,7 @@ public class AmbPatient {
   private String dateReg;
   private String state;
   private String icon;
+  private Double paySum;
 
   public int getId() {
     return id;
@@ -82,5 +83,13 @@ public class AmbPatient {
 
   public void setIcon(String icon) {
     this.icon = icon;
+  }
+
+  public Double getPaySum() {
+    return paySum;
+  }
+
+  public void setPaySum(Double paySum) {
+    this.paySum = paySum;
   }
 }

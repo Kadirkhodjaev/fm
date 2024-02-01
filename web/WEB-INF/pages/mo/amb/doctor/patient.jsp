@@ -11,7 +11,7 @@
   <div class="panel-heading">
     <span class="fa fa-user"></span> Пациент - <span class="text-danger bold">${patient.fio} (${patient.client.birthdate != null ? "ДР" : "ГР"}: <c:if test="${patient.client.birthdate != null}"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.client.birthdate}" /></c:if><c:if test="${patient.client.birthdate == null}">${patient.client.birthyear}</c:if>)</span>
     <ul class="pagination" style="float:right; margin-top:-5px">
-      <li class="paginate_button" tabindex="0"><a href="#" onclick="setPage('/ambs/archive.s');return false;"><i class="fa fa-backward"></i> Назад</a></li>
+      <li class="paginate_button" tabindex="0"><a href="#" onclick="setPage('/ambs/patients.s');return false;"><i class="fa fa-backward"></i> Назад</a></li>
     </ul>
   </div>
   <form id="form-data">
@@ -40,7 +40,7 @@
         <tr>
           <td class="right bold" nowrap>Код отправителя:</td>
           <td colspan="3">
-            ${patient.lvpartner.code}
+              ${patient.lvpartner.code}
           </td>
         </tr>
       </c:if>
@@ -48,13 +48,15 @@
     </table>
   </form>
 </div>
+<div id="patient_fizio"></div>
+
 <!--Услуги -->
-<div id="patient_treatments"></div>
 <div id="patient_services"></div>
+
 <script>
   $(function() {
-    <c:if test="${patient.treatment == 'Y'}">
-    $('#patient_treatments').load('/ambs/patient/treatments.s?id=${patient.id}');
+    <c:if test="${patient.fizio == 'Y'}">
+      $('#patient_fizio').load('/ambs/doctor/fizio.s?id=${patient.id}');
     </c:if>
     $('#patient_services').load('/ambs/patient/services.s?id=${patient.id}');
   });

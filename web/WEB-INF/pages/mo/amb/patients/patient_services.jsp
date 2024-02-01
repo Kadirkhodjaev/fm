@@ -2,7 +2,7 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<div class="panel panel-info wpx-1200 margin-auto">
+<div class="panel panel-info wpx-1400 margin-auto">
   <div class="panel-heading">
     <table class="w-100">
       <tr>
@@ -15,7 +15,7 @@
       </tr>
     </table>
   </div>
-  <c:if test="${patient.state != 'ARCH'}">
+  <c:if test="${patient.current}">
     <div class="text-danger text-center border-bottom-1 p-4" style="font-size: 15px">
       <span class="fa fa-plus-square"></span> Новая услуга
     </div>
@@ -36,7 +36,7 @@
     </table>
   </c:if>
   <c:if test="${fn:length(patient_services) > 0}">
-    <c:if test="${patient.state != 'ARCH'}">
+    <c:if test="${patient.current}">
       <div class="text-danger text-center border-bottom-1 p-4" style="font-size: 15px">
         <span class="fa fa-list"></span> Добавленные услуги
       </div>
@@ -51,24 +51,27 @@
         </td>
         <td class="center bold" title="Состояние"><b class="fa fa-certificate"></b></td>
         <td class="center bold">Наименование</td>
+        <td class="center bold">Дата</td>
         <td class="center bold">Сумма</td>
         <td class="center bold" title="Дата и время подтверждение со стороны врача">Подтверждение</td>
         <td class="center bold">Врач</td>
-        <c:if test="${patient.state != 'ARCH'}">
+        <c:if test="${patient.current}">
           <td title="Удалить услугу" class="center bold text-danger"><span class="fa fa-trash"></span></td>
         </c:if>
-        <td title="Повторная консультация" class="bold center"><span class="fa fa-repeat"></span></td>
+        <c:if test="${isReg}">
+          <td title="Повторная консультация" class="bold center"><span class="fa fa-repeat"></span></td>
+        </c:if>
       </tr>
       <c:forEach items="${patient_services}" var="s" varStatus="loop">
         <tr>
           <td class="center wpx-40">${loop.index + 1}</td>
           <td class="center wpx-40">
             <c:if test="${fn:length(patient_services) > 1}">
-              <c:if test="${s.state == 'DONE'}">
+              <c:if test="${s.state == 'DONE' && !s.treatment}">
                 <input type="checkbox" class="hand" checked>
               </c:if>
             </c:if>
-            <c:if test="${fn:length(patient_services) == 1 && s.state == 'DONE'}">
+            <c:if test="${fn:length(patient_services) == 1 && s.state == 'DONE' && !s.treatment}">
               <button class="btn btn-info btn-icon"><i class="fa fa-print"></i></button>
             </c:if>
           </td>
@@ -80,6 +83,9 @@
             <c:if test="${s.state == 'DONE'}"><img title="Выполнена" src='/res/imgs/green.gif'/></c:if>
           </td>
           <td>${s.service.name}</td>
+          <td class="center">
+            <fmt:formatDate pattern = "dd.MM.yyyy" value = "${s.planDate}" />
+          </td>
           <td class="right">${s.price}</td>
           <td class="center">
             <fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${s.confDate}" />
@@ -96,7 +102,7 @@
               </select>
             </c:if>
           </td>
-          <c:if test="${patient.state != 'ARCH'}">
+          <c:if test="${patient.current}">
             <td style="width:40px" class="center">
               <c:if test="${s.canDelete}">
                 <button type="button" class="btn btn-danger btn-icon" onclick="delService(${s.id})">
@@ -105,13 +111,15 @@
               </c:if>
             </td>
           </c:if>
-          <td style="width:40px" class="center">
-            <c:if test="${s.repeat}">
-              <button type="button" class="btn btn-info btn-icon" onclick="setRepeat(${s.id})">
-                <b class="fa fa-repeat"></b>
-              </button>
-            </c:if>
-          </td>
+          <c:if test="${isReg}">
+            <td style="width:40px" class="center">
+              <c:if test="${s.repeat}">
+                <button type="button" class="btn btn-info btn-icon" onclick="setRepeat(${s.id})">
+                  <b class="fa fa-repeat"></b>
+                </button>
+              </c:if>
+            </td>
+          </c:if>
         </tr>
       </c:forEach>
     </table>

@@ -7,14 +7,13 @@ import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
 import ckb.dao.med.client.DClient;
 import ckb.domains.admin.Clients;
-import ckb.domains.med.amb.AmbGroups;
+import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbPatients;
 import ckb.grid.AmbGrid;
-import ckb.models.AmbGroup;
 import ckb.models.AmbService;
 import ckb.services.admin.form.SForm;
-import ckb.services.mo.amb.SAmbGrid;
+import ckb.services.mo.amb.SMoAmb;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.Util;
@@ -38,14 +37,12 @@ public class CAmbPatient {
 
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DAmbPatient dAmbPatient;
-  @Autowired private DAmbService dAmbService;
   @Autowired private DClient dClient;
-  @Autowired private SAmbGrid sAmbGrid;
+  @Autowired private SMoAmb sAmb;
   @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
   @Autowired private DAmbPatientService dAmbPatientService;
   @Autowired private DUser dUser;
-  @Autowired private DAmbGroup dAmbGroup;
   @Autowired private DAmbResult dAmbResult;
   @Autowired private SForm sForm;
 
@@ -56,14 +53,29 @@ public class CAmbPatient {
       session.setCurUrl("/ambs/patients.s");
       AmbGrid grid = SessionUtil.getAmbGrid(req, "AMB_PATIENTS");
       grid.setGrid(req);
-      grid.setSql("From Amb_Patients t Where t.state != 'ARCH'");
+      Users u = dUser.get(session.getUserId());
+      if(session.getRoleId() == 22)
+        grid.setSql("From Amb_Patients t Where t.state != 'ARCH'");
+      if(session.getRoleId() == 23) {
+        String serviceWhere = "Exists (Select 1 From Amb_Patient_Services c Where t.id = c.patient And c.State Not In ('DEL', 'AUTO_DEL') And c.worker_id = " + session.getUserId() + ")";
+        String fizioWhere = u.isAmbFizio() ? " Or t.fizio = 'Y'" : "";
+        grid.setSql("From Amb_Patients t Where t.state in ('WORK', 'DONE') And (" + serviceWhere + fizioWhere + ")");
+      }
+      if(session.getRoleId() == 24) {
+        grid.setSql("From Amb_Patients t Where t.state not in ('PRN', 'ARCH')");
+      }
       grid.setOrder("Order By t.Id Desc");
-      grid.setRowCount(sAmbGrid.rowCount(grid));
+      grid.setRowCount(sAmb.gridRowCount(grid));
       grid.initPages();
       grid.setStartPos((grid.getPage() - 1) * grid.getPageSize() + 1);
       model.addAttribute("grid", grid);
-      model.addAttribute("patients", sAmbGrid.rows(grid, session));
-      model.addAttribute("view_url", "/ambs/reg.s?id=");
+      model.addAttribute("patients", sAmb.gridRows(grid, session));
+      // Регистрация
+      if(session.getRoleId() == 22) model.addAttribute("view_url", "/ambs/reg.s?id=");
+      // Амб услуги + Физиотерапия
+      if(session.getRoleId() == 23 && u.isAmbFizio()) model.addAttribute("view_url", "/ambs/doctor/patient.s?id=");
+      // Касса
+      if(session.getRoleId() == 24) model.addAttribute("view_url", "/cash/amb/patient.s?id=");
       SessionUtil.addSession(req, "AMB_PATIENTS", grid);
     } catch (Exception e) {
       e.printStackTrace();
@@ -80,11 +92,11 @@ public class CAmbPatient {
       grid.setGrid(req);
       grid.setSql("From Amb_Patients t Where t.state = 'ARCH'");
       grid.setOrder("Order By t.Id Desc");
-      grid.setRowCount(sAmbGrid.rowCount(grid));
+      grid.setRowCount(sAmb.gridRowCount(grid));
       grid.initPages();
       grid.setStartPos((grid.getPage() - 1) * grid.getPageSize() + 1);
       model.addAttribute("grid", grid);
-      model.addAttribute("patients", sAmbGrid.rows(grid, session));
+      model.addAttribute("patients", sAmb.gridRows(grid, session));
       model.addAttribute("view_url", "/ambs/view.s?id=");
       SessionUtil.addSession(req, "AMB_ARCHIVES", grid);
     } catch (Exception e) {
@@ -173,18 +185,7 @@ public class CAmbPatient {
       model.addAttribute("paid_sum", total);
       model.addAttribute("ent_sum", entSum);
       //
-      List<AmbGroup> srs = new ArrayList<>();
-      List<AmbGroups> groups = dAmbGroup.list("From AmbGroups t Where t.active = 1 And Exists (From AmbServices c Where c.state = 'A' And c.group.id = t.id)");
-      //
-      for(AmbGroups group: groups) {
-        AmbGroup g = new AmbGroup();
-        g.setGroup(group);
-        g.setServices(dAmbService.list("From AmbServices Where state = 'A' And group.id = " + group.getId() + " Order By ord"));
-        srs.add(g);
-      }
-      model.addAttribute("services", srs);
       model.addAttribute("patient", patient);
-      model.addAttribute("isReg", session.isReg());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -226,6 +227,7 @@ public class CAmbPatient {
         pat.setRegDate(new Date());
         pat.setCard(0D);
         pat.setCash(0D);
+        pat.setPaySum(0D);
         pat.setCrOn(new Date());
         pat.setCrBy(SessionUtil.getUser(req).getUserId());
       }
@@ -281,9 +283,30 @@ public class CAmbPatient {
     Session session = SessionUtil.getUser(req);
     try {
       AmbPatients patient = dAmbPatient.get(session.getCurPat());
-      patient.setFizio("Y");
-      patient.setState("WORK");
-      dAmbPatient.save(patient);
+      if(!patient.getFizio().equals("Y")) {
+        patient.setFizio("Y");
+        patient.setState("WORK");
+        dAmbPatient.save(patient);
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/treatment.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String set_treatment(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    Session session = SessionUtil.getUser(req);
+    try {
+      AmbPatients patient = dAmbPatient.get(session.getCurPat());
+      if(patient.getTreatment() == null || !"Y".equals(patient.getTreatment())) {
+        patient.setTreatment("Y");
+        dAmbPatient.save(patient);
+      }
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);

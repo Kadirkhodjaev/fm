@@ -36,8 +36,8 @@
   <div class="panel-heading">
     Реквизиты услуги
     <ul class="pagination" style="float:right; margin-top:-5px">
-      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPage('/core/amb/services.s')" title="Назад"><i class="fa fa-backward"></i> Назад</a></li>
       <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="saveAmb()" title="Сохранить"><i class="fa fa-save"></i> Сохранить</a></li>
+      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPage('/core/amb/services.s')" title="Назад"><i class="fa fa-backward"></i> Назад</a></li>
     </ul>
   </div>
   <hidden path="id"/>
@@ -75,6 +75,10 @@
         <tr>
           <td class="bold">Консультация?:</td>
           <td><input type="checkbox" value="Y" name="consul" <c:if test="${ser.consul == 'Y'}">checked</c:if>></td>
+        </tr>
+        <tr>
+          <td class="bold">Амбулаторное лечение?:</td>
+          <td><input type="checkbox" value="Y" name="treatment" <c:if test="${ser.treatment == 'Y'}">checked</c:if>></td>
         </tr>
         <tr>
           <td class="bold">Форма:</td>

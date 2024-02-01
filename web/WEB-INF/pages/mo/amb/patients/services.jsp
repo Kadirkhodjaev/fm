@@ -11,7 +11,7 @@
           <span class="fa fa-list"></span> Услуги - ${patient.fio} (<c:if test="${ent_sum > 0}">К оплате: <b><fmt:formatNumber value = "${ent_sum}" type = "number"/> сум</b></c:if><c:if test="${paid_sum > 0 && ent_sum > 0}"> / </c:if><c:if test="${paid_sum > 0}">Оплачена: <b><fmt:formatNumber value = "${paid_sum}" type = "number"/> сум</b></c:if>)
         </td>
         <td class="right text-danger" style="font-size: 15px">
-          <c:if test="${patient.state != 'ARCH'}">
+          <c:if test="${patient.current}">
             <button type="button" class="btn btn-info btn-icon" id="add-service" data-toggle="modal" data-target="#service_list">
               <b class="fa fa-list"></b>
             </button>
@@ -32,11 +32,15 @@
         </td>
         <td class="center bold" title="Состояние"><b class="fa fa-certificate"></b></td>
         <td class="center bold">Наименование</td>
+        <td class="center bold">Дата окз. услуги</td>
         <td class="center bold">Сумма</td>
         <td class="center bold" title="Дата и время подтверждение со стороны врача">Подтверждение</td>
         <td class="center bold">Врач</td>
-        <c:if test="${patient.state != 'ARCH'}">
+        <c:if test="${patient.current}">
           <td title="Удалить услугу" class="center bold text-danger"><span class="fa fa-trash"></span></td>
+        </c:if>
+        <c:if test="${patient.current && patient.treatment == 'Y'}">
+          <td title="Подтвердить услугу" class="center bold text-success"><span class="fa fa-check"></span></td>
         </c:if>
       </tr>
       <c:forEach items="${patient_services}" var="s" varStatus="loop">
@@ -44,11 +48,11 @@
           <td class="center wpx-40">${loop.index + 1}</td>
           <td class="center wpx-40">
             <c:if test="${fn:length(patient_services) > 1}">
-              <c:if test="${s.state == 'DONE'}">
+              <c:if test="${s.state == 'DONE' && !s.treatment}">
                 <input type="checkbox" class="hand" checked>
               </c:if>
             </c:if>
-            <c:if test="${fn:length(patient_services) == 1 && s.state == 'DONE'}">
+            <c:if test="${fn:length(patient_services) == 1 && s.state == 'DONE' && !s.treatment}">
               <button class="btn btn-info btn-icon"><i class="fa fa-print"></i></button>
             </c:if>
           </td>
@@ -60,6 +64,9 @@
             <c:if test="${s.state == 'DONE'}"><img title="Выполнена" src='/res/imgs/green.gif'/></c:if>
           </td>
           <td>${s.service.name}</td>
+          <td class="center <c:if test="${s.today}">text-danger bold</c:if>">
+            <fmt:formatDate pattern = "dd.MM.yyyy" value = "${s.planDate}" />
+          </td>
           <td class="right">${s.price}</td>
           <td class="center">
             <fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${s.confDate}" />
@@ -68,7 +75,7 @@
             <c:if test="${s.closed || fn:length(s.users) == 1 || s.result != null && patient.state == 'ARCH'}">
               ${s.worker.fio}
             </c:if>
-            <c:if test="${!s.closed && fn:length(s.users) > 1 && s.result == null && patient.state != 'ARCH'}">
+            <c:if test="${!s.closed && fn:length(s.users) > 1 && s.result == null && patient.current}">
               <select class="form-control" onchange="setLv(${s.id}, this.value)">
                 <c:forEach items="${s.users}" var="u">
                   <option <c:if test="${s.worker.id == u.id}">selected</c:if> value="${u.id}">${u.fio}</option>
@@ -76,11 +83,20 @@
               </select>
             </c:if>
           </td>
-          <c:if test="${patient.state != 'ARCH'}">
+          <c:if test="${patient.current}">
             <td style="width:40px" class="center">
               <c:if test="${s.state == 'ENT'}">
                 <button type="button" class="btn btn-danger btn-icon" onclick="delService(${s.id})">
                   <b class="fa fa-remove"></b>
+                </button>
+              </c:if>
+            </td>
+          </c:if>
+          <c:if test="${patient.current && patient.treatment == 'Y'}">
+            <td style="width:40px" class="center">
+              <c:if test="${s.state == 'PAID' && s.treatment}">
+                <button type="button" class="btn btn-success btn-icon" onclick="confirmPatientService(${s.id})">
+                  <b class="fa fa-check"></b>
                 </button>
               </c:if>
             </td>
@@ -189,20 +205,7 @@
         dataType: 'json',
         success: function (res) {
           openMsg(res);
-          if(res.success) $('#service_block').html('').load('/ambs/patient/services.s?grid=1&id=${patient.id}');
-        }
-      });
-  }
-  function setRepeat(id) {
-    if(confirm('Вы действительно хотите включить повторную консультацию?'))
-      $.ajax({
-        url: '/ambs/patient/repeat-service.s',
-        method: 'post',
-        data: 'id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          openMsg(res);
-          if(res.success) $('#service_block').html('').load('/ambs/patient/services.s?grid=1&id=${patient.id}');
+          if(res.success) setPage('${sessionScope.ENV.curUrl}');
         }
       });
   }
@@ -279,6 +282,19 @@
         openMsg(res);
       }
     });
+  }
+  function confirmPatientService(id) {
+    if(confirm('Вы действительно хотите подтвердить выполнения данной услуги?'))
+      $.ajax({
+        url: '/ambs/doctor/treatment/confirm.s',
+        method: 'post',
+        data: 'id=' + id,
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success) $('#service_block').html('').load('/ambs/patient/services.s?grid=1&id=${patient.id}');
+        }
+      });
   }
   $('#print_checked').click(() => {
 

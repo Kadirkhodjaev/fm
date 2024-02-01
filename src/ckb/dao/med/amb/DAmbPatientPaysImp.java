@@ -17,7 +17,17 @@ public class DAmbPatientPaysImp extends DaoImp<AmbPatientPays> implements DAmbPa
     try {
       return getList("From AmbPatientPays Where patient = " + curPat);
     } catch (Exception e) {
-      return new ArrayList<AmbPatientPays>();
+      return new ArrayList<>();
+    }
+  }
+
+  @Override
+  public Double paidSum(Integer id) {
+    try {
+      Double summ = (Double) entityManager.createQuery("Select Sum(card + cash + transfer) From AmbPatientPays Where patient = " + id).getSingleResult();
+      return summ == null ? 0D : summ;
+    } catch (Exception e) {
+      return 0D;
     }
   }
 }

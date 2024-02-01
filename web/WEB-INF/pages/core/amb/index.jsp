@@ -48,6 +48,7 @@
           <th>Наименование</th>
           <th>Стоимость</th>
           <th>Стоимость (Иностранцы)</th>
+          <th>Лечение?</th>
           <th>Состояние</th>
           <th>Форма</th>
         </thead>
@@ -61,6 +62,10 @@
             </td>
             <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.service.price}" type = "number"/></td>
             <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.service.for_price}" type = "number"/></td>
+            <td style="vertical-align: middle; text-align: center">
+              <c:if test="${s.service.treatment == 'Y'}">Да</c:if>
+              <c:if test="${s.service.treatment != 'Y'}">Нет</c:if>
+            </td>
             <td style="vertical-align: middle; text-align: center">
               <c:if test="${s.service.state == 'A'}">Активный</c:if>
               <c:if test="${s.service.state == 'P'}">Пассивный</c:if>

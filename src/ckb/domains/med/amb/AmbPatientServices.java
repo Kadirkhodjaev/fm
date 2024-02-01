@@ -19,8 +19,10 @@ public class AmbPatientServices extends GenId {
   @OneToOne @JoinColumn private Users worker;
   @Column private Integer result;
   @Column private Date confDate;
+  @Column private Date planDate;
   @Column private String amb_repeat = "N";
   @Column private String diagnoz = "";
+  @Column(name = "treatment_id") private Integer treatmentId;
 
   @Column private Integer pay;
 
@@ -169,5 +171,21 @@ public class AmbPatientServices extends GenId {
 
   public void setFizioComment(String fizioComment) {
     this.fizioComment = fizioComment;
+  }
+
+  public Integer getTreatmentId() {
+    return treatmentId;
+  }
+
+  public void setTreatmentId(Integer treatmentId) {
+    this.treatmentId = treatmentId;
+  }
+
+  public Date getPlanDate() {
+    return planDate;
+  }
+
+  public void setPlanDate(Date planDate) {
+    this.planDate = planDate;
   }
 }

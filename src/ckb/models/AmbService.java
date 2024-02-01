@@ -14,9 +14,12 @@ public class AmbService {
   private AmbServices service;
   private Date regDate;
   private Date confDate;
+  private Date planDate;
   private List<AmbPatientServices> services;
   private String price;
   private String state;
+  private boolean isToday;
+  private boolean isTreatment;
   private boolean canDelete;
   private Users worker;
   private List<Users> users;
@@ -52,6 +55,14 @@ public class AmbService {
 
   public AmbServices getService() {
     return service;
+  }
+
+  public Date getPlanDate() {
+    return planDate;
+  }
+
+  public void setPlanDate(Date planDate) {
+    this.planDate = planDate;
   }
 
   public void setService(AmbServices service) {
@@ -220,5 +231,21 @@ public class AmbService {
 
   public void setCanDelete(boolean canDelete) {
     this.canDelete = canDelete;
+  }
+
+  public boolean isToday() {
+    return isToday;
+  }
+
+  public void setToday(boolean today) {
+    isToday = today;
+  }
+
+  public boolean isTreatment() {
+    return isTreatment;
+  }
+
+  public void setTreatment(boolean treatment) {
+    isTreatment = treatment;
   }
 }

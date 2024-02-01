@@ -103,6 +103,7 @@ public class CCoreUser {
       u.setLogin(Util.get(req, "login"));
       u.setLv(Util.getCheckbox(req, "lv"));
       u.setActive(Util.getCheckbox(req, "active"));
+      u.setAmbTreatment(Util.getCheckbox(req, "amb_treatment"));
       u.setConsul(Util.getCheckbox(req, "consul"));
       u.setZavlv(Util.getCheckbox(req, "zavlv"));
       u.setProfil(Util.get(req, "profil"));

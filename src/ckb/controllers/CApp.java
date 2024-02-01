@@ -55,19 +55,6 @@ public class  CApp {
   @Autowired private DDept dDept;
   @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DUserDrugLine dUserDrugLine;
-  /*@Autowired private DKdos dKdo;
-  @Autowired private DAmbService dAmbService;
-  @Autowired private DKdoChoosen dKdoChoosen;
-  @Autowired private DPatient dPatient;
-  @Autowired private DAmbPatient dAmbPatient;
-  @Autowired private DDrug dDrug;
-  @Autowired private DDrugSaldo dDrugSaldo;
-  @Autowired private DDrugActDrug dDrugActDrug;
-  @Autowired private DDrugOutRow dDrugOutRow;
-  @Autowired private DHNPatientKdo dHNPatientKdo;
-  @Autowired private DHNPatientDrug dHNPatientDrug;
-  @Autowired private DPatientPays dPatientPay;
-  @Autowired private DAmbPatientPays dAmbPatientPay;*/
 
   @RequestMapping({"/main.s", "/"})
   protected String main(HttpServletRequest req, Model model) {
@@ -264,9 +251,14 @@ public class  CApp {
       m.add(new Menu("Архив", "/ambs/archive.s", "fa fa-group fa-fw", session));
     }
     if(roleId == 23) {
-      session.setCurUrl(session.getCurUrl().equals("") ? "/ambs/doctor/patients.s" : session.getCurUrl());
-      m.add(new Menu("Текущие", "/ambs/doctor/patients.s", "fa fa-group fa-fw", session));
-      m.add(new Menu("Архив", "/ambs/doctor/archive.s", "fa fa-group fa-fw", session));
+      session.setCurUrl(session.getCurUrl().equals("") ? "/ambs/patients.s" : session.getCurUrl());
+      m.add(new Menu("Текущие", "/ambs/patients.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Архив", "/ambs/archive.s", "fa fa-group fa-fw", session));
+    }
+    if(roleId == 24) {
+      session.setCurUrl(session.getCurUrl().equals("") ? "/ambs/patients.s" : session.getCurUrl());
+      m.add(new Menu("Текущие", "/ambs/patients.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Архив", "/ambs/archive.s", "fa fa-group fa-fw", session));
     }
     model.addAttribute("menuList", m);
     model.addAttribute("lvs", dUser.getLvs());
@@ -274,8 +266,8 @@ public class  CApp {
     model.addAttribute("depts", dDept.getAll());
     model.addAttribute("repList", dUser.getReports(session.getUserId()));
     model.addAttribute("openPage", roleId == 0 ? "/roles.s" : session.getCurUrl().equals("") ? dRole.get(roleId).getUrl() : session.getCurUrl());
-    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22 || session.getRoleId() == 23);
-    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22 && roleId != 23);
+    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22 || session.getRoleId() == 23 || session.getRoleId() == 24);
+    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22 && roleId != 23 && roleId != 24);
     model.addAttribute("isEnterFilter", dParam.byCode("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);
     model.addAttribute("clinicName", dParam.byCode("CLINIC_NAME"));

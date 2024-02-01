@@ -95,6 +95,10 @@
                 <td style="text-align: left"><input type="checkbox" name="lv" value="1" <c:if test="${user.lv}">checked</c:if>/></td>
               </tr>
               <tr>
+                <td class="right">Амбулаторное лечение?</td>
+                <td style="text-align: left"><input type="checkbox" name="amb_treatment" value="1" <c:if test="${user.ambTreatment}">checked</c:if>/></td>
+              </tr>
+              <tr>
                 <td class="right">Активный?</td>
                 <td style="text-align: left"><input type="checkbox" name="active" value="1" <c:if test="${user.active}">checked</c:if>/></td>
               </tr>

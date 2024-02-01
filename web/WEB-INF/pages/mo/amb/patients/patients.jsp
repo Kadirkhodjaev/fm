@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <div class="panel panel-info w-100" style="margin-bottom:0">
   <div class="panel-heading">
     <span class="fa fa-users"></span> Список пациентов
@@ -44,20 +45,29 @@
           <th>Страна</th>
           <th>Регион</th>
           <th style="width:130px">Дата рег.</th>
+          <th style="width:130px">К оплате</th>
           <th style="width:130px">Состояние</th>
         </tr>
       </thead>
       <tbody style="overflow: scroll">
       <c:forEach items="${patients}" var="p" varStatus="loop">
-        <tr ondblclick="view(${p.id})" onclick="setRow(${loop.index})" id="grid_row_${loop.index}" patient="${p.id}">
+        <tr <c:if test="${view_url != null}">ondblclick="view(${p.id})"</c:if> onclick="setRow(${loop.index})" id="grid_row_${loop.index}" patient="${p.id}">
           <td class="center">${loop.index + 1}</td>
           <td class="center"><img src='/res/imgs/${p.icon}.gif'/></td>
-          <td><a href="#" onclick="view(${p.id}); return false;">${p.fio}</a></td>
+          <td>
+            <c:if test="${view_url != null}">
+              <a href="#" onclick="view(${p.id}); return false;">${p.fio}</a>
+            </c:if>
+            <c:if test="${view_url == null}">
+              ${p.fio}
+            </c:if>
+          </td>
           <td class="center">${p.birthdate}</td>
           <td class="center">${p.tel}</td>
           <td class="center">${p.country}</td>
           <td class="center">${p.region}</td>
           <td class="center">${p.dateReg}</td>
+          <td class="right"><fmt:formatNumber value = "${p.paySum}" type = "number"/></td>
           <td class="center">${p.state}</td>
         </tr>
       </c:forEach>

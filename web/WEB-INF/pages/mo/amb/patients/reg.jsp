@@ -10,7 +10,7 @@
 <link href="/res/choosen/chosen.min.css" rel="stylesheet">
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 <script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
-<div class="panel panel-info wpx-1200 margin-auto">
+<div class="panel panel-info wpx-1400 margin-auto">
   <div class="panel-heading">
     <c:if test="${patient.id == null}">
       <span class="fa fa-pencil"></span> Регистрация нового пациента
@@ -19,7 +19,10 @@
       <span class="fa fa-user"></span> Реквизиты пациента
     </c:if>
     <ul class="pagination" style="float:right; margin-top:-5px">
-      <c:if test="${isReg && patient.fizio != 'Y' && (patient.id == null || patient.state == 'PRN' || patient.state == 'WORK' || patient.state == 'DONE')}">
+      <c:if test="${isReg && patient.id != null && patient.treatment != 'Y'}">
+        <li class="paginate_button" tabindex="0"><a href="#" id="btn-treatment"><i title="Амбулатовное лечение" class="fa fa-medkit"></i> Лечение</a></li>
+      </c:if>
+      <c:if test="${isReg && patient.fizio != 'Y' && (patient.id != null || patient.state == 'PRN' || patient.state == 'WORK' || patient.state == 'DONE')}">
         <li class="paginate_button" tabindex="0"><a href="#" id="btn-fizio"><i title="Физиотерапия" class="fa fa-check"></i> Физиотерапия</a></li>
       </c:if>
       <c:if test="${isReg && (patient.state == 'PRN' || patient.id == null)}">
@@ -128,7 +131,7 @@
         </tr>
         <tr>
           <td class="right" nowrap>Код отправителя:</td>
-          <td colspan="3">
+          <td>
             <select class="form-control" name="lvpartner">
               <option></option>
               <c:forEach items="${lvpartners}" var="p">
@@ -136,12 +139,18 @@
               </c:forEach>
             </select>
           </td>
+          <td class="right" nowrap>Амбулаторное лечение:</td>
+          <td>
+            <c:if test="${patient.treatment == 'Y'}">Да</c:if>
+            <c:if test="${patient.treatment != 'Y'}">Нет</c:if>
+          </td>
         </tr>
       </tbody>
     </table>
   </form>
 </div>
 <c:if test="${patient.id > 0}">
+  <div id="patient_treatments"></div>
   <div id="patient_services"></div>
 </c:if>
 
@@ -275,6 +284,20 @@
     if(confirm('Вы действительно хотите отправить на физиотерапию?'))
       $.ajax({
         url: '/ambs/fizio.s',
+        method: 'post',
+        data: '',
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success)
+            setPage('/ambs/reg.s?id=${patient.id}');
+        }
+      });
+  });
+  $('#btn-treatment').click(() => {
+    if(confirm('Вы действительно хотите назначить Амбулатовное лечение?'))
+      $.ajax({
+        url: '/ambs/treatment.s',
         method: 'post',
         data: '',
         dataType: 'json',
@@ -440,6 +463,9 @@
   }
   $(function(){
     $('#patient_services').load('/ambs/patient/services.s?id=${patient.id}');
+    <c:if test="${patient.treatment == 'Y'}">
+      $('#patient_treatments').load('/ambs/patient/treatments.s?id=${patient.id}');
+    </c:if>
     $(".date-format").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
   });
 </script>

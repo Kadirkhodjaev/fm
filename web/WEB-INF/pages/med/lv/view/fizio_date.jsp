@@ -48,14 +48,21 @@
         document.getElementById("fizio_" + id + "_" + d).checked = !document.getElementById("fizio_" + id + "_" + d).checked;
     }
   }
-
+  $(() => {
+    $('body').click(() => {
+      $('.oblast_filter').hide();
+      $('.comment_filter').hide();
+    })
+  })
   let oblast = [], comments = [];
   function search_templates(dom, kdo, code) {
-    let div = $('#' + code + '_filter'), elem = $(dom), v = elem.val().toUpperCase();
+    let elem = $(dom), v = elem.val().toUpperCase();
+    let div = elem.parent().find('.' + code + '_filter');
     div.width(elem.width() + 150);
     if(v.length === 0) div.hide();
     if(v.length > 3) {
       if(oblast.length === 0) {
+        $('.' + code + '_filter').hide();
         $.ajax({
           url: '/view/fizio/search_templates.s',
           method: 'post',
@@ -72,6 +79,7 @@
           }
         });
       } else {
+        div.show();
         let cls = oblast.filter(obj => obj.toUpperCase().indexOf(v) !== -1);
         buildOblast(dom, cls, code);
       }
@@ -80,12 +88,12 @@
     }
   }
   function buildOblast(dom, cls, code) {
-    let table = $('#' + code + '_filter>table>tbody');
+    let table = $(dom).parent().find('.' + code + '_filter>table>tbody');
     table.html('');
     for(let obj of cls) {
       let tr = $('<tr></tr>');
       tr.click(()=> {
-        $('#' + code + '_filter').hide();
+        $(dom).parent().find('.' + code + '_filter').hide();
         dom.value = obj;
       });
       let fio = $('<td>' + obj + '</td>');
@@ -158,7 +166,7 @@
               <td width="100" align="right">${fizio.price * (fizio.count == null ? 0 : fizio.count) - (fizio.paidSum != null ? fizio.paidSum : 0)}</td>
               <td width="250">
                 <input type="text" maxlength="200" class="form-control" onkeyup="search_templates(this, ${fizio.kdo.id}, 'oblast')" name="oblast" value="${fizio.oblast}"/>
-                <div id="oblast_filter" style="display: none; position: absolute; background:white">
+                <div class="oblast_filter" style="display: none; position: absolute; background:white">
                   <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
                 </div>
               </td>
@@ -170,7 +178,7 @@
               </c:forEach>
               <td>
                 <input type="text" maxlength="200" class="form-control" name="comment" onkeyup="search_templates(this, ${fizio.kdo.id}, 'comment')" value="${fizio.comment}"/>
-                <div id="comment_filter" style="display: none; position: absolute; background:white">
+                <div class="comment_filter" style="display: none; position: absolute; background:white">
                   <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
                 </div>
               </td>

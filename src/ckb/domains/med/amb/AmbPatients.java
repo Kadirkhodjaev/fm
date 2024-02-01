@@ -53,6 +53,7 @@ public class AmbPatients extends GenId {
   private SelOpts sex;
   // Физиотерпия
   @Column private String fizio = "N";
+  @Column private String treatment = "N";
   @Column private Integer fizioSetUser;
 
   @Column private String tgNumber;
@@ -61,6 +62,7 @@ public class AmbPatients extends GenId {
   @Column(nullable = false) private Double cash = 0D;
   @Column(nullable = false) private Double card = 0D;
   @Column(nullable = false) private Double transfer = 0D;
+  @Column private Double paySum = 0D;
 
   @OneToOne @JoinColumn private LvPartners lvpartner;
   @OneToOne @JoinColumn private Clients client;
@@ -260,4 +262,23 @@ public class AmbPatients extends GenId {
     return this.counteryId == null || this.counteryId == 199;
   }
 
+  public String getTreatment() {
+    return treatment;
+  }
+
+  public void setTreatment(String treatment) {
+    this.treatment = treatment;
+  }
+
+  public Double getPaySum() {
+    return paySum;
+  }
+
+  public void setPaySum(Double paySum) {
+    this.paySum = paySum;
+  }
+
+  public boolean isCurrent() {
+    return !state.equals("ARCH");
+  }
 }

@@ -60,6 +60,9 @@ public class Users extends GenId {
   @Column(name = "doc_fizio")
   private boolean docfizio;
 
+  @Column(name = "amb_treatment")
+  private boolean ambTreatment;
+
   @Column private boolean glb = false;
   @Column private boolean boss = false;
   @Column private boolean drugDirection = false;
@@ -290,5 +293,13 @@ public class Users extends GenId {
 
   public void setStatExp(boolean statExp) {
     this.statExp = statExp;
+  }
+
+  public boolean isAmbTreatment() {
+    return ambTreatment;
+  }
+
+  public void setAmbTreatment(boolean ambTreatment) {
+    this.ambTreatment = ambTreatment;
   }
 }

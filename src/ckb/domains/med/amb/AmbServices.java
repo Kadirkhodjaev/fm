@@ -15,6 +15,7 @@ public class AmbServices extends GenId {
   @Column private String state;
   @Column private String consul = "N";
   @Column private String diagnoz = "Y";
+  @Column private String treatment = "N";
   //
   @Column private Integer form_id;
   @Column private String ei;
@@ -116,5 +117,13 @@ public class AmbServices extends GenId {
 
   public void setOrd(int ord) {
     this.ord = ord;
+  }
+
+  public String getTreatment() {
+    return treatment;
+  }
+
+  public void setTreatment(String treatment) {
+    this.treatment = treatment;
   }
 }

@@ -100,6 +100,8 @@
   <!-- AMB -->
   <bean id="dAmpPatients" class="ckb.dao.med.amb.DAmbPatientImp" parent="daoImpl"/>
   <bean id="dAmbPatientServices" class="ckb.dao.med.amb.DAmbPatientServiceImp" parent="daoImpl"/>
+  <bean id="dAmbPatientTreatment" class="ckb.dao.med.amb.DAmbPatientTreatmentImp" parent="daoImpl"/>
+  <bean id="dAmbPatientTreatmentDate" class="ckb.dao.med.amb.DAmbPatientTreatmentDateImp" parent="daoImpl"/>
   <bean id="dAmbServices" class="ckb.dao.med.amb.DAmbServiceImp" parent="daoImpl"/>
   <bean id="dAmbResults" class="ckb.dao.med.amb.DAmbResultImp" parent="daoImpl"/>
   <bean id="dAmbServiceUsers" class="ckb.dao.med.amb.DAmbServiceUsersImp" parent="daoImpl"/>
@@ -196,7 +198,7 @@
   <bean id="sClient" class="ckb.services.med.client.SClientImp" scope="singleton"/>
   <bean id="sDrug" class="ckb.services.med.drug.SDrugImp" scope="singleton"/>
 
-  <bean id="sAmbGrid" class="ckb.services.mo.amb.SAmbGridImp" scope="singleton"/>
+  <bean id="sMoGrid" class="ckb.services.mo.amb.SMoAmbImp" scope="singleton"/>
 
 
   <bean id="cleansoftDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">

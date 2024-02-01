@@ -4294,7 +4294,7 @@ public class SRepImp implements SRep {
 				ps = conn.prepareStatement(
 					" Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio, " +
 						" 			   t.yearNum name, " +
-						"				   0.2 * c.koykoPrice * c.dayCount summ, " +
+						"				   0.02 * c.koykoPrice * c.dayCount summ, " +
 						"				   2 partnerProc, " +
 						"					 c.koykoPrice * c.dayCount price, " +
 						"					 t.date_end " +
