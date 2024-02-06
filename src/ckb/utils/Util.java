@@ -369,7 +369,8 @@ public class Util {
   }
 
   public static Double getDouble(HttpServletRequest req, String name) {
-    return Double.parseDouble(get(req, name));
+    String val = get(req, name);
+    return Double.parseDouble(val.replace(" ", ""));
   }
 
   public static Double getDouble(HttpServletRequest req, String name, Double def) {
@@ -405,5 +406,10 @@ public class Util {
     if(!sum.contains(","))
       sum = sum + ",00";
     return sum;
+  }
+
+  public static Float getFloat(HttpServletRequest req, String name) {
+    String val = get(req, name);
+    return Float.valueOf(val.replace(" ", ""));
   }
 }

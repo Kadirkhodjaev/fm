@@ -1,16 +1,16 @@
 package ckb.services.mo.amb;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.region.DRegion;
-import ckb.dao.med.amb.DAmbPatient;
-import ckb.dao.med.amb.DAmbPatientService;
-import ckb.dao.med.amb.DAmbService;
-import ckb.dao.med.amb.DAmbServiceUsers;
-import ckb.domains.med.amb.AmbPatientServices;
-import ckb.domains.med.amb.AmbPatients;
-import ckb.domains.med.amb.AmbServices;
+import ckb.dao.med.amb.*;
+import ckb.dao.med.amb.form.DAmbFormField;
+import ckb.dao.med.amb.form.DAmbFormFieldNorma;
+import ckb.dao.med.amb.form.DAmbFormFieldOption;
+import ckb.dao.med.cashbox.discount.DCashDiscount;
+import ckb.domains.med.amb.*;
 import ckb.grid.AmbGrid;
 import ckb.models.AmbPatient;
+import ckb.models.amb.AmbFormField;
 import ckb.session.Session;
 import ckb.utils.DB;
 import ckb.utils.Util;
@@ -26,11 +26,17 @@ import java.util.List;
 public class SMoAmbImp implements SMoAmb {
 
   @Autowired private DAmbPatient dAmbPatient;
-  @Autowired private DAmbServiceUsers dAmbServiceUser;
+  @Autowired private DAmbServiceUser dAmbServiceUser;
   @Autowired private DAmbPatientService dAmpPatientService;
   @Autowired private DAmbService dAmbService;
   @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
+  @Autowired private DAmbPatientService dAmbPatientService;
+  @Autowired private DCashDiscount dCashDiscount;
+  @Autowired private DAmbPatientPay dAmbPatientPay;
+  @Autowired private DAmbFormField dAmbFormField;
+  @Autowired private DAmbFormFieldNorma dAmbFormFieldNorma;
+  @Autowired private DAmbFormFieldOption dAmbFormFieldOption;
 
   @Override
   public List<AmbPatient> gridRows(AmbGrid grid, Session session) {
@@ -135,9 +141,67 @@ public class SMoAmbImp implements SMoAmb {
     }
     return ser.getId();
   }
+
   @Override
   public void createPatientService(int patient, int service, int user) {
     int id = createPatientServiceId(patient, service, user, 0);
+  }
+
+  @Override
+  public void updatePaySum(Integer patient) {
+    AmbPatients pat = dAmbPatient.get(patient);
+    List<AmbPatientServices> sers = dAmbPatientService.list("From AmbPatientServices t Where t.patient = " + patient);
+    double summ = 0;
+    for(AmbPatientServices ser: sers) {
+      summ += ser.getPrice();
+    }
+    Double discount = dCashDiscount.patientAmbDiscountSum(patient);
+    Double paid = dAmbPatientPay.paidSum(patient);
+    pat.setPaySum(summ - paid - discount);
+    dAmbPatient.save(pat);
+  }
+
+  @Override
+  public List<AmbFormField> serviceFields(Integer service) {
+    List<AmbFormFields> fields = dAmbFormField.list("From AmbFormFields Where service = " + service);
+    List<AmbFormField> rows = new ArrayList<>();
+    for(AmbFormFields field: fields) {
+      AmbFormField f = new AmbFormField();
+      f.setId(field.getId());
+      f.setService(service);
+      f.setFieldName(field.getFieldName());
+      f.setFieldLabel(field.getFieldLabel());
+      f.setTypeCode(field.getTypeCode());
+      f.setEi(field.getEi());
+      f.setOrd(field.getOrd());
+      f.setNormaType(field.getNormaType());
+      if(f.getNormaType() != null && f.getNormaType().equals("all")) {
+        List<AmbFormFieldNormas> normas = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And sex = 'all'");
+        if(normas != null && !normas.isEmpty()) {
+          f.setNormaId(normas.get(0).getId());
+          f.setNormaFrom(normas.get(0).getNormaFrom());
+          f.setNormaTo(normas.get(0).getNormaTo());
+        }
+      }
+      if(f.getNormaType() != null && f.getNormaType().equals("sex_norm")) {
+        List<AmbFormFieldNormas> maleNorm = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And sex = 'male'");
+        if(maleNorm != null && !maleNorm.isEmpty()) {
+          f.setMaleNormaId(maleNorm.get(0).getId());
+          f.setMaleNormaFrom(maleNorm.get(0).getNormaFrom());
+          f.setMaleNormaTo(maleNorm.get(0).getNormaTo());
+        }
+        List<AmbFormFieldNormas> femaleNorm = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And sex = 'female'");
+        if(femaleNorm != null && !femaleNorm.isEmpty()) {
+          f.setFemaleNormaId(femaleNorm.get(0).getId());
+          f.setFemaleNormaFrom(femaleNorm.get(0).getNormaFrom());
+          f.setFemaleNormaTo(femaleNorm.get(0).getNormaTo());
+        }
+      }
+      f.setOptions(dAmbFormFieldOption.list("From AmbFormFieldOptions Where field = " + f.getId()));
+      //
+      rows.add(f);
+    }
+    return rows;
   }
 
 }

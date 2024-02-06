@@ -4,7 +4,7 @@ import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbPatientService;
 import ckb.dao.med.amb.DAmbResult;
-import ckb.dao.med.amb.DAmbServiceFields;
+import ckb.dao.med.amb.DAmbServiceField;
 import ckb.dao.med.kdos.forms.f1.DF1;
 import ckb.dao.med.kdos.forms.f10.DF10;
 import ckb.dao.med.kdos.forms.f11.DF11;
@@ -69,7 +69,7 @@ public class SRkdoImp implements SRkdo {
   @Autowired DF999 df999;
   @Autowired private DAmbPatientService dAmbPatientServices;
   @Autowired private DAmbResult dAmbResults;
-  @Autowired private DAmbServiceFields dAmbServiceFields;
+  @Autowired private DAmbServiceField dAmbServiceFields;
 
   @Override
   public List<String> getResults(int curPat) {

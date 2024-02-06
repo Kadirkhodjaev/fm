@@ -86,6 +86,7 @@ public class  CApp {
       m.add(new Menu("Формы", "/core/form/list.s", "fa fa-edit fa-fw", session));
       m.add(new Menu("Амб группы", "/core/amb/groups.s", "fa fa-list-alt fa-fw", session));
       m.add(new Menu("Амб услуги", "/core/amb/services.s", "fa fa-plus fa-fw", session));
+      m.add(new Menu("Амбулатория", "/core/ambv2/index.s", "fa fa-plus fa-fw", session));
       m.add(new Menu("Стат группы", "/core/stat/groups.s", "fa fa-list-alt fa-fw", session));
       m.add(new Menu("Стат услуги", "/core/stat/services.s", "fa fa-list-alt fa-fw", session));
       m.add(new Menu("Детали лаб", "/core/stat/details.s", "fa fa-th fa-fw", session));

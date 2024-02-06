@@ -4,8 +4,8 @@ import ckb.dao.admin.forms.DForm;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbGroup;
 import ckb.dao.med.amb.DAmbService;
-import ckb.dao.med.amb.DAmbServiceFields;
-import ckb.dao.med.amb.DAmbServiceUsers;
+import ckb.dao.med.amb.DAmbServiceField;
+import ckb.dao.med.amb.DAmbServiceUser;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbGroups;
 import ckb.domains.med.amb.AmbServiceFields;
@@ -33,12 +33,38 @@ import java.util.List;
 @RequestMapping("/core/amb/")
 public class CCoreAmb {
 
-  @Autowired private DAmbServiceFields dAmbServiceFields;
+  @Autowired private DAmbServiceField dAmbServiceFields;
   @Autowired private DAmbService dAmbServices;
-  @Autowired private DAmbServiceUsers dAmbServiceUsers;
+  @Autowired private DAmbServiceUser dAmbServiceUsers;
   @Autowired private DUser dUser;
   @Autowired private DForm dForm;
   @Autowired private DAmbGroup dAmbGroups;
+
+  @RequestMapping("index.s")
+  protected String index(HttpServletRequest req) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("core/amb/index.s");
+    if(session.getCurSubUrl().isEmpty() || !session.getCurSubUrl().contains("core/amb")) session.setCurSubUrl("/core/amb/services.s");
+    if(session.getCurSubUrl().contains("core/amb/service")) session.setCurSubUrl("core/amb/services.s");
+    if(session.getCurSubUrl().contains("core/amb/group")) session.setCurSubUrl("core/amb/groups.s");
+    if(session.getCurSubUrl().contains("core/amb/services")) {
+      String filter = session.getFilters().get("amb_group_filter");
+      String page = Util.get(req, "page", filter);
+      HashMap<String, String> fl = session.getFilters();
+      fl.put("amb_group_filter", page);
+      session.setFilters(fl);
+      filter = session.getFilters().get("amb_service_word");
+      page = Util.toUTF8(Util.get(req, "word"));
+      if(page.equals("_"))
+        page = "";
+      else
+        page = Util.nvl(page, filter);
+      fl = session.getFilters();
+      fl.put("amb_service_word", page);
+      session.setFilters(fl);
+    }
+    return "admin/ambv2/index";
+  }
 
   @RequestMapping("/services.s")
   protected String amb(HttpServletRequest request, Model model){

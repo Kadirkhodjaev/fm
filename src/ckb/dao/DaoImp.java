@@ -142,4 +142,13 @@ public abstract class DaoImp<T extends GenId> implements Dao<T> {
   public List<T> list(String sql){
     return entityManager.createQuery(sql).getResultList();
   }
+
+  //Удаление из таблицы строки
+  @Transactional
+  public void delSql(String sql){
+    List<T> rows = list(sql);
+    for(T row: rows) {
+      delete(row.getId());
+    }
+  }
 }

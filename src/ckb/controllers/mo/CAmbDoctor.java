@@ -1,6 +1,6 @@
 package ckb.controllers.mo;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.med.amb.*;
 import ckb.domains.admin.Clients;
@@ -193,4 +193,33 @@ public class CAmbDoctor {
     }
     return json.toString();
   }
+
+  @RequestMapping("service.s")
+  protected String work(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    int patient = Util.getInt(req, "patient", 0);
+    int id = Util.getInt(req, "id", 0);
+    session.setCurPat(patient);
+    session.setCurUrl("/ambs/doctor/service.s?patient=" + patient + "&id=" + id);
+    AmbPatients pat = dAmbPatient.get(patient);
+    AmbPatientServices service = dAmbPatientService.get(id);
+    model.addAttribute("service", service);
+    model.addAttribute("patient", pat);
+    return "/mo/amb/doctor/service";
+  }
+
+  @RequestMapping("form.s")
+  protected String form(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    int patient = Util.getInt(req, "patient", 0);
+    int id = Util.getInt(req, "id", 0);
+    session.setCurPat(patient);
+    session.setCurUrl("/ambs/doctor/service.s?patient=" + patient + "&id=" + id);
+    AmbPatients pat = dAmbPatient.get(patient);
+    AmbPatientServices service = dAmbPatientService.get(id);
+    model.addAttribute("service", service);
+    model.addAttribute("patient", pat);
+    return "/mo/amb/doctor/service";
+  }
+
 }

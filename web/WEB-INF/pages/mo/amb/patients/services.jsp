@@ -63,7 +63,9 @@
             <c:if test="${s.state == 'PAID'}"><img title="Оплачена" src='/res/imgs/yellow.gif'/></c:if>
             <c:if test="${s.state == 'DONE'}"><img title="Выполнена" src='/res/imgs/green.gif'/></c:if>
           </td>
-          <td>${s.service.name}</td>
+          <td>
+            <a href="#" onclick="setPage('/ambs/doctor/service.s?patient=${patient.id}&id=${s.id}')">${s.service.name}</a>
+          </td>
           <td class="center <c:if test="${s.today}">text-danger bold</c:if>">
             <fmt:formatDate pattern = "dd.MM.yyyy" value = "${s.planDate}" />
           </td>

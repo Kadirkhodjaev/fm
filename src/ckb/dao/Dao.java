@@ -66,4 +66,6 @@ public interface Dao<T extends GenId> {
   T obj(String sql);
 
   List<T> list(String sql);
+
+  void delSql(String sql);
 }

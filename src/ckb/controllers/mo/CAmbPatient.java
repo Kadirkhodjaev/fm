@@ -1,6 +1,6 @@
 package ckb.controllers.mo;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;

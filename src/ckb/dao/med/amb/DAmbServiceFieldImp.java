@@ -5,9 +5,9 @@ import ckb.domains.med.amb.AmbServiceFields;
 
 import java.util.List;
 
-public class DAmbServiceFieldsImp extends DaoImp<AmbServiceFields> implements DAmbServiceFields {
+public class DAmbServiceFieldImp extends DaoImp<AmbServiceFields> implements DAmbServiceField {
 
-  public DAmbServiceFieldsImp() {
+  public DAmbServiceFieldImp() {
     super(AmbServiceFields.class);
   }
 

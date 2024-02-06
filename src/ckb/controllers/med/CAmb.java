@@ -1,6 +1,6 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
@@ -68,11 +68,11 @@ public class CAmb {
   @Autowired private DAmbService dAmbServices;
   @Autowired private DAmbResult dAmbResults;
   @Autowired private DUser dUser;
-  @Autowired private DAmbServiceUsers dAmbServiceUsers;
+  @Autowired private DAmbServiceUser dAmbServiceUsers;
   @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DAmbPatientLinks dAmbPatientLinks;
   @Autowired private DTemplate dTemplate;
-  @Autowired private DAmbServiceFields dAmbServiceFields;
+  @Autowired private DAmbServiceField dAmbServiceFields;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DDrug dDrug;
   @Autowired private DDrugCount dDrugCount;

@@ -1,6 +1,6 @@
 package ckb.services.med.client;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
 import ckb.domains.admin.Clients;

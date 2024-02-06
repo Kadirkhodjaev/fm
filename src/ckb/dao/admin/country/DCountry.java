@@ -1,4 +1,4 @@
-package ckb.dao.admin.countery;
+package ckb.dao.admin.country;
 
 import ckb.dao.Dao;
 import ckb.domains.admin.Counteries;

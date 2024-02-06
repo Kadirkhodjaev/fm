@@ -36,7 +36,7 @@ public class SAmpImp implements SAmb {
   @Autowired private DAmbPatientService dAmpPatientServices;
   @Autowired private DAmbPatientLinks dAmbPatientLinks;
   @Autowired private DOpt dOpt;
-  @Autowired private DAmbServiceFields dAmbServiceFields;
+  @Autowired private DAmbServiceField dAmbServiceFields;
   @Autowired private DAmbPatient dAmbPatients;
   @Autowired private DAmbPatientService dAmbPatientServices;
   @Autowired private DAmbResult dAmbResults;

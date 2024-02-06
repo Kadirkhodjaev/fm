@@ -1,6 +1,6 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;

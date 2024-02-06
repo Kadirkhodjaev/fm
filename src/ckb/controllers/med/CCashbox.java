@@ -1,10 +1,10 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbPatientPays;
+import ckb.dao.med.amb.DAmbPatientPay;
 import ckb.dao.med.amb.DAmbPatientService;
 import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.cashbox.discount.DCashDiscount;
@@ -70,7 +70,7 @@ public class CCashbox {
   @Autowired private DAmbPatient dAmbPatients;
   @Autowired private DAmbPatientService dAmbPatientServices;
   @Autowired private DUser dUser;
-  @Autowired private DAmbPatientPays dAmbPatientPay;
+  @Autowired private DAmbPatientPay dAmbPatientPay;
   // Stat buyicha
   @Autowired private DPatient dPatient;
   @Autowired private DPatientWatchers dPatientWatchers;

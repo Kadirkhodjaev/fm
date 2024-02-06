@@ -15,9 +15,12 @@ public class AmbService {
   private Date regDate;
   private Date confDate;
   private Date planDate;
+  private String msg;
   private List<AmbPatientServices> services;
   private String price;
+  private Double dprice;
   private String state;
+  private String newForm;
   private boolean isToday;
   private boolean isTreatment;
   private boolean canDelete;
@@ -247,5 +250,29 @@ public class AmbService {
 
   public void setTreatment(boolean treatment) {
     isTreatment = treatment;
+  }
+
+  public Double getDprice() {
+    return dprice;
+  }
+
+  public void setDprice(Double dprice) {
+    this.dprice = dprice;
+  }
+
+  public String getMsg() {
+    return msg;
+  }
+
+  public void setMsg(String msg) {
+    this.msg = msg;
+  }
+
+  public String getNewForm() {
+    return newForm;
+  }
+
+  public void setNewForm(String newForm) {
+    this.newForm = newForm;
   }
 }

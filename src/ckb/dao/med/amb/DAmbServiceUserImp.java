@@ -8,11 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-public class DAmbServiceUsersImp extends DaoImp<AmbServiceUsers> implements DAmbServiceUsers {
+public class DAmbServiceUserImp extends DaoImp<AmbServiceUsers> implements DAmbServiceUser {
 
   @Autowired private DUser dUser;
 
-  public DAmbServiceUsersImp() {
+  public DAmbServiceUserImp() {
     super(AmbServiceUsers.class);
   }
 

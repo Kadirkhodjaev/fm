@@ -7,7 +7,7 @@ import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.admin.users.DUserIp;
 import ckb.dao.med.amb.DAmbGroup;
-import ckb.dao.med.amb.DAmbServiceUsers;
+import ckb.dao.med.amb.DAmbServiceUser;
 import ckb.dao.med.amb.DAmbService;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.kdos.DKdoTypes;
@@ -48,7 +48,7 @@ public class CCoreUser {
   @Autowired private DReport dReport;
   @Autowired private DKdoTypes dKdoType;
   @Autowired private DAmbService dAmbServices;
-  @Autowired private DAmbServiceUsers dAmbServiceUsers;
+  @Autowired private DAmbServiceUser dAmbServiceUsers;
   @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DUserDrugLine dUserDrugLine;

@@ -5,7 +5,7 @@ import ckb.domains.med.amb.AmbPatientPays;
 
 import java.util.List;
 
-public interface DAmbPatientPays extends Dao<AmbPatientPays> {
+public interface DAmbPatientPay extends Dao<AmbPatientPays> {
 
   List<AmbPatientPays> byPatient(int curPat);
 

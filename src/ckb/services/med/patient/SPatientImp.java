@@ -1140,7 +1140,7 @@ public class SPatientImp implements SPatient {
           "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
           "                     And c.patientDrug_id = t.id " +
           "                     And date(c.date) = date(t.crOn)) " +
-          "      And date(crOn) = '2024-01-20' " + // CURRENT_DATE()
+          "      And date(crOn) = CURRENT_DATE() " + //
           "      And g.id = t.patient_id " +
           "      And g.dept_id = " + dep + // CURRENT_DATE()
           "    Order By t.patient_id, t.Id desc ");

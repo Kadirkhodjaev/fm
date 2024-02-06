@@ -32,7 +32,7 @@ public class CAmbPatientService {
   @Autowired private DAmbPatient dAmbPatient;
   @Autowired private SMoAmb sMoAmb;
   @Autowired private DAmbService dAmbService;
-  @Autowired private DAmbServiceUsers dAmbServiceUser;
+  @Autowired private DAmbServiceUser dAmbServiceUser;
   @Autowired private DAmbPatientService dAmbPatientService;
   @Autowired private DUser dUser;
   @Autowired private DAmbGroup dAmbGroup;
@@ -52,7 +52,7 @@ public class CAmbPatientService {
         List<AmbService> ss = new ArrayList<AmbService>();
         List<AmbPatientServices> services = dAmbPatientService.getList("From AmbPatientServices Where patient = " + id + " Order By id desc");
         for(AmbPatientServices s: services) {
-          if(!session.isReg() && session.getUserId() != s.getCrBy() && s.getState().equals("ENT")) continue;
+          if(!session.isReg() && session.getUserId() != s.getCrBy() && (s.getState().equals("ENT") || s.getState().equals("DEL"))) continue;
           AmbService d = new AmbService();
           d.setId(s.getId());
           d.setState(s.getState());
@@ -143,6 +143,7 @@ public class CAmbPatientService {
       int id = Util.getInt(req, "id");
       int patient = Util.getInt(req, "patient");
       sMoAmb.createPatientService(patient, id, session.getUserId());
+      sMoAmb.updatePaySum(patient);
       json.put("success", true);
     } catch (Exception e) {
       return Util.err(json, e.getMessage());
@@ -160,6 +161,7 @@ public class CAmbPatientService {
       int patient = Util.getInt(req, "patient");
       for(String id: ids)
         sMoAmb.createPatientService(patient, Integer.parseInt(id), session.getUserId());
+      sMoAmb.updatePaySum(patient);
       json.put("success", true);
     } catch (Exception e) {
       return Util.err(json, e.getMessage());
@@ -184,9 +186,7 @@ public class CAmbPatientService {
           }
         }
         dAmbPatientService.delete(ser.getId());
-        AmbPatients pat = dAmbPatient.get(ser.getPatient());
-        pat.setPaySum(dAmbPatientService.patientTotalSum(pat.getId()));
-        dAmbPatient.save(pat);
+        sMoAmb.updatePaySum(ser.getPatient());
       }
       json.put("success", true);
     } catch (Exception e) {
@@ -243,22 +243,13 @@ public class CAmbPatientService {
       ser.setMsg(null);
       ser.setCrBy(session.getUserId());
       dAmbPatientService.save(ser);
+      sMoAmb.updatePaySum(pat.getId());
       //
       json.put("success", true);
     } catch (Exception e) {
       return Util.err(json, e.getMessage());
     }
     return json.toString();
-  }
-
-  @RequestMapping("print.s")
-  protected String print(HttpServletRequest req, Model m) {
-    Session session = SessionUtil.getUser(req);
-    AmbPatients pat = dAmbPatient.get(session.getCurPat());
-    m.addAttribute("patient", pat);
-    m.addAttribute("ids", req.getParameter("ids"));
-    //
-    return "med/amb/print";
   }
   //endregion
 

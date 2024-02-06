@@ -1,6 +1,6 @@
 package ckb.services.med.rep;
 
-import ckb.dao.admin.countery.DCountry;
+import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.reports.DReport;
