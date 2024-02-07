@@ -7,12 +7,12 @@
 <style>
   .table tr td {padding:10px !important;}
 </style>
-<div class="panel panel-info wpx-1200 margin-auto">
+<div class="panel panel-info wpx-1400 margin-auto">
   <div class="panel-heading">
     Реквизиты услуги
     <ul class="pagination" style="float:right; margin-top:-5px">
       <li class="paginate_button"><a href="#" onclick="saveAmb()" title="Сохранить"><i class="fa fa-save"></i> Сохранить</a></li>
-      <li class="paginate_button"><a href="#" onclick="setPage('/core/ambv2/index.s')" title="Назад"><i class="fa fa-backward"></i> Назад</a></li>
+      <li class="paginate_button"><a href="#" onclick="$('#pager').load('/core/ambv2/services.s')" title="Назад"><i class="fa fa-backward"></i> Назад</a></li>
     </ul>
   </div>
   <div class="panel-body">
@@ -71,7 +71,8 @@
           <td>${users}</td>
         </tr>
       </table>
-      <div class="w-100">
+      <c:if test="${ser.newForm == 'Y'}">
+        <div class="w-100">
         <div class="border-bottom-1 pb-10">
           <table class="w-100">
             <tr>
@@ -111,7 +112,7 @@
                     <tr>
                       <td class="p-5 text-right wpx-100">Тип <req>*</req>:</td>
                       <td class="p-5 wpx-300">
-                        <select class="form-control" name="field_type_code" onchange="setFieldType(this.value)">
+                        <select class="form-control" name="field_type_code" onchange="setFieldType(this.value, ${f.id})">
                           <option <c:if test="${f.typeCode == 'float_norm'}">selected</c:if> value="float_norm">Цифровое поле с нормами</option>
                           <option <c:if test="${f.typeCode == 'float_nonorm'}">selected</c:if> value="float_nonorm">Цифровое поле без норм</option>
                           <option <c:if test="${f.typeCode == 'input_norm'}">selected</c:if> value="input_norm">Текствое поле</option>
@@ -121,12 +122,12 @@
                         </select>
                       </td>
                       <td rowspan="3" class="vertical-align-top p-5">
-                        <table class="w-100 light-table" id="form_field_select_block">
+                        <table class="w-100 light-table" id="form_field_select_block_${f.id}">
                           <tbody>
                             <tr>
                               <td class="p-5 wpx-100">Значение: </td>
                               <td class="p-5">
-                                <input type="text" value="" class="form-control" id="new_field_option" placeholder="Новое значение для выбора"/>
+                                <input type="text" value="" class="form-control" id="new_field_option_${f.id}" placeholder="Новое значение для выбора"/>
                               </td>
                               <td class="wpx-40">
                                 <button class="btn btn-success btn-icon" type="button" onclick="addFieldOption(${f.id})">
@@ -134,12 +135,12 @@
                                 </button>
                               </td>
                             </tr>
-                            <c:forEach items="${options}" var="op" varStatus="loop">
+                            <c:forEach items="${f.options}" var="op" varStatus="loop">
                               <c:if test="${op.field == f.id}">
                                 <tr>
                                   <td class="text-right">${loop.index + 1}</td>
                                   <td>${op.optName}</td>
-                                  <td class="wpx-40">
+                                  <td class="wpx-40 text-center pb-2">
                                     <button class="btn btn-danger btn-icon" type="button" onclick="deleteOption(${op.id})">
                                       <span class="fa fa-trash"></span>
                                     </button>
@@ -149,7 +150,7 @@
                             </c:forEach>
                           </tbody>
                         </table>
-                        <table class="w-100" id="all_norm_block">
+                        <table class="w-100" id="all_norm_block_${f.id}">
                           <tr>
                             <td class="text-center bold" colspan="2">Диапазон нормы</td>
                           </tr>
@@ -163,7 +164,7 @@
                             </td>
                           </tr>
                         </table>
-                        <table class="w-100" id="sex_norm_block">
+                        <table class="w-100" id="sex_norm_block_${f.id}">
                           <tr>
                             <td class="text-center bold" colspan="2">Мужчина</td>
                             <td class="text-center bold" colspan="2">Женщина</td>
@@ -189,12 +190,107 @@
                             </td>
                           </tr>
                         </table>
+                        <table class="w-100 light-table" id="year_norm_block_${f.id}">
+                          <thead>
+                          <tr>
+                            <td colspan="4" class="pb-2">
+                              Нормы по возрасту
+                            </td>
+                            <td class="wpx-40 text-center">
+                              <button type="button" class="btn btn-success btn-icon" onclick="addNorma(${f.id}, 'year_norm')">
+                                <span class="fa fa-plus"></span>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colspan="2">Возраст диапазон</td>
+                            <td colspan="2">Норма диапазон</td>
+                          </tr>
+                          </thead>
+                          <tbody>
+                          <c:forEach items="${f.normas}" var="a">
+                            <c:if test="${a.normType == 'year_norm'}">
+                              <tr>
+                                <td class="pb-2">
+                                  <input type="hidden" name="year_norm_id_${f.id}" value="${a.id}"/>
+                                  <input type="text" name="year_norm_year_from_${a.id}" maxlength="3" class="form-control human_year text-center" value="${a.yearFrom}" placeholder="С">
+                                </td>
+                                <td class="pb-2">
+                                  <input type="text" name="year_norm_year_to_${a.id}" maxlength="3" class="form-control human_year text-center" value="${a.yearTo}" placeholder="По">
+                                </td>
+                                <td class="pb-2">
+                                  <input type="text" name="year_norm_norm_from_${a.id}" maxlength="10" class="form-control money text-center" value="${a.normaFrom}" placeholder="С">
+                                </td>
+                                <td class="pb-2">
+                                  <input type="text" name="year_norm_norm_to_${a.id}" maxlength="10" class="form-control money text-center" value="${a.normaTo}" placeholder="По">
+                                </td>
+                                <td class="pb-2 text-center">
+                                  <button type="button" class="btn btn-danger btn-icon" onclick="delNorma(${a.id})">
+                                    <span class="fa fa-remove"></span>
+                                  </button>
+                                </td>
+                              </tr>
+                            </c:if>
+                          </c:forEach>
+                          </tbody>
+                        </table>
+                        <table class="w-100 light-table" id="sex_year_norm_block_${f.id}">
+                          <thead>
+                          <tr>
+                            <td colspan="5" class="pb-2">
+                              Нормы по возрасту
+                            </td>
+                            <td class="wpx-40 text-center">
+                              <button type="button" class="btn btn-success btn-icon" onclick="addNorma(${f.id}, 'sex_year_norm')">
+                                <span class="fa fa-plus"></span>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="wpx-100">Пол</td>
+                            <td colspan="2">Возраст диапазон</td>
+                            <td colspan="2">Норма диапазон</td>
+                          </tr>
+                          </thead>
+                          <tbody>
+                          <c:forEach items="${f.normas}" var="a">
+                            <c:if test="${a.normType == 'sex_year_norm'}">
+                              <tr>
+                                <td class="pb-2">
+                                  <select class="form-control" name="sex_year_norm_sex_${a.id}">
+                                    <option <c:if test="${a.sex == 'male'}">selected</c:if> value="male">Мужчина</option>
+                                    <option <c:if test="${a.sex == 'female'}">selected</c:if> value="female">Женшина</option>
+                                  </select>
+                                </td>
+                                <td class="pb-2">
+                                  <input type="hidden" name="sex_year_norm_id_${f.id}" value="${a.id}"/>
+                                  <input type="text" name="sex_year_norm_year_from_${a.id}" maxlength="3" class="form-control human_year text-center" value="${a.yearFrom}" placeholder="С">
+                                </td>
+                                <td class="pb-2">
+                                  <input type="text" name="sex_year_norm_year_to_${a.id}" maxlength="3" class="form-control human_year text-center" value="${a.yearTo}" placeholder="По">
+                                </td>
+                                <td class="pb-2">
+                                  <input type="text" name="sex_year_norm_norm_from_${a.id}" maxlength="10" class="form-control money text-center" value="${a.normaFrom}" placeholder="С">
+                                </td>
+                                <td class="pb-2">
+                                  <input type="text" name="sex_year_norm_norm_to_${a.id}" maxlength="10" class="form-control money text-center" value="${a.normaTo}" placeholder="По">
+                                </td>
+                                <td class="pb-2 text-center">
+                                  <button type="button" class="btn btn-danger btn-icon" onclick="delNorma(${a.id})">
+                                    <span class="fa fa-remove"></span>
+                                  </button>
+                                </td>
+                              </tr>
+                            </c:if>
+                          </c:forEach>
+                          </tbody>
+                        </table>
                       </td>
                     </tr>
-                    <tr class="with_norm_field">
+                    <tr class="with_norm_field_${f.id}">
                       <td class="p-5 text-right">Тип нормы <req>*</req>:</td>
                       <td class="p-5">
-                        <select class="form-control" name="norm_type" onchange="setNormType(this.value)">
+                        <select class="form-control" id="field_norm_type_${f.id}" name="norm_type" onchange="setNormType(this.value, ${f.id})">
                           <option <c:if test="${f.normaType == 'all'}">selected</c:if> value="all">Общая норма для всех</option>
                           <option <c:if test="${f.normaType == 'sex_norm'}">selected</c:if> value="sex_norm">Норма отдельно от пола</option>
                           <option <c:if test="${f.normaType == 'year_norm'}">selected</c:if> value="year_norm">Норма отдельно от возраста</option>
@@ -202,7 +298,7 @@
                         </select>
                       </td>
                     </tr>
-                    <tr class="with_norm_field">
+                    <tr class="with_norm_field_${f.id}">
                       <td class="p-5 text-right">Ед. изм. :</td>
                       <td class="p-5">
                         <input type="text" maxlength="20" name="field_ei" class="form-control text-center" value="${f.ei}"/>
@@ -220,12 +316,14 @@
           </tbody>
         </table>
       </div>
+      </c:if>
     </form>
   </div>
 </div>
 <script>
   $(() => {
     $('.money').mask("# ##0.00", {reverse: true});
+    $('.human_year').mask("000", {reverse: true});
   });
   function reloadPage(res) {
     if(res.success) $('#pager').load('/core/ambv2/service/save.s?id=${ser.id}');
@@ -257,14 +355,19 @@
           reloadPage(res);
         }
       });
+    } else {
+      openMedMsg('Наименование не может быть пустым', false);
     }
   }
-  function setFieldType(val) {
-    $('.with_norm_field').toggle(val.indexOf('_norm') > 0);
-    $('#form_field_select_block').toggle(val === 'select');
+  function setFieldType(val, id) {
+    $('.with_norm_field_' + id).toggle(val.indexOf('_norm') > 0);
+    $('#form_field_select_block_' + id).toggle(val === 'select');
+    //
+    let normType = val.indexOf('_norm') > 0 ? $('#field_norm_type_' + id).val() : '';
+    setNormType(normType, id);
   }
   function addFieldOption(field) {
-    let option = $('#new_field_option').val();
+    let option = $('#new_field_option_' + field).val();
     $.ajax({
       url: '/core/ambv2/service/field/option/add.s',
       method: 'post',
@@ -304,13 +407,38 @@
       });
     }
   }
-  function setNormType(val) {
-    $('#all_norm_block').toggle(val === 'all');
-    $('#sex_norm_block').toggle(val === 'sex_norm');
-
+  function setNormType(val, id) {
+    $('#all_norm_block_' + id).toggle(val === 'all');
+    $('#sex_norm_block_' + id).toggle(val === 'sex_norm');
+    $('#year_norm_block_' + id).toggle(val === 'year_norm');
+    $('#sex_year_norm_block_' + id).toggle(val === 'sex_year_norm');
+  }
+  function addNorma(id, type) {
+    $.ajax({
+      url: '/core/ambv2/service/field/norma/add.s',
+      method: 'post',
+      data: 'service=${ser.id}&field=' + id + '&type=' + type,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        reloadPage(res);
+      }
+    });
+  }
+  function delNorma(id) {
+    if(confirm('Вы действительно хотите удалить запись?'))
+      $.ajax({
+        url: '/core/ambv2/service/field/norma/del.s',
+        method: 'post',
+        data: 'id=' + id,
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          reloadPage(res);
+        }
+      });
   }
   <c:forEach items="${fields}" var="f">
-    setFieldType('${f.typeCode}');
-    setNormType('${f.normaType}');
+    setFieldType('${f.typeCode}', '${f.id}');
   </c:forEach>
 </script>

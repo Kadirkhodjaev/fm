@@ -11,6 +11,7 @@ import ckb.domains.med.amb.*;
 import ckb.grid.AmbGrid;
 import ckb.models.AmbPatient;
 import ckb.models.amb.AmbFormField;
+import ckb.models.amb.AmbFormFieldNorma;
 import ckb.session.Session;
 import ckb.utils.DB;
 import ckb.utils.Util;
@@ -176,7 +177,7 @@ public class SMoAmbImp implements SMoAmb {
       f.setOrd(field.getOrd());
       f.setNormaType(field.getNormaType());
       if(f.getNormaType() != null && f.getNormaType().equals("all")) {
-        List<AmbFormFieldNormas> normas = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And sex = 'all'");
+        List<AmbFormFieldNormas> normas = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And normType = 'all'");
         if(normas != null && !normas.isEmpty()) {
           f.setNormaId(normas.get(0).getId());
           f.setNormaFrom(normas.get(0).getNormaFrom());
@@ -184,18 +185,34 @@ public class SMoAmbImp implements SMoAmb {
         }
       }
       if(f.getNormaType() != null && f.getNormaType().equals("sex_norm")) {
-        List<AmbFormFieldNormas> maleNorm = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And sex = 'male'");
+        List<AmbFormFieldNormas> maleNorm = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And normType = 'sex_norm' And sex = 'male'");
         if(maleNorm != null && !maleNorm.isEmpty()) {
           f.setMaleNormaId(maleNorm.get(0).getId());
           f.setMaleNormaFrom(maleNorm.get(0).getNormaFrom());
           f.setMaleNormaTo(maleNorm.get(0).getNormaTo());
         }
-        List<AmbFormFieldNormas> femaleNorm = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And sex = 'female'");
+        List<AmbFormFieldNormas> femaleNorm = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And normType = 'sex_norm' And sex = 'female'");
         if(femaleNorm != null && !femaleNorm.isEmpty()) {
           f.setFemaleNormaId(femaleNorm.get(0).getId());
           f.setFemaleNormaFrom(femaleNorm.get(0).getNormaFrom());
           f.setFemaleNormaTo(femaleNorm.get(0).getNormaTo());
         }
+      }
+      if(f.getNormaType() != null && !f.getNormaType().equals("all") && !f.getNormaType().equals("sex_norm")) {
+        List<AmbFormFieldNormas> normas = dAmbFormFieldNorma.list(" From AmbFormFieldNormas Where field = " + f.getId() + " And normType = '" + f.getNormaType() + "'");
+        List<AmbFormFieldNorma> nms = new ArrayList<>();
+        for(AmbFormFieldNormas n: normas) {
+          AmbFormFieldNorma a = new AmbFormFieldNorma();
+          a.setId(n.getId());
+          a.setSex(n.getSex());
+          a.setYearFrom(n.getYearFrom());
+          a.setYearTo(n.getYearTo());
+          a.setNormaFrom(n.getNormaFrom());
+          a.setNormaTo(n.getNormaTo());
+          a.setNormType(n.getNormType());
+          nms.add(a);
+        }
+        f.setNormas(nms);
       }
       f.setOptions(dAmbFormFieldOption.list("From AmbFormFieldOptions Where field = " + f.getId()));
       //

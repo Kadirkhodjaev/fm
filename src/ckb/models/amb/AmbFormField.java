@@ -1,6 +1,5 @@
 package ckb.models.amb;
 
-import ckb.domains.med.amb.AmbFormFieldNormas;
 import ckb.domains.med.amb.AmbFormFieldOptions;
 
 import java.util.List;
@@ -25,7 +24,7 @@ public class AmbFormField {
   private String femaleNormaFrom;
   private String femaleNormaTo;
   private List<AmbFormFieldOptions> options;
-  private List<AmbFormFieldNormas> normas;
+  private List<AmbFormFieldNorma> normas;
 
   public Integer getId() {
     return id;
@@ -125,11 +124,11 @@ public class AmbFormField {
     this.options = options;
   }
 
-  public List<AmbFormFieldNormas> getNormas() {
+  public List<AmbFormFieldNorma> getNormas() {
     return normas;
   }
 
-  public void setNormas(List<AmbFormFieldNormas> normas) {
+  public void setNormas(List<AmbFormFieldNorma> normas) {
     this.normas = normas;
   }
 

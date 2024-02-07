@@ -1,23 +1,24 @@
-package ckb.domains.med.amb;
+package ckb.models.amb;
 
-import ckb.domains.GenId;
+public class AmbFormFieldNorma {
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+  private Integer id;
+  private Integer service;
+  private Integer field;
+  private String normType;
+  private String sex;
+  private Integer yearFrom;
+  private Integer yearTo;
+  private String normaFrom;
+  private String normaTo;
 
-@Entity
-@Table(name = "Amb_Form_Field_Normas")
-public class AmbFormFieldNormas extends GenId {
+  public Integer getId() {
+    return id;
+  }
 
-  @Column private Integer service;
-  @Column private Integer field;
-  @Column private String normType;
-  @Column private String sex;
-  @Column private Integer yearFrom;
-  @Column private Integer yearTo;
-  @Column private Double normaFrom;
-  @Column private Double normaTo;
+  public void setId(Integer id) {
+    this.id = id;
+  }
 
   public Integer getService() {
     return service;
@@ -67,19 +68,21 @@ public class AmbFormFieldNormas extends GenId {
     this.yearTo = yearTo;
   }
 
-  public Double getNormaFrom() {
+  public String getNormaFrom() {
     return normaFrom;
   }
 
   public void setNormaFrom(Double normaFrom) {
-    this.normaFrom = normaFrom;
+    String val = String.valueOf(normaFrom);
+    this.normaFrom = val.indexOf(".") == val.length() - 2 ? val + "0" : val;
   }
 
-  public Double getNormaTo() {
+  public String getNormaTo() {
     return normaTo;
   }
 
   public void setNormaTo(Double normaTo) {
-    this.normaTo = normaTo;
+    String val = String.valueOf(normaTo);
+    this.normaTo = val.indexOf(".") == val.length() - 2 ? val + "0" : val;
   }
 }

@@ -119,54 +119,73 @@ public class CCoreAmbv2 {
       ser.setState(Util.isNull(req, "state") ? "P": "A");
       ser.setNewForm(Util.isNull(req, "new_form") ? "N": "Y");
       AmbServices ds = dAmbService.saveAndReturn(ser);
-      String[] fields = req.getParameterValues("field_id");
-      String[] field_labels = req.getParameterValues("field_label");
-      String[] field_types = req.getParameterValues("field_type_code");
-      String[] field_norms = req.getParameterValues("norm_type");
-      String[] field_ei = req.getParameterValues("field_ei");
-      for(int i=0; i<fields.length; i++) {
-        AmbFormFields field = dAmbFormField.get(Integer.valueOf(fields[i]));
-        field.setEi(field_ei[i]);
-        field.setNormaType(field_norms[i]);
-        field.setTypeCode(field_types[i]);
-        field.setFieldLabel(field_labels[i]);
-        dAmbFormField.save(field);
-        if(field.getNormaType().equals("all")) {
-          AmbFormFieldNormas norma = Util.isNull(req, "field_norma_" + field.getId()) ? new AmbFormFieldNormas() : dAmbFormFieldNorma.get(Util.getInt(req, "field_norma_" + field.getId()));
-          if(Util.isNull(req, "field_norma_" + field.getId())) {
-            if(dAmbFormFieldNorma.getCount("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'all'") > 0)
-              norma = dAmbFormFieldNorma.getObj("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'all'");
+      if(ds.getNewForm().equals("Y")) {
+        String[] fields = req.getParameterValues("field_id");
+        String[] field_labels = req.getParameterValues("field_label");
+        String[] field_types = req.getParameterValues("field_type_code");
+        String[] field_norms = req.getParameterValues("norm_type");
+        String[] field_ei = req.getParameterValues("field_ei");
+        for (int i = 0; i < fields.length; i++) {
+          AmbFormFields field = dAmbFormField.get(Integer.valueOf(fields[i]));
+          field.setEi(field_ei[i]);
+          field.setNormaType(field_norms[i]);
+          field.setTypeCode(field_types[i]);
+          field.setFieldLabel(field_labels[i]);
+          dAmbFormField.save(field);
+          if (field.getNormaType().equals("all")) {
+            AmbFormFieldNormas norma = Util.isNull(req, "field_norma_" + field.getId()) ? new AmbFormFieldNormas() : dAmbFormFieldNorma.get(Util.getInt(req, "field_norma_" + field.getId()));
+            if (Util.isNull(req, "field_norma_" + field.getId())) {
+              if (dAmbFormFieldNorma.getCount("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'all'") > 0)
+                norma = dAmbFormFieldNorma.getObj("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'all'");
+            }
+            norma.setNormaFrom(Util.getDouble(req, "field_norma_from_" + field.getId(), 0D));
+            norma.setNormaTo(Util.getDouble(req, "field_norma_to_" + field.getId(), 0D));
+            norma.setService(field.getService());
+            norma.setField(field.getId());
+            norma.setSex("");
+            norma.setNormType("all");
+            dAmbFormFieldNorma.save(norma);
           }
-          norma.setNormaFrom(Util.getDouble(req, "field_norma_from_" + field.getId(), 0D));
-          norma.setNormaTo(Util.getDouble(req, "field_norma_to_" + field.getId(), 0D));
-          norma.setService(field.getService());
-          norma.setField(field.getId());
-          norma.setSex("all");
-          dAmbFormFieldNorma.save(norma);
-        }
-        if(field.getNormaType().equals("sex_norm")) {
-          AmbFormFieldNormas maleNorm = Util.isNull(req, "field_male_norma_" + field.getId()) ? new AmbFormFieldNormas() : dAmbFormFieldNorma.get(Util.getInt(req, "field_male_norma_" + field.getId()));
-          if(Util.isNull(req, "field_male_norma_" + field.getId())) {
-            if(dAmbFormFieldNorma.getCount("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'male'") > 0)
-              maleNorm = dAmbFormFieldNorma.getObj("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'male'");
+          if (field.getNormaType().equals("sex_norm")) {
+            AmbFormFieldNormas maleNorm = Util.isNull(req, "field_male_norma_" + field.getId()) ? new AmbFormFieldNormas() : dAmbFormFieldNorma.get(Util.getInt(req, "field_male_norma_" + field.getId()));
+            if (Util.isNull(req, "field_male_norma_" + field.getId())) {
+              if (dAmbFormFieldNorma.getCount("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'male'") > 0)
+                maleNorm = dAmbFormFieldNorma.getObj("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'male'");
+            }
+            maleNorm.setNormaFrom(Util.getDouble(req, "field_male_norma_from_" + field.getId(), 0D));
+            maleNorm.setNormaTo(Util.getDouble(req, "field_male_norma_to_" + field.getId(), 0D));
+            maleNorm.setService(field.getService());
+            maleNorm.setField(field.getId());
+            maleNorm.setSex("male");
+            maleNorm.setNormType("sex_norm");
+            dAmbFormFieldNorma.save(maleNorm);
+            AmbFormFieldNormas femaleNorm = Util.isNull(req, "field_female_norma_" + field.getId()) ? new AmbFormFieldNormas() : dAmbFormFieldNorma.get(Util.getInt(req, "field_female_norma_" + field.getId()));
+            if (Util.isNull(req, "field_female_norma_" + field.getId())) {
+              if (dAmbFormFieldNorma.getCount("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'female'") > 0)
+                femaleNorm = dAmbFormFieldNorma.getObj("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'female'");
+            }
+            femaleNorm.setNormaFrom(Util.getDouble(req, "field_female_norma_from_" + field.getId(), 0D));
+            femaleNorm.setNormaTo(Util.getDouble(req, "field_female_norma_to_" + field.getId(), 0D));
+            femaleNorm.setService(field.getService());
+            femaleNorm.setField(field.getId());
+            femaleNorm.setSex("female");
+            maleNorm.setNormType("sex_norm");
+            dAmbFormFieldNorma.save(femaleNorm);
           }
-          maleNorm.setNormaFrom(Util.getDouble(req, "field_male_norma_from_" + field.getId(), 0D));
-          maleNorm.setNormaTo(Util.getDouble(req, "field_male_norma_to_" + field.getId(), 0D));
-          maleNorm.setService(field.getService());
-          maleNorm.setField(field.getId());
-          maleNorm.setSex("male");
-          dAmbFormFieldNorma.save(maleNorm);
-          AmbFormFieldNormas femaleNorm = Util.isNull(req, "field_female_norma_" + field.getId()) ? new AmbFormFieldNormas() : dAmbFormFieldNorma.get(Util.getInt(req, "field_female_norma_" + field.getId()));
-          if(Util.isNull(req, "field_female_norma_" + field.getId())) {
-            if(dAmbFormFieldNorma.getCount("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'female'") > 0)
-              femaleNorm = dAmbFormFieldNorma.getObj("From AmbFormFieldNormas Where field = " + field.getId() + " And sex = 'female'");
+          if (field.getNormaType().equals("year_norm") || field.getNormaType().equals("sex_year_norm")) {
+            String[] normaIds = req.getParameterValues(field.getNormaType() + "_id_" + field.getId());
+            if(normaIds != null)
+              for(String normId: normaIds) {
+                AmbFormFieldNormas norm = dAmbFormFieldNorma.get(Integer.parseInt(normId));
+                if(field.getNormaType().equals("sex_year_norm")) norm.setSex(Util.get(req, field.getNormaType() + "_sex_" + normId, "male"));
+                norm.setYearFrom(Util.getInt(req, field.getNormaType() + "_year_from_" + normId, 0));
+                norm.setYearTo(Util.getInt(req, field.getNormaType() + "_year_to_" + normId, 0));
+                norm.setNormaFrom(Util.getDouble(req, field.getNormaType() + "_norm_from_" + normId, 0D));
+                norm.setNormaTo(Util.getDouble(req, field.getNormaType() + "_norm_to_" + normId, 0D));
+                //if(dAmbFormFieldNorma.getCount("From AmbFormFieldNormas Where field = " + norm.getField() + " And id != " + normId + " And ()") > 0)
+                dAmbFormFieldNorma.save(norm);
+              }
           }
-          femaleNorm.setNormaFrom(Util.getDouble(req, "field_female_norma_from_" + field.getId(), 0D));
-          femaleNorm.setNormaTo(Util.getDouble(req, "field_female_norma_to_" + field.getId(), 0D));
-          femaleNorm.setService(field.getService());
-          femaleNorm.setField(field.getId());
-          femaleNorm.setSex("female");
-          dAmbFormFieldNorma.save(femaleNorm);
         }
       }
       json.put("success", true);
@@ -243,6 +262,40 @@ public class CCoreAmbv2 {
     JSONObject json = new JSONObject();
     try {
       dAmbFormFieldOption.delete(Util.getInt(req, "id"));
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/service/field/norma/add.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String add_service_field_norma(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      AmbServices service = dAmbService.get(Util.getInt(req, "service"));
+      AmbFormFieldNormas obj = new AmbFormFieldNormas();
+      obj.setService(service.getId());
+      obj.setField(Util.getInt(req, "field"));
+      obj.setNormType(Util.get(req, "type"));
+      obj.setSex("male");
+      dAmbFormFieldNorma.save(obj);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/service/field/norma/del.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String del_service_field_norma(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      dAmbFormFieldNorma.delete(Util.getInt(req, "id"));
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
