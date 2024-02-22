@@ -64,7 +64,12 @@
             <c:if test="${s.state == 'DONE'}"><img title="Выполнена" src='/res/imgs/green.gif'/></c:if>
           </td>
           <td>
-            <a href="#" onclick="setPage('/ambs/doctor/service.s?patient=${patient.id}&id=${s.id}')">${s.service.name}</a>
+            <c:if test="${s.state == 'DONE' || (s.state == 'PAID' && sessionScope.ENV.userId == s.worker.id)}">
+              <a href="#" onclick="setPage('/ambs/doctor/service.s?patient=${patient.id}&id=${s.id}')">${s.service.name}</a>
+            </c:if>
+            <c:if test="${!(s.state == 'DONE' || (s.state == 'PAID' && sessionScope.ENV.userId == s.worker.id))}">
+              ${s.service.name}
+            </c:if>
           </td>
           <td class="center <c:if test="${s.today}">text-danger bold</c:if>">
             <fmt:formatDate pattern = "dd.MM.yyyy" value = "${s.planDate}" />
@@ -251,7 +256,7 @@
     updateCounter();
   }
   function saveAllServices() {
-    if(selected_services.length == 0) {
+    if(selected_services.length === 0) {
       openMedMsg('Услуги не выбраны', false);
       return;
     }
@@ -268,7 +273,8 @@
           getDOM('close_btn').click();
           clearAddingService();
           setTimeout(() => {
-            $('#service_block').html('').load('/ambs/patient/services.s?grid=1&id=${patient.id}');
+            setPage('${sessionScope.ENV.curUrl}');
+            //$('#service_block').html('').load('/ambs/patient/services.s?grid=1&id=${patient.id}');
           }, 1000);
         }
       }

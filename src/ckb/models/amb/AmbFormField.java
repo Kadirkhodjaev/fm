@@ -8,6 +8,8 @@ public class AmbFormField {
 
   private Integer id;
   private Integer service;
+  private Integer form;
+  private String code;
   private String fieldName;
   private String fieldLabel;
   private String typeCode;
@@ -40,6 +42,22 @@ public class AmbFormField {
 
   public void setService(Integer service) {
     this.service = service;
+  }
+
+  public Integer getForm() {
+    return form;
+  }
+
+  public void setForm(Integer form) {
+    this.form = form;
+  }
+
+  public String getCode() {
+    return code;
+  }
+
+  public void setCode(String code) {
+    this.code = code;
   }
 
   public String getFieldName() {

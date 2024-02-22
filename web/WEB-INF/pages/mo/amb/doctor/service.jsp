@@ -34,11 +34,29 @@
         </td>
       </tr>
     </c:if>
+    <tr>
+      <td class="right bold">Услуга:</td>
+      <td colspan="3">
+        <select class="form-control" onchange="openService(this)">
+          <c:forEach items="${services}" var="s">
+            <option <c:if test="${s.id == service.id}">selected</c:if> data-state="${s.state}" value="${s.id}">${s.service.name}</option>
+          </c:forEach>
+        </select>
+      </td>
+    </tr>
     </tbody>
   </table>
   <div class="border-bottom-1"></div>
-  <div class="w-100 text-center border-bottom-1 p-10">
-    <h4 class="bold">${service.service.name}</h4>
-  </div>
+  <div id="amb_form"></div>
 </div>
+<script>
+  $(() => {
+    $('#amb_form').load('/ambs/work/${service.state == 'DONE' ? 'view' : 'form'}.s?id=${service.id}');
+  })
+  function openService(dom) {
+    var selected = dom.options[dom.selectedIndex];
+    var state = selected.getAttribute('data-state');
+    $('#amb_form').load('/ambs/work/' + (state === 'DONE' ? 'view' : 'form') + '.s?id=' + dom.value);
+  }
+</script>
 

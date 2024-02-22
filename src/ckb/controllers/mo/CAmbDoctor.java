@@ -202,8 +202,10 @@ public class CAmbDoctor {
     session.setCurPat(patient);
     session.setCurUrl("/ambs/doctor/service.s?patient=" + patient + "&id=" + id);
     AmbPatients pat = dAmbPatient.get(patient);
+    List<AmbPatientServices> services = dAmbPatientService.getList("From AmbPatientServices Where state In ('PAID', 'DONE') And patient = " + pat.getId() + " And worker.id = " + session.getUserId() + " Order By id desc");
     AmbPatientServices service = dAmbPatientService.get(id);
     model.addAttribute("service", service);
+    model.addAttribute("services", services);
     model.addAttribute("patient", pat);
     return "/mo/amb/doctor/service";
   }

@@ -12,6 +12,7 @@ public class AmbResults extends GenId {
 
   @Column private Integer patient;
   @Column(unique = true) private Integer service;
+  @Column private Integer form;
   @Column private String c1;
   @Column private String c2;
   @Column private String c3;
@@ -87,6 +88,14 @@ public class AmbResults extends GenId {
 
   public void setService(Integer service) {
     this.service = service;
+  }
+
+  public Integer getForm() {
+    return form;
+  }
+
+  public void setForm(Integer form) {
+    this.form = form;
   }
 
   public String getC1() {

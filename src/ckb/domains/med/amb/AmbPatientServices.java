@@ -22,6 +22,7 @@ public class AmbPatientServices extends GenId {
   @Column private Date planDate;
   @Column private String amb_repeat = "N";
   @Column private String diagnoz = "";
+  @Column private Integer ambForm;
   @Column(name = "treatment_id") private Integer treatmentId;
 
   @Column private Integer pay;
@@ -187,5 +188,13 @@ public class AmbPatientServices extends GenId {
 
   public void setPlanDate(Date planDate) {
     this.planDate = planDate;
+  }
+
+  public Integer getAmbForm() {
+    return ambForm;
+  }
+
+  public void setAmbForm(Integer ambForm) {
+    this.ambForm = ambForm;
   }
 }

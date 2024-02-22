@@ -13,6 +13,7 @@ public class AmbFormFieldNormas extends GenId {
   @Column private Integer service;
   @Column private Integer field;
   @Column private String normType;
+  @Column private String catName;
   @Column private String sex;
   @Column private Integer yearFrom;
   @Column private Integer yearTo;
@@ -41,6 +42,14 @@ public class AmbFormFieldNormas extends GenId {
 
   public void setNormType(String normType) {
     this.normType = normType;
+  }
+
+  public String getCatName() {
+    return catName;
+  }
+
+  public void setCatName(String catName) {
+    this.catName = catName;
   }
 
   public String getSex() {

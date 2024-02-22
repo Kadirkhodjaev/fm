@@ -3,6 +3,7 @@ package ckb.services.mo.amb;
 import ckb.grid.AmbGrid;
 import ckb.models.AmbPatient;
 import ckb.models.amb.AmbFormField;
+import ckb.models.amb.AmbFormFieldRow;
 import ckb.session.Session;
 
 import java.util.List;
@@ -19,5 +20,7 @@ public interface SMoAmb {
 
   void updatePaySum(Integer patient);
 
-  List<AmbFormField> serviceFields(Integer service);
+  List<AmbFormFieldRow> serviceFields(Integer service, Integer form);
+
+  AmbFormField getServiceField(int id);
 }

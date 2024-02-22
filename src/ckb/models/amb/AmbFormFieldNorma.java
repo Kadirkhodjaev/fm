@@ -6,6 +6,7 @@ public class AmbFormFieldNorma {
   private Integer service;
   private Integer field;
   private String normType;
+  private String catName;
   private String sex;
   private Integer yearFrom;
   private Integer yearTo;
@@ -42,6 +43,14 @@ public class AmbFormFieldNorma {
 
   public void setNormType(String normType) {
     this.normType = normType;
+  }
+
+  public String getCatName() {
+    return catName;
+  }
+
+  public void setCatName(String catName) {
+    this.catName = catName;
   }
 
   public String getSex() {

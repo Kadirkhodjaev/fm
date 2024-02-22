@@ -100,6 +100,8 @@
   <!-- AMB -->
   <bean id="dPrintPage" class="ckb.dao.print.page.DPrintPageImp" parent="daoImpl"/>
   <bean id="dPrintPageParam" class="ckb.dao.print.page.param.DPrintPageParamImp" parent="daoImpl"/>
+  <bean id="dAmbForm" class="ckb.dao.med.amb.form.DAmbFormImp" parent="daoImpl"/>
+  <bean id="dAmbFormCol" class="ckb.dao.med.amb.form.DAmbFormColImp" parent="daoImpl"/>
   <bean id="dAmbFormField" class="ckb.dao.med.amb.form.DAmbFormFieldImp" parent="daoImpl"/>
   <bean id="dAmbFormFieldNorma" class="ckb.dao.med.amb.form.DAmbFormFieldNormaImp" parent="daoImpl"/>
   <bean id="dAmbFormFieldOption" class="ckb.dao.med.amb.form.DAmbFormFieldOptionImp" parent="daoImpl"/>

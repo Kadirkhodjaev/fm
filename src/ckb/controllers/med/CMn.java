@@ -37,85 +37,7 @@ public class CMn {
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DUser dUser;
 
-  @RequestMapping("index.s")
-  protected String patients(HttpServletRequest req, Model m) {
-    return "drugs";
-  }
-
-  @RequestMapping("/drugstore.s")
-  protected String sklad(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/mn/drugstore.s");
-    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
-    String endDate = Util.get(req, "period_end", Util.getCurDate());
-    //
-    Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    try {
-      conn = DB.getConnection();
-      //
-      Double income_in = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
-      Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
-      //
-      Double income_period = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
-      Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
-      //
-      model.addAttribute("saldo_in", income_in - out_in);
-      model.addAttribute("income_sum", income_period);
-      model.addAttribute("outcome_sum", out_period);
-      model.addAttribute("saldo_out", income_in - out_in + income_period - out_period);
-      //
-      Double hnSaldoOut = DB.getSum(conn, "Select Sum((t.drugCount - t.rasxod) * c.price) From Hn_Drugs t, Drug_Out_Rows c Where c.id = t.outRow_Id And t.drugCount - t.rasxod > 0");
-      Double hnDayOut = DB.getSum(conn, "Select sum(t.summ) From ( " +
-        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_Id And date(t.crOn) = CURRENT_DATE() " +
-        " union all " +
-        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_id And date(t.crOn) = CURRENT_DATE() " +
-        " ) t ");
-      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount) * f.price, 0) summ From hn_drugs c, drug_out_rows f where f.id = c.outRow_id And date(c.crOn) = CURRENT_DATE()");
-      model.addAttribute("hn_saldo_in", hnSaldoOut - hnDayIn + hnDayOut);
-      model.addAttribute("hn_day_in", hnDayIn);
-      model.addAttribute("hn_day_out", hnDayOut);
-      model.addAttribute("hn_saldo_out", hnSaldoOut);
-      ps = conn.prepareStatement(
-        "Select t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear, Sum(t.rasxod * w.price) Summ, count(*) " +
-        "      From hn_date_patient_rows t, Patients c, hn_drugs d, drug_out_rows w " +
-        "     Where t.patient_id = c.id " +
-        "       and t.drug_Id = d.id " +
-        "       and w.Id = d.outRow_id " +
-        "       And c.paid != 'CLOSED' " +
-        "  Group By t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear"
-      );
-      ps.execute();
-      rs = ps.getResultSet();
-      List<ObjList> list = new ArrayList<ObjList>();
-      double summ = 0;
-      while (rs.next()) {
-        ObjList obj = new ObjList();
-        obj.setC1(rs.getString("surname") + " " + rs.getString("name") + " " + rs.getString("middlename"));
-        obj.setC2(Util.dateToString(rs.getDate("date_begin")));
-        obj.setC3(Util.dateToString(rs.getDate("date_end")));
-        obj.setC4(rs.getString("yearNum"));
-        obj.setC5(rs.getString("birthyear"));
-        obj.setC6(rs.getString("summ"));
-        summ += rs.getDouble("summ");
-        list.add(obj);
-      }
-      model.addAttribute("patients", list);
-      model.addAttribute("summ", summ);
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      DB.done(rs);
-      DB.done(ps);
-      DB.done(conn);
-    }
-    //
-    model.addAttribute("period_start", startDate);
-    model.addAttribute("period_end", endDate);
-    return "/med/mn/drugs";
-  }
-
+  // Медикаменты
   @RequestMapping("drugs.s")
   protected String drugs(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
@@ -131,83 +53,83 @@ public class CMn {
       cn = DB.getConnection();
       ps = cn.prepareStatement(
         "Select c.id, c.Name, " +
-        "    Sum(f.saldo_in) saldo_in, " +
-        "    Sum(f.saldo_in_sum) saldo_in_sum, " +
-        "    Sum(f.cin) cin, " +
-        "    Sum(f.sin) sin, " +
-        "    Sum(f.cout) cout, " +
-        "    Sum(f.sout) sout, " +
-        "    Sum(f.saldo_in + f.cin - f.cout) saldo_out, " +
-        "    Sum(f.saldo_in_sum + f.sin - f.sout) saldo_out_sum " +
-        "From ( " +
-        "Select f.drug_id, " +
-        "       Round(Sum(f.counter), 2) saldo_in,  " +
-        "       Round(Sum(f.summ), 2) saldo_in_sum, " +
-        "       0 cin, 0 sin, 0 cout, 0 sout " +
-        "  From (Select t.drug_id,   " +
-        "               Sum(t.counter) counter,  " +
-        "               Sum(t.counter * t.countprice) summ " +
-        "     From drug_act_drugs t, drug_acts c " +
-        "     Where c.id = t.act_Id  " +
-        "       And date(c.regDate) <= ? " +
-        "     Group By t.drug_id " +
-        "    Union All " +
-        "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
-        "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
-        "     Where a.id = f.outRow_id  " +
-        "       And d.Id = c.doc_Id  " +
-        "       And c.drug_Id = f.id  " +
-        "       And f.outRow_id > 0 " +
-        "       And date(d.date) < ? " +
-        "     Group By f.drug_id " +
-        "    Union All " +
-        "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
-        "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
-        "     Where a.id = f.outRow_id " +
-        "       And d.Id = c.doc_Id  " +
-        "       And c.drug_Id = f.id  " +
-        "       And f.outRow_id > 0 " +
-        "       And date(d.date) < ? " +
-        "     Group By f.drug_id) f " +
-        "Group By f.drug_id " +
-        "Union All " +
-        "Select f.drug_id, " +
-        "       0, 0, " +
-        "       Round(Sum(f.cin), 2) cin,  " +
-        "       Round(Sum(f.sin), 2) sin, " +
-        "       Round(Sum(f.cout), 2) cout,  " +
-        "       Round(Sum(f.sout), 2) sout  " +
-        "  From (Select t.drug_id,   " +
-        "        Sum(t.counter) cin,  " +
-        "        Sum(t.counter * t.countprice) sin, " +
-        "        0 cout, " +
-        "        0 sout " +
-        "     From drug_act_drugs t, drug_acts c " +
-        "     Where c.id = t.act_Id  " +
-        "       And date(c.regDate) Between ? And ? " +
-        "     Group By t.drug_id " +
-        "    Union All " +
-        "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
-        "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
-        "     Where a.id = f.outRow_id  " +
-        "       And d.Id = c.doc_Id  " +
-        "       And c.drug_Id = f.id  " +
-        "       And f.outRow_id > 0 " +
-        "       And date(d.date) Between ? And ? " +
-        "     Group By f.drug_id " +
-        "    Union All " +
-        "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
-        "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
-        "     Where a.id = f.outRow_id " +
-        "       And d.Id = c.doc_Id  " +
-        "       And c.drug_Id = f.id  " +
-        "       And f.outRow_id > 0 " +
-        "       And date(d.date) Between ? And ? " +
-        "     Group By f.drug_id) f " +
-        "Group By f.drug_id ) f, drug_s_names c " +
-        "Where c.id = f.drug_id " +
-        "  And c.state = 'A' " +
-        "Group By c.id, c.name ");
+          "    Sum(f.saldo_in) saldo_in, " +
+          "    Sum(f.saldo_in_sum) saldo_in_sum, " +
+          "    Sum(f.cin) cin, " +
+          "    Sum(f.sin) sin, " +
+          "    Sum(f.cout) cout, " +
+          "    Sum(f.sout) sout, " +
+          "    Sum(f.saldo_in + f.cin - f.cout) saldo_out, " +
+          "    Sum(f.saldo_in_sum + f.sin - f.sout) saldo_out_sum " +
+          "From ( " +
+          "Select f.drug_id, " +
+          "       Round(Sum(f.counter), 2) saldo_in,  " +
+          "       Round(Sum(f.summ), 2) saldo_in_sum, " +
+          "       0 cin, 0 sin, 0 cout, 0 sout " +
+          "  From (Select t.drug_id,   " +
+          "               Sum(t.counter) counter,  " +
+          "               Sum(t.counter * t.countprice) summ " +
+          "     From drug_act_drugs t, drug_acts c " +
+          "     Where c.id = t.act_Id  " +
+          "       And date(c.regDate) <= ? " +
+          "     Group By t.drug_id " +
+          "    Union All " +
+          "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
+          "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
+          "     Where a.id = f.outRow_id  " +
+          "       And d.Id = c.doc_Id  " +
+          "       And c.drug_Id = f.id  " +
+          "       And f.outRow_id > 0 " +
+          "       And date(d.date) < ? " +
+          "     Group By f.drug_id " +
+          "    Union All " +
+          "    Select f.drug_id, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ " +
+          "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
+          "     Where a.id = f.outRow_id " +
+          "       And d.Id = c.doc_Id  " +
+          "       And c.drug_Id = f.id  " +
+          "       And f.outRow_id > 0 " +
+          "       And date(d.date) < ? " +
+          "     Group By f.drug_id) f " +
+          "Group By f.drug_id " +
+          "Union All " +
+          "Select f.drug_id, " +
+          "       0, 0, " +
+          "       Round(Sum(f.cin), 2) cin,  " +
+          "       Round(Sum(f.sin), 2) sin, " +
+          "       Round(Sum(f.cout), 2) cout,  " +
+          "       Round(Sum(f.sout), 2) sout  " +
+          "  From (Select t.drug_id,   " +
+          "        Sum(t.counter) cin,  " +
+          "        Sum(t.counter * t.countprice) sin, " +
+          "        0 cout, " +
+          "        0 sout " +
+          "     From drug_act_drugs t, drug_acts c " +
+          "     Where c.id = t.act_Id  " +
+          "       And date(c.regDate) Between ? And ? " +
+          "     Group By t.drug_id " +
+          "    Union All " +
+          "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
+          "     From hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_out_rows a  " +
+          "     Where a.id = f.outRow_id  " +
+          "       And d.Id = c.doc_Id  " +
+          "       And c.drug_Id = f.id  " +
+          "       And f.outRow_id > 0 " +
+          "       And date(d.date) Between ? And ? " +
+          "     Group By f.drug_id " +
+          "    Union All " +
+          "    Select f.drug_id, 0, 0, Sum(c.rasxod) counter, Sum(c.rasxod * a.price) summ " +
+          "     From hn_date_rows c, hn_drugs f, hn_dates d, drug_out_rows a " +
+          "     Where a.id = f.outRow_id " +
+          "       And d.Id = c.doc_Id  " +
+          "       And c.drug_Id = f.id  " +
+          "       And f.outRow_id > 0 " +
+          "       And date(d.date) Between ? And ? " +
+          "     Group By f.drug_id) f " +
+          "Group By f.drug_id ) f, drug_s_names c " +
+          "Where c.id = f.drug_id " +
+          "  And c.state = 'A' " +
+          "Group By c.id, c.name ");
       ps.setString(1, Util.dateDB(startDate));
       ps.setString(2, Util.dateDB(startDate));
       ps.setString(3, Util.dateDB(startDate));
@@ -247,168 +169,7 @@ public class CMn {
     return "med/mn/rating";
   }
 
-  @RequestMapping("/services.s")
-  protected String services(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/mn/services.s");
-    Connection cn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
-    String endDate = Util.get(req, "period_end", Util.getCurDate());
-    try {
-      cn = DB.getConnection();
-      List<Obj> kdoTypes = new ArrayList<Obj>();
-      List<KdoTypes> types = dKdoType.getList("From KdoTypes Where state = 'A'");
-      for(KdoTypes type: types) {
-        Obj obj = new Obj();
-        obj.setFio(type.getName());
-        obj.setPrice(0D);
-        ps = cn.prepareStatement(
-          "Select c.id kdo_id, c.name, " +
-            "  (Select Count(*) From lv_plans t Where t.kdo_id = c.id And t.result_date between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "') counter, " +
-            "  ifnull((Select sum(t.price) From lv_plans t Where t.kdo_id = c.id And t.result_date between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "'), 0) total " +
-            "  From kdos c " +
-            " Where c.kdo_type = ? " +
-            "   And c.state = 'A'");
-        ps.setInt(1, type.getId());
-        ps.execute();
-        rs = ps.getResultSet();
-        List<ObjList> stats = new ArrayList<ObjList>();
-        while (rs.next()) {
-          ObjList row = new ObjList();
-          row.setC1(rs.getString("kdo_id"));
-          row.setC2(rs.getString("name"));
-          row.setC3(rs.getString("counter"));
-          row.setC4(rs.getString("total"));
-          stats.add(row);
-          obj.setPrice(obj.getPrice() + rs.getDouble("total"));
-        }
-        obj.setList(stats);
-        kdoTypes.add(obj);
-      }
-      m.addAttribute("rows", kdoTypes);
-      List<Obj> ambGroups = new ArrayList<Obj>();
-      List<AmbGroups> groups = dAmbGroup.getAll();
-      for(AmbGroups group: groups) {
-        Obj obj = new Obj();
-        obj.setFio(group.getName());
-        obj.setPrice(0D);
-        ps = cn.prepareStatement(
-          "Select c.id service_Id, c.name, " +
-          " (Select count(*) From Amb_Patient_Services t Where t.crOn between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id) counter, " +
-          " ifnull((Select sum(t.price) From Amb_Patient_Services t Where t.crOn between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id), 0) total " +
-            "  From Amb_Services c " +
-            " Where c.group_id = ? " +
-            "   And c.state = 'A'");
-        ps.setInt(1, group.getId());
-        ps.execute();
-        rs = ps.getResultSet();
-        List<ObjList> amb = new ArrayList<ObjList>();
-        while (rs.next()) {
-          ObjList row = new ObjList();
-          row.setC1(rs.getString("service_Id"));
-          row.setC2(rs.getString("name"));
-          row.setC3(rs.getString("counter"));
-          row.setC4(rs.getString("total"));
-          amb.add(row);
-          obj.setPrice(obj.getPrice() + rs.getDouble("total"));
-        }
-        obj.setList(amb);
-        ambGroups.add(obj);
-      }
-      m.addAttribute("amb", ambGroups);
-      m.addAttribute("period_start", startDate);
-      m.addAttribute("period_end", endDate);
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      DB.done(rs);
-      DB.done(ps);
-      DB.done(cn);
-    }
-    return "med/mn/kdos";
-  }
-
-  @RequestMapping("/users.s")
-  protected String users(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/mn/users.s");
-    Connection cn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
-    String endDate = Util.get(req, "period_end", Util.getCurDate());
-    try {
-      cn = DB.getConnection();
-      List<Obj> kdoTypes = new ArrayList<Obj>();
-      List<Users> users = dUser.getList("From Users");
-      for(Users user: users) {
-        Obj obj = new Obj();
-        obj.setFio(user.getFio());
-        obj.setPrice(0D);
-        ps = cn.prepareStatement(
-          "Select t.id, c.`name`, Count(*) counter, Sum(t.price) price " +
-            "  From Lv_Plans t, Kdos c " +
-            " Where t.Result_Date Between ? And ? " +
-            "   And c.id = t.Kdo_Id " +
-            "   And t.conf_user = ? " +
-            " Group By c.name");
-        ps.setString(1, Util.dateDB(startDate));
-        ps.setString(2, Util.dateDB(endDate));
-        ps.setInt(3, user.getId());
-        ps.execute();
-        rs = ps.getResultSet();
-        List<ObjList> stats = new ArrayList<ObjList>();
-        while (rs.next()) {
-          ObjList row = new ObjList();
-          row.setC1(rs.getString("id"));
-          row.setC2(rs.getString("name"));
-          row.setC3(rs.getString("counter"));
-          row.setC4(rs.getString("price"));
-          stats.add(row);
-          obj.setPrice(obj.getPrice() + rs.getDouble("price"));
-        }
-        ps = cn.prepareStatement(
-          "Select c.Id, c.name, Count(*) Counter, Sum(t.price) price " +
-            "  From Amb_Patient_Services t, Amb_Services c " +
-            " Where t.confDate Between ? And ? " +
-            "   And c.id = t.service_Id " +
-            "   And c.id = t.service_Id " +
-            "   And t.worker_Id = ? " +
-            " Group By c.Id, c.name");
-        ps.setString(1, Util.dateDB(startDate));
-        ps.setString(2, Util.dateDB(endDate));
-        ps.setInt(3, user.getId());
-        ps.execute();
-        rs = ps.getResultSet();
-        while (rs.next()) {
-          ObjList row = new ObjList();
-          row.setC1(rs.getString("id"));
-          row.setC2("Амбулатория: "+ rs.getString("name"));
-          row.setC3(rs.getString("counter"));
-          row.setC4(rs.getString("price"));
-          stats.add(row);
-          obj.setPrice(obj.getPrice() + rs.getDouble("price"));
-        }
-        if(stats.size() > 0) {
-          obj.setList(stats);
-          kdoTypes.add(obj);
-        }
-      }
-      m.addAttribute("rows", kdoTypes);
-      m.addAttribute("period_start", startDate);
-      m.addAttribute("period_end", endDate);
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      DB.done(rs);
-      DB.done(ps);
-      DB.done(cn);
-    }
-    return "med/mn/user_rating";
-  }
-
+  // Анализ склада
   @RequestMapping("analys.s")
   protected String analys(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
@@ -508,6 +269,7 @@ public class CMn {
     return "med/mn/analys";
   }
 
+  // Анализ медикаметов
   @RequestMapping("drugs/days.s")
   protected String drugDays(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
@@ -584,6 +346,374 @@ public class CMn {
       DB.done(cn);
     }
     return "med/mn/days";
+  }
+
+  // Рейтинг услуг
+  @RequestMapping("/services.s")
+  protected String services(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/services.s");
+    Connection cn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
+    String endDate = Util.get(req, "period_end", Util.getCurDate());
+    try {
+      cn = DB.getConnection();
+      List<Obj> kdoTypes = new ArrayList<Obj>();
+      List<KdoTypes> types = dKdoType.getList("From KdoTypes Where state = 'A'");
+      for(KdoTypes type: types) {
+        Obj obj = new Obj();
+        obj.setFio(type.getName());
+        obj.setPrice(0D);
+        ps = cn.prepareStatement(
+          "Select c.id kdo_id, c.name, " +
+            "  (Select Count(*) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And t.result_date between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "') counter, " +
+            "  ifnull((Select sum(t.price) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And t.result_date between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "'), 0) total " +
+            "  From kdos c " +
+            " Where c.kdo_type = ? " +
+            "   And c.state = 'A'");
+        ps.setInt(1, type.getId());
+        ps.execute();
+        rs = ps.getResultSet();
+        List<ObjList> stats = new ArrayList<ObjList>();
+        while (rs.next()) {
+          ObjList row = new ObjList();
+          row.setC1(rs.getString("kdo_id"));
+          row.setC2(rs.getString("name"));
+          row.setC3(rs.getString("counter"));
+          row.setC4(rs.getString("total"));
+          stats.add(row);
+          obj.setPrice(obj.getPrice() + rs.getDouble("total"));
+        }
+        obj.setList(stats);
+        kdoTypes.add(obj);
+      }
+      m.addAttribute("rows", kdoTypes);
+      List<Obj> ambGroups = new ArrayList<>();
+      List<AmbGroups> groups = dAmbGroup.getAll();
+      for(AmbGroups group: groups) {
+        Obj obj = new Obj();
+        obj.setFio(group.getName());
+        obj.setPrice(0D);
+        ps = cn.prepareStatement(
+          "Select c.id service_Id, c.name, " +
+            " (Select count(*) From Amb_Patient_Services t Where t.worker_Id is not null And t.crOn between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id) counter, " +
+            " ifnull((Select sum(t.price) From Amb_Patient_Services t Where t.worker_Id is not null And t.crOn between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id), 0) total " +
+            "  From Amb_Services c " +
+            " Where c.group_id = ? " +
+            "   And c.state = 'A'");
+        ps.setInt(1, group.getId());
+        ps.execute();
+        rs = ps.getResultSet();
+        List<ObjList> amb = new ArrayList<ObjList>();
+        while (rs.next()) {
+          ObjList row = new ObjList();
+          row.setC1(rs.getString("service_Id"));
+          row.setC2(rs.getString("name"));
+          row.setC3(rs.getString("counter"));
+          row.setC4(rs.getString("total"));
+          amb.add(row);
+          obj.setPrice(obj.getPrice() + rs.getDouble("total"));
+        }
+        obj.setList(amb);
+        ambGroups.add(obj);
+      }
+      m.addAttribute("amb", ambGroups);
+      m.addAttribute("period_start", startDate);
+      m.addAttribute("period_end", endDate);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(cn);
+    }
+    return "med/mn/kdos";
+  }
+
+  // Рейтинг по врачам
+  @RequestMapping("/users.s")
+  protected String users(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/users.s");
+    Connection cn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
+    String endDate = Util.get(req, "period_end", Util.getCurDate());
+    try {
+      cn = DB.getConnection();
+      List<Obj> kdoTypes = new ArrayList<Obj>();
+      List<Users> users = dUser.getList("From Users");
+      for(Users user: users) {
+        Obj obj = new Obj();
+        obj.setFio(user.getFio());
+        obj.setPrice(0D);
+        ps = cn.prepareStatement(
+          "Select t.id, c.`name`, Count(*) counter, Sum(t.price) price " +
+            "  From Lv_Plans t, Kdos c " +
+            " Where t.Result_Date Between ? And ? " +
+            "   And c.id = t.Kdo_Id " +
+            "   And t.conf_user = ? " +
+            " Group By c.name");
+        ps.setString(1, Util.dateDB(startDate));
+        ps.setString(2, Util.dateDB(endDate));
+        ps.setInt(3, user.getId());
+        ps.execute();
+        rs = ps.getResultSet();
+        List<ObjList> stats = new ArrayList<ObjList>();
+        while (rs.next()) {
+          ObjList row = new ObjList();
+          row.setC1(rs.getString("id"));
+          row.setC2(rs.getString("name"));
+          row.setC3(rs.getString("counter"));
+          row.setC4(rs.getString("price"));
+          stats.add(row);
+          obj.setPrice(obj.getPrice() + rs.getDouble("price"));
+        }
+        ps = cn.prepareStatement(
+          "Select c.Id, c.name, Count(*) Counter, Sum(t.price) price " +
+            "  From Amb_Patient_Services t, Amb_Services c " +
+            " Where t.confDate Between ? And ? " +
+            "   And c.id = t.service_Id " +
+            "   And c.id = t.service_Id " +
+            "   And t.worker_Id = ? " +
+            " Group By c.Id, c.name");
+        ps.setString(1, Util.dateDB(startDate));
+        ps.setString(2, Util.dateDB(endDate));
+        ps.setInt(3, user.getId());
+        ps.execute();
+        rs = ps.getResultSet();
+        while (rs.next()) {
+          ObjList row = new ObjList();
+          row.setC1(rs.getString("id"));
+          row.setC2("Амбулатория: "+ rs.getString("name"));
+          row.setC3(rs.getString("counter"));
+          row.setC4(rs.getString("price"));
+          stats.add(row);
+          obj.setPrice(obj.getPrice() + rs.getDouble("price"));
+        }
+        if(stats.size() > 0) {
+          obj.setList(stats);
+          kdoTypes.add(obj);
+        }
+      }
+      m.addAttribute("rows", kdoTypes);
+      m.addAttribute("period_start", startDate);
+      m.addAttribute("period_end", endDate);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(cn);
+    }
+    return "med/mn/user_rating";
+  }
+
+  // Аптека
+  @RequestMapping("/drugstore.s")
+  protected String drugstore(HttpServletRequest req, Model model) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/drugstore.s");
+    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
+    String endDate = Util.get(req, "period_end", Util.getCurDate());
+    //
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      //
+      Double income_in = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
+      Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
+      //
+      Double income_period = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
+      Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
+      //
+      model.addAttribute("saldo_in", income_in - out_in);
+      model.addAttribute("income_sum", income_period);
+      model.addAttribute("outcome_sum", out_period);
+      model.addAttribute("saldo_out", income_in - out_in + income_period - out_period);
+      //
+      Double hnSaldoOut = DB.getSum(conn, "Select Sum((t.drugCount - t.rasxod) * c.price) From Hn_Drugs t, Drug_Out_Rows c Where c.id = t.outRow_Id And t.drugCount - t.rasxod > 0");
+      Double hnDayOut = DB.getSum(conn, "Select sum(t.summ) From ( " +
+        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_Id And date(t.crOn) = CURRENT_DATE() " +
+        " union all " +
+        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_id And date(t.crOn) = CURRENT_DATE() " +
+        " ) t ");
+      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount) * f.price, 0) summ From hn_drugs c, drug_out_rows f where f.id = c.outRow_id And date(c.crOn) = CURRENT_DATE()");
+      model.addAttribute("hn_saldo_in", hnSaldoOut - hnDayIn + hnDayOut);
+      model.addAttribute("hn_day_in", hnDayIn);
+      model.addAttribute("hn_day_out", hnDayOut);
+      model.addAttribute("hn_saldo_out", hnSaldoOut);
+      ps = conn.prepareStatement(
+        "Select t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear, Sum(t.rasxod * w.price) Summ, count(*) " +
+        "      From hn_date_patient_rows t, Patients c, hn_drugs d, drug_out_rows w " +
+        "     Where t.patient_id = c.id " +
+        "       and t.drug_Id = d.id " +
+        "       and w.Id = d.outRow_id " +
+        "       And c.paid != 'CLOSED' " +
+        "  Group By t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear"
+      );
+      ps.execute();
+      rs = ps.getResultSet();
+      List<ObjList> list = new ArrayList<ObjList>();
+      double summ = 0;
+      while (rs.next()) {
+        ObjList obj = new ObjList();
+        obj.setC1(rs.getString("surname") + " " + rs.getString("name") + " " + rs.getString("middlename"));
+        obj.setC2(Util.dateToString(rs.getDate("date_begin")));
+        obj.setC3(Util.dateToString(rs.getDate("date_end")));
+        obj.setC4(rs.getString("yearNum"));
+        obj.setC5(rs.getString("birthyear"));
+        obj.setC6(rs.getString("summ"));
+        summ += rs.getDouble("summ");
+        list.add(obj);
+      }
+      model.addAttribute("patients", list);
+      model.addAttribute("summ", summ);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    //
+    model.addAttribute("period_start", startDate);
+    model.addAttribute("period_end", endDate);
+    return "/med/mn/drugs";
+  }
+
+  // Склад
+  @RequestMapping("/stores.s")
+  protected String stores(HttpServletRequest req, Model model) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/stores.s");
+    Connection cn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
+    String endDate = Util.get(req, "period_end", Util.getCurDate());
+    try {
+      cn = DB.getConnection();
+      List<DrugDirections> directions = dDrugDirection.getAll();
+      List<Obj> stores = new ArrayList<Obj>();
+      double tprixod = 0, trasxod = 0;
+      for(DrugDirections direction: directions) {
+        Obj o = new Obj();
+        o.setFio(direction.getName());
+        o.setPrice(0D);
+        o.setClaimCount(0D);
+        ps = cn.prepareStatement(
+          "Select t.drug_id, " +
+            "         c.name, " +
+            "         sum(t.drugCount) prixod, " +
+            "         sum(t.rasxod) rasxod, " +
+            "         sum(t.drugCount - t.rasxod) diff, " +
+            "         sum(f.price * t.drugCount) prixod_total, " +
+            "         sum(f.price * t.rasxod)  rasxod_total " +
+            "  From Hn_Drugs t, Drug_s_Names c, Drug_Out_Rows f  " +
+            " Where t.direction_Id = ? " +
+            "   And c.id = t.drug_id " +
+            "   And f.income_Id > 0 " +
+            "   And f.id = t.outRow_id " +
+            " Group By t.drug_id");
+        ps.setInt(1, direction.getId());
+        ps.execute();
+        rs = ps.getResultSet();
+        List<ObjList> list = new ArrayList<ObjList>();
+        while (rs.next()) {
+          ObjList obj = new ObjList();
+          obj.setC1(rs.getString("name"));
+          obj.setC2(rs.getString("prixod"));
+          obj.setC3(rs.getString("rasxod"));
+          obj.setC4(rs.getString("diff"));
+          obj.setC5(rs.getString("prixod_total"));
+          obj.setC6(rs.getString("rasxod_total"));
+          list.add(obj);
+          o.setPrice(o.getPrice() + rs.getDouble("prixod_total"));
+          o.setClaimCount(o.getClaimCount() + rs.getDouble("rasxod_total"));
+        }
+        tprixod += o.getPrice();
+        trasxod += o.getClaimCount();
+        o.setList(list);
+        stores.add(o);
+      }
+      model.addAttribute("prixod", tprixod);
+      model.addAttribute("rasxod", trasxod);
+      model.addAttribute("rows", stores);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(cn);
+    }
+    return "med/mn/stores";
+  }
+
+  // Склад: Простой
+  @RequestMapping("drug_downtime.s")
+  protected String drug_downtime(HttpServletRequest req, Model m) {
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/mn/drug_downtime.s");
+    Connection cn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String order = Util.get(req, "order", "income");
+    String direction = Util.get(req, "direction", "0");
+    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
+    String endDate = Util.get(req, "period_end", Util.getCurDate());
+    if(Util.stringToDate(startDate).after(Util.stringToDate(endDate)))
+      startDate = endDate;
+    try {
+      cn = DB.getConnection();
+      ps = cn.prepareStatement(
+        "Select d.name direction, c.name drug, date(f.regDate) Doc_Date, t.drugCount, t.rasxod, t.drugCount - t.rasxod saldo, date(s.endDate) endDate " +
+          "  From hn_drugs t, Drug_s_Names c, Drug_s_Directions d, Drug_Out_Rows a, Drug_Outs f, Drug_Act_Drugs s " +
+          "Where c.id = t.drug_id " +
+          "  And t.rasxod - t.drugCount <> 0 " +
+          "  And d.id = t.direction_Id " +
+          "  " + (direction.equals("0") ? "" : " And d.id = " + direction) +
+          "  And f.id = a.doc_Id " +
+          "  And a.id = t.outRow_Id " +
+          "  And f.regDate <= DATE_ADD(CURRENT_DATE(), Interval 30 day) " +
+          "  And s.id = a.income_id " +
+          "Order By " + (order.equals("income") ? "f.regDate" : "s.endDate"));
+      /*ps.setString(1, Util.dateDB(startDate));
+      ps.setString(2, Util.dateDB(startDate));*/
+      rs = ps.executeQuery();
+      List<ObjList> rows = new ArrayList<ObjList>();
+      while (rs.next()) {
+        ObjList row = new ObjList();
+        row.setC1(rs.getString("direction"));
+        row.setC2(rs.getString("drug"));
+        row.setC3(Util.dateToString(rs.getDate("doc_date")));
+        row.setC7(Util.dateToString(rs.getDate("enddate")));
+        row.setC4(rs.getString("drugCount"));
+        row.setC5(rs.getString("rasxod"));
+        row.setC6(rs.getString("saldo"));
+        row.setDd(rs.getDate("enddate"));
+        //
+        rows.add(row);
+      }
+      m.addAttribute("rows", rows);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(cn);
+    }
+    m.addAttribute("period_start", startDate);
+    m.addAttribute("period_end", endDate);
+    m.addAttribute("order", order);
+    m.addAttribute("direction", direction);
+    m.addAttribute("directions", dDrugDirection.getAll());
+    return "med/mn/drug_downtime";
   }
 
   @RequestMapping("drug/analys.s")
@@ -762,133 +892,6 @@ public class CMn {
       DB.done(cn);
     }
     return "med/mn/drug_analys";
-  }
-
-  @RequestMapping("/stores.s")
-  protected String stores(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/mn/stores.s");
-    Connection cn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
-    String endDate = Util.get(req, "period_end", Util.getCurDate());
-    try {
-      cn = DB.getConnection();
-      List<DrugDirections> directions = dDrugDirection.getAll();
-      List<Obj> stores = new ArrayList<Obj>();
-      double tprixod = 0, trasxod = 0;
-      for(DrugDirections direction: directions) {
-        Obj o = new Obj();
-        o.setFio(direction.getName());
-        o.setPrice(0D);
-        o.setClaimCount(0D);
-        ps = cn.prepareStatement(
-          "Select t.drug_id, " +
-            "         c.name, " +
-            "         sum(t.drugCount) prixod, " +
-            "         sum(t.rasxod) rasxod, " +
-            "         sum(t.drugCount - t.rasxod) diff, " +
-            "         sum(f.price * t.drugCount) prixod_total, " +
-            "         sum(f.price * t.rasxod)  rasxod_total " +
-            "  From Hn_Drugs t, Drug_s_Names c, Drug_Out_Rows f  " +
-            " Where t.direction_Id = ? " +
-            "   And c.id = t.drug_id " +
-            "   And f.income_Id > 0 " +
-            "   And f.id = t.outRow_id " +
-            " Group By t.drug_id");
-        ps.setInt(1, direction.getId());
-        ps.execute();
-        rs = ps.getResultSet();
-        List<ObjList> list = new ArrayList<ObjList>();
-        while (rs.next()) {
-          ObjList obj = new ObjList();
-          obj.setC1(rs.getString("name"));
-          obj.setC2(rs.getString("prixod"));
-          obj.setC3(rs.getString("rasxod"));
-          obj.setC4(rs.getString("diff"));
-          obj.setC5(rs.getString("prixod_total"));
-          obj.setC6(rs.getString("rasxod_total"));
-          list.add(obj);
-          o.setPrice(o.getPrice() + rs.getDouble("prixod_total"));
-          o.setClaimCount(o.getClaimCount() + rs.getDouble("rasxod_total"));
-        }
-        tprixod += o.getPrice();
-        trasxod += o.getClaimCount();
-        o.setList(list);
-        stores.add(o);
-      }
-      model.addAttribute("prixod", tprixod);
-      model.addAttribute("rasxod", trasxod);
-      model.addAttribute("rows", stores);
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      DB.done(rs);
-      DB.done(ps);
-      DB.done(cn);
-    }
-    return "med/mn/stores";
-  }
-
-  @RequestMapping("drug_downtime.s")
-  protected String drug_downtime(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/mn/drug_downtime.s");
-    Connection cn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    String order = Util.get(req, "order", "income");
-    String direction = Util.get(req, "direction", "0");
-    String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
-    String endDate = Util.get(req, "period_end", Util.getCurDate());
-    if(Util.stringToDate(startDate).after(Util.stringToDate(endDate)))
-      startDate = endDate;
-    try {
-      cn = DB.getConnection();
-      ps = cn.prepareStatement(
-        "Select d.name direction, c.name drug, date(f.regDate) Doc_Date, t.drugCount, t.rasxod, t.drugCount - t.rasxod saldo, date(s.endDate) endDate " +
-          "  From hn_drugs t, Drug_s_Names c, Drug_s_Directions d, Drug_Out_Rows a, Drug_Outs f, Drug_Act_Drugs s " +
-          "Where c.id = t.drug_id " +
-          "  And t.rasxod - t.drugCount <> 0 " +
-          "  And d.id = t.direction_Id " +
-          "  " + (direction.equals("0") ? "" : " And d.id = " + direction) +
-          "  And f.id = a.doc_Id " +
-          "  And a.id = t.outRow_Id " +
-          "  And f.regDate <= DATE_ADD(CURRENT_DATE(), Interval 30 day) " +
-          "  And s.id = a.income_id " +
-          "Order By " + (order.equals("income") ? "f.regDate" : "s.endDate"));
-      /*ps.setString(1, Util.dateDB(startDate));
-      ps.setString(2, Util.dateDB(startDate));*/
-      rs = ps.executeQuery();
-      List<ObjList> rows = new ArrayList<ObjList>();
-      while (rs.next()) {
-        ObjList row = new ObjList();
-        row.setC1(rs.getString("direction"));
-        row.setC2(rs.getString("drug"));
-        row.setC3(Util.dateToString(rs.getDate("doc_date")));
-        row.setC7(Util.dateToString(rs.getDate("enddate")));
-        row.setC4(rs.getString("drugCount"));
-        row.setC5(rs.getString("rasxod"));
-        row.setC6(rs.getString("saldo"));
-        row.setDd(rs.getDate("enddate"));
-        //
-        rows.add(row);
-      }
-      m.addAttribute("rows", rows);
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      DB.done(rs);
-      DB.done(ps);
-      DB.done(cn);
-    }
-    m.addAttribute("period_start", startDate);
-    m.addAttribute("period_end", endDate);
-    m.addAttribute("order", order);
-    m.addAttribute("direction", direction);
-    m.addAttribute("directions", dDrugDirection.getAll());
-    return "med/mn/drug_downtime";
   }
 
 }

@@ -91,7 +91,7 @@ public class CAmbPatientService {
         for(AmbGroups group: groups) {
           AmbGroup g = new AmbGroup();
           g.setGroup(group);
-          g.setServices(dAmbService.list("From AmbServices Where ifnull(treatment, 'N') != 'Y' And state = 'A' And group.id = " + group.getId() + " Order By ord"));
+          g.setServices(dAmbService.list("From AmbServices Where ifnull(treatment, 'N') != 'Y' And newForm = 'Y' And state = 'A' And group.id = " + group.getId() + " Order By ord"));
           srs.add(g);
         }
         model.addAttribute("services", srs);
@@ -102,6 +102,7 @@ public class CAmbPatientService {
       model.addAttribute("ent_sum", entSum);
       model.addAttribute("patient", patient);
       model.addAttribute("isReg", session.isReg());
+      model.addAttribute("is_grid", Util.isNull(req, "grid"));
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -117,7 +118,7 @@ public class CAmbPatientService {
       int patient = Util.getInt(req, "patient");
       JSONArray arr = new JSONArray();
       AmbPatients pat = dAmbPatient.get(patient);
-      List<AmbServices> services = dAmbService.list("From AmbServices Where state = 'A' And upper(name) like '%" + word + "%' Order By ord");
+      List<AmbServices> services = dAmbService.list("From AmbServices Where newForm = 'Y' And state = 'A' And upper(name) like '%" + word + "%' Order By ord");
       for(AmbServices ser: services) {
         JSONObject obj = new JSONObject();
         obj.put("id", ser.getId());
