@@ -2,36 +2,6 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<script src="/res/js/common.js"></script>
-<div class="w-100 text-center border-bottom-1">
-  <table class="w-100">
-    <tr>
-      <td style="width:30px" class="p-3 text-center">
-        <c:if test="${!service.closed}">
-          <c:if test="${!(service.result > 0)}">
-            <img src="/res/imgs/red.gif" alt="">
-          </c:if>
-          <c:if test="${service.result > 0}">
-            <img src="/res/imgs/yellow.gif" alt="">
-          </c:if>
-        </c:if>
-        <c:if test="${service.closed}">
-          <img src="/res/imgs/green.gif" alt="">
-        </c:if>
-      </td>
-      <td class="text-left p-3" style="vertical-align:bottom">
-        <h4 class="bold" style="margin-top:15px">
-          ${service.service.name}
-        </h4>
-      </td>
-      <td class="text-right p-3" style="width:250px; padding-right:10px">
-        <button class="btn btn-info btn-icon" type="button" onclick="moPrintPage(2, 'patient=${service.patient}&service=${service.id}')">
-          <i class="fa fa-print"></i> Печать
-        </button>
-      </td>
-    </tr>
-  </table>
-</div>
 <table class="w-100 light-table">
   <c:if test="${!text_exist}">
     <thead>

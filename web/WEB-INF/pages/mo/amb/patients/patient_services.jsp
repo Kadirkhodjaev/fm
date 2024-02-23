@@ -2,6 +2,7 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<script src="/res/js/common.js"></script>
 <div class="panel panel-info wpx-1400 margin-auto">
   <div class="panel-heading">
     <table class="w-100">
@@ -68,7 +69,7 @@
           <td class="center wpx-40">
             <c:if test="${fn:length(patient_services) > 1}">
               <c:if test="${s.state == 'DONE' && !s.treatment}">
-                <input type="checkbox" class="hand" checked>
+                <input type="checkbox" class="hand amb-print-checkbox" checked value="${s.id}">
               </c:if>
             </c:if>
             <c:if test="${fn:length(patient_services) == 1 && s.state == 'DONE' && !s.treatment}">
@@ -273,7 +274,6 @@
       }
     });
   }
-
   function delService(id) {
     if(confirm('Вы действительно хотите удалить запись?'))
       $.ajax({
@@ -375,7 +375,18 @@
     });
   }
   $('#print_checked').click(() => {
-
+    let p = 'patient=${patient.id}&';
+    let s = '';
+    $('.amb-print-checkbox').each((idx, dom) => {
+      if($(dom).is(':checked')) {
+        s += 'service=' + dom.value + '&';
+      }
+    })
+    if(s === '') {
+      openMedMsg('Нет выбранных форм для распечатки!', false);
+      return;
+    }
+    moPrintPage(2, p + s);
   })
   $(()=> {
     $('#service-model-content').height($(document).height() - 100);

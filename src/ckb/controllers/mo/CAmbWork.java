@@ -308,4 +308,39 @@ public class CAmbWork {
     model.addAttribute("cols", cols);
     return "/mo/amb/doctor/view_form";
   }
+
+  @RequestMapping("print.s")
+  protected String print_form(HttpServletRequest req, Model model) {
+    int id = Util.getInt(req, "patient");
+    AmbPatients patient = dAmbPatient.get(id);
+    model.addAttribute("patient", patient);
+    String[] services = req.getParameterValues("service");
+    model.addAttribute("services", services);
+    model.addAttribute("now", Util.getCurDate() + " " + Util.getCurTime());
+    return "/mo/amb/doctor/print_form";
+  }
+
+  @RequestMapping("print/service.s")
+  protected String print_service(HttpServletRequest req, Model model) {
+    int id = Util.getInt(req, "id");
+    AmbPatientServices service = dAmbPatientService.get(id);
+    AmbPatients patient = dAmbPatient.get(service.getPatient());
+    model.addAttribute("service", service);
+    List<AmbFormFieldRow> fields = dSMoAmb.serviceFields(service.getService().getId(), service.getAmbForm());
+    model.addAttribute("fields", fields);
+    model.addAttribute("code_exist", getFieldExist(fields, "code"));
+    model.addAttribute("norma_exist", getFieldExist(fields, "norma"));
+    model.addAttribute("ei_exist", getFieldExist(fields, "ei"));
+    model.addAttribute("text_exist", getFieldExist(fields, "type"));
+    List<AmbFormCols> cols = dAmbFormCol.list("From AmbFormCols Where form = " + service.getAmbForm() + " Order By ord");
+    if(cols.isEmpty()) {
+      AmbFormCols c = new AmbFormCols();
+      c.setName("Значение");
+      cols = new ArrayList<>();
+      cols.add(c);
+    }
+    model.addAttribute("res", getResult(patient, service, true));
+    model.addAttribute("cols", cols);
+    return "/mo/amb/doctor/print_service";
+  }
 }

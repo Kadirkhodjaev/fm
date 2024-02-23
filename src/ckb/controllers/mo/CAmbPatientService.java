@@ -62,7 +62,7 @@ public class CAmbPatientService {
           d.setCanDelete(false);
           d.setPlanDate(s.getPlanDate());
           d.setToday(Util.dateToString(s.getPlanDate()).equals(Util.getCurDate()));
-          d.setTreatment(s.getTreatmentId() != null);
+          d.setTreatment(s.getTreatmentId() != null && s.getTreatmentId() > 0);
           d.setResult(s.getResult() == null || s.getResult() == 0 ? null : dAmbResult.get(s.getResult()));
           d.setConfDate(s.getConfDate());
           if(session.isReg() && s.canRepeat()) {
@@ -92,7 +92,8 @@ public class CAmbPatientService {
           AmbGroup g = new AmbGroup();
           g.setGroup(group);
           g.setServices(dAmbService.list("From AmbServices Where ifnull(treatment, 'N') != 'Y' And newForm = 'Y' And state = 'A' And group.id = " + group.getId() + " Order By ord"));
-          srs.add(g);
+          if(!g.getServices().isEmpty())
+            srs.add(g);
         }
         model.addAttribute("services", srs);
       }

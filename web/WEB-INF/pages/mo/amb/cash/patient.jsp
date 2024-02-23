@@ -230,7 +230,7 @@
               <td class="right"><fmt:formatNumber value="${pay.card}" type = "number"/></td>
               <td class="center">
                 <c:if test="${pay.payType == 'pay'}">
-                  <button class="btn btn-info btn-icon" onclick="printCheck(1, 'check=' + ${pay.id})">
+                  <button class="btn btn-info btn-icon" onclick="moPrintPage(1, 'check=' + ${pay.id})">
                     <i class="fa fa-print"></i>
                   </button>
                 </c:if>
@@ -440,15 +440,6 @@
           if(res.success) reloadPage();
         }
       });
-  }
-  function printCheck(id, param) {
-    let form = $('<form action="/print/index.s" method="post" target="_blank"></form>');
-    let idx = $('<input name="print_page_id" type="hidden" value="' + id + '"/>');
-    let params = $('<input name="params" type="hidden" value="' + param + '"/>');
-    form.append(idx).append(params);
-    $('body').append(form);
-    form.submit();
-    form.remove();
   }
   function delService(id, state, price) {
     if (state === 'PAID') {

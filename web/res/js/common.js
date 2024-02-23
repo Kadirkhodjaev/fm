@@ -253,3 +253,13 @@ function errMsg(msg) {
 function getDOM(id) {
   return document.getElementById(id);
 }
+
+function moPrintPage(id, param) {
+  let form = $('<form action="/print/index.s" method="post" target="_blank"></form>');
+  let idx = $('<input name="print_page_id" type="hidden" value="' + id + '"/>');
+  let params = $('<input name="params" type="hidden" value="' + param + '"/>');
+  form.append(idx).append(params);
+  $('body').append(form);
+  form.submit();
+  form.remove();
+}
