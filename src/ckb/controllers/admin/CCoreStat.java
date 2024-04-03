@@ -134,6 +134,7 @@ public class CCoreStat {
       json.put("for_price", d.getFor_price());
       json.put("real_price", d.getReal_price());
       json.put("for_real_price", d.getFor_real_price());
+      json.put("bonus_proc", d.getBonusProc());
       json.put("minTime", d.getMinTime());
       json.put("maxTime", d.getMaxTime());
       json.put("state", d.getState());
@@ -177,6 +178,7 @@ public class CCoreStat {
       if(Util.isNotNull(req, "for_price")) d.setFor_price(Double.parseDouble(Util.get(req, "for_price").replaceAll(",", ".")));
       if(Util.isNotNull(req, "real_price")) d.setReal_price(Double.parseDouble(Util.get(req, "real_price").replaceAll(",", ".")));
       if(Util.isNotNull(req, "for_real_price")) d.setFor_real_price(Double.parseDouble(Util.get(req, "for_real_price").replaceAll(",", ".")));
+      if(Util.isNotNull(req, "bonus_proc")) d.setBonusProc(Double.parseDouble(Util.get(req, "bonus_proc").replaceAll(",", ".")));
       d.setState(Util.isNull(req, "state") ? "P": "A");
       d.setPriced(Util.isNull(req, "priced") ? "N": "Y");
       d.setNecKdo(Util.isNull(req, "necKdo") ? "N": "Y");

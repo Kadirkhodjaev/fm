@@ -125,6 +125,7 @@ public class CCoreAmb {
       ser.setPrice(Double.parseDouble(Util.get(req, "price")));
       ser.setOrd(Util.getInt(req, "ord", 0));
       ser.setFor_price(Double.parseDouble(Util.get(req, "for_price")));
+      ser.setBonusProc(Double.parseDouble(Util.nvl(req, "bonus_proc", "0")));
       ser.setGroup(dAmbGroups.get(Util.getInt(req, "group")));
       ser.setForm_id(Util.getInt(req, "form_id") != -1 ? Util.getInt(req, "form_id") : null);
       ser.setEi(Util.get(req, "ei"));
@@ -183,6 +184,7 @@ public class CCoreAmb {
       ser.setFizio(Util.isNotNull(req, "fizio"));
       ser.setActive(Util.isNotNull(req, "active"));
       ser.setPartnerProc(Util.getDouble(req, "partnerProc", 0D));
+      ser.setBonusProc(Util.getDouble(req, "bonusProc", 0D));
       dAmbGroups.save(ser);
       json.put("success", true);
     } catch (Exception e) {

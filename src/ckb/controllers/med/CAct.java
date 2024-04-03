@@ -3,6 +3,7 @@ package ckb.controllers.med;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
+import ckb.dao.med.cashbox.discount.DCashDiscount;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
 import ckb.dao.med.head_nurse.patient.drugs.DHNPatientDrug;
 import ckb.dao.med.head_nurse.patient.kdos.DHNPatientKdo;
@@ -18,6 +19,7 @@ import ckb.dao.med.patient.DPatient;
 import ckb.dao.med.patient.DPatientPays;
 import ckb.dao.med.patient.DPatientPlan;
 import ckb.dao.med.patient.DPatientWatchers;
+import ckb.domains.admin.Kdos;
 import ckb.domains.med.head_nurse.HNPatientDrugs;
 import ckb.domains.med.head_nurse.HNPatientKdos;
 import ckb.domains.med.head_nurse.HNPatients;
@@ -75,6 +77,10 @@ public class CAct {
   @Autowired private DPatientPlan dPatientPlan;
   @Autowired private DLvEpic dLvEpic;
   @Autowired private DDept dDept;
+  @Autowired private DCashDiscount dCashDiscount;
+
+  int lgotaDays = 10;
+  Date startDate = Util.stringToDate("31.03.2024");
 
   @RequestMapping("index.s")
   protected String patients(HttpServletRequest req, Model m) {
@@ -92,26 +98,164 @@ public class CAct {
     //
     String where = "";
     if(filter != null) {
-      where = " (Upper(patient.surname) like '%" + filter.toUpperCase() + "%' Or Upper(patient.name) like '%" + filter.toUpperCase() + "%' Or Upper(patient.middlename) like '%" + filter.toUpperCase() + "%' Or patient.yearNum like '%" + filter.toUpperCase() + "%') And ";
+      where = " (patient.id like '" + filter + "' Or Upper(patient.surname) like '%" + filter.toUpperCase() + "%' Or Upper(patient.name) like '%" + filter.toUpperCase() + "%' Or Upper(patient.middlename) like '%" + filter.toUpperCase() + "%' Or patient.yearNum like '%" + filter.toUpperCase() + "%') And ";
     }
-    m.addAttribute("rows", dhnPatient.getList("From HNPatients t Where " + where + " t.state != 'E' And (t.dateEnd = null Or t.dateEnd Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "') Order By t.id Desc"));
+    m.addAttribute("rows", dhnPatient.getList("From HNPatients t Where " + where + " t.state != 'E' And (t.dateEnd = null Or t.dateEnd Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "') Order By t.id Desc"));
     m.addAttribute("filter", filter);
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
     return "med/act/index";
   }
 
+  private void importChoosenKdos(HNPatientKdos obj, Integer plan) {
+    if(obj.getKdo().getId() == 153) {
+      LvBios checker = dLvBio.getByPlan(plan);
+      if (checker == null) return;
+      List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + obj.getKdo().getId());
+      for(KdoChoosens choosen: choosens) {
+        if(choosen.getOrd() == 1 && checker.getC1() != 1) continue;
+        if(choosen.getOrd() == 2 && checker.getC2() != 1) continue;
+        if(choosen.getOrd() == 3 && checker.getC3() != 1) continue;
+        if(choosen.getOrd() == 4 && checker.getC4() != 1) continue;
+        if(choosen.getOrd() == 5 && checker.getC5() != 1) continue;
+        if(choosen.getOrd() == 6 && checker.getC6() != 1) continue;
+        if(choosen.getOrd() == 7 && checker.getC7() != 1) continue;
+        if(choosen.getOrd() == 8 && checker.getC8() != 1) continue;
+        if(choosen.getOrd() == 9 && checker.getC9() != 1) continue;
+        if(choosen.getOrd() == 10 && checker.getC10() != 1) continue;
+        if(choosen.getOrd() == 11 && checker.getC11() != 1) continue;
+        if(choosen.getOrd() == 12 && checker.getC12() != 1) continue;
+        if(choosen.getOrd() == 13 && checker.getC13() != 1) continue;
+        if(choosen.getOrd() == 14 && checker.getC14() != 1) continue;
+        if(choosen.getOrd() == 15 && checker.getC15() != 1) continue;
+        if(choosen.getOrd() == 16 && checker.getC16() != 1) continue;
+        if(choosen.getOrd() == 17 && checker.getC17() != 1) continue;
+        if(choosen.getOrd() == 18 && checker.getC18() != 1) continue;
+        if(choosen.getOrd() == 19 && checker.getC19() != 1) continue;
+        if(choosen.getOrd() == 20 && checker.getC20() != 1) continue;
+        if(choosen.getOrd() == 21 && checker.getC21() != 1) continue;
+        if(choosen.getOrd() == 22 && checker.getC22() != 1) continue;
+        if(choosen.getOrd() == 23 && checker.getC23() != 1) continue;
+        if(choosen.getOrd() == 24 && checker.getC24() != 1) continue;
+        double price = choosen.getStatusPrice(obj.getParent().getPatient());
+        double real_price = choosen.getStatusRealPrice(obj.getParent().getPatient());
+        obj.setId(null);
+        obj.setPrice(obj.getParent().getDayCount() < lgotaDays && price == 0 ? real_price : price);
+        obj.setReal_price(real_price);
+        obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
+        obj.setServiceCount(1D);
+        obj.setServiceName(choosen.getName());
+        obj.setServiceType(0);
+        dhnPatientKdo.save(obj);
+      }
+    }
+    if(obj.getKdo().getId() == 56) { // Каулограмма
+      LvCouls checker = dLvCoul.getByPlan(plan);
+      if (checker == null) return;
+      List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + obj.getKdo().getId());
+      for(KdoChoosens choosen: choosens) {
+        if(choosen.getOrd() == 1 && !checker.isC1()) continue;
+        if(choosen.getOrd() == 2 && !checker.isC2()) continue;
+        if(choosen.getOrd() == 3 && !checker.isC3()) continue;
+        if(choosen.getOrd() == 4 && !checker.isC4()) continue;
+        double price = choosen.getStatusPrice(obj.getParent().getPatient());
+        double real_price = choosen.getStatusRealPrice(obj.getParent().getPatient());
+        obj.setId(null);
+        obj.setPrice(obj.getParent().getDayCount() < lgotaDays && price == 0 ? real_price : price);
+        obj.setReal_price(real_price);
+        obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
+        obj.setServiceCount(1D);
+        obj.setServiceName(choosen.getName());
+        obj.setServiceType(0);
+        dhnPatientKdo.save(obj);
+      }
+    }
+    if(obj.getKdo().getId() == 120) { // Garmon
+      LvGarmons checker = dLvGarmon.getByPlan(plan);
+      if (checker == null) return;
+      List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + obj.getKdo().getId());
+      for(KdoChoosens choosen: choosens) {
+        if(choosen.getOrd() == 1 && !checker.isC1()) continue;
+        if(choosen.getOrd() == 2 && !checker.isC2()) continue;
+        if(choosen.getOrd() == 3 && !checker.isC3()) continue;
+        if(choosen.getOrd() == 4 && !checker.isC4()) continue;
+        if(choosen.getOrd() == 5 && !checker.isC5()) continue;
+        if(choosen.getOrd() == 6 && !checker.isC6()) continue;
+        if(choosen.getOrd() == 7 && !checker.isC7()) continue;
+        if(choosen.getOrd() == 8 && !checker.isC8()) continue;
+        if(choosen.getOrd() == 9 && !checker.isC9()) continue;
+        if(choosen.getOrd() == 10 && !checker.isC10()) continue;
+        if(choosen.getOrd() == 11 && !checker.isC11()) continue;
+        if(choosen.getOrd() == 12 && !checker.isC12()) continue;
+        if(choosen.getOrd() == 13 && !checker.isC13()) continue;
+        if(choosen.getOrd() == 14 && !checker.isC14()) continue;
+        if(choosen.getOrd() == 15 && !checker.isC15()) continue;
+        if(choosen.getOrd() == 16 && !checker.isC16()) continue;
+        if(choosen.getOrd() == 17 && !checker.isC17()) continue;
+        if(choosen.getOrd() == 18 && !checker.isC18()) continue;
+        if(choosen.getOrd() == 19 && !checker.isC19()) continue;
+        if(choosen.getOrd() == 20 && !checker.isC20()) continue;
+        if(choosen.getOrd() == 21 && !checker.isC21()) continue;
+        if(choosen.getOrd() == 22 && !checker.isC22()) continue;
+        if(choosen.getOrd() == 23 && !checker.isC23()) continue;
+        if(choosen.getOrd() == 24 && !checker.isC24()) continue;
+        if(choosen.getOrd() == 25 && !checker.isC25()) continue;
+        if(choosen.getOrd() == 26 && !checker.isC26()) continue;
+        if(choosen.getOrd() == 27 && !checker.isC27()) continue;
+        if(choosen.getOrd() == 28 && !checker.isC28()) continue;
+        if(choosen.getOrd() == 29 && !checker.isC29()) continue;
+        if(choosen.getOrd() == 30 && !checker.isC30()) continue;
+        double price = choosen.getStatusPrice(obj.getParent().getPatient());
+        double real_price = choosen.getStatusRealPrice(obj.getParent().getPatient());
+        obj.setId(null);
+        obj.setPrice(obj.getParent().getDayCount() < lgotaDays && price == 0 ? real_price : price);
+        obj.setReal_price(real_price);
+        obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
+        obj.setServiceCount(1D);
+        obj.setServiceName(choosen.getName());
+        obj.setServiceType(0);
+        dhnPatientKdo.save(obj);
+      }
+    }
+    if(obj.getKdo().getId() == 121) { // Торч
+      LvTorchs checker = dLvTorch.getByPlan(plan);
+      if (checker == null) return;
+      List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + obj.getKdo().getId());
+      for(KdoChoosens choosen: choosens) {
+        if(choosen.getOrd() == 1 && !checker.isC1()) continue;
+        if(choosen.getOrd() == 2 && !checker.isC2()) continue;
+        if(choosen.getOrd() == 3 && !checker.isC3()) continue;
+        if(choosen.getOrd() == 4 && !checker.isC4()) continue;
+        double price = choosen.getStatusPrice(obj.getParent().getPatient());
+        double real_price = choosen.getStatusRealPrice(obj.getParent().getPatient());
+        obj.setId(null);
+        obj.setPrice(obj.getParent().getDayCount() < lgotaDays && price == 0 ? real_price : price);
+        obj.setReal_price(real_price);
+        obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
+        obj.setServiceCount(1D);
+        obj.setServiceName(choosen.getName());
+        obj.setServiceType(0);
+        dhnPatientKdo.save(obj);
+      }
+    }
+  }
+
   @RequestMapping("info.s")
   protected String info(HttpServletRequest req, Model m) {
     //
-    int lgotaDays = 10;
     session = SessionUtil.getUser(req);
     session.setCurUrl("/act/info.s?id=" + Util.get(req, "id"));
     //
     HNPatients hnPatient = dhnPatient.get(Util.getInt(req, "id"));
+    Date d = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
+    Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
     //
     if(hnPatient.getEatPrice() == null) hnPatient.setEatPrice(0D);
-    if(hnPatient.getKoykoPrice() == null) hnPatient.setKoykoPrice(sPatient.getPatientKoykoPrice(hnPatient.getPatient()));
+    if(hnPatient.getKoykoPrice() == null) {
+      hnPatient.setKoykoPrice(sPatient.getPatientKoykoPrice(hnPatient.getPatient()));
+      hnPatient.setKoykoPrice(hnPatient.getKoykoPrice() * (100 + ndsProc) / 100);
+    }
+    if(hnPatient.getNdsProc() == null) hnPatient.setNdsProc(ndsProc);
     if(hnPatient.getDayCount() == 0) {
       if(hnPatient.getDateEnd() != null) {
         long diffInMillies = Math.abs(hnPatient.getDateEnd().getTime() - hnPatient.getPatient().getDateBegin().getTime());
@@ -120,13 +264,14 @@ public class CAct {
       }
     }
     dhnPatient.save(hnPatient);
-    m.addAttribute("obj", hnPatient);
     List<HNPatientDrugs> drugs = dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + Util.getInt(req, "id"));
     //
     for(HNPatientDrugs drug: drugs) {
-      if(drug.getDrugName() == null || drug.getPrice() == null) {
+      if(drug.getDrugName() == null || drug.getPrice() == null || drug.getNds() == null) {
+        drug.setNdsProc(ndsProc);
         if(drug.getDrugName() == null) drug.setDrugName(drug.getDrug().getName());
         if(drug.getDrugPrice() == null) drug.setDrugPrice(drug.getPrice());
+        if(drug.getNds() == null) drug.setNds(drug.getPrice() * ndsProc / 100);
         dhnPatientDrug.save(drug);
       }
     }
@@ -138,24 +283,27 @@ public class CAct {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      Double drugSum = DB.getSum(conn, "Select Sum(t.price * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
+      Double drugSum = DB.getSum(conn, "Select Sum((t.price + t.nds) * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
       m.addAttribute("drugSum", drugSum);
       //
       List<HNPatientKdos> services = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + hnPatient.getId());
-      List<HNPatientKdos> labs = new ArrayList<HNPatientKdos>();
-      List<HNPatientKdos> consuls = new ArrayList<HNPatientKdos>();
-      List<HNPatientKdos> kdos = new ArrayList<HNPatientKdos>();
-      double labSum = 0, consulSum = 0, kdoSum = 0, paidSum = 0, watcherSum = 0, epicSum = 0, totalSum = 0;
+      double labSum = 0, consulSum = 0, kdoSum = 0, paidSum = 0, watcherSum = 0, epicSum = 0, totalSum, discountSum;
       // Дополнительное место
       List<PatientWatchers> watchers = dPatientWatcher.byPatient(hnPatient.getPatient().getId());
-      for(PatientWatchers watcher: watchers)
-        watcherSum += watcher.getDayCount() * watcher.getPrice();
+      for(PatientWatchers watcher: watchers) {
+        if(watcher.getNds() == null) {
+          watcher.setNdsProc(ndsProc);
+          watcher.setNds(watcher.getPrice() * ndsProc / 100);
+          dPatientWatcher.save(watcher);
+        }
+        watcherSum += watcher.getDayCount() * (watcher.getPrice() + watcher.getNds());
+      }
       // Дополнительное место
       m.addAttribute("watchers", watchers);
-      if(services.size() == 0) {
+      if(services.isEmpty()) {
         // Лабораторные исследования
         ps = conn.prepareStatement(
-          "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 kdo_count, ifnull(c.Price, 0) Price, ifnull(c.real_price, 0) real_price, ifnull(c.for_real_price, 0) for_real_price " +
+          "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 kdo_count, t.conf_user " +
             "  From lv_plans t, Kdos c " +
             " Where t.patientId = ? " +
             "    And t.Kdo_Id = c.Id " +
@@ -165,621 +313,60 @@ public class CAct {
         ps.setInt(1, hnPatient.getPatient().getId());
         rs = ps.executeQuery();
         while (rs.next()) {
-          if(rs.getInt("kdo_id") == 121 || rs.getInt("kdo_id") == 120 || rs.getInt("kdo_id") == 56 || rs.getInt("kdo_id") == 153) {
-            if (rs.getInt("kdo_id") == 153) {
-              LvBios bio = dLvBio.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.getC1() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 1);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 1);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Умумий оксил");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC2() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 2);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 2);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Холестерин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC3() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 3);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 3);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Глюкоза");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC4() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 4);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 4);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Мочевина");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC5() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 5);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 5);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Креатинин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC6() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 6);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 6);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Билирубин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC7() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 7);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 7);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("АЛТ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC8() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 8);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 8);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("АСТ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC9() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 9);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 9);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Альфа амилаза");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC10() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 10);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 10);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Кальций");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC11() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 11);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 11);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Сийдик кислотаси");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC12() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 12);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 12);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("K – калий");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC13() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 13);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 13);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Na – натрий");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC14() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 14);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 14);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Fe – темир");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC15() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 15);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 15);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Mg – магний");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC16() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 16);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 16);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Ишкорий фасфотаза");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC17() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 17);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 17);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ГГТ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC18() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 18);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 18);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Гликирланган гемоглобин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC19() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 19);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 19);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("РФ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC20() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 20);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 20);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("АСЛО");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC21() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 21);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 21);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("СРБ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC22() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 22);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 22);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("RW");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC23() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 23);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 23);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Hbs Ag");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.getC24() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 153, 24);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 153, 24);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Гепатит «С» ВГС");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-              }
-            }
-            if (rs.getInt("kdo_id") == 56) { // Каулограмма
-              LvCouls bio = dLvCoul.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.isC4()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 56, 4);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 56, 4);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ПТИ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC1()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 56, 1);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 56, 1);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Фибриноген");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC2()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 56, 2);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 56, 2);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Тромбин вакти");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC3()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 56, 3);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 56, 3);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("А.Ч.Т.В. (сек)");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-              }
-            }
-            if (rs.getInt("kdo_id") == 120) { // Garmon
-              LvGarmons bio = dLvGarmon.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.isC1()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 120, 1);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 120, 1);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ТТГ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC2()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 120, 2);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 120, 2);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Т4");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC3()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 120, 3);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 120, 3);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Т3");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC4()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 120, 4);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 120, 4);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Анти-ТРО");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-              }
-            }
-            if (rs.getInt("kdo_id") == 121) { // Торч
-              LvTorchs bio = dLvTorch.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.isC1()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 121, 1);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 121, 1);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Хламидия");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC2()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 121, 2);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 121, 2);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Токсоплазма");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC3()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 121, 3);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 121, 3);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ЦМВ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-                if (bio.isC4()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(hnPatient);
-                  double price = dKdoChoosen.getPrice(hnPatient.getPatient().getCounteryId(), 121, 4);
-                  double real_price = dKdoChoosen.getRealPrice(hnPatient.getPatient().getCounteryId(), 121, 4);
-                  obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ВПГ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                  labSum += obj.getPrice() * obj.getServiceCount();
-                  labs.add(obj);
-                }
-              }
-            }
+          HNPatientKdos obj = new HNPatientKdos();
+          obj.setParent(hnPatient);
+          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
+          obj.setServiceType(0);
+          obj.setWorker(rs.getInt("conf_user"));
+          obj.setNdsProc(ndsProc);
+          if(dKdoChoosen.getCount("From KdoChoosens Where kdo.id = " + obj.getKdo().getId()) > 0) {
+            importChoosenKdos(obj, rs.getInt("id"));
           } else {
-            HNPatientKdos obj = new HNPatientKdos();
-            obj.setParent(hnPatient);
-            double price = dKdo.getKdoPrice(hnPatient.getPatient().getCounteryId(), rs.getInt("kdo_id"));
-            double real_price = obj.getParent().getPatient().getCounteryId() == 199 ? rs.getDouble("real_price") : rs.getDouble("for_real_price");
+            Kdos kdo = dKdo.get(obj.getKdo().getId());
+            double price = kdo.getStatusPrice(hnPatient.getPatient());
+            double real_price = kdo.getStatusRealPrice(hnPatient.getPatient());
             obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
             obj.setReal_price(real_price);
+            obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
             obj.setServiceCount(rs.getDouble("kdo_count"));
             obj.setServiceName(rs.getString("Kdo_Name"));
-            obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-            obj.setServiceType(0);
             dhnPatientKdo.save(obj);
-            labSum += obj.getPrice() * obj.getServiceCount();
-            labs.add(obj);
           }
           //
         }
         // Медицинские услуги
         ps = conn.prepareStatement(
-          "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, ifnull(Max(c.Price), 0) Price, ifnull(Max(c.real_price), 0) real_price, ifnull(Max(c.for_real_price), 0) for_real_price " +
+          "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, t.conf_user " +
             "  From lv_plans t, Kdos c " +
             " Where t.patientId = ? " +
             "    And t.Kdo_Id = c.Id " +
             "    And t.result_id > 0 " +
             "    And t.Kdo_Type_Id not in (1, 2, 3, 8, 19, 20) " +
-            "  Group By t.Kdo_Id"
+            "  Group By t.Kdo_Id, t.conf_user"
         );
         ps.setInt(1, hnPatient.getPatient().getId());
         rs = ps.executeQuery();
         while (rs.next()) {
           HNPatientKdos obj = new HNPatientKdos();
           obj.setParent(hnPatient);
-          obj.setPrice(dKdo.getKdoPrice(hnPatient.getPatient().getCounteryId(), rs.getInt("kdo_id")));
-          if(obj.getParent().getPatient().getCounteryId() == 199)
-            obj.setReal_price(rs.getDouble("real_price"));
-          else
-            obj.setReal_price(rs.getDouble("for_real_price"));
+          Kdos kdo = dKdo.get(rs.getInt("kdo_id"));
+          obj.setPrice(kdo.getStatusPrice(hnPatient.getPatient()));
+          obj.setReal_price(kdo.getStatusRealPrice(hnPatient.getPatient()));
+          obj.setNdsProc(ndsProc);
+          obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
           obj.setServiceCount(rs.getDouble("kdo_count"));
           obj.setServiceName(rs.getString("Kdo_Name"));
           obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
           obj.setServiceType(1);
+          obj.setWorker(rs.getInt("conf_user"));
           dhnPatientKdo.save(obj);
-          kdoSum += obj.getPrice() * obj.getServiceCount();
-          //
-          kdos.add(obj);
         }
         // Физиотерапия
         ps = conn.prepareStatement(
           "Select t.Kdo_Id, " +
             "         c.`Name` Kdo_Name, " +
             "         (Select Count(*) From Lv_Fizio_Dates d Where d.fizio_Id = t.Id And d.state = 'Y' And d.done = 'Y') Kdo_Count, " +
-            "         ifnull(c.Price, 0) Price, " +
-            "         ifnull(c.Real_Price, 0) real_Price, " +
-            "         ifnull(c.for_real_price, 0) for_real_price " +
+            "         t.userId " +
             "    From lv_fizios t, Kdos c " +
             "   Where t.patientId = ? " +
             "     And t.Kdo_Id = c.Id " +
@@ -790,25 +377,21 @@ public class CAct {
         while (rs.next()) {
           HNPatientKdos obj = new HNPatientKdos();
           obj.setParent(hnPatient);
-          obj.setPrice(rs.getDouble("price"));
-          //
-          if(obj.getParent().getPatient().getCounteryId() == 199)
-            obj.setReal_price(rs.getDouble("real_price"));
-          else
-            obj.setReal_price(rs.getDouble("for_real_price"));
-          //
+          Kdos kdo  = dKdo.get(rs.getInt("kdo_id"));
+          obj.setPrice(kdo.getStatusPrice(hnPatient.getPatient()));
+          obj.setReal_price(kdo.getStatusRealPrice(hnPatient.getPatient()));
+          obj.setNdsProc(ndsProc);
+          obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
           obj.setServiceCount(rs.getDouble("kdo_count"));
           obj.setServiceName(rs.getString("Kdo_Name"));
           obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
           obj.setServiceType(1);
+          obj.setWorker(rs.getInt("userId"));
           dhnPatientKdo.save(obj);
-          kdoSum += obj.getPrice() * obj.getServiceCount();
-          //
-          kdos.add(obj);
         }
         // Консультация
         ps = conn.prepareStatement(
-          "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price " +
+          "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price, t.lvid " +
             "  From lv_consuls t, Users c " +
             " Where t.patientId = ? " +
             "    And c.Id = t.lvId " +
@@ -819,28 +402,43 @@ public class CAct {
         while (rs.next()) {
           HNPatientKdos obj = new HNPatientKdos();
           obj.setParent(hnPatient);
-          if(hnPatient.getPatient().getCounteryId() == 199)
+          if(hnPatient.getPatient().getCounteryId() == 199) {
             obj.setPrice(rs.getDouble("price"));
-          else
-            obj.setPrice(rs.getDouble("for_price"));
-          //
-          if(hnPatient.getPatient().getCounteryId() == 199)
             obj.setReal_price(rs.getDouble("real_price"));
-          else
+          } else {
+            obj.setPrice(rs.getDouble("for_price"));
             obj.setReal_price(rs.getDouble("for_real_price"));
+          }
+          obj.setNdsProc(ndsProc);
+          obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
           obj.setServiceCount(rs.getDouble("counter"));
           obj.setServiceName(rs.getString("profil"));
           obj.setServiceType(2);
+          obj.setWorker(rs.getInt("lvid"));
           dhnPatientKdo.save(obj);
-          consulSum += obj.getPrice() * obj.getServiceCount();
-          //
-          consuls.add(obj);
         }
-      } else {
-        for(HNPatientKdos service: services) {
-          if(service.getServiceType() == 0) { labSum += service.getPrice() * service.getServiceCount(); labs.add(service); }
-          if(service.getServiceType() == 1) { kdoSum += service.getPrice() * service.getServiceCount(); kdos.add(service); }
-          if(service.getServiceType() == 2) { consulSum += service.getPrice() * service.getServiceCount(); consuls.add(service); }
+      }
+      List<HNPatientKdos> labs = new ArrayList<>();
+      List<HNPatientKdos> consuls = new ArrayList<>();
+      List<HNPatientKdos> kdos = new ArrayList<>();
+      services = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + hnPatient.getId());
+      for(HNPatientKdos service: services) {
+        if(service.getNds() == null) {
+          service.setNdsProc(ndsProc);
+          service.setNds(service.getPrice() * ndsProc / 100);
+          dhnPatientKdo.save(service);
+        }
+        if(service.getServiceType() == 0) {
+          labSum += (service.getPrice() + service.getNds()) * service.getServiceCount();
+          labs.add(service);
+        }
+        if(service.getServiceType() == 1) {
+          kdoSum += (service.getPrice() + service.getNds()) * service.getServiceCount();
+          kdos.add(service);
+        }
+        if(service.getServiceType() == 2) {
+          consulSum += (service.getPrice() + service.getNds()) * service.getServiceCount();
+          consuls.add(service);
         }
       }
       //
@@ -848,9 +446,10 @@ public class CAct {
       for(PatientPays pay: pays) {
         paidSum += pay.getCash() + pay.getCard() + pay.getTransfer();
       }
+      discountSum = dCashDiscount.patientStatDiscountSum(hnPatient.getPatient().getId());
       //
       List<LvEpics> epics = dLvEpic.getPatientEpics(hnPatient.getPatient().getId());
-      List<ObjList> epicRows = new ArrayList<ObjList>();
+      List<ObjList> epicRows = new ArrayList<>();
       Integer days = hnPatient.getDayCount();
       for(LvEpics epic: epics) {
         if(epic.getDateBegin() == null || epic.getKoyko() == null || epic.getPrice() == null) {
@@ -864,11 +463,16 @@ public class CAct {
         obj.setC4(Util.dateToString(epic.getDateEnd()));
         obj.setC5(epic.getPrice().toString());
         obj.setC6(epic.getKoyko() + "");
+        if(epic.getNds() == null) {
+          epic.setNdsProc(ndsProc);
+          epic.setNds(epic.getPrice() * ndsProc / 100);
+          dLvEpic.save(epic);
+        }
         days -= epic.getKoyko();
-        epicSum += (epic.getPrice() * epic.getKoyko());
+        epicSum += (epic.getPrice() + epic.getNds()) * epic.getKoyko();
         epicRows.add(obj);
       }
-      if(epicRows.size() > 0) {
+      if(!epicRows.isEmpty()) {
         ObjList obj = new ObjList();
         obj.setIb("-1");
         obj.setC1(hnPatient.getPatient().getDept().getName());
@@ -877,7 +481,7 @@ public class CAct {
         obj.setC4(Util.dateToString(hnPatient.getDateEnd()));
         obj.setC5(hnPatient.getKoykoPrice().toString());
         obj.setC6(days + "");
-        epicSum += (Double.parseDouble(obj.getC6()) * Double.parseDouble(obj.getC5()));
+        epicSum += hnPatient.getKoykoPrice() * days;
         epicRows.add(obj);
       }
       m.addAttribute("epics", epicRows);
@@ -885,16 +489,13 @@ public class CAct {
       //
       Double disPerc = hnPatient.getPatient().getDis_perc();
       disPerc = (disPerc == null ? 0 : disPerc) / 100;
-      Double koyko = hnPatient.getKoykoPrice() * hnPatient.getDayCount();
-      if(epicRows.size() > 0) {
-        totalSum = watcherSum + drugSum + labSum + kdoSum + consulSum + (epicSum - epicSum * disPerc) + (hnPatient.getEatPrice() * hnPatient.getDayCount());
-      } else {
-        totalSum = watcherSum + drugSum + labSum + kdoSum + consulSum + (koyko - koyko * disPerc) + (hnPatient.getEatPrice() * hnPatient.getDayCount());
-      }
+      Double koyko = epicRows.isEmpty() ? hnPatient.getKoykoPrice() * hnPatient.getDayCount() : epicSum;
+      totalSum = watcherSum + drugSum + labSum + kdoSum + consulSum + koyko * (1-disPerc) + (hnPatient.getEatPrice() * hnPatient.getDayCount()) - discountSum;
       hnPatient.setPaySum((double) Math.round((totalSum - paidSum) * 100) / 100);
       hnPatient.setTotalSum((double) Math.round(totalSum * 100) / 100);
       //
       dhnPatient.save(hnPatient);
+      m.addAttribute("obj", hnPatient);
       m.addAttribute("labs", labs);
       m.addAttribute("kdos", kdos);
       m.addAttribute("consuls", consuls);
@@ -903,6 +504,7 @@ public class CAct {
       m.addAttribute("kdoSum", kdoSum);
       m.addAttribute("consulSum", consulSum);
       m.addAttribute("watcherSum", watcherSum);
+      m.addAttribute("discountSum", discountSum + (koyko * disPerc));
       m.addAttribute("paidSum", paidSum);
       List<ObjList> plans = sPatient.getPlans(hnPatient.getPatient().getId());
       boolean isErr = false;
@@ -940,29 +542,29 @@ public class CAct {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      Double drugSum =  DB.getSum(conn, "Select Sum(t.price * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
+      Double drugSum =  DB.getSum(conn, "Select Sum((t.price + t.nds) * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
       m.addAttribute("summ", drugSum);
       //
       List<HNPatientKdos> services = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + hnPatient.getId());
       List<HNPatientKdos> labs = new ArrayList<HNPatientKdos>();
       List<HNPatientKdos> consuls = new ArrayList<HNPatientKdos>();
       List<HNPatientKdos> kdos = new ArrayList<HNPatientKdos>();
-      double labSum = 0D, consulSum = 0D, kdoSum = 0D, watcherSum = 0D, discountSum = 0;
+      double labSum = 0D, consulSum = 0D, kdoSum = 0D, discountSum = 0;
       for(HNPatientKdos service: services) {
         if(service.getServiceType() == 0) {
-          labSum += service.getPrice() * service.getServiceCount();
+          labSum += (service.getPrice() + service.getNds()) * service.getServiceCount();
           labs.add(service);
           if(service.getPrice() == 0)
             discountSum += service.getReal_price() * service.getServiceCount();
         }
         if(service.getServiceType() == 1) {
-          kdoSum += service.getPrice() * service.getServiceCount();
+          kdoSum += (service.getPrice() + service.getNds()) * service.getServiceCount();
           kdos.add(service);
           if(service.getPrice() == 0)
             discountSum += service.getReal_price() * service.getServiceCount();
         }
         if(service.getServiceType() == 2) {
-          consulSum += service.getPrice() * service.getServiceCount();
+          consulSum += (service.getPrice() + service.getNds()) * service.getServiceCount();
           consuls.add(service);
           if(service.getPrice() == 0)
             discountSum += service.getReal_price() * service.getServiceCount();
@@ -970,8 +572,6 @@ public class CAct {
       }
       // Дополнительное место
       List<PatientWatchers> watchers = dPatientWatcher.byPatient(hnPatient.getPatient().getId());
-      for(PatientWatchers watcher: watchers)
-        watcherSum += watcher.getDayCount() * watcher.getPrice();
       m.addAttribute("watchers", watchers);
       //
       m.addAttribute("labs", labs);
@@ -1009,8 +609,9 @@ public class CAct {
         obj.setC4(Util.dateToString(epic.getDateEnd()));
         obj.setC5(epic.getPrice().toString());
         obj.setC6(epic.getKoyko() + "");
+        obj.setC7(epic.getNds() + "");
         days -= epic.getKoyko();
-        epicSum += epic.getKoyko() * epic.getPrice();
+        epicSum += epic.getKoyko() * (epic.getPrice() + epic.getNds());
         epicRows.add(obj);
       }
       if(epicRows.size() > 0) {
@@ -1022,16 +623,13 @@ public class CAct {
         obj.setC4(Util.dateToString(hnPatient.getDateEnd()));
         obj.setC5(hnPatient.getKoykoPrice().toString());
         obj.setC6(days + "");
+        obj.setC7("0");
         epicRows.add(obj);
       }
       m.addAttribute("epics", epicRows);
       Double disPerc = hnPatient.getPatient().getDis_perc();
       disPerc = disPerc == null ? 0 : disPerc;
-      double koyko;
-      if(epicRows.size() > 0)
-        koyko = epicSum;
-      else
-        koyko = hnPatient.getKoykoPrice() * hnPatient.getDayCount();
+      double koyko = epicRows.isEmpty() ? hnPatient.getKoykoPrice() * hnPatient.getDayCount() : epicSum;
       //
       m.addAttribute("dis_sum", koyko);
       m.addAttribute("dis_perc", disPerc);
@@ -1148,6 +746,7 @@ public class CAct {
           HNPatientDrugs obj = dhnPatientDrug.get(Util.getInt(req, "id"));
           if (Util.get(req, "type").equals("price")) {
             obj.setPrice(Double.parseDouble(Util.get(req, "value")));
+            obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
           }
           if (Util.get(req, "type").equals("counter")) {
             obj.setServiceCount(Double.parseDouble(Util.get(req, "value")));
@@ -1160,6 +759,7 @@ public class CAct {
             LvEpics epic = dLvEpic.get(id);
             if (Util.get(req, "type").equals("price")) {
               epic.setPrice(Double.parseDouble(Util.get(req, "value")));
+              epic.setNds(epic.getPrice() * epic.getNdsProc() / 100);
             }
             if (Util.get(req, "type").equals("koyko")) {
               epic.setKoyko(Integer.parseInt(Util.get(req, "value")));
@@ -1173,6 +773,7 @@ public class CAct {
             PatientWatchers obj = dPatientWatcher.get(id);
             if (Util.get(req, "type").equals("price")) {
               obj.setPrice(Double.parseDouble(Util.get(req, "value")));
+              obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
             }
             if (Util.get(req, "type").equals("counter")) {
               obj.setDayCount(Integer.parseInt(Util.get(req, "value")));
@@ -1185,6 +786,7 @@ public class CAct {
         HNPatientKdos obj = dhnPatientKdo.get(Util.getInt(req, "id"));
         if (Util.get(req, "type").equals("price")) {
           obj.setPrice(Double.parseDouble(Util.get(req, "value")));
+          obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
         }
         if (Util.get(req, "type").equals("counter")) {
           obj.setServiceCount(Double.parseDouble(Util.get(req, "value")));
@@ -1228,6 +830,8 @@ public class CAct {
     try {
       conn = DB.getConnection();
       HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
+      Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
       List<HNPatientKdos> kdos = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + pat.getId() + " And serviceType = " + Util.get(req, "type"));
       for(HNPatientKdos kdo: kdos) {
         dhnPatientKdo.delete(kdo.getId());
@@ -1235,7 +839,7 @@ public class CAct {
       if(Util.get(req, "type").equals("0")) {
         // Лабораторные исследования
         ps = conn.prepareStatement(
-          "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 Kdo_Count, ifnull(c.Price, 0) Price, ifnull(c.Real_Price, 0) real_Price, ifnull(c.for_real_price, 0) for_real_price " +
+          "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 Kdo_Count, t.conf_user " +
             "  From lv_plans t, Kdos c " +
             " Where t.patientId = ? " +
             "    And t.Kdo_Id = c.Id " +
@@ -1245,504 +849,23 @@ public class CAct {
         ps.setInt(1, pat.getPatient().getId());
         rs = ps.executeQuery();
         while (rs.next()) {
-          if(rs.getInt("kdo_id") == 121 || rs.getInt("kdo_id") == 120 || rs.getInt("kdo_id") == 56 || rs.getInt("kdo_id") == 153) {
-            if (rs.getInt("kdo_id") == 153) {
-              LvBios bio = dLvBio.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.getC1() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 1);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 1);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Умумий оксил");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC2() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 2);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 2);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Холестерин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC3() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 3);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 3);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Глюкоза");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC4() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 4);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 4);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Мочевина");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC5() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 5);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 5);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Креатинин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC6() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 6);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 6);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Билирубин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC7() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 7);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 7);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("АЛТ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC8() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 8);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 8);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("АСТ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC9() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 9);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 9);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Альфа амилаза");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC10() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 10);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 10);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Кальций");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC11() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 11);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 11);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Сийдик кислотаси");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC12() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 12);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 12);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("K – калий");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC13() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 13);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 13);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Na – натрий");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC14() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 14);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 14);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Fe – темир");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC15() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 15);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 15);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Mg – магний");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC16() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 16);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 16);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Ишкорий фасфотаза");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC17() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 17);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 17);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ГГТ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC18() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 18);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 18);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Гликирланган гемоглобин");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC19() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 19);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 19);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("РФ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC20() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 20);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 20);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("АСЛО");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC21() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 21);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 21);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("СРБ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC22() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 22);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 22);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("RW");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC23() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 23);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 23);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Hbs Ag");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.getC24() == 1) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 153, 24);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 153, 24);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Гепатит «С» ВГС");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-              }
-            }
-            if (rs.getInt("kdo_id") == 56) { // Каулограмма
-              LvCouls bio = dLvCoul.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.isC4()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 56, 4);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 56, 4);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ПТИ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                }
-                if (bio.isC1()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 56, 1);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 56, 1);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Фибриноген");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC2()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 56, 2);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 56, 2);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Тромбин вакти");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC3()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 56, 3);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 56, 3);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("А.Ч.Т.В. (сек)");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-              }
-            }
-            if (rs.getInt("kdo_id") == 120) { // Garmon
-              LvGarmons bio = dLvGarmon.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.isC1()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 120, 1);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 120, 1);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ТТГ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC2()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 120, 2);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 120, 2);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Т4");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC3()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 120, 3);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 120, 3);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Т3");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC4()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 120, 4);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 120, 4);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Анти-ТРО");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-              }
-            }
-            if (rs.getInt("kdo_id") == 121) { // Торч
-              LvTorchs bio = dLvTorch.getByPlan(rs.getInt("id"));
-              if (bio != null) {
-                if (bio.isC1()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 121, 1);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 121, 1);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Хламидия");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC2()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 121, 2);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 121, 2);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("Токсоплазма");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC3()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 121, 3);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 121, 3);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ЦМВ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-                if (bio.isC4()) {
-                  HNPatientKdos obj = new HNPatientKdos();
-                  obj.setParent(pat);
-                  double price = dKdoChoosen.getPrice(pat.getPatient().getCounteryId(), 121, 4);
-                  double real_price = dKdoChoosen.getRealPrice(pat.getPatient().getCounteryId(), 121, 4);
-                  obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-                  obj.setReal_price(real_price);
-                  obj.setServiceCount(1D);
-                  obj.setServiceName("ВПГ");
-                  obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-                  obj.setServiceType(0);
-                  dhnPatientKdo.save(obj);
-                }
-              }
-            }
+          HNPatientKdos obj = new HNPatientKdos();
+          obj.setParent(pat);
+          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
+          obj.setWorker(rs.getInt("conf_user"));
+          obj.setServiceType(0);
+          obj.setNdsProc(ndsProc);
+          if(dKdoChoosen.getCount("From KdoChoosens Where kdo.id = " + obj.getKdo().getId()) > 0) {
+            importChoosenKdos(obj, rs.getInt("id"));
           } else {
-            HNPatientKdos obj = new HNPatientKdos();
-            obj.setParent(pat);
-            double price = dKdo.getKdoPrice(pat.getPatient().getCounteryId(), rs.getInt("kdo_id"));
-            double real_price = dKdo.getKdoRealPrice(pat.getPatient().getCounteryId(), rs.getInt("kdo_id"));
+            Kdos kdo = dKdo.get(obj.getKdo().getId());
+            double price = kdo.getStatusPrice(pat.getPatient());
+            double real_price = kdo.getStatusRealPrice(pat.getPatient());
             obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
             obj.setReal_price(real_price);
+            obj.setNds(obj.getPrice() * ndsProc / 100);
             obj.setServiceCount(rs.getDouble("kdo_count"));
             obj.setServiceName(rs.getString("Kdo_Name"));
-            obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
             obj.setServiceType(0);
             dhnPatientKdo.save(obj);
           }
@@ -1751,25 +874,28 @@ public class CAct {
       // Медицинские услуги
       if(Util.get(req, "type").equals("1")) {
         ps = conn.prepareStatement(
-          "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, ifnull(Max(c.Price), 0) Price " +
+          "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, t.conf_user " +
             "  From lv_plans t, Kdos c " +
             " Where t.patientId = ? " +
             "    And t.Kdo_Id = c.Id " +
             "    And t.result_id > 0 " +
             "    And t.Kdo_Type_Id not in (1, 2, 3, 8, 19, 20) " +
-            "  Group By t.Kdo_Id"
+            "  Group By t.Kdo_Id, t.conf_user "
         );
         ps.setInt(1, pat.getPatient().getId());
         rs = ps.executeQuery();
         while (rs.next()) {
           HNPatientKdos obj = new HNPatientKdos();
           obj.setParent(pat);
-          obj.setPrice(dKdo.getKdoPrice(pat.getPatient().getCounteryId(), rs.getInt("kdo_id")));
-          obj.setReal_price(dKdo.getKdoRealPrice(pat.getPatient().getCounteryId(), rs.getInt("kdo_id")));
+          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
+          obj.setPrice(obj.getKdo().getStatusPrice(pat.getPatient()));
+          obj.setReal_price(obj.getKdo().getStatusRealPrice(pat.getPatient()));
+          obj.setNdsProc(ndsProc);
+          obj.setNds(obj.getPrice() * ndsProc / 100);
           obj.setServiceCount(rs.getDouble("kdo_count"));
           obj.setServiceName(rs.getString("Kdo_Name"));
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
           obj.setServiceType(1);
+          obj.setWorker(rs.getInt("conf_user"));
           dhnPatientKdo.save(obj);
         }
         // Физиотерапия
@@ -1777,9 +903,7 @@ public class CAct {
           "Select t.Kdo_Id, " +
             "         c.`Name` Kdo_Name, " +
             "         (Select Count(*) From Lv_Fizio_Dates d Where d.fizio_Id = t.Id And d.state = 'Y' And d.done = 'Y') Kdo_Count, " +
-            "         ifnull(c.Price, 0) Price, " +
-            "         ifnull(c.Real_Price, 0) real_Price, " +
-            "         ifnull(c.for_real_price, 0) for_real_price " +
+            "         t.userId " +
             "    From lv_fizios t, Kdos c " +
             "   Where t.patientId = ? " +
             "     And t.Kdo_Id = c.Id " +
@@ -1790,19 +914,22 @@ public class CAct {
         while (rs.next()) {
           HNPatientKdos obj = new HNPatientKdos();
           obj.setParent(pat);
-          obj.setPrice(dKdo.getKdoPrice(pat.getPatient().getCounteryId(), rs.getInt("kdo_id")));
-          obj.setReal_price(dKdo.getKdoRealPrice(pat.getPatient().getCounteryId(), rs.getInt("kdo_id")));
+          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
+          obj.setPrice(obj.getKdo().getStatusPrice(pat.getPatient()));
+          obj.setReal_price(obj.getKdo().getStatusRealPrice(pat.getPatient()));
+          obj.setNdsProc(ndsProc);
+          obj.setNds(obj.getPrice() * ndsProc / 100);
           obj.setServiceCount(rs.getDouble("kdo_count"));
           obj.setServiceName(rs.getString("Kdo_Name"));
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
           obj.setServiceType(1);
+          obj.setWorker(rs.getInt("userId"));
           dhnPatientKdo.save(obj);
         }
       }
       // Консультация
       if(Util.get(req, "type").equals("2")) {
         ps = conn.prepareStatement(
-          "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price" +
+          "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price, t.lvid" +
             "  From lv_consuls t, Users c " +
             " Where t.patientId = ? " +
             "    And c.Id = t.lvId " +
@@ -1814,18 +941,19 @@ public class CAct {
           HNPatientKdos obj = new HNPatientKdos();
           obj.setParent(pat);
           obj.setPrice(0D);
-          if(pat.getPatient().getCounteryId() == 199)
+          if(pat.getPatient().getCounteryId() == 199) {
             obj.setPrice(rs.getDouble("price"));
-          else
-            obj.setPrice(rs.getDouble("for_price"));
-          //
-          if(pat.getPatient().getCounteryId() == 199)
             obj.setReal_price(rs.getDouble("real_price"));
-          else
+          } else {
+            obj.setPrice(rs.getDouble("for_price"));
             obj.setReal_price(rs.getDouble("for_real_price"));
+          }
+          obj.setNdsProc(ndsProc);
+          obj.setNds(obj.getPrice() * ndsProc / 100);
           obj.setServiceCount(rs.getDouble("counter"));
           obj.setServiceName(rs.getString("profil"));
           obj.setServiceType(2);
+          obj.setWorker(rs.getInt("lvid"));
           dhnPatientKdo.save(obj);
         }
       }
@@ -1847,11 +975,15 @@ public class CAct {
     JSONObject json = new JSONObject();
     try {
       HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
+      Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
       HNPatientKdos kdo = new HNPatientKdos();
       if(Util.get(req, "type").equals("lab")) kdo.setServiceType(0);
       if(Util.get(req, "type").equals("kdo")) kdo.setServiceType(1);
       if(Util.get(req, "type").equals("consul")) kdo.setServiceType(2);
       kdo.setPrice(Double.parseDouble(Util.get(req, "price")));
+      kdo.setNdsProc(ndsProc);
+      kdo.setNds(kdo.getPrice() * ndsProc / 100);
       kdo.setServiceCount(Double.parseDouble(Util.get(req, "counter")));
       kdo.setServiceName(Util.get(req, "name"));
       kdo.setParent(pat);

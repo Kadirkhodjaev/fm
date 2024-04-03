@@ -155,8 +155,9 @@ public class CCashbox {
     //
     Double discountSum = dCashDiscount.patientAmbDiscountSum(pat.getId());
     Double paySum = dAmbPatientServices.patientTotalSum(session.getCurPat());
-    m.addAttribute("serviceTotal", dAmbPatientServices.patientTotal(session.getCurPat()));
-    m.addAttribute("serviceTotalSum", Math.floor((paySum + drugSum - discountSum) * 100) / 100);
+    Double nds = dAmbPatientServices.patientNdsSum(session.getCurPat()), serviceTotalSum = Math.floor((paySum + drugSum - discountSum) * 100) / 100;
+    m.addAttribute("ndsTotal", nds + serviceTotalSum);
+    m.addAttribute("serviceTotalSum", serviceTotalSum);
     List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
     List<AmbService> ss = new ArrayList<AmbService>();
     for(AmbPatientServices s: services) {
@@ -169,12 +170,12 @@ public class CCashbox {
       d.setResult(res);
       d.setWorker(s.getWorker());
       d.setUsers(dUser.getList("From Users t Where id = " + s.getWorker().getId()));
-      if(s.getPrice() != 0) {
-        String sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice());
-        if(sum.indexOf(",") == -1)
-          sum = sum + ",00";
-        d.setPrice(sum);
-      }
+      String sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice());
+      if(!sum.contains(",")) sum = sum + ",00";
+      d.setPrice(sum);
+      sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice() + Util.nvl(s.getNds(), 0));
+      if(!sum.contains(",")) sum = sum + ",00";
+      d.setNds(sum);
       ss.add(d);
     }
     m.addAttribute("is_admin", dUser.get(session.getUserId()).isAmbAdmin());
@@ -245,7 +246,7 @@ public class CCashbox {
     List<AmbPatientServices> rows = dAmbPatientServices.getList("From AmbPatientServices Where state In ('PAID', 'DONE') And patient = " + pat.getId() + (id > 0 ? " And pay = " + id : ""));
     double sum = 0;
     for(AmbPatientServices row: rows) {
-      sum += row.getPrice();
+      sum += row.getPrice() + Util.nvl(row.getNds(), 0D);
     }
     if(pat.getQrcode() == null || pat.getQrcode().equals("")) {
       pat.setQrcode(Util.md5(pat.getId().toString()));
@@ -362,6 +363,120 @@ public class CCashbox {
     return data.toString();
   }
 
+  protected void choosenKdos(LvPlans plan, Patients pat, List<ObjList> planDetails, Double ndsProc) {
+    List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + plan.getKdo().getId());
+    if (plan.getKdo().getId() == 153) {
+      LvBios checker = dLvBio.getByPlan(plan.getId());
+      if(checker != null)
+        for(KdoChoosens choosen: choosens) {
+          if(choosen.getOrd() == 1 && checker.getC1() == 1) continue;
+          if(choosen.getOrd() == 2 && checker.getC2() == 1) continue;
+          if(choosen.getOrd() == 3 && checker.getC3() == 1) continue;
+          if(choosen.getOrd() == 4 && checker.getC4() == 1) continue;
+          if(choosen.getOrd() == 5 && checker.getC5() == 1) continue;
+          if(choosen.getOrd() == 6 && checker.getC6() == 1) continue;
+          if(choosen.getOrd() == 7 && checker.getC7() == 1) continue;
+          if(choosen.getOrd() == 8 && checker.getC8() == 1) continue;
+          if(choosen.getOrd() == 9 && checker.getC9() == 1) continue;
+          if(choosen.getOrd() == 10 && checker.getC10() == 1) continue;
+          if(choosen.getOrd() == 11 && checker.getC11() == 1) continue;
+          if(choosen.getOrd() == 12 && checker.getC12() == 1) continue;
+          if(choosen.getOrd() == 13 && checker.getC13() == 1) continue;
+          if(choosen.getOrd() == 14 && checker.getC14() == 1) continue;
+          if(choosen.getOrd() == 15 && checker.getC15() == 1) continue;
+          if(choosen.getOrd() == 16 && checker.getC16() == 1) continue;
+          if(choosen.getOrd() == 17 && checker.getC17() == 1) continue;
+          if(choosen.getOrd() == 18 && checker.getC18() == 1) continue;
+          if(choosen.getOrd() == 19 && checker.getC19() == 1) continue;
+          if(choosen.getOrd() == 20 && checker.getC20() == 1) continue;
+          if(choosen.getOrd() == 21 && checker.getC21() == 1) continue;
+          if(choosen.getOrd() == 22 && checker.getC22() == 1) continue;
+          if(choosen.getOrd() == 23 && checker.getC23() == 1) continue;
+          if(choosen.getOrd() == 24 && checker.getC24() == 1) continue;
+          if(choosen.getOrd() == 25 && checker.getC25() == 1) continue;
+          if(choosen.getOrd() == 26 && checker.getC26() == 1) continue;
+          if(choosen.getOrd() == 27 && checker.getC27() == 1) continue;
+          if(choosen.getOrd() == 28 && checker.getC28() == 1) continue;
+          if(choosen.getOrd() == 29 && checker.getC29() == 1) continue;
+          ObjList ll = new ObjList();
+          ll.setC1(choosen.getName());
+          ll.setPrice(choosen.getStatusPrice(pat));
+          ll.setDate(Util.dateToString(plan.getActDate()));
+          planDetails.add(ll);
+        }
+    }
+    if (plan.getKdo().getId() == 56) { // Каулограмма
+      LvCouls checker = dLvCoul.getByPlan(plan.getId());
+      if(checker != null)
+        for(KdoChoosens choosen: choosens) {
+          if(choosen.getOrd() == 1 && checker.isC1()) continue;
+          if(choosen.getOrd() == 2 && checker.isC2()) continue;
+          if(choosen.getOrd() == 3 && checker.isC3()) continue;
+          if(choosen.getOrd() == 4 && checker.isC4()) continue;
+          ObjList ll = new ObjList();
+          ll.setC1(choosen.getName());
+          ll.setPrice(choosen.getStatusPrice(pat) * (100 + ndsProc) / 100);
+          ll.setDate(Util.dateToString(plan.getActDate()));
+          planDetails.add(ll);
+        }
+    }
+    if (plan.getKdo().getId() == 120) { // Garmon
+      LvGarmons checker = dLvGarmon.getByPlan(plan.getId());
+      if(checker != null)
+        for(KdoChoosens choosen: choosens) {
+          if(choosen.getOrd() == 1 && checker.isC1()) continue;
+          if(choosen.getOrd() == 2 && checker.isC2()) continue;
+          if(choosen.getOrd() == 3 && checker.isC3()) continue;
+          if(choosen.getOrd() == 4 && checker.isC4()) continue;
+          if(choosen.getOrd() == 5 && checker.isC5()) continue;
+          if(choosen.getOrd() == 6 && checker.isC6()) continue;
+          if(choosen.getOrd() == 7 && checker.isC7()) continue;
+          if(choosen.getOrd() == 8 && checker.isC8()) continue;
+          if(choosen.getOrd() == 9 && checker.isC9()) continue;
+          if(choosen.getOrd() == 10 && checker.isC10()) continue;
+          if(choosen.getOrd() == 11 && checker.isC11()) continue;
+          if(choosen.getOrd() == 12 && checker.isC12()) continue;
+          if(choosen.getOrd() == 13 && checker.isC13()) continue;
+          if(choosen.getOrd() == 14 && checker.isC14()) continue;
+          if(choosen.getOrd() == 15 && checker.isC15()) continue;
+          if(choosen.getOrd() == 16 && checker.isC16()) continue;
+          if(choosen.getOrd() == 17 && checker.isC17()) continue;
+          if(choosen.getOrd() == 18 && checker.isC18()) continue;
+          if(choosen.getOrd() == 19 && checker.isC19()) continue;
+          if(choosen.getOrd() == 20 && checker.isC20()) continue;
+          if(choosen.getOrd() == 21 && checker.isC21()) continue;
+          if(choosen.getOrd() == 22 && checker.isC22()) continue;
+          if(choosen.getOrd() == 23 && checker.isC23()) continue;
+          if(choosen.getOrd() == 24 && checker.isC24()) continue;
+          if(choosen.getOrd() == 25 && checker.isC25()) continue;
+          if(choosen.getOrd() == 26 && checker.isC26()) continue;
+          if(choosen.getOrd() == 27 && checker.isC27()) continue;
+          if(choosen.getOrd() == 28 && checker.isC28()) continue;
+          if(choosen.getOrd() == 30 && checker.isC30()) continue;
+          ObjList ll = new ObjList();
+          ll.setC1(choosen.getName());
+          ll.setPrice(choosen.getStatusPrice(pat) * (100 + ndsProc) / 100);
+          ll.setDate(Util.dateToString(plan.getActDate()));
+          planDetails.add(ll);
+        }
+    }
+    if (plan.getKdo().getId() == 121) { // Торч
+      LvTorchs checker = dLvTorch.getByPlan(plan.getId());
+      if(checker != null)
+        for(KdoChoosens choosen: choosens) {
+          if(choosen.getOrd() == 1 && checker.isC1()) continue;
+          if(choosen.getOrd() == 2 && checker.isC2()) continue;
+          if(choosen.getOrd() == 3 && checker.isC3()) continue;
+          if(choosen.getOrd() == 4 && checker.isC4()) continue;
+          ObjList ll = new ObjList();
+          ll.setC1(choosen.getName());
+          ll.setPrice(choosen.getStatusPrice(pat) * (100 + ndsProc) / 100);
+          ll.setDate(Util.dateToString(plan.getActDate()));
+          planDetails.add(ll);
+        }
+    }
+  }
+
   @RequestMapping("stat.s")
   protected String statCash(HttpServletRequest request, Model model) {
     session = SessionUtil.getUser(request);
@@ -378,6 +493,7 @@ public class CCashbox {
     Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
     Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
     Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));
+    Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
     Double discountSum = dCashDiscount.patientStatDiscountSum(pat.getId());
     Double total = 0D;
     //
@@ -430,10 +546,10 @@ public class CCashbox {
         total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_SEMILUX;
     }
     model.addAttribute("minusDays", minusDays);
-    model.addAttribute("koykoTotal", total);
+    model.addAttribute("koykoTotal", total * (100 + ndsProc) / 100);
     List<PatientWatchers> watchers = dPatientWatchers.byPatient(pat.getId());
     for(PatientWatchers watcher: watchers) {
-      total += watcher.getTotal();
+      total += watcher.getTotal() * (100 + ndsProc) / 100;
     }
     model.addAttribute("watchers", watchers);
     //
@@ -448,7 +564,7 @@ public class CCashbox {
       pfizios.add(ds);
       if(fizio.getPaid().equals("N")) {
         Long counter = dLvFizioDate.getStateCount(fizio.getId());
-        total += fizio.getPrice() * (counter == null ? 0 : counter) - (fizio.getPaidSum() != null ? fizio.getPaidSum() : 0);
+        total += (fizio.getPrice() * (counter == null ? 0 : counter) - (fizio.getPaidSum() != null ? fizio.getPaidSum() : 0)) * (100 + ndsProc) / 100;
       }
     }
     model.addAttribute("fizios", pfizios);
@@ -458,281 +574,10 @@ public class CCashbox {
     List<ObjList> planDetails = new ArrayList<ObjList>();
     for(LvPlans plan: plans) {
       if(plan.getPrice() != null)
-        total += plan.getPrice();
+        total += plan.getPrice() * (100 + ndsProc) / 100;
       // Торч - Garmon - Каулограмма - Биохимия
-      if(plan.getKdo().getId() == 121 || plan.getKdo().getId() == 120 || plan.getKdo().getId() == 56 || plan.getKdo().getId() == 153) {
-        if (plan.getKdo().getId() == 153) {
-          LvBios bio = dLvBio.getByPlan(plan.getId());
-          if (bio != null) {
-            if (bio.getC1() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Умумий оксил");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 1));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC2() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Холестерин");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 2));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC3() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Глюкоза");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 3));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC4() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Мочевина");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 4));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC5() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Креатинин");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 5));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC6() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Билирубин");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 6));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC7() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("АЛТ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 7));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC8() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("АСТ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 8));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC9() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Альфа амилаза");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 9));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC10() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Кальций");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 10));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC11() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Сийдик кислотаси");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 11));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC12() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("K – калий");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 12));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC13() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Na – натрий");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 13));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC14() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Fe – темир");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 14));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC15() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Mg – магний");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 15));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC16() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Ишкорий фасфотаза");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 16));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC17() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("ГГТ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 17));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC18() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Гликирланган гемоглобин");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 18));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC19() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("РФ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 19));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC20() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("АСЛО");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 20));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC21() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("СРБ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 21));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC22() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("RW");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 22));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC23() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Hbs Ag");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 23));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.getC24() == 1) {
-              ObjList ll = new ObjList();
-              ll.setC1("Гепатит «С» ВГС");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 153, 24));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-          }
-        }
-        if (plan.getKdo().getId() == 56) { // Каулограмма
-          LvCouls bio = dLvCoul.getByPlan(plan.getId());
-          if (bio != null) {
-            if (bio.isC4()) {
-              ObjList ll = new ObjList();
-              ll.setC1("ПТИ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 56, 4));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC1()) {
-              ObjList ll = new ObjList();
-              ll.setC1("Фибриноген");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 56, 1));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC2()) {
-              ObjList ll = new ObjList();
-              ll.setC1("Тромбин вакти");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 56, 2));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC3()) {
-              ObjList ll = new ObjList();
-              ll.setC1("А.Ч.Т.В. (сек)");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 56, 3));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-          }
-        }
-        if (plan.getKdo().getId() == 120) { // Garmon
-          LvGarmons bio = dLvGarmon.getByPlan(plan.getId());
-          if (bio != null) {
-            if (bio.isC1()) {
-              ObjList ll = new ObjList();
-              ll.setC1("ТТГ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 120, 1));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC2()) {
-              ObjList ll = new ObjList();
-              ll.setC1("Т4");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 120, 2));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC3()) {
-              ObjList ll = new ObjList();
-              ll.setC1("Т3");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 120, 3));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC4()) {
-              ObjList ll = new ObjList();
-              ll.setC1("Анти-ТРО");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 120, 4));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-          }
-        }
-        if (plan.getKdo().getId() == 121) { // Торч
-          LvTorchs bio = dLvTorch.getByPlan(plan.getId());
-          if (bio != null) {
-            if (bio.isC1()) {
-              ObjList ll = new ObjList();
-              ll.setC1("Хламидия");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 121, 1));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC2()) {
-              ObjList ll = new ObjList();
-              ll.setC1("Токсоплазма");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 121, 2));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC3()) {
-              ObjList ll = new ObjList();
-              ll.setC1("ЦМВ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 121, 3));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-            if (bio.isC4()) {
-              ObjList ll = new ObjList();
-              ll.setC1("ВПГ");
-              ll.setPrice(dKdoChoosen.getPrice(pat.getCounteryId(), 121, 4));
-              ll.setDate(Util.dateToString(plan.getActDate()));
-              planDetails.add(ll);
-            }
-          }
-        }
+      if(dKdoChoosen.getCount("From KdoChoosens Where kdo.id = " + plan.getKdo().getId()) > 0) {
+        choosenKdos(plan, pat, planDetails, ndsProc);
       } else {
         plns.add(plan);
       }

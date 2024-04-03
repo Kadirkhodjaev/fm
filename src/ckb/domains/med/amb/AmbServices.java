@@ -23,6 +23,7 @@ public class AmbServices extends GenId {
   @Column private String normaFrom;
   @Column private String normaTo;
   @Column private int ord = 99;
+  @Column private Double bonusProc = 0D;
 
   public AmbGroups getGroup() {
     return group;
@@ -41,7 +42,7 @@ public class AmbServices extends GenId {
   }
 
   public Double getPrice() {
-    return price;
+    return price == null ? 0 : price;
   }
 
   public void setPrice(Double price) {
@@ -57,7 +58,7 @@ public class AmbServices extends GenId {
   }
 
   public Double getFor_price() {
-    return for_price;
+    return for_price == null ? 0 : for_price;
   }
 
   public void setFor_price(Double for_price) {
@@ -134,5 +135,17 @@ public class AmbServices extends GenId {
 
   public void setNewForm(String newForm) {
     this.newForm = newForm;
+  }
+
+  public Double getBonusProc() {
+    return bonusProc;
+  }
+
+  public void setBonusProc(Double bonusProc) {
+    this.bonusProc = bonusProc;
+  }
+
+  public Double getStatusPrice(AmbPatients pat) {
+    return pat.isResident() ? getPrice() : getFor_price();
   }
 }

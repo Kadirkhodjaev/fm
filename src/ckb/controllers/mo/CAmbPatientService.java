@@ -124,7 +124,7 @@ public class CAmbPatientService {
         JSONObject obj = new JSONObject();
         obj.put("id", ser.getId());
         obj.put("name", ser.getName());
-        obj.put("price", Util.sumFormat(pat.isResident() ? ser.getPrice() : ser.getFor_price()));
+        obj.put("price", Util.sumFormat(ser.getStatusPrice(pat)));
         arr.put(obj);
       }
       json.put("services", arr);
@@ -347,7 +347,7 @@ public class CAmbPatientService {
         JSONObject obj = new JSONObject();
         obj.put("id", ser.getId());
         obj.put("name", ser.getName());
-        obj.put("price", Util.sumFormat(pat.isResident() ? ser.getPrice() : ser.getFor_price()));
+        obj.put("price", Util.sumFormat(ser.getStatusPrice(pat)));
         arr.put(obj);
       }
       json.put("treatments", arr);

@@ -10,23 +10,16 @@ import java.util.Date;
 @Table(name = "Patient_Watchers")
 public class PatientWatchers extends GenId {
 
-  @Column
-  private Integer patient_id;
-  @Column
-  private Integer dayCount;
-  @OneToOne
-  @JoinColumn(name = "type_id")
-  private Dicts type;
-  @Column
-  private Double price;
-  @Column
-  private Double total;
-  @Column
-  private String state;
-  @Column
-  private Integer crBy;
-  @Column
-  private Date crOn;
+  @Column private Integer patient_id;
+  @Column private Integer dayCount;
+  @OneToOne @JoinColumn(name = "type_id") private Dicts type;
+  @Column private Double price;
+  @Column private Double ndsProc;
+  @Column private Double nds;
+  @Column private Double total;
+  @Column private String state;
+  @Column private Integer crBy;
+  @Column private Date crOn;
 
   public Integer getPatient_id() {
     return patient_id;
@@ -90,5 +83,21 @@ public class PatientWatchers extends GenId {
 
   public void setType(Dicts type) {
     this.type = type;
+  }
+
+  public Double getNdsProc() {
+    return ndsProc == null ? 0 : ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
+  }
+
+  public Double getNds() {
+    return nds == null ? 0 : nds;
+  }
+
+  public void setNds(Double nds) {
+    this.nds = nds;
   }
 }

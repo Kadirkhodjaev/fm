@@ -14,6 +14,8 @@ public class AmbPatientServices extends GenId {
   @Column private Integer patient;
   @OneToOne @JoinColumn private AmbServices service;
   @Column private Double price;
+  @Column private Double ndsProc;
+  @Column private Double nds;
   @Column private String state;
   @Column private String msg;
   @OneToOne @JoinColumn private Users worker;
@@ -196,5 +198,21 @@ public class AmbPatientServices extends GenId {
 
   public void setAmbForm(Integer ambForm) {
     this.ambForm = ambForm;
+  }
+
+  public Double getNdsProc() {
+    return ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
+  }
+
+  public Double getNds() {
+    return nds;
+  }
+
+  public void setNds(Double nds) {
+    this.nds = nds;
   }
 }

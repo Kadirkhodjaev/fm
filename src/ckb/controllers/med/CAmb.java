@@ -309,16 +309,21 @@ public class CAmb {
           d.setUsers(dUser.getList("From Users t Where Exists (Select 1 From AmbServiceUsers c Where t.id = c.user And c.service = " + s.getService().getId() + ")"));
         else
           d.setUsers(dUser.getList("From Users t Where id = " + s.getWorker().getId()));
-        if(s.getPrice() != 0) {
-          String sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice());
-          if(sum.indexOf(",") == -1)
-            sum = sum + ",00";
-          d.setPrice(sum);
-        }
+        //
+        String sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice());
+        if(!sum.contains(",")) sum = sum + ",00";
+        d.setPrice(sum);
+        //
+        sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice() + Util.nvl(s.getNds(), 0D));
+        if (!sum.contains(",")) sum = sum + ",00";
+        d.setNds(sum);
+        //
         ss.add(d);
       }
       m.addAttribute("services", ss);
-      m.addAttribute("serviceTotal", dAmbPatientServices.patientTotalSum(session.getCurPat()));
+      Double summ = dAmbPatientServices.patientTotalSum(session.getCurPat()), nds = dAmbPatientServices.patientNdsSum(session.getCurPat());
+      m.addAttribute("serviceTotal", summ);
+      m.addAttribute("ndsTotal", nds + summ);
       m.addAttribute("histories", sAmb.getHistoryServices(session.getCurPat()));
     }
     m.addAttribute("clients", dClient.getList("From Clients Order By surname"));
@@ -352,6 +357,22 @@ public class CAmb {
         }
       }
       json.put("id", p.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/setPartner.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String setPartner(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      AmbPatients pat = dAmbPatients.get(Util.getInt(req, "id"));
+      pat.setLvpartner(dLvPartner.get(Util.getInt(req, "partner")));
+      dAmbPatients.save(pat);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -395,7 +416,7 @@ public class CAmb {
       List<AmbServices> list = new ArrayList<AmbServices>();
       List<AmbServices> services = dAmbServices.byType(group.getId());
       for(AmbServices s: services)
-        if(dAmbServiceUsers.getCount("From AmbServiceUsers Where service = " + s.getId()) > 0 && ((pat.getCounteryId().equals(199) && s.getPrice() != null && s.getPrice() > 0) || (!pat.getCounteryId().equals(199) && s.getFor_price() != null && s.getFor_price() > 0)))
+        if(dAmbServiceUsers.getCount("From AmbServiceUsers Where service = " + s.getId()) > 0 && s.getStatusPrice(pat) > 0)
           list.add(s);
       if(list.size() > 0) {
         g.setServices(list);
@@ -424,7 +445,9 @@ public class CAmb {
         ser.setCrOn(new Date());
         ser.setPatient(session.getCurPat());
         ser.setService(s);
-        ser.setPrice(pat.getCounteryId().equals(199) ? s.getPrice() : s.getFor_price());
+        ser.setPrice(s.getStatusPrice(pat));
+        ser.setNdsProc(Double.parseDouble(dParam.byCode("NDS_PROC")));
+        ser.setNds(ser.getPrice() * (ser.getNdsProc() == 0 ? 100 : ser.getNdsProc()) / 100);
         ser.setState("ENT");
         ser.setResult(0);
         ser.setAmb_repeat("N");

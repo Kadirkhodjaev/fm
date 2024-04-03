@@ -11,12 +11,12 @@ public class DAmbPatientServiceImp extends DaoImp<AmbPatientServices> implements
   }
 
   @Override
-  public String patientTotal(int curPat) {
+  public Double patientNdsSum(int curPat) {
     try {
-      String sum = "" + entityManager.createQuery("Select Sum(price) From AmbPatientServices Where state = 'ENT' And patient = " + curPat).getSingleResult();
-      return sum.equals("null") || sum.equals("") ? "0" : sum.replace(",", ".");
+      Double sum = (Double) entityManager.createQuery("Select Sum(nds) From AmbPatientServices Where state = 'ENT' And patient = " + curPat).getSingleResult();
+      return sum == null ? 0D : sum;
     } catch (Exception e) {
-      return "";
+      return 0D;
     }
   }
 

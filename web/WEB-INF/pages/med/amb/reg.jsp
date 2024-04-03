@@ -202,6 +202,17 @@
   function loadPdf() {
     $('#pdffile').attr('src', 'http://31.135.213.158:8745/result?id=${patient.qrcode}');
   }
+  function setArchPartner(id) {
+    $.ajax({
+      url: '/amb/setPartner.s',
+      method: 'post',
+      data: 'id=${patient.id}&partner=' + id,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+      }
+    });
+  }
 </script>
 <iframe id="frmDiv" name="frm" class="hidden"></iframe>
 <div class="panel panel-info" style="width: 900px !important; margin: auto">
@@ -310,10 +321,21 @@
           <tr>
             <td class="right" nowrap colspan="2">Код отправителя (Лечащего врача):</td>
             <td colspan="2">
-              <f:select path="lvpartner.id" class="form-control">
-                <f:option value=""></f:option>
-                <f:options items="${lvpartners}" itemValue="id" itemLabel="code"></f:options>
-              </f:select>
+              <c:if test="${sessionScope.ENV.userId == 1 && patient.state == 'ARCH'}">
+                <select class="form-control" onchange="setArchPartner(this.value)">
+                  <option value=""></option>
+                  <c:forEach items="${lvpartners}" var="partner">
+                    <option value="${partner.id}" <c:if test="${partner.id == patient.lvpartner.id}">selected</c:if>>${partner.code}</option>
+                  </c:forEach>
+                </select>
+              </c:if>
+              <c:if test="${!(sessionScope.ENV.userId == 1 && patient.state == 'ARCH')}">
+                <f:select path="lvpartner.id" class="form-control">
+                  <f:option value=""></f:option>
+                  <f:options items="${lvpartners}" itemValue="id" itemLabel="code"></f:options>
+                </f:select>
+              </c:if>
+            </td>
           </tr>
         </c:if>
         <tr>
@@ -346,6 +368,7 @@
               <td class="center bold">&nbsp;</td>
               <td class="center bold">Наименование</td>
               <td class="center bold">Сумма</td>
+              <td class="center bold">С НДС</td>
               <td class="center bold">Подтверждение</td>
               <td class="center bold">Врач</td>
               <c:if test="${patient.state != 'ARCH'}">
@@ -372,6 +395,7 @@
                   ${ser.service.name}
                 </td>
                 <td class="right" style="padding-right:7px">${ser.price}</td>
+                <td class="right" style="padding-right:7px">${ser.nds}</td>
                 <td class="center" nowrap style="padding-right:7px"><fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${ser.confDate}" /></td>
                 <td class="center">
                   <input type="hidden" name="service" value="${ser.id}"/>
@@ -404,6 +428,9 @@
                 <td class="right" style="padding-right:7px">
                   <fmt:formatNumber value = "${serviceTotal}" type = "number"/>
                 </td>
+                <td class="right" style="padding-right:7px">
+                  <fmt:formatNumber value = "${ndsTotal}" type = "number"/>
+                </td>
                 <td class="center">&nbsp;</td>
                 <td class="center">&nbsp;</td>
                 <td class="center">&nbsp;</td>
@@ -430,6 +457,7 @@
               <td class="center bold"><input type="checkbox" onclick="setAllCheck(this, ${his.id})"></td>
               <td class="center bold">Наименование</td>
               <td class="center bold">Сумма</td>
+              <td class="center bold">C НДС</td>
             </tr>
             <c:forEach items="${his.services}" var="ser" varStatus="loop">
               <tr id="ser${ser.id}">
@@ -443,6 +471,7 @@
                     ${ser.service.name}
                 </td>
                 <td class="right" style="padding-right:7px">${ser.price}</td>
+                <td class="right" style="padding-right:7px">${ser.nds}</td>
               </tr>
             </c:forEach>
           </table>

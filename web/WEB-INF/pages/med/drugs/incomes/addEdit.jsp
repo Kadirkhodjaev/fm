@@ -80,6 +80,7 @@
           <th>Количество</th>
           <th>Кол-во единиц</th>
           <th>Цена за единицу</th>
+          <th>С НДС</th>
         </tr>
       </thead>
       <tr>
@@ -115,6 +116,9 @@
         </td>
         <td>
           <input type="number" required class="form-control right" id="one_price" value="" name="one_price" disabled/>
+        </td>
+        <td>
+          <input type="number" required class="form-control right" onblur="removeVergul(this, 'nds')" id="nds" name="nds" disabled />
         </td>
         <td id="drug_default_count" class="center"></td>
       </tr>
@@ -207,6 +211,7 @@
         <th>Сумма прихода</th>
         <th>Кол-во единиц</th>
         <th>Цена за единицу</th>
+        <th>С НДС</th>
         <th>Расход</th>
         <th>Остаток</th>
         <th>Ед.изм.</th>
@@ -232,6 +237,7 @@
         <td class="right"><fmt:formatNumber value="${drug.blockCount * drug.price}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.counter}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.countPrice}" type = "number"/></td>
+        <td class="right"><fmt:formatNumber value="${drug.countPrice + drug.ndsSum}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.rasxod}" type = "number"/></td>
         <td class="right"><fmt:formatNumber value="${drug.counter - drug.rasxod}" type = "number"/></td>
         <td class="left">${drug.measure.name}</td>
@@ -429,11 +435,14 @@
       let cn = d.options[d.selectedIndex].getAttribute('counter');
       $('#counter').val(cn * dom.value);
     }
-    let price = document.getElementById("drug_price").value;
-    let bc = document.getElementById("block_count").value;
+    let price = getDOM("drug_price").value;
+    let bc = getDOM("block_count").value;
     let count = document.getElementById("counter").value;
-    if(price > 0 && bc > 0 && count > 0)
-      document.getElementById("one_price").value = Math.round((price / (count / bc)) * 100) / 100;
+    if(price > 0 && bc > 0 && count > 0) {
+      let p = Math.round((price / (count / bc)) * 100) / 100;
+      getDOM("one_price").value = p;
+      getDOM("nds").value = Math.round(Number('${ndsProc}') * p) / 100;
+    }
   }
   function setDrugName(dom) {
     var cn = dom.options[dom.selectedIndex].getAttribute('counter');
@@ -442,6 +451,7 @@
     $('#block_count').attr('disabled', dom.value === '' || cn === 0 || cn === '');
     $('#counter').attr('disabled', dom.value === '' || cn === 0 || cn === '');
     $('#one_price').attr('disabled', dom.value === '' || cn === 0 || cn === '');
+    $('#nds').attr('disabled', dom.value === '' || cn === 0 || cn === '');
   }
   function saveDrugForm() {
     if($('#drug-name').val() == '') {

@@ -5,7 +5,7 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <script>
-  var totalSum = ${serviceTotal};
+  var totalSum = +Number(${ndsTotal});
   function delService(id, state) {
     if (state == 'PAID') {
       if (confirm('Возврат денег?')) {
@@ -94,6 +94,7 @@
           <td class="center bold">#</td>
           <td class="center bold">Наименование</td>
           <td class="center bold">Сумма</td>
+          <td class="center bold">С НДС</td>
           <td class="center bold">Врач</td>
           <c:if test="${patient.state != 'ARCH'}">
             <td class="center bold" style="width: 30px">Удалить</td>
@@ -118,6 +119,7 @@
                 ${ser.service.name}
             </td>
             <td class="right" style="padding-right:7px">${ser.price}</td>
+            <td class="right" style="padding-right:7px">${ser.nds}</td>
             <td class="center">${ser.users[0].fio}</td>
             <c:if test="${patient.state != 'ARCH'}">
               <td class="center">
@@ -135,6 +137,9 @@
             <td>ИТОГО к оплате</td>
             <td class="right" style="padding-right:7px">
               <fmt:formatNumber value = "${serviceTotalSum}" type = "number"/>
+            </td>
+            <td class="right" style="padding-right:7px">
+              <fmt:formatNumber value = "${ndsTotal}" type = "number"/>
             </td>
             <td class="center">&nbsp;</td>
             <td class="center">&nbsp;</td>
@@ -355,9 +360,9 @@
 </div>
 
 <script>
-  var totalSum = ${serviceTotalSum}, paidSum = ${paidSum}, discountSumm = ${discountSum};
+  var totalSum = Number(${ndsTotal}), paidSum = ${paidSum}, discountSumm = ${discountSum};
   $(function() {
-    $('#totalSumSpan').html('<fmt:formatNumber value = "${serviceTotalSum}" type = "number"/>');
+    $('#totalSumSpan').html('<fmt:formatNumber value = "${ndsTotal}" type = "number"/>');
   });
   function setPay(type, dom) {
     var elem = document.getElementById(type + 'Input');

@@ -368,8 +368,8 @@ public class CMn {
         obj.setPrice(0D);
         ps = cn.prepareStatement(
           "Select c.id kdo_id, c.name, " +
-            "  (Select Count(*) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And t.result_date between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "') counter, " +
-            "  ifnull((Select sum(t.price) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And t.result_date between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "'), 0) total " +
+            "  (Select Count(*) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "') counter, " +
+            "  ifnull((Select sum(t.price) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "'), 0) total " +
             "  From kdos c " +
             " Where c.kdo_type = ? " +
             "   And c.state = 'A'");
@@ -398,8 +398,8 @@ public class CMn {
         obj.setPrice(0D);
         ps = cn.prepareStatement(
           "Select c.id service_Id, c.name, " +
-            " (Select count(*) From Amb_Patient_Services t Where t.worker_Id is not null And t.crOn between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id) counter, " +
-            " ifnull((Select sum(t.price) From Amb_Patient_Services t Where t.worker_Id is not null And t.crOn between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id), 0) total " +
+            " (Select count(*) From Amb_Patient_Services t Where t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id) counter, " +
+            " ifnull((Select sum(t.price) From Amb_Patient_Services t Where t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id), 0) total " +
             "  From Amb_Services c " +
             " Where c.group_id = ? " +
             "   And c.state = 'A'");
@@ -453,7 +453,7 @@ public class CMn {
         ps = cn.prepareStatement(
           "Select t.id, c.`name`, Count(*) counter, Sum(t.price) price " +
             "  From Lv_Plans t, Kdos c " +
-            " Where t.Result_Date Between ? And ? " +
+            " Where date(t.Result_Date) Between ? And ? " +
             "   And c.id = t.Kdo_Id " +
             "   And t.conf_user = ? " +
             " Group By c.name");
@@ -475,7 +475,7 @@ public class CMn {
         ps = cn.prepareStatement(
           "Select c.Id, c.name, Count(*) Counter, Sum(t.price) price " +
             "  From Amb_Patient_Services t, Amb_Services c " +
-            " Where t.confDate Between ? And ? " +
+            " Where date(t.confDate) Between ? And ? " +
             "   And c.id = t.service_Id " +
             "   And c.id = t.service_Id " +
             "   And t.worker_Id = ? " +

@@ -800,6 +800,7 @@ public class SPatientImp implements SPatient {
     Patients pat = dPatient.get(epic.getPatientId());
     if(!pat.getRoom().getId().equals(epic.getRoom().getId()) || !pat.getLv_id().equals(epic.getLvId()) || !pat.getDept().getId().equals(epic.getDeptId())) {
       //
+      Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
       LvEpics e = new LvEpics();
       e.setDateBegin(epic.getDateBegin());
       e.setDateEnd(epic.getDateEnd());
@@ -809,6 +810,8 @@ public class SPatientImp implements SPatient {
       e.setPatientId(epic.getPatientId());
       e.setKoyko(epic.getKoyko());
       e.setPrice(epic.getPrice());
+      e.setNdsProc(ndsProc);
+      e.setNds(epic.getPrice() * ndsProc / 100);
       //
       pat.setLv_id(epic.getLvId());
       pat.setLv_dept_id(dUser.get(epic.getLvId()).getDept().getId());
@@ -1139,8 +1142,8 @@ public class SPatientImp implements SPatient {
           "                   Where c.checked = 1 " +
           "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
           "                     And c.patientDrug_id = t.id " +
-          "                     And date(c.date) = date(t.crOn)) " +
-          "      And date(crOn) = CURRENT_DATE() " + //
+          "                     And date(c.date) = CURRENT_DATE()) " +
+          "      And date(t.crOn) = CURRENT_DATE() " + //
           "      And g.id = t.patient_id " +
           "      And g.dept_id = " + dep + // CURRENT_DATE()
           "    Order By t.patient_id, t.Id desc ");

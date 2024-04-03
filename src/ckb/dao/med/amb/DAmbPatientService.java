@@ -7,9 +7,10 @@ import java.util.List;
 
 public interface DAmbPatientService extends Dao<AmbPatientServices> {
 
-  String patientTotal(int curPat);
-
   Double patientTotalSum(int curPat);
 
+  Double patientNdsSum(int curPat);
+
   List<AmbPatientServices> byUser(int curPat, int userId);
+
 }

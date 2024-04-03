@@ -2,6 +2,7 @@ package ckb.domains.med.lv;
 
 import ckb.domains.GenId;
 import ckb.domains.admin.Kdos;
+import ckb.domains.med.patient.Patients;
 
 import javax.persistence.*;
 
@@ -80,5 +81,13 @@ public class KdoChoosens extends GenId {
 
   public void setFor_real_price(Double for_real_price) {
     this.for_real_price = for_real_price;
+  }
+
+  public double getStatusPrice(Patients patient) {
+    return patient.isResident() ? getPrice() : getFor_price();
+  }
+
+  public double getStatusRealPrice(Patients patient) {
+    return patient.isResident() ? getReal_price() : getFor_real_price();
   }
 }

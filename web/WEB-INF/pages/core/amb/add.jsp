@@ -69,6 +69,10 @@
           <td><input type="text" class="form-control right" value="${ser.for_price}" name="for_price" required></td>
         </tr>
         <tr>
+          <td class="bold">Процент вознограждения (%):</td>
+          <td><input type="text" class="form-control right" value="${ser.bonusProc}" name="bonus_proc"/></td>
+        </tr>
+        <tr>
           <td class="bold">Активный?:</td>
           <td><input type="checkbox" value="A" name="state" <c:if test="${ser.state == 'A'}">checked</c:if>></td>
         </tr>

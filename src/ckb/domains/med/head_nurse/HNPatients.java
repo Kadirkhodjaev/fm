@@ -16,6 +16,7 @@ public class HNPatients extends GenId {
   @Column private Date dateEnd;
   @Column private int dayCount;
 
+  @Column private Double ndsProc;
   @Column private Double koykoPrice;
   @Column private Double eatPrice;
 
@@ -103,5 +104,13 @@ public class HNPatients extends GenId {
 
   public void setClosed(String closed) {
     this.closed = closed;
+  }
+
+  public Double getNdsProc() {
+    return ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
   }
 }

@@ -146,7 +146,7 @@ public class Util {
   }
 
   public static String nvl(HttpServletRequest req, String name, String def) {
-    return req.getParameter(name) == null ? def : req.getParameter(name);
+    return req.getParameter(name) == null || req.getParameter(name).isEmpty() ? def : req.getParameter(name);
   }
 
   public static String getCurDate() {
@@ -411,5 +411,9 @@ public class Util {
   public static Float getFloat(HttpServletRequest req, String name) {
     String val = get(req, name);
     return Float.valueOf(val.replace(" ", ""));
+  }
+
+  public static Double nvl(Double sum, double def) {
+    return sum == null ? def : sum;
   }
 }

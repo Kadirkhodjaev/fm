@@ -131,7 +131,7 @@ public class SMoAmbImp implements SMoAmb {
     ser.setCrOn(new Date());
     ser.setPatient(pat.getId());
     ser.setService(s);
-    ser.setPrice(pat.isResident() ? s.getPrice() : s.getFor_price());
+    ser.setPrice(s.getStatusPrice(pat));
     ser.setState("ENT");
     ser.setPlanDate(new Date());
     ser.setResult(0);

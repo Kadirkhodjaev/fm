@@ -11,7 +11,5 @@ public interface DDrugActDrug extends Dao<DrugActDrugs> {
 
   List<Drugs> getExists();
 
-  List<DrugActDrugs> byDrug(Integer drugId);
-
   Double getActSum(Integer id);
 }

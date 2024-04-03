@@ -18,6 +18,8 @@ public class AmbService {
   private String msg;
   private List<AmbPatientServices> services;
   private String price;
+  private String nds;
+  private Double dnds;
   private Double dprice;
   private String state;
   private String newForm;
@@ -274,5 +276,21 @@ public class AmbService {
 
   public void setNewForm(String newForm) {
     this.newForm = newForm;
+  }
+
+  public String getNds() {
+    return nds;
+  }
+
+  public void setNds(String nds) {
+    this.nds = nds;
+  }
+
+  public Double getDnds() {
+    return dnds;
+  }
+
+  public void setDnds(Double dnds) {
+    this.dnds = dnds;
   }
 }

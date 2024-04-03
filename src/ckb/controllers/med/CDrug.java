@@ -1,6 +1,7 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.depts.DDept;
+import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.med.drug.act.DDrugAct;
 import ckb.dao.med.drug.actdrug.DDrugActDrug;
@@ -71,6 +72,7 @@ public class CDrug {
   @Autowired private DHNDirection dhnDirection;
   @Autowired private DHNDirectionLink dhnDirectionLink;
   @Autowired private DUserDrugLine dUserDrugLine;
+  @Autowired private DParam dParam;
 
   //region INCOMES
   @RequestMapping("/acts.s")
@@ -81,7 +83,7 @@ public class CDrug {
     String endDate = Util.get(request, "period_end", Util.getCurDate());
     String partner = Util.get(request, "partner");
     //
-    List<DrugActs> acts = dDrugAct.getList("From DrugActs Where regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (partner != null && !partner.isEmpty() ? " And contract.partner.id = " + partner : "") + " Order By regDate Desc");
+    List<DrugActs> acts = dDrugAct.getList("From DrugActs Where date(regDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (partner != null && !partner.isEmpty() ? " And contract.partner.id = " + partner : "") + " Order By regDate Desc");
     List<ObjList> list = new ArrayList<ObjList>();
     for(DrugActs act : acts) {
       ObjList obj = new ObjList();
@@ -89,7 +91,7 @@ public class CDrug {
       obj.setC1(act.getContract().getPartner().getName());
       obj.setC2("№" + act.getRegNum() + " от " + Util.dateToString(act.getRegDate()));
       obj.setC3(dDrugActDrug.getCount("From DrugActDrugs Where act.id = " + act.getId()).toString());
-      if(act != null && act.getId() != null) {
+      if(act.getId() != null) {
         Double sum = dDrugActDrug.getActSum(act.getId());
         obj.setC4("" + (sum == null ? 0 : sum));
       } else {
@@ -111,6 +113,7 @@ public class CDrug {
   protected String addEditAct(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/drugs/act/addEdit.s?id=" + Util.get(req, "id"));
+    Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
     //
     DrugActs act = Util.getInt(req, "id") > 0 ? dDrugAct.get(Util.getInt(req, "id")) : new DrugActs();
     if(Util.getInt(req, "id") == 0)
@@ -125,6 +128,7 @@ public class CDrug {
     // List Of Act Drugs
     model.addAttribute("drugs", dDrugActDrug.getList("From DrugActDrugs Where act.id = " + Util.getInt(req, "id") + " Order By Id Desc"));
     model.addAttribute("drug_total_sum", dDrugActDrug.getActSum(Util.getInt(req, "id")));
+    model.addAttribute("ndsProc", ndsProc);
     Util.makeMsg(req, model);
     return "/med/drugs/incomes/addEdit";
   }
@@ -183,6 +187,7 @@ public class CDrug {
     Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
+      Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
       Date endDate = Util.stringToDate(Util.get(req, "end_date"));
       boolean isErr = false;
       if(Util.isNotDouble(req, "price")) {
@@ -218,10 +223,12 @@ public class CDrug {
       drug.setDrug(dDrug.get(Util.getInt(req, "drug")));
       drug.setManufacturer(dDrugManufacturer.get(Util.getInt(req, "man")));
       drug.setPrice(Util.getDouble(req, "price"));
+      drug.setNdsProc(ndsProc);
       drug.setBlockCount(Util.getDouble(req, "block_count"));
       drug.setCounter(Util.getDouble(req, "counter"));
       drug.setMeasure(drug.getDrug().getMeasure());
       drug.setCountPrice(Util.getDouble(req, "one_price"));
+      drug.setNds(Util.getDouble(req, "nds"));
       drug.setEndDate(endDate);
       drug.setRasxod(0D);
       drug.setCrBy(session.getUserId());
@@ -917,7 +924,7 @@ public class CDrug {
     String endDate = Util.get(request, "period_end", Util.getCurDate());
     String direction = Util.get(request, "direction");
     //
-    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (direction != null && !direction.isEmpty() ? "And direction.id = " + direction : "") + " Order By regDate Desc, id desc");
+    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And date(regDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (direction != null && !direction.isEmpty() ? "And direction.id = " + direction : "") + " Order By regDate Desc, id desc");
     List<ObjList> list = new ArrayList<ObjList>();
     //
     for(DrugOuts act : acts) {

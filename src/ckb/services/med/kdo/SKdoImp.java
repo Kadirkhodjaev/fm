@@ -665,14 +665,22 @@ public class SKdoImp implements SKdo {
     }
     /////////////////////////////////////////////////////////////////////////////////
     if(p.getKdo().getFormId() == 999 || p.getKdo().getFormId() == 889 || p.getKdo().getFormId() == 888 || p.getKdo().getFormId() == 777 || p.getKdo().getFormId() == 1011) {
-      F999 f = p.getResultId().equals(0) ? new F999() : df999.get(p.getResultId());
+      F999 f;
+      if(p.getResultId().equals(0)) {
+        if(df999.getCount("From F999 Where plan_id = " + p.getId()) > 0) {
+          f = df999.getObj("From F999 Where plan_id = " + p.getId());
+        } else {
+          f = new F999();
+        }
+      } else f = df999.get(p.getResultId());
       f.setId(f.getId());
       f.setPatientId(p.getPatientId());
       f.setPlan_id(p.getId());
       f.setKdoId(p.getKdo().getId());
       f.setC1(Req.get(request, "c1"));
       f.setC2(Req.get(request, "c2"));
-      resId = df999.saveAndReturn(f).getId();
+      df999.saveAndReturn(f);
+      resId = f.getId();
     } else {
       if (p.getKdo().getId().equals(1)) {
         F1 f = p.getResultId().equals(0) ? new F1() : df1.get(p.getResultId());

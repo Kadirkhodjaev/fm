@@ -5,6 +5,7 @@ import ckb.domains.med.drug.dict.*;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Drug_Act_Drugs")
@@ -22,6 +23,8 @@ public class DrugActDrugs extends GenId {
   @Column private Double rasxod;
   @Column private Date startDate;
   @Column private Date endDate;
+  @Column private Double ndsProc;
+  @Column private Double nds;
 
   @Column private Integer crBy;
   @Column private Date crOn;
@@ -128,5 +131,29 @@ public class DrugActDrugs extends GenId {
 
   public void setManufacturer(DrugManufacturers manufacturer) {
     this.manufacturer = manufacturer;
+  }
+
+  public Double getNdsProc() {
+    return ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
+  }
+
+  public Double getNds() {
+    return nds;
+  }
+
+  public void setNds(Double nds) {
+    this.nds = nds;
+  }
+
+  public Double getNdsSum() {
+    if(Objects.equals(rasxod, counter)) {
+      return 0D;
+    } else {
+      return nds == null ? countPrice * 0.12 : nds;
+    }
   }
 }

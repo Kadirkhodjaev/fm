@@ -52,21 +52,23 @@
           <td style="text-align:right;font-weight:bold;vertical-align: middle">Оплачено: </td>
           <td align="center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${paidSum}"/></td>
           <td style="text-align:right;font-weight:bold;vertical-align: middle">Общая сумма: </td>
-          <td align="center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${watcherSum + drugSum + labSum + kdoSum + consulSum + (obj.koykoPrice * obj.dayCount) + (obj.eatPrice * obj.dayCount)}"/></td>
+          <td align="center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.totalSum}"/></td>
+          <td style="text-align:right;font-weight:bold;vertical-align: middle">Скидка: </td>
+          <td align="center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${discountSum}"/></td>
           <td style="text-align:right;font-weight:bold;vertical-align:middle;">
-            <c:if test="${watcherSum + drugSum + labSum + kdoSum + consulSum + (obj.koykoPrice * obj.dayCount) + (obj.eatPrice * obj.dayCount) - paidSum >= 0}">
+            <c:if test="${obj.paySum >= 0}">
               К оплате:
             </c:if>
-            <c:if test="${watcherSum + drugSum + labSum + kdoSum + consulSum + (obj.koykoPrice * obj.dayCount) + (obj.eatPrice * obj.dayCount) - paidSum < 0}">
+            <c:if test="${obj.paySum < 0}">
               Возврат:
             </c:if>
           </td>
           <td align="center">
-            <c:if test="${watcherSum + drugSum + labSum + kdoSum + consulSum + (obj.koykoPrice * obj.dayCount) + (obj.eatPrice * obj.dayCount) - paidSum >= 0}">
-              <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${watcherSum + drugSum + labSum + kdoSum + consulSum + (obj.koykoPrice * obj.dayCount) + (obj.eatPrice * obj.dayCount) - paidSum}"/>
+            <c:if test="${obj.paySum >= 0}">
+              <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.paySum}"/>
             </c:if>
-            <c:if test="${watcherSum + drugSum + labSum + kdoSum + consulSum + (obj.koykoPrice * obj.dayCount) + (obj.eatPrice * obj.dayCount) - paidSum < 0}">
-              <span style="color:red;font-weight:bold"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${paidSum - (watcherSum + drugSum + labSum + kdoSum + consulSum + (obj.koykoPrice * obj.dayCount) + (obj.eatPrice * obj.dayCount))}"/></span>
+            <c:if test="${obj.paySum < 0}">
+              <span style="color:red;font-weight:bold"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.paySum}"/></span>
             </c:if>
           </td>
         </tr>
@@ -91,6 +93,7 @@
           <th>Койко дней</th>
           <th>Стоимость</th>
           <th>Сумма</th>
+          <th>С НДС</th>
         </tr>
         </thead>
         <tbody>
@@ -108,6 +111,9 @@
             </td>
             <td style="width:150px; text-align:right">
               <input type="number" <c:if test="${row.ib == '-1' && sessionScope.ENV.userId != 1}">disabled</c:if> class="form-control right" onchange="setFieldValue('epic', 'price', ${row.ib}, this)" value="${row.c5}">
+            </td>
+            <td style="width:150px; text-align:right">
+              <input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.c5 * row.c6}" type = "number"/>">
             </td>
             <td style="width:150px; text-align:right">
               <input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.c5 * row.c6}" type = "number"/>">
@@ -138,6 +144,7 @@
           <th>Цена за единицу</th>
           <th>Расход</th>
           <th>Сумма</th>
+          <th>С НДС</th>
           <c:if test="${obj.closed != 'Y'}">
             <th>Удалить</th>
           </c:if>
@@ -159,6 +166,9 @@
           </td>
           <td style="width:120px; text-align:right">
             <input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.serviceCount * row.price}" type = "number"/>">
+          </td>
+          <td style="width:120px; text-align:right">
+            <input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.serviceCount * (row.price + row.nds)}" type = "number"/>">
           </td>
           <c:if test="${obj.closed != 'Y'}">
             <td style="width:30px;text-align: center" class="center">
@@ -191,6 +201,7 @@
         <th style="width:150px">Стоимость</th>
         <th style="width:150px">Количество</th>
         <th style="width:150px">Сумма</th>
+        <th style="width:150px">С НДС</th>
         <c:if test="${obj.closed != 'Y'}">
           <th>Удалить</th>
         </c:if>
@@ -204,6 +215,7 @@
             <td align="right"><input type="number" class="form-control right" value="${elem.price}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
             <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${elem.price * elem.serviceCount}" type = "number"/>"></td>
+            <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${(elem.price + elem.nds) * elem.serviceCount}" type = "number"/>"></td>
             <c:if test="${obj.closed != 'Y'}">
               <td style="width:30px;text-align: center" class="center">
                 <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delServiceRow(${elem.id})"><span class="fa fa-minus"></span></button>
@@ -234,6 +246,7 @@
         <th style="width:150px">Стоимость</th>
         <th style="width:150px">Количество</th>
         <th style="width:150px">Сумма</th>
+        <th style="width:150px">С НДС</th>
         <c:if test="${obj.closed != 'Y'}">
           <th>Удалить</th>
         </c:if>
@@ -247,6 +260,7 @@
             <td align="right"><input type="number" class="form-control right" value="${elem.price}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
             <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${elem.price * elem.serviceCount}" type = "number"/>"></td>
+            <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${(elem.price + elem.nds) * elem.serviceCount}" type = "number"/>"></td>
             <c:if test="${obj.closed != 'Y'}">
               <td style="width:30px;text-align: center" class="center">
                 <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delServiceRow(${elem.id})"><span class="fa fa-minus"></span></button>
@@ -277,6 +291,7 @@
         <th style="width:150px">Стоимость</th>
         <th style="width:150px">Количество</th>
         <th style="width:150px">Сумма</th>
+        <th style="width:150px">С НДС</th>
         <c:if test="${obj.closed != 'Y'}">
           <th>Удалить</th>
         </c:if>
@@ -290,6 +305,7 @@
             <td align="right"><input type="number" class="form-control right" value="${elem.price}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
             <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${elem.price * elem.serviceCount}" type = "number"/>"></td>
+            <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${(elem.price + elem.nds) * elem.serviceCount}" type = "number"/>"></td>
             <c:if test="${obj.closed != 'Y'}">
               <td style="width:30px;text-align: center" class="center">
                 <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delServiceRow(${elem.id})"><span class="fa fa-minus"></span></button>
@@ -315,6 +331,7 @@
           <th style="width:150px">Количество</th>
           <th style="width:150px">Стоимость</th>
           <th style="width:150px">Сумма</th>
+          <th style="width:150px">С НДС</th>
         </tr>
         </thead>
         <tbody>
@@ -323,6 +340,7 @@
             <td align="center"><input type="number" class="form-control center" value="${row.dayCount}" onchange="setFieldValue('watcher', 'counter', ${row.id}, this)"></td>
             <td align="right"><input type="number" class="form-control right" value="${row.price}" onchange="setFieldValue('watcher', 'price', ${row.id}, this)"></td>
             <td class="center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${row.price * row.dayCount}" type = "number"/></td>
+            <td class="center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${(row.price + row.nds) * row.dayCount}" type = "number"/></td>
           </tr>
         </c:forEach>
         </tbody>
@@ -383,7 +401,7 @@
   var consulCount = ${fn:length(consuls)};
   var drugCount = ${fn:length(drugs)};
 
-  function openCash(id){
+  function openCash(){
     if(confirm('Вы действительно хотите удалить открыть кассу?')) {
       $.ajax({
         url: '/act/patient/cash.s',

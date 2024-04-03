@@ -1,6 +1,7 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.depts.DDept;
+import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.med.amb.DAmbDrug;
@@ -115,6 +116,7 @@ public class CHeadNurse {
   @Autowired private DDept dDept;
   @Autowired private DRooms dRoom;
   @Autowired private SDrug sDrug;
+  @Autowired private DParam dParam;
   //endregion
 
   //region OUT_PATIENT
@@ -1037,6 +1039,8 @@ public class CHeadNurse {
             drug.setMeasure(row.getMeasure());
             drug.setRasxod(0D);
             drug.setPrice(row.getPrice());
+            drug.setNdsProc(row.getIncome().getNdsProc());
+            drug.setNds(row.getIncome().getNds());
             drug.setCrBy(session.getUserId());
             drug.setCrOn(new Date());
             dhnDrug.saveAndReturn(drug);
@@ -1520,6 +1524,9 @@ public class CHeadNurse {
       hnPatient.setState("C");
       hnPatient.setClosed("N");
       dhnPatient.saveAndReturn(hnPatient);
+      Date startDate = Util.stringToDate("31.03.2024");
+      Date chd = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
+      Double ndsProc = chd.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
       //
       Connection conn = null;
       PreparedStatement ps = null;
@@ -1527,7 +1534,7 @@ public class CHeadNurse {
       try {
         conn = DB.getConnection();
         ps = conn.prepareStatement(
-          "Select c.id hndrug, d.id drug_id, d.name, m.id measure_id, m.name measure, ifnull((Select fd.price From drug_out_rows fd where fd.Id = c.outRow_id), 0) price, Sum(t.rasxod) summ " +
+          "Select c.id hndrug, d.id drug_id, d.name, m.id measure_id, m.name measure, ifnull((Select fd.price From drug_out_rows fd where fd.Id = c.outRow_id), 0) price, Sum(t.rasxod) summ, ifnull(c.ndsProc, 0) ndsProc, ifnull(c.nds, 0) nds " +
             "     From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m, Hn_Dates f " +
             "     Where m.id = d.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.patient_id = ? " +
             "       And f.id = t.doc_id " +
@@ -1545,6 +1552,8 @@ public class CHeadNurse {
           drug.setDrugPrice(rs.getDouble("price"));
           drug.setPrice(drug.getDrug().getPrice() == null ? drug.getDrugPrice() : drug.getDrug().getPrice());
           drug.setServiceCount(rs.getDouble("summ"));
+          drug.setNdsProc(ndsProc);
+          drug.setNds(drug.getPrice() * ndsProc / 100);
           dhnPatientDrug.save(drug);
         }
       } catch (Exception e) {
@@ -1570,6 +1579,9 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     try {
       HNPatients hnPatient = dhnPatient.get(Util.getInt(req, "id"));
+      Date startDate = Util.stringToDate("31.03.2024");
+      Date chd = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
+      Double ndsProc = chd.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
       //
       dhnPatientDrug.deletePatient(hnPatient.getId());
       //
@@ -1579,13 +1591,13 @@ public class CHeadNurse {
       try {
         conn = DB.getConnection();
         ps = conn.prepareStatement(
-          "Select c.id hndrug, d.id drug_id, d.name, m.id measure_id, m.name measure, ifnull((Select fd.price From drug_out_rows fd where fd.Id = c.outRow_id), 0) price, Sum(t.rasxod) summ " +
-            "     From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m, Hn_Dates f " +
-            "     Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.patient_id = ? " +
-            "       And f.id = t.doc_id " +
-            "       And f.state = 'CON' " +
-            "     Group By d.Name " +
-            "     Order By c.id, d.id, d.name, m.id, m.name"
+          "Select c.id hndrug, d.id drug_id, d.name, m.id measure_id, m.name measure, ifnull((Select fd.price From drug_out_rows fd where fd.Id = c.outRow_id), 0) price, Sum(t.rasxod) summ, ifnull(c.ndsProc, 0) ndsProc, ifnull(c.nds, 0) nds " +
+            "    From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m, Hn_Dates f " +
+            "   Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.patient_id = ? " +
+            "     And f.id = t.doc_id " +
+            "     And f.state = 'CON' " +
+            "   Group By d.Name " +
+            "   Order By c.id, d.id, d.name, m.id, m.name"
         );
         ps.setInt(1, hnPatient.getPatient().getId());
         rs = ps.executeQuery();
@@ -1597,6 +1609,8 @@ public class CHeadNurse {
           drug.setDrugPrice(rs.getDouble("price"));
           drug.setPrice(drug.getDrug().getPrice() == null ? drug.getDrugPrice() : drug.getDrug().getPrice());
           drug.setServiceCount(rs.getDouble("summ"));
+          drug.setNdsProc(ndsProc);
+          drug.setNds(drug.getPrice() * ndsProc / 100);
           dhnPatientDrug.save(drug);
         }
       } catch (Exception e) {
@@ -1992,7 +2006,7 @@ public class CHeadNurse {
     dh.put("hn_amb_out", endDate);
     session.setDateEnd(dh);
     //
-    m.addAttribute("rows", dhnDate.getList("From HNDates Where typeCode = 'AMB' And direction.id in " + arr + " And date Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc"));
+    m.addAttribute("rows", dhnDate.getList("From HNDates Where typeCode = 'AMB' And direction.id in " + arr + " And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc"));
     //
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);

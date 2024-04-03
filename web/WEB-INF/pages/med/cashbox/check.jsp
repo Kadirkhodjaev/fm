@@ -50,14 +50,14 @@
       <c:forEach items="${rows}" var="row">
         <tr>
           <td style="font-size: 12px">${row.service.name}</td>
-          <td style="font-size: 12px; text-align:right"><fmt:formatNumber value = "${row.price}" type = "number"/></td>
+          <td style="font-size: 12px; text-align:right"><fmt:formatNumber value = "${row.price + row.nds}" type = "number"/></td>
         </tr>
         <tr>
           <td colspan="2" style="border-bottom:1px dotted black"></td>
         </tr>
       </c:forEach>
       <tr>
-        <td style="font-size:12px">Всего</td>
+        <td style="font-size:12px">Всего с НДС</td>
         <td style="font-size:12px; text-align: right"><fmt:formatNumber value = "${sum}" type = "number"/></td>
       </tr>
       <tr>

@@ -1,6 +1,7 @@
 package ckb.domains.admin;
 
 import ckb.domains.GenId;
+import ckb.domains.med.patient.Patients;
 
 import javax.persistence.*;
 
@@ -27,6 +28,7 @@ public class Kdos extends GenId {
   @Column private Integer ord = 0;
   @Column private Double price;
   @Column private Double for_price;
+  @Column private Double bonusProc;
   @Column private String priced;
   @Column private String necKdo = "N";
   @Column private String norma;
@@ -172,5 +174,21 @@ public class Kdos extends GenId {
 
   public void setFizei(String fizei) {
     this.fizei = fizei;
+  }
+
+  public Double getBonusProc() {
+    return bonusProc;
+  }
+
+  public void setBonusProc(Double bonusProc) {
+    this.bonusProc = bonusProc;
+  }
+
+  public double getStatusPrice(Patients patient) {
+    return patient.isResident() ? getPrice() : getFor_price();
+  }
+
+  public double getStatusRealPrice(Patients patient) {
+    return patient.isResident() ? getReal_price() : getFor_real_price();
   }
 }

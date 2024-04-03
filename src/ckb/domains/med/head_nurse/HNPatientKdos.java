@@ -17,6 +17,9 @@ public class HNPatientKdos extends GenId {
   @Column private Double serviceCount;
   @Column private Double price;
   @Column private Double real_price;
+  @Column private Double ndsProc;
+  @Column private Double nds;
+  @Column private Integer worker;
 
   public HNPatients getParent() {
     return parent;
@@ -72,5 +75,29 @@ public class HNPatientKdos extends GenId {
 
   public void setReal_price(Double real_price) {
     this.real_price = real_price;
+  }
+
+  public Integer getWorker() {
+    return worker;
+  }
+
+  public void setWorker(Integer worker) {
+    this.worker = worker;
+  }
+
+  public Double getNdsProc() {
+    return ndsProc == null ? 0 : ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
+  }
+
+  public Double getNds() {
+    return nds == null ? 0 : nds;
+  }
+
+  public void setNds(Double nds) {
+    this.nds = nds;
   }
 }

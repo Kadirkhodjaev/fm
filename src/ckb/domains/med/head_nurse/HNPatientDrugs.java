@@ -21,6 +21,8 @@ public class HNPatientDrugs extends GenId {
   @Column private Double serviceCount;
   @Column private Double price;
   @Column private Double drugPrice;
+  @Column private Double ndsProc;
+  @Column private Double nds;
 
   public HNPatients getParent() {
     return parent;
@@ -84,5 +86,21 @@ public class HNPatientDrugs extends GenId {
 
   public void setDrugCounter(Double drugCounter) {
     this.drugCounter = drugCounter;
+  }
+
+  public Double getNdsProc() {
+    return ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
+  }
+
+  public Double getNds() {
+    return nds;
+  }
+
+  public void setNds(Double nds) {
+    this.nds = nds;
   }
 }

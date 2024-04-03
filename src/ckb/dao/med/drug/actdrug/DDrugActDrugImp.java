@@ -23,19 +23,14 @@ public class DDrugActDrugImp extends DaoImp<DrugActDrugs> implements DDrugActDru
     try {
       return entityManager.createQuery("Select drug From DrugActDrugs Where counter - ifnull(rasxod, 0) > 0").getResultList();
     } catch (Exception e) {
-      return new ArrayList<Drugs>();
+      return new ArrayList<>();
     }
-  }
-
-  @Override
-  public List<DrugActDrugs> byDrug(Integer drugId) {
-    return getList("From DrugActDrugs Where drugCount - ifnull(rasxod, 0) > 0 And drug.id = " + drugId);
   }
 
   @Override
   public Double getActSum(Integer id) {
     try {
-       return (Double) entityManager.createQuery("Select Sum(countPrice * counter) From DrugActDrugs Where act.id = " + id).getSingleResult();
+       return (Double) entityManager.createQuery("Select Sum((countPrice + ifnull(nds, 0)) * counter) From DrugActDrugs Where act.id = " + id).getSingleResult();
     } catch (Exception e) {
       return 0D;
     }

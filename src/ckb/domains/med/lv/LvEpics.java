@@ -21,6 +21,8 @@ public class LvEpics extends GenId {
   @OneToOne @JoinColumn private Rooms room;
 
   @Column private Double price;
+  @Column private Double ndsProc;
+  @Column private Double nds;
   @Column private Integer koyko;
 
   public Rooms getRoom() {
@@ -95,4 +97,19 @@ public class LvEpics extends GenId {
     this.koyko = koyko;
   }
 
+  public Double getNdsProc() {
+    return ndsProc == null ? 0 : ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
+  }
+
+  public Double getNds() {
+    return nds == null ? 0 : nds;
+  }
+
+  public void setNds(Double nds) {
+    this.nds = nds;
+  }
 }

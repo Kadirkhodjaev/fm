@@ -166,6 +166,12 @@
               </td>
             </tr>
             <tr>
+              <td class="right bold">Процент вознограждения (%):</td>
+              <td>
+                <input type="text" id="bonus_proc" class="form-control right" name="bonus_proc" value=""/>
+              </td>
+            </tr>
+            <tr>
               <td class="right bold">Реальная стоимость*:</td>
               <td>
                 <input type="text" id="kdo-real-price" class="form-control right" name="real_price" value=""/>
@@ -253,8 +259,10 @@
       success: function (res) {
         openMsg(res);
         if (res.success) {
-          $('#close-modal').click();
-          setPage('/core/stat/service/save.s?group=' + $('#sel_kdo_group').val());
+          getDOM('close-modal').click();
+          setTimeout(function() {
+            setPage('/core/stat/services.s?group=' + $('#sel_kdo_group').val());
+          }, 500);
         }
       }
     });
@@ -284,6 +292,7 @@
           $('*[name=for_price]').val(res.for_price);
           $('*[name=real_price]').val(res.real_price);
           $('*[name=for_real_price]').val(res.for_real_price);
+          $('*[name=bonus_proc]').val(res.bonus_proc);
           $('*[name=minTime]').val(res.minTime);
           $('*[name=maxTime]').val(res.maxTime);
           $('*[name=group]').val(res.group);

@@ -15,6 +15,7 @@ public class AmbGroups extends GenId {
   @Column private boolean isFizio;
   @Column private boolean active;
   @Column private Double partnerProc;
+  @Column private Double bonusProc;
 
   public String getName() {
     return name;
@@ -54,5 +55,13 @@ public class AmbGroups extends GenId {
 
   public void setPartnerProc(Double partnerProc) {
     this.partnerProc = partnerProc;
+  }
+
+  public Double getBonusProc() {
+    return bonusProc;
+  }
+
+  public void setBonusProc(Double bonusProc) {
+    this.bonusProc = bonusProc;
   }
 }

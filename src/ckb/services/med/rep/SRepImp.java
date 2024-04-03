@@ -210,6 +210,10 @@ public class SRepImp implements SRep {
 			rep63(req, m);
 		} else if(id == 64) { // Талабнома (Аптека)
 			rep64(req, m);
+		} else if(id == 65) { // Талабнома (Аптека)
+			rep65(req, m);
+		} else if(id == 66) { // Талабнома (Аптека)
+			rep66(req, m);
 		}
 	}
 	// Амбулаторные услуги - По категориям
@@ -5190,6 +5194,306 @@ public class SRepImp implements SRep {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	// Расчет
+	private void rep65(HttpServletRequest req, Model m) {
+		Connection conn = DB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		String params = "";
+		List<ObjList> rows = new ArrayList<>();
+		List<ObjList> ambs = new ArrayList<>();
+		List<ObjList> users = new ArrayList<>();
+		HashMap<Integer, Double> lv = new HashMap<>();
+		//
+		Date startDate = Util.getDate(req, "period_start");
+		Date endDate = Util.getDate(req, "period_end");
+		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
+		try {
+			ps = conn.prepareStatement(
+				"Select t.Lv, " +
+					"         c.fio, " +
+					"         Sum(t.lux_count) lux_count, " +
+					"         Sum(t.lux_sum) lux_sum, " +
+					"         Sum(t.lux_count * t.eat) eat_lux_sum, " +
+					"          " +
+					"         Sum(t.delux_count) delux_count, " +
+					"         Sum(t.delux_sum) delux_sum, " +
+					"         Sum(t.delux_count * t.eat) eat_delux_sum, " +
+					"          " +
+					"         Sum(t.simple_count) simple_count, " +
+					"         Sum(t.simple_sum) simple_sum, " +
+					"         Sum(t.simple_count * t.eat) eat_simple_sum, " +
+					"          " +
+					"         Count(*) Patient_Count, " +
+					"         Sum(t.Total_Sum) Total_Sum, " +
+					"         Sum(t.total_count * t.eat) eat_total_sum, " +
+					"         Sum(t.Total_Sum) - Sum(t.total_count * t.eat) bonus_total, " +
+					"         Sum(t.Total_Sum - t.total_count * t.eat) * 0.1 bonus " +
+					"  From ( " +
+					"      Select t.lv, " +
+					"             t.patient, " +
+					"             Sum(Case When t.roomType = 5 Then t.koyko Else 0 End) lux_count, " +
+					"             Sum(Case When t.roomType = 5 Then t.koyko * t.price Else 0 End) lux_sum, " +
+					"             Sum(Case When t.roomType = 7 Then t.koyko Else 0 End) delux_count, " +
+					"             Sum(Case When t.roomType = 7 Then t.koyko * t.price Else 0 End) delux_sum, " +
+					"             Sum(Case When t.roomType = 6 Then t.koyko Else 0 End) simple_count, " +
+					"             Sum(Case When t.roomType = 6 Then t.koyko * t.price Else 0 End) simple_sum, " +
+					"             Sum(t.koyko) total_count, " +
+					"             Sum(t.koyko * t.price) total_sum, " +
+					"             (Select a.val From Params a Where a.Code = 'EAT_PRICE') eat " +
+					"        From ( " +
+					"          Select c.lvId lv, " +
+					"                 t.patient_Id patient, " +
+					"                 r.roomType, " +
+					"                 c.koyko, " +
+					"                 c.price " +
+					"          From Hn_Patients t, Lv_Epics c, Rooms r " +
+					"        Where t.patient_Id = c.patientId " +
+					"           And t.state = 'D' " +
+					"           And t.dateEnd between ? And ? " +
+					"           And c.koyko > 0 " +
+					"           And r.Id = c.room_Id " +
+					"       Union All " +
+					"       Select c.lv_id, " +
+					"                 t.patient_Id, " +
+					"                 r.roomType, " +
+					"                 t.dayCount - (Select ifnull(Sum(g.koyko), 0) From Lv_Epics g Where g.patientId = c.id) Koyko, " +
+					"                 t.koykoPrice " +
+					"          From Hn_Patients t, Patients c, Rooms r " +
+					"        Where t.patient_Id = c.id " +
+					"           And t.dateEnd between ? And ? " +
+					"           And r.id = c.Room_Id) t " +
+					"    Group By t.lv, t.patient) t, Users c " +
+					"  Where c.id = t.lv " +
+					"  Group By t.lv"
+			);
+			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+			ps.setString(3, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(4, Util.dateDB(Util.get(req, "period_end")));
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				ObjList a = new ObjList();
+				//
+				a.setC1(rs.getString("fio"));
+				a.setC2(rs.getString("lux_count"));
+				a.setC3(rs.getString("lux_sum"));
+				a.setC4(rs.getString("eat_lux_sum"));
+				//
+				a.setC5(rs.getString("delux_count"));
+				a.setC6(rs.getString("delux_sum"));
+				a.setC7(rs.getString("eat_delux_sum"));
+				//
+				a.setC8(rs.getString("simple_count"));
+				a.setC9(rs.getString("simple_sum"));
+				a.setC10(rs.getString("eat_simple_sum"));
+				//
+				a.setC11(rs.getString("patient_count"));
+				a.setC12(rs.getString("total_sum"));
+				a.setC13(rs.getString("eat_total_sum"));
+				a.setC14(rs.getString("bonus_total"));
+				a.setC15(rs.getString("bonus"));
+				//
+				lv.put(rs.getInt("lv"), rs.getDouble("bonus"));
+				//
+				rows.add(a);
+			}
+			//
+			ps = conn.prepareStatement(
+				"Select a.id lv," +
+					"          a.fio, " +
+					"          c.name, " +
+					"          Count(*) Counter, " +
+					"          Sum(t.price) Summ, " +
+					"          Sum(t.price) * Case When f.bonusProc > 0 Then f.bonusProc Else c.bonusProc End / 100 Bonus " +
+					"     From amb_patient_services t, Amb_Services c, Users a, Amb_Groups f " +
+					"    Where t.state = 'DONE' " +
+					"      And t.confDate between ? And ? " +
+					"      And c.id = t.service_Id " +
+					"      And f.id = c.group_id " +
+					"   	 And (c.bonusProc > 0 Or f.bonusProc > 0) " +
+					"   	 And a.id = t.worker_Id " +
+					" 	 Group By a.fio, c.name"
+			);
+			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				ObjList a = new ObjList();
+				//
+				a.setC1(rs.getString("fio"));
+				a.setC2(rs.getString("name"));
+				a.setC3(rs.getString("counter"));
+				a.setC4(rs.getString("summ"));
+				a.setC5(rs.getString("bonus"));
+				//
+				if(lv.containsKey(rs.getInt("lv"))) {
+					Double bonus = lv.get(rs.getInt("lv"));
+					bonus += rs.getDouble("bonus");
+					lv.put(rs.getInt("lv"), bonus);
+				} else {
+					lv.put(rs.getInt("lv"), rs.getDouble("bonus"));
+				}
+				//
+				ambs.add(a);
+			}
+			//
+			Double total = 0D;
+			Set<Integer> keys = lv.keySet();
+			for(Integer key: keys) {
+				ObjList a = new ObjList();
+				a.setC1(dUser.get(key).getFio());
+				total += lv.get(key);
+				a.setC2(lv.get(key).toString());
+				//
+				users.add(a);
+			}
+			m.addAttribute("total", total);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DB.done(conn);
+			DB.done(ps);
+			DB.done(rs);
+		}
+		m.addAttribute("rows", rows);
+		m.addAttribute("ambs", ambs);
+		m.addAttribute("users", users);
+		// Параметры отчета
+		m.addAttribute("params", params);
+	}
+	// Расчет детализация
+	private void rep66(HttpServletRequest req, Model m) {
+		Connection conn = DB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		String params = "";
+		List<ObjList> rows = new ArrayList<>();
+		List<ObjList> ambs = new ArrayList<>();
+		//
+		Integer id = Util.getInt(req, "lv", 0);
+		Users lv = dUser.get(id);
+		Date startDate = Util.getDate(req, "period_start");
+		Date endDate = Util.getDate(req, "period_end");
+		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate) + " Врач: " + lv.getFio();
+		try {
+			ps = conn.prepareStatement(
+				"Select t.lv,  " +
+					"       t.patient,  " +
+					"       Concat(c.surname, ' ', c.name, ' ', c.middlename) fio, " +
+					"       c.Date_Begin, " +
+					"       t.date_end, " +
+					"       Sum(Case When t.roomType = 5 Then t.koyko Else 0 End) lux_count,  " +
+					"       Sum(Case When t.roomType = 5 Then t.koyko * t.price Else 0 End) lux_sum,  " +
+					"       Sum(Case When t.roomType = 7 Then t.koyko Else 0 End) delux_count,  " +
+					"       Sum(Case When t.roomType = 7 Then t.koyko * t.price Else 0 End) delux_sum,  " +
+					"       Sum(Case When t.roomType = 6 Then t.koyko Else 0 End) simple_count,  " +
+					"       Sum(Case When t.roomType = 6 Then t.koyko * t.price Else 0 End) simple_sum,  " +
+					"       Sum(t.koyko) total_count,  " +
+					"       Sum(t.koyko * t.price) total_sum, " +
+					"       Sum(t.koyko * (t.price - (Select a.val From Params a Where a.Code = 'EAT_PRICE'))) Bonus_Sum, " +
+					"       Sum(t.koyko * (t.price - (Select a.val From Params a Where a.Code = 'EAT_PRICE'))) * 0.1 Bonus " +
+					"  From (  " +
+					"    Select c.lvId lv,  " +
+					"           t.patient_Id patient,  " +
+					"           r.roomType,  " +
+					"           c.koyko,  " +
+					"           c.price, " +
+					"           date(t.dateEnd) date_end " +
+					"      From Hn_Patients t, Lv_Epics c, Rooms r  " +
+					"     Where t.patient_Id = c.patientId  " +
+					"       And t.state = 'D' " +
+					"       And c.lvid = ? " +
+					"       And t.dateEnd between ? And ? " +
+					"       And c.koyko > 0  " +
+					"       And r.Id = c.room_Id  " +
+					"    Union All  " +
+					"    Select c.lv_id,  " +
+					"           t.patient_Id, " +
+					"           r.roomType,  " +
+					"           t.dayCount - (Select ifnull(Sum(g.koyko), 0) From Lv_Epics g Where g.patientId = c.id) Koyko,  " +
+					"           t.koykoPrice, " +
+					"           date(t.dateEnd) date_end " +
+					"      From Hn_Patients t, Patients c, Rooms r  " +
+					"     Where t.patient_Id = c.id  " +
+					"       And c.lv_id = ? " +
+					"       And t.dateEnd between ? And ? " +
+					"      And r.id = c.Room_Id) t, Patients c  " +
+					"    Where t.patient = c.id " +
+					"    Group By t.lv, t.patient"
+			);
+			ps.setInt(1, id);
+			ps.setString(2, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(3, Util.dateDB(Util.get(req, "period_end")));
+			ps.setInt(4, id);
+			ps.setString(5, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(6, Util.dateDB(Util.get(req, "period_end")));
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				ObjList a = new ObjList();
+				a.setC1(rs.getString("fio"));
+				a.setC2(Util.dateToString(rs.getDate("date_begin")));
+				a.setC3(Util.dateToString(rs.getDate("date_end")));
+				a.setC4(rs.getString("lux_count"));
+				a.setC5(rs.getString("lux_sum"));
+				a.setC6(rs.getString("delux_count"));
+				a.setC7(rs.getString("delux_sum"));
+				a.setC8(rs.getString("simple_count"));
+				a.setC9(rs.getString("simple_sum"));
+				a.setC10(rs.getString("total_count"));
+				a.setC11(rs.getString("total_sum"));
+				a.setC12(rs.getString("bonus_sum"));
+				a.setC13(rs.getString("bonus"));
+				//
+				rows.add(a);
+			}
+			ps = conn.prepareStatement(
+				"Select concat(f.surname, ' ', f.name, ' ', f.middlename) fio, " +
+					"       date(f.Reg_Date) reg_date, " +
+					"       date(t.confDate) conf_date, " +
+					"       c.name,  " +
+					"       t.price Summ,  " +
+					"       c.bonusProc,  " +
+					"       t.price * Case When a.bonusProc > 0 Then a.bonusPorc Else c.bonusProc End / 100 Bonus  " +
+					"  From amb_patient_services t, Amb_Patients f, Amb_Services c, Amb_Groups a  " +
+					" Where t.state = 'DONE'  " +
+					"   And t.worker_Id = ? " +
+					"   And t.confDate between ? And ? " +
+					"   And c.id = t.service_Id  " +
+					"   And c.group_id = a.id  " +
+					"   And (c.bonusProc > 0 Or a.bonusProc > 0)  " +
+					"   And f.id = t.patient " +
+					" Order By f.Reg_Date, f.id"
+			);
+			ps.setInt(1, id);
+			ps.setString(2, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(3, Util.dateDB(Util.get(req, "period_end")));
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				ObjList a = new ObjList();
+				//
+				a.setC1(rs.getString("fio"));
+				a.setC2(Util.dateToString(rs.getDate("reg_date")));
+				a.setC3(Util.dateToString(rs.getDate("conf_date")));
+				a.setC4(rs.getString("name"));
+				a.setC5(rs.getString("summ"));
+				a.setC6(rs.getString("bonusProc"));
+				a.setC7(rs.getString("bonus"));
+				//
+				ambs.add(a);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DB.done(conn);
+			DB.done(ps);
+			DB.done(rs);
+		}
+		m.addAttribute("rows", rows);
+		m.addAttribute("ambs", ambs);
+		// Параметры отчета
+		m.addAttribute("params", params);
 	}
 
 }

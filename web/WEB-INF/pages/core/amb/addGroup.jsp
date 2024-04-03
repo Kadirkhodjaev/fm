@@ -43,6 +43,10 @@
           <td><input type="number" class="form-control right" value="${ser.partnerProc}" name="partnerProc" required></td>
         </tr>
         <tr>
+          <td class="bold">Процент бонуса (%):</td>
+          <td><input type="number" class="form-control right" value="${ser.bonusProc}" name="bonusProc" required></td>
+        </tr>
+        <tr>
           <td class="bold">Группа?:</td>
           <td><input type="checkbox" value="A" name="group" <c:if test="${ser.group}">checked</c:if>></td>
         </tr>

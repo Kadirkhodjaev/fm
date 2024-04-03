@@ -1012,4 +1012,8 @@ public class Patients extends GenId {
   public String getFio() {
     return this.surname + " " + this.name + " " + this.middlename;
   }
+
+  public boolean isResident() {
+    return getCounteryId() == 199;
+  }
 }

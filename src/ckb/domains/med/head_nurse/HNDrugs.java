@@ -25,6 +25,8 @@ public class HNDrugs extends GenId {
   @Column private Integer transfer;
   @Column private Integer transfer_hndrug_id;
   @Column private Integer history;
+  @Column private Double ndsProc;
+  @Column private Double nds;
 
   @Column private Integer crBy;
   @Column private Date crOn;
@@ -123,5 +125,21 @@ public class HNDrugs extends GenId {
 
   public void setHistory(Integer history) {
     this.history = history;
+  }
+
+  public Double getNdsProc() {
+    return ndsProc;
+  }
+
+  public void setNdsProc(Double ndsProc) {
+    this.ndsProc = ndsProc;
+  }
+
+  public Double getNds() {
+    return nds;
+  }
+
+  public void setNds(Double nds) {
+    this.nds = nds;
   }
 }
