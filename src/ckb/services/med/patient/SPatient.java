@@ -17,7 +17,7 @@ import java.util.List;
 
 public interface SPatient {
 
-  Patients save(HttpServletRequest req);
+  Patients save(HttpServletRequest req) throws Exception;
 
   void createModel(HttpServletRequest request, Patients patient);
 
@@ -48,8 +48,6 @@ public interface SPatient {
   List<PatientDrug> getPatientDrugs(int curPat);
 
   PatientDrug getDrug(int id);
-
-  double getPatientKoykoPrice(Patients patient);
 
   List<PatientDrug> getDrugsByType(int curPat, int i);
 

@@ -321,7 +321,7 @@
       });
     }
   }
-  // Client Block
+  //region Client Block
   $('input[name=client_name]').keyup( () => {
     <c:if test="${patient.id != null}">return;</c:if>
     let div = $('#client_filter'), elem = $('input[name=client_name]'), v = elem.val().toUpperCase();
@@ -461,6 +461,8 @@
     getDOM('clientForm').reset();
     $('#btn_client_view').click();
   }
+  //endregion
+
   $(function(){
     $('#patient_services').load('/ambs/patient/services.s?id=${patient.id}');
     <c:if test="${patient.treatment == 'Y'}">

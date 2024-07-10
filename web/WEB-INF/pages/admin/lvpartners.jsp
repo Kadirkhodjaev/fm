@@ -24,6 +24,7 @@
           <th>Код</th>
           <th>ФИО</th>
           <th>Состояние</th>
+          <th>Отчет</th>
         </tr>
         </thead>
         <tbody>
@@ -39,6 +40,10 @@
             <td class="center">
               <c:if test="${obj.state == 'A'}">Активный</c:if>
               <c:if test="${obj.state != 'A'}">Пассивный</c:if>
+            </td>
+            <td class="center">
+              <c:if test="${obj.report != 'Y'}">Да</c:if>
+              <c:if test="${obj.report == 'Y'}">Нет</c:if>
             </td>
           </tr>
         </c:forEach>
@@ -78,6 +83,12 @@
                 <input type="checkbox" checked name="state" value="A"/>
               </td>
             </tr>
+            <tr>
+              <td class="right bold">Не отображать в отчетах?:</td>
+              <td class="left">
+                <input type="checkbox" checked name="report" value="Y"/>
+              </td>
+            </tr>
           </table>
         </form>
       </div>
@@ -108,6 +119,7 @@
           $('*[name=code]').val(res.code);
           $('*[name=fio]').val(res.fio);
           $('*[name=state]').prop('checked', res.state == 'A');
+          $('*[name=report]').prop('checked', res.report == 'Y');
         } else {
           alert(res.msg);
         }

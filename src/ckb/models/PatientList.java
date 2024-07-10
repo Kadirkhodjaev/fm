@@ -34,6 +34,7 @@ public class PatientList {
   private String lv;
   // Состояние опалаты
   private String paid;
+  private String birthday;
 
   public int getId() {
     return id;
@@ -137,5 +138,13 @@ public class PatientList {
 
   public void setPaid(String paid) {
     this.paid = paid;
+  }
+
+  public String getBirthday() {
+    return birthday;
+  }
+
+  public void setBirthday(String birthday) {
+    this.birthday = birthday;
   }
 }

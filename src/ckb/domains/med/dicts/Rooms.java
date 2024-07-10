@@ -27,6 +27,15 @@ public class Rooms extends GenId {
 
 	@Column private Long koykoLimit;
 
+	@Column private Double price;
+	@Column private Double for_price;
+
+	@Column private Double extra_price;
+	@Column private Double for_extra_price;
+
+	@Column private Double bron_price;
+	@Column private Double for_bron_price;
+
 	@Column private String access = "N";
 	@Column private String state = "A";
 
@@ -86,5 +95,53 @@ public class Rooms extends GenId {
 
 	public void setDept(Depts dept) {
 		this.dept = dept;
+	}
+
+	public Double getPrice() {
+		return price;
+	}
+
+	public void setPrice(Double price) {
+		this.price = price;
+	}
+
+	public Double getFor_price() {
+		return for_price;
+	}
+
+	public void setFor_price(Double for_price) {
+		this.for_price = for_price;
+	}
+
+	public Double getExtra_price() {
+		return extra_price;
+	}
+
+	public void setExtra_price(Double extra_price) {
+		this.extra_price = extra_price;
+	}
+
+	public Double getFor_extra_price() {
+		return for_extra_price;
+	}
+
+	public void setFor_extra_price(Double for_extra_price) {
+		this.for_extra_price = for_extra_price;
+	}
+
+	public Double getBron_price() {
+		return bron_price;
+	}
+
+	public void setBron_price(Double bron_price) {
+		this.bron_price = bron_price;
+	}
+
+	public Double getFor_bron_price() {
+		return for_bron_price;
+	}
+
+	public void setFor_bron_price(Double for_bron_price) {
+		this.for_bron_price = for_bron_price;
 	}
 }

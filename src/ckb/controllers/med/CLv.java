@@ -693,7 +693,7 @@ public class CLv {
     epic.setDateBegin(Req.getDate(request, "Date_Begin"));
     epic.setDateEnd(Req.getDate(request, "Date_End"));
     Patients pat = dPatient.get(session.getCurPat());
-    epic.setPrice(sPatient.getPatientKoykoPrice(pat));
+    epic.setPrice(pat.getRoomPrice());
     //
     if(epic.getDateBegin() == null)
       epic.setDateBegin(dPatient.get(session.getCurPat()).getDateBegin());

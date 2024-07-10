@@ -36,7 +36,7 @@
       <table width="100%">
         <c:forEach items="${params}" var="p">
           <tr>
-            <td class="text-right" style="padding:5px">
+            <td class="text-right" style="padding:5px" nowrap>
                 ${p.c2}<c:if test="${p.c7}"><d></d></c:if> :
             </td>
             <td style="padding:5px">

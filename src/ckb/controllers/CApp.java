@@ -94,6 +94,7 @@ public class  CApp {
       m.add(new Menu("Отделении", "/admin/depts.s", "fa fa-th-list fa-fw", session));
       m.add(new Menu("Параметры", "/admin/price.s", "fa fa-th fa-fw", session));
       m.add(new Menu("Партнеры", "/admin/lvpartners.s", "fa fa-users fa-fw", session));
+      m.add(new Menu("Палата", "/admin/rooms.s", "fa fa-archive fa-fw", session));
       m.add(new Menu("Протокол", "/admin/log.s", "fa fa-users fa-fw", session));
     }
     if(roleId == 3) { // Приемное – медсестра
@@ -176,7 +177,7 @@ public class  CApp {
     if(roleId == 15) { // Амбулаторная регистрация
       m.add(new Menu("Регистрация", "/amb/reg.s", "fa fa-edit fa-fw", session.getCurUrl().contains("/amb/reg.s")));
       m.add(new Menu("Текущие", "/amb/home.s", "fa fa-group fa-fw", session.getCurUrl().equals("/amb/home.s")));
-      m.add(new Menu("Клиенты", "/client/list.s", "fa fa-group fa-fw", session.getCurUrl().equals("/client/list.s")));
+      m.add(new Menu("Клиенты", "/clients/list.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Архив", "/amb/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/amb/archive.s")));
     }
     if(roleId == 16) { // Физиотерапия

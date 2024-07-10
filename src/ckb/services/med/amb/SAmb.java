@@ -23,7 +23,7 @@ public interface SAmb {
 
   void createModel(HttpServletRequest req, AmbPatients p);
 
-  AmbPatients save(HttpServletRequest req);
+  AmbPatients save(HttpServletRequest req) throws Exception;
 
   void setFields(Model m, Integer serviceId);
 

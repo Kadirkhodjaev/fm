@@ -175,7 +175,7 @@ public class CClients {
       Clients client = Util.isNull(req, "cl_id") ? new Clients() : dClient.get(Util.getInt(req, "cl_id"));
       client.setSurname(Util.get(req, "cl_surname", "").toUpperCase());
       client.setName(Util.get(req, "cl_name", "").toUpperCase());
-      if(client.getSurname().isEmpty() || client.getName().isEmpty() || Util.isNull(req, "cl_sex_id") || Util.isNull(req, "cl_birthdate"))
+      if(client.getSurname().isEmpty() || client.getName().isEmpty() || Util.isNull(req, "cl_sex_id") || Util.isNull(req, "cl_birthdate") || Util.isNull(req, "cl_country_id"))
         return Util.err(json, "Заполните все обязательные поля");
       client.setMiddlename(Util.get(req, "cl_middlename", "").toUpperCase());
       client.setBirthdate(Util.getDate(req, "cl_birthdate"));
@@ -222,6 +222,7 @@ public class CClients {
       json.put("doc_seria", c.getDocSeria());
       json.put("doc_num", c.getDocNum());
       json.put("doc_info", c.getDocInfo());
+      json.put("passport", c.getPassport());
       json.put("country_id", c.getCountry() == null ? null : c.getCountry().getId());
       json.put("country_name", c.getCountry() == null ? null : c.getCountry().getName());
       json.put("region_id", c.getRegion() == null ? null : c.getRegion().getId());

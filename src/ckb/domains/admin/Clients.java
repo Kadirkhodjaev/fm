@@ -180,4 +180,8 @@ public class Clients extends GenId {
   public String getFio() {
     return surname + " " + name + " " + middlename;
   }
+
+  public String getPassport() {
+    return getDocSeria() + " " + getDocNum() + " " + getDocInfo();
+  }
 }

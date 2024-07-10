@@ -1,5 +1,6 @@
 package ckb.utils;
 
+import ckb.domains.admin.Clients;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.ui.Model;
@@ -415,5 +416,11 @@ public class Util {
 
   public static Double nvl(Double sum, double def) {
     return sum == null ? def : sum;
+  }
+
+  public static void checkClient(Clients c) throws Exception {
+    if(c.getCountry() == null) throw new Exception("Не заполненные данные: Страна (Гражданство)");
+    if(c.getSex() == null) throw new Exception("Не заполненные данные: Пол");
+    if(c.getBirthdate() == null) throw new Exception("Не заполненные данные: Дата рождения");
   }
 }

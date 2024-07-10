@@ -19,6 +19,7 @@ public class DrugOuts extends GenId {
   @Column private Date crOn;
   @Column private Date sendOn;
   @Column private Date confirmOn;
+  @Column private String insFlag;
 
   public String getRegNum() {
     return regNum;
@@ -82,5 +83,13 @@ public class DrugOuts extends GenId {
 
   public void setConfirmOn(Date confirmOn) {
     this.confirmOn = confirmOn;
+  }
+
+  public String getInsFlag() {
+    return insFlag;
+  }
+
+  public void setInsFlag(String insFlag) {
+    this.insFlag = insFlag;
   }
 }

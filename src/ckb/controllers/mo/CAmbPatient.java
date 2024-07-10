@@ -10,6 +10,7 @@ import ckb.domains.admin.Clients;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbPatients;
+import ckb.domains.med.amb.AmbServiceUsers;
 import ckb.grid.AmbGrid;
 import ckb.models.AmbService;
 import ckb.services.admin.form.SForm;
@@ -45,6 +46,7 @@ public class CAmbPatient {
   @Autowired private DUser dUser;
   @Autowired private DAmbResult dAmbResult;
   @Autowired private SForm sForm;
+  @Autowired private DAmbServiceUser dAmbServiceUser;
 
   @RequestMapping("patients.s")
   protected String patients(HttpServletRequest req, Model model) {
@@ -170,9 +172,12 @@ public class CAmbPatient {
           if((new Date().getTime() - patient.getRegDate().getTime()) / (1000*60*60*24) <= 5)
             d.setRepeat(true);
         }
-        if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.isReg() && s.isNoResult()))
-          d.setUsers(dUser.getList("From Users t Where Exists (Select 1 From AmbServiceUsers c Where t.id = c.user And c.service = " + s.getService().getId() + ")"));
-        else
+        if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.isReg() && s.isNoResult())) {
+          List<Users> users = new ArrayList<>();
+          List<AmbServiceUsers> serviceUsers = dAmbServiceUser.getList("From AmbServiceUsers t Where t.service = " + s.getService().getId());
+          for(AmbServiceUsers serviceUser: serviceUsers) users.add(dUser.get(serviceUser.getUser()));
+          d.setUsers(users);
+        } else
           d.setUsers(dUser.getList("From Users t Where id = " + s.getWorker().getId()));
         if("ENT".equals(s.getState()))
           entSum += s.getPrice();

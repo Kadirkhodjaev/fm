@@ -65,6 +65,8 @@ import java.util.List;
 public class CCashbox {
 
   private Session session = null;
+  Date startDate = Util.stringToDate("31.03.2024");
+
   @Autowired private DCountry dCountery;
   @Autowired private DRegion dRegion;
   @Autowired private DAmbPatient dAmbPatients;
@@ -409,10 +411,10 @@ public class CCashbox {
       LvCouls checker = dLvCoul.getByPlan(plan.getId());
       if(checker != null)
         for(KdoChoosens choosen: choosens) {
-          if(choosen.getOrd() == 1 && checker.isC1()) continue;
-          if(choosen.getOrd() == 2 && checker.isC2()) continue;
-          if(choosen.getOrd() == 3 && checker.isC3()) continue;
-          if(choosen.getOrd() == 4 && checker.isC4()) continue;
+          if(choosen.getOrd() == 1 && checker.isC4()) continue;
+          if(choosen.getOrd() == 2 && checker.isC1()) continue;
+          if(choosen.getOrd() == 3 && checker.isC2()) continue;
+          if(choosen.getOrd() == 4 && checker.isC3()) continue;
           ObjList ll = new ObjList();
           ll.setC1(choosen.getName());
           ll.setPrice(choosen.getStatusPrice(pat) * (100 + ndsProc) / 100);
@@ -487,13 +489,14 @@ public class CCashbox {
     if(pat.getLv_id() != null)
       model.addAttribute("lv", dUser.get(pat.getLv_id()));
     //
-    Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
-    Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
-    Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));
-    Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
-    Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
-    Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));
     Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+
+    /*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB")) * (100 + ndsProc) / 100;
+    Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB")) * (100 + ndsProc) / 100;
+    Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB")) * (100 + ndsProc) / 100;
+    Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX")) * (100 + ndsProc) / 100;
+    Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE")) * (100 + ndsProc) / 100;
+    Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX")) * (100 + ndsProc) / 100;*/
     Double discountSum = dCashDiscount.patientStatDiscountSum(pat.getId());
     Double total = 0D;
     //
@@ -510,43 +513,49 @@ public class CCashbox {
       minusDays += days;
       // 5 - Люкс, 6 - Простой, 7 - Полулюкс
       obj.setC2(epic.getRoom().getRoomType().getName());
+      Double price = epic.getRoom().getPrice() * (100 + ndsProc) / 100, for_price = epic.getRoom().getFor_price() * (100 + ndsProc) / 100;
       if(pat.getCounteryId() == 199) { // Узбекистан
-        if(epic.getRoom().getRoomType().getId() == 5)  // Люкс
+        obj.setC3((price * (pat.getDayCount() == null ? 0 : days)) + "");
+        /*if(epic.getRoom().getRoomType().getId() == 5)  // Люкс
           obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_LUX_UZB) + "");
         else if(epic.getRoom().getRoomType().getId() == 6) // Протая
           obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_SIMPLE_UZB) + "");
         else // Полулюкс
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_SEMILUX_UZB) + "");
+          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_SEMILUX_UZB) + "");*/
       } else {
-        if(epic.getRoom().getRoomType().getId() == 5)  // Люкс
+        obj.setC3((for_price * (pat.getDayCount() == null ? 0 : days)) + "");
+        /*if(epic.getRoom().getRoomType().getId() == 5)  // Люкс
           obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_LUX) + "");
         else if(epic.getRoom().getRoomType().getId() == 6) // Протая
           obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_SIMPLE) + "");
         else // Полулюкс
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_SEMILUX) + "");
+          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_SEMILUX) + "");*/
       }
       total += Double.parseDouble(obj.getC3());
       eps.add(obj);
     }
     model.addAttribute("epics", eps);
     //
+    Double price = pat.getRoom().getPrice() * (100 + ndsProc) / 100, for_price = pat.getRoom().getFor_price() * (100 + ndsProc) / 100;
     if(pat.getCounteryId() == 199) { // Узбекистан
-      if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
+      total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * price;
+      /*if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
         total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_LUX_UZB;
       else if(pat.getRoom().getRoomType().getId() == 6) // Протая
         total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_SIMPLE_UZB;
       else // Полулюкс
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_SEMILUX_UZB;
+        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_SEMILUX_UZB;*/
     } else {
-      if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
+      total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * for_price;
+      /*if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
         total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_LUX;
       else if(pat.getRoom().getRoomType().getId() == 6) // Протая
         total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_SIMPLE;
       else // Полулюкс
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_SEMILUX;
+        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_SEMILUX;*/
     }
     model.addAttribute("minusDays", minusDays);
-    model.addAttribute("koykoTotal", total * (100 + ndsProc) / 100);
+    model.addAttribute("koykoTotal", total);
     List<PatientWatchers> watchers = dPatientWatchers.byPatient(pat.getId());
     for(PatientWatchers watcher: watchers) {
       total += watcher.getTotal() * (100 + ndsProc) / 100;
@@ -646,15 +655,19 @@ public class CCashbox {
         }
       }
       Patients pat = dPatient.get(Util.getInt(req, "id"));
-      Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
+      Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      /*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
       Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
       Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
       Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
       Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));
-      Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));
+      Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));*/
       //
-      Double total;
-      if(pat.getCounteryId() == 199) { // Узбекистан
+      Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
+      Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
+      //
+      /*if(pat.getCounteryId() == 199) { // Узбекистан
         if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
           total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX_UZB;
         else if(pat.getRoom().getRoomType().getId() == 6) // Протая
@@ -668,7 +681,7 @@ public class CCashbox {
           total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE;
         else // Полулюкс
           total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX;
-      }
+      }*/
       Double paid = 0D;
       List<PatientPays> pays = dPatientPays.getList("From PatientPays t Where t.patient_id = " + pat.getId());
       for(PatientPays py: pays)

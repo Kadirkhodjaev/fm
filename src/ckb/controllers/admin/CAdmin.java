@@ -5,7 +5,12 @@ import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserLog;
-import ckb.domains.admin.*;
+import ckb.dao.med.dicts.rooms.DRooms;
+import ckb.domains.admin.Depts;
+import ckb.domains.admin.LvPartners;
+import ckb.domains.admin.Params;
+import ckb.domains.admin.Users;
+import ckb.domains.med.dicts.Rooms;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.Req;
@@ -31,6 +36,7 @@ public class CAdmin {
   @Autowired private DParam dParam;
   @Autowired private DUserLog dUserLog;
   @Autowired private DLvPartner dLvPartner;
+  @Autowired private DRooms dRoom;
 
   @RequestMapping("/changePass.s")
   protected String changePass(HttpServletRequest request, Model model){
@@ -184,6 +190,7 @@ public class CAdmin {
       rp.setCode(Util.get(req, "code"));
       rp.setFio(Util.get(req, "fio"));
       rp.setState(Util.get(req, "state", "P"));
+      rp.setReport(Util.get(req, "report", "N"));
       dLvPartner.save(rp);
       json.put("success", true);
     } catch (Exception e) {
@@ -203,6 +210,7 @@ public class CAdmin {
       json.put("code", rp.getCode());
       json.put("fio", rp.getFio());
       json.put("state", rp.getState());
+      json.put("report", rp.getReport());
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -210,4 +218,39 @@ public class CAdmin {
     }
     return json.toString();
   }
+
+  @RequestMapping("/rooms.s")
+  protected String rooms(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/admin/rooms.s");
+    //
+    model.addAttribute("rows", dRoom.getAll());
+    //
+    return "/admin/rooms";
+  }
+
+  @RequestMapping(value = "/room/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String save_room(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Rooms room = dRoom.get(Util.getInt(req, "id"));
+      String t = Util.get(req, "type");
+      Double v = Util.getDouble(req, "value", 0D);
+      if(t.equals("koykoLimit")) room.setKoykoLimit(Long.valueOf(Util.get(req, "value")));
+      if(t.equals("price")) room.setPrice(v);
+      if(t.equals("for_price")) room.setFor_price(v);
+      if(t.equals("extra_price")) room.setExtra_price(v);
+      if(t.equals("for_extra_price")) room.setFor_extra_price(v);
+      if(t.equals("bron_price")) room.setBron_price(v);
+      if(t.equals("for_bron_price")) room.setFor_bron_price(v);
+      dRoom.save(room);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
 }

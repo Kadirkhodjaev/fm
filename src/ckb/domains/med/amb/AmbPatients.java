@@ -34,6 +34,9 @@ public class AmbPatients extends GenId {
   // Дата выписки
   @Column(name = "Reg_Date")
   private Date regDate;
+  // Дата рождения
+  @Column
+  private Date birthday;
   // Состояние
   @Column(name = "state")
   private String state;
@@ -280,5 +283,13 @@ public class AmbPatients extends GenId {
 
   public boolean isCurrent() {
     return !state.equals("ARCH");
+  }
+
+  public Date getBirthday() {
+    return birthday;
+  }
+
+  public void setBirthday(Date birthday) {
+    this.birthday = birthday;
   }
 }

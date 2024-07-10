@@ -102,8 +102,10 @@ public class CReg {
     }
     m.addAttribute("rooms", rooms);
     //
-    m.addAttribute("counteries", dCountery.getCounteries());
+    m.addAttribute("countries", dCountery.getCounteries());
     m.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+    m.addAttribute("countryName", p.getCounteryId() != null ? dCountery.get(p.getCounteryId()).getName() : "");
+    m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
     m.addAttribute("reg", Util.nvl(Util.get(req, "reg")).equals("Y") ? session.getCurPat() : "");
     m.addAttribute("booking", Util.get(req, "booking", ""));
     List<Kdos> kdos = dKdos.getList("From Kdos Where necKdo = 'Y'");
@@ -121,8 +123,6 @@ public class CReg {
       }
     }
     m.addAttribute("planIds", planIds);
-    if (Req.isNull(req, "id"))
-      m.addAttribute("clients", dClient.getList("From Clients Order By surname"));
     if (p.getId() == null)
       p.setTarDate(Util.getCurDate());
     Util.makeMsg(req, m);
@@ -133,17 +133,6 @@ public class CReg {
   @ResponseBody
   protected String addEdit(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    if(req.getParameter("birthdayString") == null) {
-      json.put("success", false);
-      json.put("msg", "Дата рождения не может быть пустым");
-      return json.toString();
-    } else {
-      if(Util.stringToDate(req.getParameter("birthdayString")) == null) {
-        json.put("success", false);
-        json.put("msg", "Не правильный формат даты рождения");
-        return json.toString();
-      }
-    }
     try {
       Patients p = sPatient.save(req);
       dPatientLink.saveLink(Util.getNullInt(req, "reg"), p.getId());
@@ -211,15 +200,24 @@ public class CReg {
     return json.toString();
   }
 
-  @RequestMapping("nurse/del.s")
-  protected String delPatient(HttpServletRequest request) {
-    session = SessionUtil.getUser(request);
-    session.setCurUrl("/patients/list.s?msgState=1&msgCode=successDelete");
-    if(dPatient.get(session.getCurPat()).getState().equals("PRN")) {
-      dPatientLink.deletePatient(session.getCurPat());
-      dPatient.delete(session.getCurPat());
+  @RequestMapping(value = "nurse/del.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String delPatient(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      session = SessionUtil.getUser(req);
+      if(dPatient.get(session.getCurPat()).getState().equals("PRN")) {
+        dPatientLink.deletePatient(session.getCurPat());
+        dPatient.delete(session.getCurPat());
+      } else {
+        return Util.err(json, "Пациент не в состоянии Введен");
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
     }
-    return "redirect:/main.s";
+    return json.toString();
   }
 
   @RequestMapping("nurse/view.s")
@@ -249,46 +247,21 @@ public class CReg {
         return json.toString();
       }
       //
-      Double EXTRA_KOYKA_LUX_UZB = Double.parseDouble(session.getParam("EXTRA_KOYKA_LUX_UZB"));
-      Double EXTRA_KOYKA_SIMPLE_UZB = Double.parseDouble(session.getParam("EXTRA_KOYKA_SIMPLE_UZB"));
-      Double EXTRA_KOYKA_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
-      Double EXTRA_KOYKA_SIMPLE = Double.parseDouble(session.getParam("EXTRA_KOYKA_SIMPLE"));
-
-      Double BRON_KOYKA_SIMPLE_UZB = Double.parseDouble(session.getParam("BRON_KOYKA_SIMPLE_UZB"));
-      Double BRON_KOYKA_LUX_UZB = Double.parseDouble(session.getParam("BRON_KOYKA_LUX_UZB"));
-      Double BRON_KOYKA_SIMPLE = Double.parseDouble(session.getParam("BRON_KOYKA_SIMPLE"));
-      Double BRON_KOYKA_LUX = Double.parseDouble(session.getParam("BRON_KOYKA_LUX"));
-      //
       PatientWatchers watcher = new PatientWatchers();
       watcher.setDayCount(Util.getInt(req, "days"));
       watcher.setPatient_id(pat.getId());
       watcher.setType(dDict.get(Util.getInt(req, "type")));
+
       if(pat.getCounteryId() == 199) {
-        if(pat.getRoom().getRoomType().getId() == 5) { // Люкс
-          if(watcher.getType().getId() == 8)
-            watcher.setPrice(BRON_KOYKA_LUX_UZB);
-          else
-            watcher.setPrice(EXTRA_KOYKA_LUX_UZB);
-        }
-        if(pat.getRoom().getRoomType().getId() == 6) { // Простая
-          if(watcher.getType().getId() == 8)
-            watcher.setPrice(BRON_KOYKA_SIMPLE_UZB);
-          else
-            watcher.setPrice(EXTRA_KOYKA_SIMPLE_UZB);
-        }
+        if(watcher.getType().getId() == 8)
+          watcher.setPrice(pat.getRoom().getBron_price());
+        else
+          watcher.setPrice(pat.getRoom().getExtra_price());
       } else {
-        if(pat.getRoom().getRoomType().getId() == 5) { // Люкс
-          if(watcher.getType().getId() == 8)
-            watcher.setPrice(BRON_KOYKA_LUX);
-          else
-            watcher.setPrice(EXTRA_KOYKA_LUX);
-        }
-        if(pat.getRoom().getRoomType().getId() == 6) { // Простая
-          if(watcher.getType().getId() == 8)
-            watcher.setPrice(BRON_KOYKA_SIMPLE);
-          else
-            watcher.setPrice(EXTRA_KOYKA_SIMPLE);
-        }
+        if(watcher.getType().getId() == 8)
+          watcher.setPrice(pat.getRoom().getFor_bron_price());
+        else
+          watcher.setPrice(pat.getRoom().getFor_extra_price());
       }
       watcher.setTotal(watcher.getPrice()*watcher.getDayCount());
       watcher.setState("ENT");

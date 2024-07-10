@@ -5,6 +5,7 @@ import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.med.amb.*;
 import ckb.dao.med.client.DClient;
+import ckb.domains.admin.Clients;
 import ckb.domains.admin.FormFields;
 import ckb.domains.med.amb.*;
 import ckb.models.AmbService;
@@ -87,6 +88,7 @@ public class SAmpImp implements SAmb {
         pat.setId(rs.getInt("id"));
         pat.setFio(Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")) + " " + Util.nvl(rs.getString("middlename")));
         pat.setBirthYear(rs.getInt("birthyear") != 0 ? "" + rs.getInt("birthyear") : "");
+        pat.setBirthday(Util.dateToString(rs.getDate("birthday")));
         pat.setDateBegin(Util.dateTimeToString(rs.getTimestamp("Reg_Date")));
         list.add(pat);
       }
@@ -154,6 +156,7 @@ public class SAmpImp implements SAmb {
       p.setLvpartner(pat.getLvpartner());
       p.setClient(pat.getClient());
       p.setQrcode(pat.getQrcode());
+      p.setBirthday(pat.getBirthday());
     } else {
       p.setSex(dOpt.get(12));
       p.setTgNumber("998");
@@ -161,20 +164,24 @@ public class SAmpImp implements SAmb {
   }
 
   @Override
-  public AmbPatients save(HttpServletRequest req) {
+  public AmbPatients save(HttpServletRequest req) throws Exception {
     AmbPatients pat = Util.isNull(req, "id") ? new AmbPatients() : dAmpPatients.get(Util.getInt(req, "id"));
-    pat.setSurname(Util.get(req, "surname"));
-    pat.setName(Util.get(req, "name"));
-    pat.setMiddlename(Util.get(req, "middlename"));
-    pat.setBirthyear(Util.getNullInt(req, "birthyear"));
+    if(Util.isNotNull(req, "client_id")) {
+      pat.setClient(dClient.get(Util.getInt(req, "client_id")));
+      Clients c = pat.getClient();
+      Util.checkClient(c);
+      pat.setSurname(c.getSurname());
+      pat.setBirthday(c.getBirthdate());
+      pat.setName(c.getName());
+      pat.setMiddlename(c.getMiddlename());
+      pat.setBirthyear(c.getBirthyear());
+      pat.setCounteryId(c.getCountry().getId());
+      pat.setRegionId(c.getRegion().getId());
+      pat.setPassportInfo(c.getDocSeria() + " " + c.getDocNum() + " " + c.getDocInfo());
+      pat.setSex(c.getSex());
+      pat.setAddress(c.getAddress());
+    }
     pat.setTel(Util.get(req, "tel"));
-    pat.setCounteryId(Util.getNullInt(req, "counteryId"));
-    pat.setRegionId(Util.getNullInt(req, "regionId"));
-    pat.setPassportInfo(Util.get(req, "passportInfo"));
-    pat.setAddress(Util.get(req, "address"));
-    pat.setSex(Util.isNull(req, "sex.id") ? null : dOpt.get(Util.getInt(req, "sex.id")));
-    if(Util.isNotNull(req, "client"))
-      pat.setClient(dClient.get(Util.getInt(req, "client")));
     pat.setTgNumber(Util.get(req, "tgNumber"));
     pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
     if(Util.isNull(req, "id")) {
@@ -207,9 +214,12 @@ public class SAmpImp implements SAmb {
   @Override
   public List<AmbService> getHistoryServices(int curPat) {
     List<AmbService> list = new ArrayList<AmbService>();
-
-    List<AmbPatientLinks> links = dAmbPatientLinks.getList("From AmbPatientLinks Where child = " + curPat + " Or parent = " + curPat);
-    for(AmbPatientLinks link : links) {
+    List<AmbPatientLinks> links = dAmbPatientLinks.getList("From AmbPatientLinks Where child = " + curPat);
+    List<AmbPatientLinks> lins = dAmbPatientLinks.getList("From AmbPatientLinks Where parent = " + curPat);
+    List<AmbPatientLinks> ls = new ArrayList<>();
+    if(!lins.isEmpty()) ls.addAll(lins);
+    if(!links.isEmpty()) ls.addAll(links);
+    for(AmbPatientLinks link : ls) {
       AmbService service = new AmbService();
       // Child
       if(link.getChild() != curPat) {

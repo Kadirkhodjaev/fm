@@ -8,6 +8,8 @@
 <link href="/res/choosen/chosen.min.css" rel="stylesheet">
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 <script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
+<link href="/res/css/styles.css" rel="stylesheet">
+<script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
 <style>
     .kdoTable tr th {font-weight: bold; text-align: center}
 </style>
@@ -48,7 +50,18 @@
     window.open("/lv/print.s");
   }
   function delPatient(){
-    openMainPage('/reg/nurse/del.s');
+    if(confirm('Вы действительно хотите данного пациента')) {
+      $.ajax({
+        url: "/reg/nurse/del.s",
+        method: "post",
+        data: '',
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if (res.success)
+            setPage('/reg/nurse/index.s');
+        }});
+    }
   }
   function setCountery(dom) {
     $('#regionId').toggle(dom.value == '199').val('');
@@ -60,54 +73,6 @@
   function contract(){
     window.open('/patients/contract.s')
   }
-  function setClient(id) {
-    $.ajax({
-      url: '/client/get.s',
-      method: 'post',
-      data: 'id=' + id,
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('#surname').val(res.surname);
-          $('#name').val(res.name);
-          $('#middlename').val(res.middlename);
-          $('#birthdayString').val(res.birthdate);
-          $('#sex_id').val(res.sex_id);
-          $('#passportInfo').val(res.doc_seria + ' ' +  res.doc_num + ' ' + res.doc_info);
-          $('#tel').val(res.tel);
-          $('#counteryId').val(res.country_id);
-          $('#regionId').val(res.region_id);
-          $('#address').val(res.address);
-        } else {
-          alert(res.msg)
-        }
-      }
-    });
-  }
-  function addClient(){
-    if (checkForm($('#clientForm'))) {
-      $.ajax({
-        url: '/client/save.s',
-        method: 'post',
-        data: $('#clientForm').serialize(),
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert("Данные успешно сохранены");
-            $('#close-modal').click();
-            $('#client-selector').each(function (elem, dom) {
-              dom.options[dom.options.length] = new Option(res.fio, res.id);
-              $(this).trigger('liszt:updated');
-            });
-            $("#client-selector").val(res.id).trigger("liszt:updated");
-            setClient(res.id);
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
-  }
   function setOtd(id) {
     $('#room_id').empty().append($('<option></option>'));
     rooms.forEach((dom) => {
@@ -115,7 +80,244 @@
         $('#room_id').append($('<option ' + ('${patient.room.id}' == dom.id ? 'selected ' : '') + 'value="' + dom.id + '">' + dom.name + '</option>'));
     });
   }
+  //region Client Block
+  $('input[name=client_name]').keyup( () => {
+    <c:if test="${patient.id != null}">return;</c:if>
+    let div = $('#client_filter'), elem = $('input[name=client_name]'), v = elem.val().toUpperCase();
+    div.width(elem.width() + 12);
+
+    if(v.length === 0) div.hide();
+    if(v.length > 3) {
+      if(clients.length === 0) {
+        $.ajax({
+          url: '/clients/search_by_letters.s',
+          method: 'post',
+          data: 'word=' + v,
+          dataType: 'json',
+          success: function (res) {
+            if (res.success) {
+              clients = res.clients;
+              if(clients.length > 0) {
+                buildClients(clients);
+                div.show();
+              } else openMedMsg('Данные не найдены', false);
+            } else openMsg(res);
+          }
+        });
+      } else {
+        let cls = clients.filter(obj => obj.name.toUpperCase().indexOf(v) !== -1);
+        buildClients(cls);
+      }
+    } else {
+      clients = [];
+    }
+  });
+  function buildClients(cls) {
+    let table = $('#client_filter>table>tbody');
+    table.html('');
+    for(let client of cls) {
+      let tr = $('<tr cid="' + client.id + '"></tr>');
+      tr.click(()=> {
+        $('#client_filter').hide();
+        $('#client_buttons .btn-success').hide();
+        $('#client_buttons .btn-info').show();
+        $('#client_buttons .btn-danger').show();
+        $('#client_buttons').width(80);
+        setClient(tr.attr('cid'));
+      });
+      let fio = $('<td>' + client.name + '</td>');
+      let bd = $('<td class="center">' + client.birthdate + '</td>');
+      tr.append(fio).append(bd);
+      table.append(tr);
+    }
+  }
+  function setClient(id) {
+    let client = id === 0 ? {} : clients.filter(obj => obj.id == id)[0];
+    $('input[name=client_id]').val(client.id);
+    $('input[name=client_name]').val(client.name).attr('readonly', id !== 0);
+    $('input[name=birthdayString]').val(client.birthdate);
+    $('input[name=sex_id]').val(client.sex);
+    $('input[name=country]').val(client.country);
+    $('input[name=region]').val(client.region);
+    $('input[name=passport]').val(client.passport);
+    $('input[name=address]').val(client.address);
+    $('input[name=tel]').val(client.tel);
+  }
+  $('#client_buttons .btn-danger').click(()=> {
+    $('#client_buttons .btn-success').show();
+    $('#client_buttons .btn-info').hide();
+    $('#client_buttons .btn-danger').hide();
+    $('#client_buttons').width(40);
+    clients = [];
+    setClient(0);
+  });
+  function saveClient() {
+    if(checkForm($('#clientForm'))) {
+      $.ajax({
+        url: '/clients/save.s',
+        method: 'post',
+        data: $('#clientForm').serialize(),
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success) {
+            updateClientInfo(res.id);
+          }
+        }
+      });
+    }
+  }
+  function updateClientInfo(id) {
+    $.ajax({
+      url: '/clients/get.s',
+      method: 'post',
+      data: 'id=' + id,
+      dataType: 'json',
+      success: function (res) {
+        if(res.success) {
+          $('input[name=client_id]').val(res.id);
+          $('input[name=client_name]').val(res.fio).attr('readonly', id !== 0);
+          $('input[name=birthdayString]').val(res.birthdate);
+          $('input[name=sex_id]').val(res.sex_name);
+          $('input[name=passport]').val(res.passport);
+          $('input[name=country]').val(res.country_name);
+          $('input[name=region]').val(res.region_name);
+          $('input[name=address]').val(res.address);
+          $('input[name=tel]').val(res.tel);
+          getDOM('close_client_info').click();
+        } else openMedMsg(res.msg, false);
+      }
+    });
+  }
+  function clientView() {
+    let client_id = $('input[name=client_id]').val();
+    $.ajax({
+      url: '/clients/get.s',
+      method: 'post',
+      data: 'id=' + client_id,
+      dataType: 'json',
+      success: function (res) {
+        if(res.success) {
+          $('input[name=cl_id]').val(res.id);
+          $('input[name=cl_surname]').val(res.surname);
+          $('input[name=cl_name]').val(res.name);
+          $('input[name=cl_middlename]').val(res.middlename);
+          $('input[name=cl_birthdate]').val(res.birthdate);
+          $('select[name=cl_sex_id]').val(res.sex_id);
+          $('input[name=cl_doc_seria]').val(res.doc_seria);
+          $('input[name=cl_doc_num]').val(res.doc_num);
+          $('input[name=cl_doc_info]').val(res.doc_info);
+          $('input[name=cl_tel]').val(res.tel);
+          $('select[name=cl_country_id]').val(res.country_id);
+          $('select[name=cl_region_id]').val(res.region_id);
+          $('input[name=cl_address]').val(res.address);
+          $('#btn_client_view').click();
+        } else openMedMsg(res.msg, false);
+      }
+    });
+  }
+  function addClient() {
+    getDOM('clientForm').reset();
+    $('#btn_client_view').click();
+  }
+  //endregion
+
 </script>
+<button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
+<div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog wpx-1000">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title text-danger"><b class="fa fa-user"></b> Реквизиты клиента</h4>
+      </div>
+      <div class="modal-body">
+        <form id="clientForm" name="clientForm">
+          <input type="hidden" name="cl_id"/>
+          <table class="formTable w-100">
+            <tr>
+              <td class="right" nowrap>ФИО <req>*</req>:</td>
+              <td colspan="3">
+                <table class="w-100">
+                  <tr>
+                    <td>
+                      <input name="cl_surname" title="Фамилия" placeholder="Фамилия" type="text" class="form-control w-100" required="true" maxlength="64" autocomplete="off"/>
+                    </td>
+                    <td>
+                      <input name="cl_name" title="Исми" placeholder="Исми" type="text" class="form-control w-100" required="true"  maxlength="64" autocomplete="off"/>
+                    </td>
+                    <td>
+                      <input name="cl_middlename" title="Шарифи" placeholder="Шарифи" class="form-control w-100" maxlength="64" autocomplete="off"/>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Дата рождения <req>*</req>:</td>
+              <td>
+                <input name="cl_birthdate" type="text" class="form-control center date-format" placeholder="dd.mm.yyyy" style="width:100px;" maxlength="10"/>
+              </td>
+              <td class="right" nowrap>Пол <req>*</req>:</td>
+              <td>
+                <select name="cl_sex_id" class="form-control">
+                  <c:forEach items="${sex}" var="sx">
+                    <option value="${sx.id}">${sx.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Серия паспорта:</td>
+              <td><input name="cl_doc_seria" type="text" class="form-control text-center uppercase" maxlength="2" placeholder="XX"/></td>
+              <td class="right" nowrap>Номер паспорта:</td>
+              <td><input name="cl_doc_num" type="text" class="form-control text-center" maxlength="10" placeholder="XXXXXXX"/></td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Паспортные данные:</td>
+              <td><input name="cl_doc_info" type="text" class="form-control" maxlength="64"/></td>
+              <td class="right" nowrap>Номер телефона:</td>
+              <td><input name="cl_tel" type="text" class="form-control" maxlength="400"/></td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Резиденство <req>*</req>:</td>
+              <td>
+                <select name="cl_country_id" class="form-control" onchange="$('select[name=cl_region_id]').toggle(this.value === '199').val()">
+                  <c:forEach items="${countries}" var="reg">
+                    <option value="${reg.id}">${reg.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+              <td class="right" nowrap>Область:</td>
+              <td>
+                <select name="cl_region_id" class="form-control">
+                  <c:forEach items="${regions}" var="reg">
+                    <option value="${reg.id}">${reg.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Адрес:</td>
+              <td colspan="3"><input name="cl_address" type="text" class="form-control" maxlength="400"/></td>
+            </tr>
+          </table>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success btn-sm" onclick="saveClient()">
+          <i class="fa fa-save"></i> Сохранить
+        </button>
+        <button class="btn btn-danger btn-sm" id="close_client_info" data-dismiss="modal" aria-hidden="true">
+          <i class="fa fa-remove"></i> Закрыть
+        </button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+
 <div class="panel panel-info" style="width: 800px !important; margin: auto">
   <div class="panel-heading">
     <span <c:if test="${patient.id != null}">title="${patient.id}"</c:if>>Бемор ҳақида маълумот</span>
@@ -138,43 +340,40 @@
       <%@include file="/incs/msgs/successError.jsp"%>
       <%@include file="/incs/msgs/errors.jsp"%>
       <table class="formTable">
-        <c:if test="${patient.id == null}">
-          <tr>
-            <td class="right" nowrap>Клиент<d></d>:</td>
-            <td colspan="3">
-              <table width="100%">
-                <tr>
-                  <td style="width:90%">
-                    <select id="client-selector" name="client" class="form-control chzn-select" onchange="setClient(this.value)">
-                      <option></option>
-                      <c:forEach items="${clients}" var="client">
-                        <option value="${client.id}">${client.surname} ${client.name} ${client.middlename}</option>
-                      </c:forEach>
-                    </select>
-                  </td>
-                  <td style="width:9%" class="text-center">
-                    <button type="button" class="btn btn-success" onclick="$('#clientForm').trigger('reset');$('#client_window').click()" style="height:20px;padding:0px 8px">
+        <tr>
+          <td class="right">Клиент <req>*</req>:</td>
+          <td colspan="3">
+            <table class="w-100">
+              <tr>
+                <td>
+                  <input type="hidden" name="client_id" value="${patient.client.id}">
+                  <input type="text" class="form-control uppercase" name="client_name" placeholder="Ф.И.О." value="<c:if test="${patient.id != null}">${patient.fio}</c:if>" <c:if test="${patient.id != null}">readonly</c:if>/>
+                  <div id="client_filter" style="display: none; position: absolute; background:white">
+                    <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
+                  </div>
+                </td>
+                <td class="center" style="<c:if test="${patient.id == null}">width:40px</c:if>" id="client_buttons">
+                  <c:if test="${patient.id == null}">
+                    <button type="button" class="btn btn-success btn-icon" onclick="addClient()">
                       <b class="fa fa-plus"></b>
                     </button>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </c:if>
-        <tr>
-          <td class="right" nowrap>ФИО<d></d>:</td>
-          <td colspan="3">
-            <f:input path="surname" title="Фамилия" placeholder="Фамилия" cssStyle="width:167px; display:inline;margin-right:10px;text-transform: uppercase;" type="text" class="form-control" required="true" maxlength="64" autofocus="1" autocomplete="off"/>
-            <f:input path="name" title="Исми" placeholder="Исми" cssStyle="width:167px; display:inline;margin-right:10px;text-transform: uppercase;" type="text" class="form-control" required="true"  maxlength="64" autocomplete="off"/>
-            <f:input path="middlename" title="Шарифи" placeholder="Шарифи" cssStyle="width:167px; float: right;text-transform: uppercase;" type="text" class="form-control" maxlength="64" autocomplete="off"/>
+                    <button type="button" class="btn btn-info btn-icon display-none" onclick="clientView()">
+                      <b class="fa fa-user"></b>
+                    </button>
+                    <button type="button" class="btn btn-danger btn-icon display-none">
+                      <b class="fa fa-remove"></b>
+                    </button>
+                  </c:if>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
           <td class="right" nowrap>Тугилган сана:</td>
-          <td><f:input path="birthdayString" class="form-control center" type="text" maxlength="10" placeholder="dd.mm.yyyy"/></td>
+          <td><input type="text" name="birthdayString" class="form-control center" readonly value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.birthday}" />" placeholder="dd.mm.yyyy"/></td>
           <td class="right" nowrap>Жинси:</td>
-          <td><f:select path="sex.id" id="sex_id" cssClass="form-control" items="${sex}" itemValue="id" itemLabel="name"/></td>
+          <td><input type="text" name="sex_id" class="form-control center" readonly value="${patient.sex.name}"/></td>
         </tr>
         <tr>
           <td class="right" nowrap>Буйи:</td>
@@ -190,20 +389,15 @@
         </tr>
         <tr>
           <td class="right" nowrap>Фукоролик:</td>
-          <td><f:select path="counteryId" items="${counteries}" onchange="setCountery(this)" itemValue="id" itemLabel="name" class="form-control" /></td>
+          <td><input type="text" name="country" class="form-control center" readonly value="${countryName}"/></td>
           <td class="right" nowrap>Вилоят:</td>
-          <td>
-            <f:select path="regionId" class="form-control">
-              <f:option value=""></f:option>
-              <f:options items="${regions}" itemValue="id" itemLabel="name"></f:options>
-            </f:select>
-          </td>
+          <td><input type="text" name="region" class="form-control center" readonly value="${regionName}"/></td>
         </tr>
         <tr>
           <td class="right" nowrap>Манзили:</td>
-          <td><f:input path="address" type="text" class="form-control" maxlength="400"/></td>
+          <td><input type="text" name="address" class="form-control center" readonly value="${patient.address}"/></td>
           <td class="right" nowrap>Паспорт маълумотлари:</td>
-          <td><f:input path="passportInfo" type="text" class="form-control" maxlength="64"/></td>
+          <td><input type="text" name="passport" class="form-control center" readonly value="${patient.passportInfo}"/></td>
         </tr>
         <tr>
           <td class="right" nowrap>Телефон раками:</td>
@@ -396,87 +590,6 @@
   </c:if>
 </div>
 
-<a href="#" data-toggle="modal" data-target="#myModal" id="client_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-        <div class="modal-dialog" style="width:800px">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-              <h4 class="modal-title" id="clientModalLabel">Реквизиты клиента</h4>
-            </div>
-            <div class="modal-body">
-              <form id="clientForm" name="clientForm">
-                <table class="formTable">
-                  <tr>
-                    <td class="right" nowrap>ФИО<d></d>:</td>
-                    <td colspan="3">
-                      <input name="surname" title="Фамилия" placeholder="Фамилия" style="width:167px; display:inline;margin-right:10px;text-transform: uppercase;" type="text" class="form-control" required="true" maxlength="64" autocomplete="off"/>
-                      <input name="name" title="Исми" placeholder="Исми" style="width:167px; display:inline;margin-right:10px;text-transform: uppercase;" type="text" class="form-control" required="true"  maxlength="64" autocomplete="off"/>
-                      <input name="middlename" title="Шарифи" placeholder="Шарифи" style="width:167px; float: right;text-transform: uppercase;" type="text" class="form-control" maxlength="64" autocomplete="off"/>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="right" nowrap>Дата рождения:</td>
-                    <td>
-                      <input name="birthdate" id="birthdate" type="text" class="form-control center" placeholder="dd.mm.yyyy" style="width:100px;" maxlength="10"/>
-                    </td>
-                    <td class="right" nowrap><ui:message code="sex"/>:</td>
-                    <td>
-                      <select name="sex_id" class="form-control">
-                        <c:forEach items="${sex}" var="sx">
-                          <option value="${sx.id}">${sx.name}</option>
-                        </c:forEach>
-                      </select>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="right" nowrap>Серия паспорта:</td>
-                    <td><input name="doc_seria" type="text" class="form-control text-center" style="text-transform: uppercase;" maxlength="2" placeholder="XX"/></td>
-                    <td class="right" nowrap>Номер паспорта:</td>
-                    <td><input name="doc_num" type="text" class="form-control text-center" style="text-transform: uppercase;" maxlength="10" placeholder="XXXXXXX"/></td>
-                  </tr>
-                  <tr>
-                    <td class="right" nowrap><ui:message code="passportInfo"/>:</td>
-                    <td><input name="doc_info" type="text" class="form-control" maxlength="64"/></td>
-                    <td class="right" nowrap><ui:message code="phone"/>:</td>
-                    <td><input name="tel" type="number" class="form-control"/></td>
-                  </tr>
-                  <tr>
-                    <td class="right" nowrap>Резиденство:</td>
-                    <td>
-                      <select name="country_id" class="form-control" onchange="setCountery(this)">
-                        <c:forEach items="${counteries}" var="ss">
-                          <option value="${ss.id}">${ss.name}</option>
-                        </c:forEach>
-                      </select>
-                    </td>
-                    <td class="right" nowrap>Область:</td>
-                    <td>
-                      <select name="region_id" id="region_id" class="form-control">
-                        <c:forEach items="${regions}" var="reg">
-                          <option value="${reg.id}">${reg.name}</option>
-                        </c:forEach>
-                      </select>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="right" nowrap><ui:message code="address"/>:</td>
-                    <td colspan="3"><input name="address" type="text" class="form-control" maxlength="400"/></td>
-                  </tr>
-                </table>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-primary" onclick="addClient()">Сохранить</button>
-              <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-            </div>
-          </div>
-          <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-      </div>
-
-
 <script>
   function setWatcherDayCount(id, dom) {
     $.ajax({
@@ -570,4 +683,5 @@
       }
     });
   }
+  $(".date-format").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
 </script>

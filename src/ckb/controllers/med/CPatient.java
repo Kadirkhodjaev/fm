@@ -514,7 +514,7 @@ public class CPatient {
     session = SessionUtil.getUser(req);
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("pat", pat);
-    model.addAttribute("price", sPatient.getPatientKoykoPrice(pat));
+    model.addAttribute("price", pat.getRoomPrice());
     model.addAttribute("sysdate", Util.getCurDate());
     return "med/patients/contract";
   }

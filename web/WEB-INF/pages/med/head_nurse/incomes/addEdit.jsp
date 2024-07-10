@@ -101,7 +101,7 @@
   <div class="panel panel-info" style="width: 80%; margin: auto">
     <div class="panel-heading">
       Записи
-      <c:if test="${obj.state == 'CON' && fn:length(rows) > 0}">
+      <c:if test="${obj.state == 'CON' && fn:length(rows) > 0 && obj.insFlag != 'Y'}">
         <button  class="btn btn-sm btn-info" onclick="updateDrop()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-check"></i> Принять на склад</button>
       </c:if>
     </div>

@@ -1016,4 +1016,8 @@ public class Patients extends GenId {
   public boolean isResident() {
     return getCounteryId() == 199;
   }
+
+  public double getRoomPrice() {
+    return counteryId == 199 ? room.getPrice() : room.getFor_price();
+  }
 }

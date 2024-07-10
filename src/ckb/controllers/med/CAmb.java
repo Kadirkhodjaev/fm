@@ -4,7 +4,6 @@ import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
-import ckb.dao.admin.forms.DFormLog;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
@@ -32,7 +31,6 @@ import ckb.session.SessionUtil;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
-import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +82,7 @@ public class CAmb {
   @Autowired private DClient dClient;
   @Autowired private DParam dParam;
   @Autowired private SRkdo sRkdo;
-  @Autowired private DFormLog dFormLog;
+  @Autowired private DAmbServiceUser dAmbServiceUser;
   //endregion
 
   //region PATIENTS
@@ -113,16 +111,16 @@ public class CAmb {
       session.setBackUrl(session.getCurUrl());
       String sql = " From Amb_Patients t Where t.state != 'ARCH' ";
       Users user = dUser.get(session.getUserId());
-      // Амбулаторные услуги
+      // ???????????? ??????
       if (session.getRoleId() == 14) {
         sql += " And (t.state in ('WORK', 'DONE') And Exists (Select 1 From Amb_Patient_Services c Where t.id = c.patient And c.State Not In ('DEL', 'AUTO_DEL') And c.worker_id = " + session.getUserId() + "))";
         if(user.isAmbFizio())
           sql += " Or (fizio = 'Y' And t.state != 'ARCH') ";
       }
-      // Касса
+      // ?????
       if (session.getRoleId() == 13)
         sql += " And t.state != 'PRN'";
-      //region Фильтр
+      //region ??????
       if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
         if (!Req.isNull(r, "filter"))
@@ -202,7 +200,7 @@ public class CAmb {
       session.setCurPat(0);
       session.setBackUrl(session.getCurUrl());
       String sql = " From Amb_Patients t Where t.state = 'ARCH' ";
-      //region Фильтр
+      //region РџРѕРёСЃРє
       if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
         session.setFiltered(true);
         if (!Req.isNull(r, "filter"))
@@ -305,9 +303,12 @@ public class CAmb {
         }
         if(!"DONE".equals(s.getState()) && !"DEL".equals(s.getState()) && !"AUTO_DEL".equals(s.getState()))
           isDone = false;
-        if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.getRoleId() == 15 && (s.getResult() == null || s.getResult() == 0)))
-          d.setUsers(dUser.getList("From Users t Where Exists (Select 1 From AmbServiceUsers c Where t.id = c.user And c.service = " + s.getService().getId() + ")"));
-        else
+        if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.getRoleId() == 15 && (s.getResult() == null || s.getResult() == 0))) {
+          List<Users> users = new ArrayList<>();
+          List<AmbServiceUsers> serviceUsers = dAmbServiceUser.getList("From AmbServiceUsers t Where t.service = " + s.getService().getId());
+          for(AmbServiceUsers serviceUser: serviceUsers) users.add(dUser.get(serviceUser.getUser()));
+          d.setUsers(users);
+        } else
           d.setUsers(dUser.getList("From Users t Where id = " + s.getWorker().getId()));
         //
         String sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice());
@@ -326,7 +327,10 @@ public class CAmb {
       m.addAttribute("ndsTotal", nds + summ);
       m.addAttribute("histories", sAmb.getHistoryServices(session.getCurPat()));
     }
-    m.addAttribute("clients", dClient.getList("From Clients Order By surname"));
+    m.addAttribute("countries", dCountery.getAll());
+    m.addAttribute("regions", dRegion.getAll());
+    m.addAttribute("countryName", p.getCounteryId() != null ? dCountery.get(p.getCounteryId()).getName() : "");
+    m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
     m.addAttribute("lvpartners", dLvPartner.getList("From LvPartners " + (session.getCurPat() > 0 ? "" : " Where state = 'A' ") + " Order By code"));
     m.addAttribute("fizio_user", dUser.get(session.getUserId()).isAmbFizio());
     m.addAttribute("regId", Util.get(req, "reg"));
@@ -388,8 +392,11 @@ public class CAmb {
     session = SessionUtil.getUser(req);
     try {
       if(dAmbPatients.get(session.getCurPat()).getState().equals("PRN")) {
-        List<AmbPatientLinks> links = dAmbPatientLinks.getList("From AmbPatientLinks Where parent = " + session.getCurPat() + " Or child = " + session.getCurPat());
+        List<AmbPatientLinks> links = dAmbPatientLinks.getList("From AmbPatientLinks Where parent = " + session.getCurPat());
         for(AmbPatientLinks link: links)
+          dAmbPatientLinks.delete(link.getId());
+        List<AmbPatientLinks> lins = dAmbPatientLinks.getList("From AmbPatientLinks Where child = " + session.getCurPat());
+        for(AmbPatientLinks link: lins)
           dAmbPatientLinks.delete(link.getId());
         List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
         for(AmbPatientServices ser : services)
@@ -407,7 +414,7 @@ public class CAmb {
   @RequestMapping("/services.s")
   protected String serviceList(HttpServletRequest req, Model m){
     session = SessionUtil.getUser(req);
-    //region Услуги
+    //region Groups
     List<AmbGroups> groups = dAmbGroups.getList("From AmbGroups t Where t.active = 1");
     List<AmbGroup> gs = new ArrayList<AmbGroup>();
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
@@ -475,9 +482,9 @@ public class CAmb {
       if(Util.isNull(req, "msg")) {
         AmbPatientServices ser = dAmbPatientServices.get(Util.getInt(req, "id"));
         dAmbPatientServices.delete(ser.getId());
-        // Если есть какие то др услуги
+        // РџРѕ РїР°С†РёРµРЅС‚Сѓ РёРјРµРµС‚СЃСЏ СѓСЃР»СѓРіРё
         if (dAmbPatientServices.getCount("From AmbPatientServices Where patient = " + ser.getPatient()) > 0) {
-          // Если все услуги оказаны то перводим пациента в состояние ДАН
+          // Р•СЃР»Рё РµСЃС‚СЊ РЅРµ РІС‹РїРѕР»РЅРµРЅРЅС‹Рµ СѓСЃР»СѓРіРё С‚Рѕ РїСЂРѕРІРѕРґРёРј DONE
           if (dAmbPatientServices.getCount("From AmbPatientServices Where state != 'DONE' And patient = " + ser.getPatient()) == 0) {
             AmbPatients pat = dAmbPatients.get(ser.getPatient());
             pat.setState("DONE");
@@ -489,9 +496,8 @@ public class CAmb {
         ser.setState("DEL");
         ser.setMsg(Util.get(req, "msg"));
         dAmbPatientServices.save(ser);
-        // Если есть какие то др услуги
+        // РџРѕ РїР°С†РёРµРЅС‚Сѓ РёРјРµРµС‚СЃСЏ СѓСЃР»СѓРіРё
         if (dAmbPatientServices.getCount("From AmbPatientServices Where patient = " + ser.getPatient()) > 0) {
-          // Если все услуги оказаны то перводим пациента в состояние ДАН
           if (dAmbPatientServices.getCount("From AmbPatientServices Where state != 'DONE' And state != 'DEL' And patient = " + ser.getPatient()) == 0) {
             AmbPatients pat = dAmbPatients.get(ser.getPatient());
             pat.setState("DONE");
@@ -526,7 +532,7 @@ public class CAmb {
   }
   //endregion
 
-  //region Амбулаторные услуги
+  //region РђРјР±СѓР»Р°С‚РѕСЂРЅС‹Рµ СѓСЃР»СѓРіРё
   @RequestMapping("/patientServices.s")
   protected String patientServices(HttpServletRequest req, Model m){
     session = SessionUtil.getUser(req);
@@ -850,7 +856,7 @@ public class CAmb {
     session = SessionUtil.getUser(req);
     try {
       AmbPatientServices ser = dAmbPatientServices.get(Req.getInt(req, "id"));
-      ser.setAmb_repeat("D"); // Повторная консультация
+      ser.setAmb_repeat("D");
       dAmbPatientServices.save(ser);
       //
       ser.setId(null);
@@ -939,7 +945,7 @@ public class CAmb {
 
   @RequestMapping(value = "/drug/save.s", method = RequestMethod.POST) @ResponseBody
   protected String patientDrugSave(HttpServletRequest req) throws JSONException {
-    Session session = SessionUtil.getUser(req);
+    /*Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     Integer id = Util.getNullInt(req, "id");
     List<AmbDrugRows> rows = new ArrayList<AmbDrugRows>();
@@ -970,7 +976,7 @@ public class CAmb {
             try {
               row.setMeasure(dDrugMeasure.get(Integer.parseInt(drug_measures[i])));
             } catch (Exception e) {
-              json.put("msg", "Нет данных по единице измерении. Обратитесь Старшой медсестре! По медикаменту не установлен Коичественный учет");
+              json.put("msg", "??? ?????? ?? ??????? ?????????. ?????????? ??????? ?????????! ?? ??????????? ?? ?????????? ????????????? ????");
               json.put("success", false);
               return json.toString();
             }
@@ -987,12 +993,12 @@ public class CAmb {
       //
       if(id == null || id == 0) {
         if(dateStates == null || dateStates.length == 0) {
-          json.put("msg", "Даты назначении не выбраны");
+          json.put("msg", "???? ?????????? ?? ???????");
           json.put("success", false);
           return json.toString();
         }
         if(rows.size() == 0) {
-          json.put("msg", "Список препаратов не может быть пустым");
+          json.put("msg", "?????? ?????????? ?? ????? ???? ??????");
           json.put("success", false);
           return json.toString();
         }
@@ -1035,7 +1041,7 @@ public class CAmb {
         drug.setNote(Util.get(req, "note"));
         //
         if(rows.size() == 0) {
-          json.put("msg", "Список препаратов не может быть пустым");
+          json.put("msg", "?????? ?????????? ?? ????? ???? ??????");
           json.put("success", false);
           return json.toString();
         }
@@ -1072,13 +1078,14 @@ public class CAmb {
       json.put("success", false);
       json.put("msg", e.getMessage());
     }
-    return json.toString();
+    return json.toString();*/
+    return "";
   }
 
   @RequestMapping(value = "/drugs/setPeriod.s")
   @ResponseBody
   protected String patientDrugPeriod(HttpServletRequest req) throws JSONException {
-    Session session = SessionUtil.getUser(req);
+    /*Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       AmbPatients pat = dAmbPatients.get(session.getCurPat());
@@ -1091,14 +1098,14 @@ public class CAmb {
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
-        if(begin.before(cal.getTime())) throw new Exception("Дата начала периода не может быть меньше Даты регистраций пациента");
+        if(begin.before(cal.getTime())) throw new Exception("???? ?????? ??????? ?? ????? ???? ?????? ???? ??????????? ????????");
       }
       if(end == null) {
         json.put("success", true);
         json.put("dates", new JSONArray());
         return json.toString();
       }
-      if(begin.after(end)) throw new Exception("Конец периода не может быть больще начала");
+      if(begin.after(end)) throw new Exception("????? ??????? ?? ????? ???? ?????? ??????");
       JSONArray dates = new JSONArray();
       int i = 0;
       while(true) {
@@ -1117,7 +1124,8 @@ public class CAmb {
       json.put("success", false);
       json.put("msg", e.getMessage());
     }
-    return json.toString();
+    return json.toString();*/
+    return "";
   }
 
   @RequestMapping(value = "/drug/delete.s", method = RequestMethod.POST)

@@ -2,6 +2,7 @@ package ckb.controllers.mo;
 
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
+import ckb.domains.admin.Users;
 import ckb.domains.med.amb.*;
 import ckb.models.*;
 import ckb.services.mo.amb.SMoAmb;
@@ -72,9 +73,12 @@ public class CAmbPatientService {
           if("ENT".equals(s.getState()) && (session.isReg() || (!session.isReg() &&  s.getCrBy() == session.getUserId()))) {
             d.setCanDelete(true);
           }
-          if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.isReg() && s.isNoResult()))
-            d.setUsers(dUser.getList("From Users t Where Exists (Select 1 From AmbServiceUsers c Where t.id = c.user And c.service = " + s.getService().getId() + ")"));
-          else
+          if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.isReg() && s.isNoResult())) {
+            List<Users> users = new ArrayList<>();
+            List<AmbServiceUsers> serviceUsers = dAmbServiceUser.getList("From AmbServiceUsers t Where t.service = " + s.getService().getId());
+            for(AmbServiceUsers serviceUser: serviceUsers) users.add(dUser.get(serviceUser.getUser()));
+            d.setUsers(users);
+          } else
             d.setUsers(dUser.getList("From Users t Where id = " + s.getWorker().getId()));
           d.setPrice(Util.sumFormat(s.getPrice()));
           ss.add(d);
@@ -290,7 +294,10 @@ public class CAmbPatientService {
           d.setWorker(s.getWorkerId());
           d.setWorkerFio(dUser.get(s.getWorkerId()).getFio());
           d.setSaved(dAmbPatientTreatmentDate.getCount("From AmbPatientTreatmentDates Where patientService > 0 And treatment = " + s.getId()) > 0 ? "Y" : "N");
-          d.setUsers(dUser.getList("From Users t Where Exists (Select 1 From AmbServiceUsers c Where t.id = c.user And c.service = " + s.getService().getId() + ")"));
+          List<Users> users = new ArrayList<>();
+          List<AmbServiceUsers> serviceUsers = dAmbServiceUser.getList("From AmbServiceUsers t Where t.service = " + s.getService().getId());
+          for(AmbServiceUsers serviceUser: serviceUsers) users.add(dUser.get(serviceUser.getUser()));
+          d.setUsers(users);
           List<AmbPatientTreatmentDates> ds = dAmbPatientTreatmentDate.list("From AmbPatientTreatmentDates Where treatment = " + s.getId());
           List<AmbTreatmentDate> dates = new ArrayList<>();
           if(ds.isEmpty()) {

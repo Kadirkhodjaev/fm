@@ -20,6 +20,7 @@ import ckb.dao.med.lv.plan.DKdoChoosen;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.*;
+import ckb.domains.admin.Clients;
 import ckb.domains.admin.Kdos;
 import ckb.domains.med.RoomBookings;
 import ckb.domains.med.dicts.Rooms;
@@ -82,20 +83,25 @@ public class SPatientImp implements SPatient {
   @Autowired private DLvPartner dLvPartner;
 
   @Override
-  public Patients save(HttpServletRequest req) {
+  public Patients save(HttpServletRequest req) throws Exception {
     Patients pat = Util.isNull(req, "id") ? new Patients() : dPatient.get(Util.getInt(req, "id"));
-    pat.setSurname(Util.get(req, "surname").toUpperCase());
-    pat.setName(Util.get(req, "name").toUpperCase());
-    pat.setMiddlename(Util.get(req, "middlename", "").toUpperCase());
-    //pat.setBirthyear(Util.getNullInt(req, "birthyear"));
+    if(Util.isNotNull(req, "client_id")) {
+      pat.setClient(dClient.get(Util.getInt(req, "client_id")));
+      Clients c = pat.getClient();
+      Util.checkClient(c);
+      pat.setSurname(c.getSurname());
+      pat.setName(c.getName().toUpperCase());
+      pat.setMiddlename(c.getMiddlename().toUpperCase());
+      pat.setCounteryId(c.getCountry().getId());
+      pat.setRegionId(c.getRegion() == null ? null : c.getRegion().getId());
+      pat.setPassportInfo(c.getPassport());
+      pat.setAddress(c.getAddress());
+      pat.setSex(c.getSex());
+      pat.setBirthday(c.getBirthdate());
+    }
     pat.setPost(Util.get(req, "post"));
     pat.setTel(Util.get(req, "tel"));
     pat.setWork(Util.get(req, "work"));
-    pat.setCounteryId(Util.getNullInt(req, "counteryId"));
-    pat.setRegionId(Util.getNullInt(req, "regionId"));
-    pat.setPassportInfo(Util.get(req, "passportInfo"));
-    pat.setAddress(Util.get(req, "address"));
-    pat.setSex(Util.isNull(req, "sex.id") ? null : dOpt.get(Util.getInt(req, "sex.id")));
     pat.setMetka(Util.isNull(req, "metka.id") ? null : dOpt.get(Util.getInt(req, "metka.id")));
     pat.setCat(Util.isNull(req, "cat.id") ? null : dOpt.get(Util.getInt(req, "cat.id")));
     pat.setTarDate(Util.get(req, "tarDate"));
@@ -119,11 +125,6 @@ public class SPatientImp implements SPatient {
     pat.setBloodGroup(Util.isNull(req, "bloodGroup.id") ? null : dOpt.get(Util.getInt(req, "bloodGroup.id")));
     pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
     pat.setDept(Util.isNull(req, "dept.id") ? null : dDept.get(Util.getInt(req, "dept.id")));
-    if(Util.isNotNull(req, "client"))
-      pat.setClient(dClient.get(Util.getInt(req, "client")));
-    //pat.setPay_type(Util.isNull(req, "pay_type.id") ? null : dOpt.get(Util.getInt(req, "pay_type.id")));
-    //pat.setDayCount(Util.getInt(req, "dayCount"));
-    pat.setBirthday(Util.stringToDate(Util.get(req, "birthdayString")));
     if(pat.getBirthday() != null) {
       pat.setBirthyear(1900 + pat.getBirthday().getYear());
     }
@@ -974,31 +975,6 @@ public class SPatientImp implements SPatient {
   }
 
   @Override
-  public double getPatientKoykoPrice(Patients patient) {
-    Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(dParam.byCode("KOYKA_PRICE_LUX_UZB"));
-    Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(dParam.byCode("KOYKA_PRICE_SIMPLE_UZB"));
-    Double KOYKA_SEMILUX_UZB = Double.parseDouble(dParam.byCode("KOYKA_SEMILUX_UZB"));
-    Double KOYKA_PRICE_LUX = Double.parseDouble(dParam.byCode("KOYKA_PRICE_LUX"));
-    Double KOYKA_PRICE_SIMPLE = Double.parseDouble(dParam.byCode("KOYKA_PRICE_SIMPLE"));
-    Double KOYKA_SEMILUX = Double.parseDouble(dParam.byCode("KOYKA_SEMILUX"));
-    if(patient.getCounteryId() == 199) { // Узбекистан
-      if(patient.getRoom().getRoomType().getId() == 5)  // Люкс
-        return KOYKA_PRICE_LUX_UZB;
-      else if(patient.getRoom().getRoomType().getId() == 6) // Протая
-        return KOYKA_PRICE_SIMPLE_UZB;
-      else // Полулюкс
-        return KOYKA_SEMILUX_UZB;
-    } else {
-      if(patient.getRoom().getRoomType().getId() == 5)  // Люкс
-        return KOYKA_PRICE_LUX;
-      else if(patient.getRoom().getRoomType().getId() == 6) // Протая
-        return KOYKA_PRICE_SIMPLE;
-      else // Полулюкс
-        return KOYKA_SEMILUX;
-    }
-  }
-
-  @Override
   public List<PatientDrug> getDrugsByType(int curPat, int type) {
     return getDrugsByType(curPat, type, false);
   }
@@ -1145,6 +1121,7 @@ public class SPatientImp implements SPatient {
           "                     And date(c.date) = CURRENT_DATE()) " +
           "      And date(t.crOn) = CURRENT_DATE() " + //
           "      And g.id = t.patient_id " +
+          "      And g.state != 'ARCH' " +
           "      And g.dept_id = " + dep + // CURRENT_DATE()
           "    Order By t.patient_id, t.Id desc ");
       rs = ps.executeQuery();

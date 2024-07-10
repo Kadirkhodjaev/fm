@@ -3,6 +3,7 @@ package ckb.services.med.rep;
 import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DLvPartner;
+import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.reports.DReport;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbGroup;
@@ -38,7 +39,6 @@ import ckb.domains.med.patient.Patients;
 import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.models.reports.Rep1;
-import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.DB;
 import ckb.utils.Util;
@@ -53,12 +53,13 @@ import java.util.*;
 
 public class SRepImp implements SRep {
 
-	@Autowired
-	DAmbGroup dAmbGroup;
-	@Autowired DReport dReport;
-	@Autowired DUser dUser;
-	@Autowired
-  DCountry dCountery;
+	Date startDate = Util.stringToDate("31.03.2024");
+
+	@Autowired private DAmbGroup dAmbGroup;
+	@Autowired private DReport dReport;
+	@Autowired private DUser dUser;
+	@Autowired private DCountry dCountery;
+	@Autowired private DParam dParam;
 	//
 	@Autowired private DPatientWatchers dPatientWatchers;
 	@Autowired private DLvFizio dLvFizio;
@@ -2722,6 +2723,7 @@ public class SRepImp implements SRep {
         service.setC3(rs.getString("lv_fio"));
         service.setC4(rs.getString("diagnoz"));
 				service.setC5(rs.getString("state"));
+				service.setC6(rs.getString("tel"));
         //
         rows.add(service);
       }
@@ -3828,19 +3830,22 @@ public class SRepImp implements SRep {
 		m.addAttribute("params", params);
 	}
 	private Double patientMustPay(HttpServletRequest request, int id) {
-		Session session = SessionUtil.getUser(request);
 		//
-		Double total;
 		Patients pat = dPatient.get(id);
 		//
-		Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
+		/*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
 		Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
 		Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));
 		Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
 		Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
-		Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));
+		Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));*/
+
+		Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+		Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+		Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
+		Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
 		//
-		if(pat.getCounteryId() == 199) { // Узбекистан
+		/*if(pat.getCounteryId() == 199) { // Узбекистан
 			if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
 				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX_UZB;
 			else if(pat.getRoom().getRoomType().getId() == 6) // Протая
@@ -3854,7 +3859,7 @@ public class SRepImp implements SRep {
 				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE;
 			else // Полулюкс
 				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX;
-		}
+		}*/
 		List<PatientWatchers> watchers = dPatientWatchers.byPatient(pat.getId());
 		for(PatientWatchers watcher: watchers) {
 			total += watcher.getTotal();
@@ -4252,10 +4257,11 @@ public class SRepImp implements SRep {
 		String pt = Util.get(req, "cat");
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
+		String repType = Util.get(req, "rep_type", "1");
 		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		double procSum = 0, totalSum = 0;
 		try {
-			List<LvPartners> partners = pt == null || pt.isEmpty() ? dLvPartner.getAll() : dLvPartner.getList("From LvPartners Where id = " + Integer.parseInt(pt));
+			List<LvPartners> partners = pt == null || pt.isEmpty() ? dLvPartner.getList("From LvPartners" + (repType.equals("0") ? " Where report != 'Y' or report is null" : "")) : dLvPartner.getList("From LvPartners Where id = " + Integer.parseInt(pt));
 			for(LvPartners partner: partners) {
 				Obj part = new Obj();
 				Double ambCount = DB.getSum(conn, "Select Count(*) From Amb_Patients t Where t.lvpartner_id = " + partner.getId() + " And date (t.reg_date) Between '" + Util.dateDB(Util.get(req, "period_start")) + "' And '" + Util.dateDB(Util.get(req, "period_end")) + "'");

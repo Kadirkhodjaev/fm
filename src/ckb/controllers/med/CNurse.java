@@ -361,6 +361,7 @@ public class CNurse {
           "         And g.patientId = c.id " +
           "         And d.state = 'Y')  " +
           "    And c.room_id = r.id " +
+          "    And c.state != 'ARCH' " +
           (patId > 0 ? " And c.id = " + patId : " " )
       );
       ps.setString(1, Util.dateDB(dated));

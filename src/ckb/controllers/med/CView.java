@@ -65,6 +65,8 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/view")
 public class CView {
 
+  Date startDate = Util.stringToDate("31.03.2024");
+
   @Autowired DPatient dPatient;
   @Autowired DLvForm1 dLvForm1;
   @Autowired DLvForm2 dLvForm2;
@@ -1245,14 +1247,17 @@ public class CView {
     List<ObjList> list = new ArrayList<ObjList>();
     //
     Patients pat = dPatient.get(session.getCurPat());
-    Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
+    /*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
     Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
     Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));
     Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
     Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
-    Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));
-    Double total;
-    if(pat.getCounteryId() == 199) { // Узбекистан
+    Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));*/
+    Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+    Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+    Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
+    Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
+    /*if(pat.getCounteryId() == 199) { // Узбекистан
       if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
         total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX_UZB;
       else if(pat.getRoom().getRoomType().getId() == 6) // Протая
@@ -1266,7 +1271,7 @@ public class CView {
         total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE;
       else // Полулюкс
         total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX;
-    }
+    }*/
     ObjList obj = new ObjList();
     obj.setC1("Оплата за койку: Кол-во дней: " + pat.getDayCount());
     obj.setC2(total + "");

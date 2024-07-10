@@ -20,7 +20,7 @@
     <span style="font-weight:bold" title="HNPATIENT: ${obj.id} PATIENT_ID: ${obj.patient.id}">Реквизиты пациента: №${obj.patient.yearNum} ${obj.patient.surname} ${obj.patient.name} ${obj.patient.middlename} - <fmt:formatDate pattern="dd.MM.yyyy" value="${obj.patient.dateBegin}"/></span>
     <button  class="btn btn-sm" onclick="setPage('/act/index.s')" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-backward"></i> Назад</button>
     <button class="btn btn-info btn-sm" style="float:right;margin-top:-5px; margin-left:10px" onclick="excel()"><span class="fa fa-file-excel-o"></span> Excel</button>
-    <c:if test="${(obj.state == 'C' || (obj.closed != 'Y' && obj.state == 'D')) && sessionScope.ENV.userId == 1}">
+    <c:if test="${(obj.state == 'C' || (obj.closed != 'Y' && obj.state == 'D'))}">
       <button  class="btn btn-sm btn-primary" onclick="confirmPatient()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-check"></i> Подтвердить</button>
     </c:if>
     <c:if test="${(obj.closed == 'Y' && obj.patient.state == 'LV') && sessionScope.ENV.userId == 1}">
@@ -212,8 +212,8 @@
           <tr>
             <td>${elem.serviceName}</td>
             <td align="right"><input type="number" class="form-control right" value="${elem.real_price}" readonly></td>
-            <td align="right"><input type="number" class="form-control right" value="${elem.price}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
-            <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
+            <td align="right"><input type="number" class="form-control right" value="${elem.price}" onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
+            <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${elem.price * elem.serviceCount}" type = "number"/>"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${(elem.price + elem.nds) * elem.serviceCount}" type = "number"/>"></td>
             <c:if test="${obj.closed != 'Y'}">
@@ -257,8 +257,8 @@
           <tr>
             <td>${elem.serviceName}</td>
             <td align="right"><input type="number" class="form-control right" value="${elem.real_price}" readonly></td>
-            <td align="right"><input type="number" class="form-control right" value="${elem.price}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
-            <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
+            <td align="right"><input type="number" class="form-control right" value="${elem.price}" onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
+            <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${elem.price * elem.serviceCount}" type = "number"/>"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${(elem.price + elem.nds) * elem.serviceCount}" type = "number"/>"></td>
             <c:if test="${obj.closed != 'Y'}">
@@ -302,8 +302,8 @@
           <tr>
             <td>${elem.serviceName}</td>
             <td align="right"><input type="number" class="form-control right" value="${elem.real_price}" readonly></td>
-            <td align="right"><input type="number" class="form-control right" value="${elem.price}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
-            <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" <c:if test="${sessionScope.ENV.userId != 1}">readonly</c:if> onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
+            <td align="right"><input type="number" class="form-control right" value="${elem.price}" onchange="setFieldValue('service', 'price', ${elem.id}, this)"></td>
+            <td align="center"><input type="number" class="form-control center" value="${elem.serviceCount}" onchange="setFieldValue('service', 'counter', ${elem.id}, this)"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${elem.price * elem.serviceCount}" type = "number"/>"></td>
             <td align="right"><input type="text" disabled class="form-control right" value="<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${(elem.price + elem.nds) * elem.serviceCount}" type = "number"/>"></td>
             <c:if test="${obj.closed != 'Y'}">

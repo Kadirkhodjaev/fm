@@ -13,6 +13,7 @@ public class LvPartners extends GenId {
   @Column(unique = true) private String code;
   @Column private String fio;
   @Column private String state;
+  @Column private String report;
 
   public String getCode() {
     return code;
@@ -36,5 +37,13 @@ public class LvPartners extends GenId {
 
   public void setState(String state) {
     this.state = state;
+  }
+
+  public String getReport() {
+    return report;
+  }
+
+  public void setReport(String report) {
+    this.report = report;
   }
 }

@@ -187,7 +187,7 @@
           <td class="center">${loop.index + 1}</td>
           <td class="center"><img src='/res/imgs/${p.iconUrl}.gif'/></td>
           <td><a href="#" onclick="addEditPatient(${p.id}); return false;">${p.fio}</a></td>
-          <td class="center">${p.birthYear}</td>
+          <td class="center">${p.birthday == null || p.birthday == '' ? p.birthYear : p.birthday}</td>
           <td class="center">${p.dateBegin}</td>
           <td class="center">${p.metka}</td>
         </tr>

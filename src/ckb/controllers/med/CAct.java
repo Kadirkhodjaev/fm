@@ -154,10 +154,10 @@ public class CAct {
       if (checker == null) return;
       List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + obj.getKdo().getId());
       for(KdoChoosens choosen: choosens) {
-        if(choosen.getOrd() == 1 && !checker.isC1()) continue;
-        if(choosen.getOrd() == 2 && !checker.isC2()) continue;
-        if(choosen.getOrd() == 3 && !checker.isC3()) continue;
-        if(choosen.getOrd() == 4 && !checker.isC4()) continue;
+        if(choosen.getOrd() == 1 && !checker.isC4()) continue;
+        if(choosen.getOrd() == 2 && !checker.isC1()) continue;
+        if(choosen.getOrd() == 3 && !checker.isC2()) continue;
+        if(choosen.getOrd() == 4 && !checker.isC3()) continue;
         double price = choosen.getStatusPrice(obj.getParent().getPatient());
         double real_price = choosen.getStatusRealPrice(obj.getParent().getPatient());
         obj.setId(null);
@@ -252,7 +252,7 @@ public class CAct {
     //
     if(hnPatient.getEatPrice() == null) hnPatient.setEatPrice(0D);
     if(hnPatient.getKoykoPrice() == null) {
-      hnPatient.setKoykoPrice(sPatient.getPatientKoykoPrice(hnPatient.getPatient()));
+      hnPatient.setKoykoPrice(hnPatient.getPatient().getRoomPrice());
       hnPatient.setKoykoPrice(hnPatient.getKoykoPrice() * (100 + ndsProc) / 100);
     }
     if(hnPatient.getNdsProc() == null) hnPatient.setNdsProc(ndsProc);
@@ -533,6 +533,8 @@ public class CAct {
     session.setCurUrl("/act/info.s?id=" + Util.get(req, "id"));
     //
     HNPatients hnPatient = dhnPatient.get(Util.getInt(req, "id"));
+    Date d = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
+    Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
     m.addAttribute("obj", hnPatient);
     m.addAttribute("lvFio", dUser.get(hnPatient.getPatient().getLv_id()).getFio());
     m.addAttribute("drugs", dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + Util.getInt(req, "id")));
@@ -631,6 +633,7 @@ public class CAct {
       disPerc = disPerc == null ? 0 : disPerc;
       double koyko = epicRows.isEmpty() ? hnPatient.getKoykoPrice() * hnPatient.getDayCount() : epicSum;
       //
+      m.addAttribute("ndsProc", ndsProc);
       m.addAttribute("dis_sum", koyko);
       m.addAttribute("dis_perc", disPerc);
       m.addAttribute("discount_sum", discountSum);

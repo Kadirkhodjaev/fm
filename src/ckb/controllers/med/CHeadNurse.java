@@ -1049,6 +1049,8 @@ public class CHeadNurse {
           }
         }
       }
+      doc.setInsFlag("Y");
+      dDrugOut.save(doc);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1404,7 +1406,7 @@ public class CHeadNurse {
         depIds += dep.getDept().getId() + ",";
     }
     depIds = depIds.substring(0, depIds.length() - 1);
-    List<Patients> patients = dPatient.getList("From Patients t Where " + where + " dept.id in (" + depIds + ") And  t.dateBegin Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By Id Desc");
+    List<Patients> patients = dPatient.getList("From Patients t Where t.state != 'ARCH' And " + where + " dept.id in (" + depIds + ") And  t.dateBegin Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By Id Desc");
     //
     List<Patients> rows = new ArrayList<Patients>();
     for(Patients patient: patients) {
