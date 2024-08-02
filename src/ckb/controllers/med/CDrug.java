@@ -48,11 +48,13 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/drugs")
 public class CDrug {
 
+  //region Autowired
   @Autowired private DDrug dDrug;
   @Autowired private DDrugDrugCategory dDrugDrugCategory;
   @Autowired private DDrugCategory dDrugCategory;
@@ -73,6 +75,7 @@ public class CDrug {
   @Autowired private DHNDirectionLink dhnDirectionLink;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DParam dParam;
+  //endregion
 
   //region INCOMES
   @RequestMapping("/acts.s")
@@ -83,7 +86,7 @@ public class CDrug {
     String endDate = Util.get(request, "period_end", Util.getCurDate());
     String partner = Util.get(request, "partner");
     //
-    List<DrugActs> acts = dDrugAct.getList("From DrugActs Where date(regDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (partner != null && !partner.isEmpty() ? " And contract.partner.id = " + partner : "") + " Order By regDate Desc");
+    List<DrugActs> acts = dDrugAct.getList("From DrugActs Where date(regDate) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' " + (partner != null && !partner.isEmpty() ? " And contract.partner.id = " + partner : "") + " Order By regDate Desc");
     List<ObjList> list = new ArrayList<ObjList>();
     for(DrugActs act : acts) {
       ObjList obj = new ObjList();
@@ -233,6 +236,7 @@ public class CDrug {
       drug.setRasxod(0D);
       drug.setCrBy(session.getUserId());
       drug.setCrOn(new Date());
+      drug.setDone("N");
       dDrugActDrug.save(drug);
       json.put("success", true);
     } catch (Exception e) {
@@ -925,7 +929,7 @@ public class CDrug {
     String direction = Util.get(request, "direction");
     String state = Util.get(request, "state", "");
     //
-    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And date(regDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' " + (direction != null && !direction.isEmpty() ? "And direction.id = " + direction : "") + ( state.isEmpty() ? "" : " And insFlag != 'Y'" ) + " Order By regDate Desc, id desc");
+    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And date(regDate) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' " + (direction != null && !direction.isEmpty() ? "And direction.id = " + direction : "") + ( state.isEmpty() ? "" : " And insFlag != 'Y'" ) + " Order By regDate Desc, id desc");
     List<ObjList> list = new ArrayList<ObjList>();
     //
     for(DrugOuts act : acts) {
@@ -993,7 +997,7 @@ public class CDrug {
     //
     model.addAttribute("obj", obj);
     model.addAttribute("measures", dDrugMeasure.getList("From DrugMeasures"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs t Where exists (Select 1 From DrugActDrugs c Where act.state != 'E' And c.counter - c.rasxod > 0 And c.drug.id = t.id) Order By t.name"));
+    model.addAttribute("drugs", dDrug.getList("From Drugs t Where exists (Select 1 From DrugActDrugs c Where c.done = 'N' And act.state != 'E' And c.counter - c.rasxod > 0 And c.drug.id = t.id) Order By t.name"));
     Util.makeMsg(req, model);
     return "/med/drugs/out/addEdit";
   }
@@ -1032,16 +1036,18 @@ public class CDrug {
       for(int i=0;i<row_ids.length;i++) {
         DrugOutRows row = dDrugOutRow.get(Integer.parseInt(row_ids[i]));
         row.setDrugCount(Double.parseDouble(drug_counts[i]));
-        DrugActDrugs income = dDrugActDrug.get(Integer.parseInt(drug_ids[i]));
-        if(row.getDrugCount() > income.getCounter() - income.getRasxod()) {
+        DrugActDrugs actDrug = dDrugActDrug.get(Integer.parseInt(drug_ids[i]));
+        if(row.getDrugCount() > actDrug.getCounter() - actDrug.getRasxod()) {
           json.put("success", false);
-          json.put("msg", "Кол-во списании не может быть больше остатка. Препарад: " + row.getDrug().getName() + " Остаток: " + (income.getCounter() - income.getRasxod()) + " Списание: " + row.getDrugCount());
+          json.put("msg", "Кол-во списании не может быть больше остатка. Препарад: " + row.getDrug().getName() + " Остаток: " + (actDrug.getCounter() - actDrug.getRasxod()) + " Списание: " + row.getDrugCount());
           return json.toString();
         }
-        income.setRasxod(income.getRasxod() + row.getDrugCount());
-        dDrugActDrug.save(income);
-        row.setPrice(income.getCountPrice());
-        row.setIncome(income);
+        actDrug.setRasxod(actDrug.getRasxod() + row.getDrugCount());
+        if(Objects.equals(actDrug.getCounter(), actDrug.getRasxod()))
+          actDrug.setDone("Y");
+        dDrugActDrug.save(actDrug);
+        row.setPrice(actDrug.getCountPrice());
+        row.setIncome(actDrug);
         dDrugOutRow.save(row);
       }
       json.put("success", true);

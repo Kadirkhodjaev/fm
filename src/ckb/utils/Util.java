@@ -155,6 +155,18 @@ public class Util {
     return (d.getDate() <= 9 ? "0" + d.getDate() : d.getDate()) + "." + (d.getMonth() < 9 ? "0" + (d.getMonth() + 1) : (d.getMonth() + 1)) + "." + (d.getYear() + 1900);
   }
 
+  public static String getCurMonth() {
+    Date d = new Date();
+    return (d.getMonth() < 9 ? "0" + (d.getMonth() + 1) : (d.getMonth() + 1)) + "." + (d.getYear() + 1900);
+  }
+
+  public static String getMonthLastDay(Date date) {
+    Calendar c = Calendar.getInstance();
+    c.setTime(date);
+    c.set(Calendar.DAY_OF_MONTH, c.getActualMaximum(Calendar.DAY_OF_MONTH));
+    return Util.dateToString(c.getTime());
+  }
+
   public static String getCurTime() {
     Date d = new Date();
     return (d.getHours() <= 9 ? "0" + d.getHours() : d.getHours()) + ":" + (d.getMinutes() <= 9 ? "0" + d.getMinutes() : d.getMinutes());

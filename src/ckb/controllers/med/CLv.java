@@ -6,10 +6,10 @@ import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.dicts.rooms.DRooms;
+import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
-import ckb.dao.med.drug.dict.measures.DDrugMeasure;
 import ckb.dao.med.eat.dict.menuTypes.DEatMenuType;
 import ckb.dao.med.eat.dict.table.DEatTable;
 import ckb.dao.med.head_nurse.drug.DHNDrug;
@@ -37,6 +37,7 @@ import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.*;
 import ckb.dao.med.template.DDrugTemplate;
 import ckb.domains.med.drug.dict.DrugDirections;
+import ckb.domains.med.drug.dict.Drugs;
 import ckb.domains.med.eat.dict.EatMenuTypes;
 import ckb.domains.med.head_nurse.HNDrugs;
 import ckb.domains.med.lv.*;
@@ -54,6 +55,7 @@ import ckb.services.med.patient.SPatient;
 import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONArray;
@@ -70,6 +72,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -120,11 +125,11 @@ public class CLv {
   @Autowired private DEatTable dEatTable;
   @Autowired private DEatMenuType dEatMenuType;
   @Autowired private DDict dDict;
-  @Autowired private DDrugMeasure dDrugMeasure;
+  @Autowired private DDrugActDrug dDrugActDrug;
+  @Autowired private DHNDrug dhnDrug;
   @Autowired private DPatientDrugTemp dPatientDrugTemp;
   @Autowired private DPatientDrugRowTemp dPatientDrugRowTemp;
   @Autowired private DDrugDirection dDrugDirection;
-  @Autowired private DHNDrug dhnDrug;
   @Autowired private DPatientShock dPatientShock;
   @Autowired private DLvFizioDate dLvFizioDate;
   //endregion
@@ -1327,10 +1332,44 @@ public class CLv {
   protected String patientDrugs(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurSubUrl("/lv/drugs.s");
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
     model.addAttribute("goals", dLvDrugGoal.getList("From LvDrugGoals Order By name"));
     //
     model.addAttribute("counters", dDrugCount.getList("From DrugCount"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs t Where t.id in (Select c.drug.id From DrugActDrugs c Where c.counter - rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0 And f.direction.shock = 'N') Order By name"));
+
+    List<Integer> drugs = session.getDrugs();
+    List<Drugs> dds = new ArrayList<>();
+    if(drugs == null || drugs.isEmpty()) {
+      HashMap<Integer, Drugs> ads = new HashMap<>();
+      drugs = new ArrayList<>();
+      try {
+        conn = DB.getConnection();
+        ps = conn.prepareStatement(
+          " Select t.drug_id From ( " +
+            "    Select c.drug_id From Drug_Act_Drugs c Where c.done = 'N' And c.counter - c.rasxod > 0 Group By c.drug_Id " +
+            "    Union All " +
+            "    Select t.drug_id From Hn_Drugs t, Drug_s_Directions d Where t.history = 0 And t.drugCount - t.rasxod > 0 And d.shock = 'N' And t.direction_id = d.id) t " +
+            "   Group By t.drug_id "
+        );
+        rs = ps.executeQuery();
+        while (rs.next()) {
+          drugs.add(rs.getInt(1));
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        DB.done(rs);
+        DB.done(ps);
+        DB.done(conn);
+      }
+      session.setDrugs(drugs);
+    }
+    for (Integer d : drugs) {
+      dds.add(dDrug.get(d));
+    }
+    model.addAttribute("drugs", dds);
     Patients pat = dPatient.get(session.getCurPat());
     //
     int temp = Integer.parseInt(Util.get(req, "temp", "0"));
@@ -1848,6 +1887,7 @@ public class CLv {
       dPatientShock.save(shock);
       HNDrugs drug = shock.getHndrug();
       drug.setRasxod(drug.getRasxod() + shock.getRasxod());
+      drug.setHistory(0);
       dhnDrug.save(drug);
       json.put("success", true);
     } catch (Exception e) {
@@ -1865,6 +1905,7 @@ public class CLv {
       PatientShocks shock = dPatientShock.get(Util.getInt(req, "id"));
       HNDrugs drug = shock.getHndrug();
       drug.setRasxod(drug.getRasxod() - shock.getRasxod());
+      drug.setHistory(0);
       dhnDrug.save(drug);
       dPatientShock.delete(shock.getId());
       json.put("success", true);

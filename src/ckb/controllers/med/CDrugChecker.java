@@ -41,17 +41,17 @@ public class CDrugChecker {
   @RequestMapping("checker.s")
   protected String checker(Model model) {
     List<DrugActDrugs> drugList = new ArrayList<DrugActDrugs>();
-    List<DrugActDrugs> DrugActDrugs = dDrugInDrug.getList("From DrugActDrugs Where rasxod > 0 And rasxod != drugCount");
+    List<DrugActDrugs> DrugActDrugs = dDrugInDrug.getList("From DrugActDrugs Where rasxod > 0");
     for(DrugActDrugs drugInDrug: DrugActDrugs) {
       double outRasxod = dDrugOutRow.getIncomeRasxod(drugInDrug.getId());
-      if(outRasxod != drugInDrug.getRasxod()) {
+      if(outRasxod != drugInDrug.getRasxod() || drugInDrug.getRasxod() > drugInDrug.getCounter()) {
         drugInDrug.setPrice(outRasxod);
         drugList.add(drugInDrug);
       }
     }
     model.addAttribute("drug_rows", drugList);
     List<HNDrugs> hnList = new ArrayList<HNDrugs>();
-    List<HNDrugs> hnDrugs = dhnDrug.getList("From HNDrugs Where history is null Order By direction.id");
+    List<HNDrugs> hnDrugs = dhnDrug.getList("From HNDrugs Where history = 0 Order By direction.id");
     for(HNDrugs hnDrug: hnDrugs) {
       int hndrug = hnDrug.getId();
       BigDecimal r1 = BigDecimal.valueOf(dhnDateRow.getHDRasxod(hndrug));
@@ -96,6 +96,7 @@ public class CDrugChecker {
         if(rasxod > d.getCounter())
           return Util.err(json, "Уже поздно реально куп ишлатворишибди");
         d.setRasxod(rasxod);
+        d.setDone(d.getRasxod().equals(d.getCounter()) ? "Y" : "N");
         dDrugInDrug.save(d);
       }
       if(code.equals("hn")) {
@@ -108,6 +109,7 @@ public class CDrugChecker {
         if(rasxod > d.getDrugCount())
           return Util.err(json, "Уже поздно реально куп ишлатворишибди");
         d.setRasxod(rasxod);
+        d.setHistory(0);
         dhnDrug.save(d);
       }
       json.put("success", true);

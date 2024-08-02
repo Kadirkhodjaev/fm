@@ -125,7 +125,9 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out/patient.s");
     //
-    String dr = Util.get(req, "dr", "0");
+    String s_dr = session.getFilters("out_patient_direction", "0");
+    String dr = Util.get(req, "dr", s_dr);
+    session.setFilters("out_patient_direction", dr);
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
@@ -152,7 +154,7 @@ public class CHeadNurse {
     dh.put("hn_pat_out", endDate);
     session.setDateEnd(dh);
     //
-    m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And typeCode = 'STAT' And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By date Desc"));
+    m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And typeCode = 'STAT' And date(date) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By date Desc"));
     //
     List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     m.addAttribute("directions", directions);
@@ -639,7 +641,9 @@ public class CHeadNurse {
   protected String out(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out.s");
-    String dr = Util.get(req, "dr", "0");
+    String s_dr = session.getFilters("hn_out_direction", "0");
+    String dr = Util.get(req, "dr", s_dr);
+    session.setFilters("hn_out_direction", dr);
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
@@ -666,7 +670,7 @@ public class CHeadNurse {
     dh.put("hn_out", endDate);
     session.setDateEnd(dh);
     //
-    m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And typeCode = 'OUT' Order By date Desc"));
+    m.addAttribute("rows", dhnDate.getList("From HNDates Where direction.id in " + arr + " And date(date) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' And typeCode = 'OUT' Order By date Desc"));
     //
     List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     m.addAttribute("directions", directions);
@@ -942,7 +946,14 @@ public class CHeadNurse {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/incomes.s");
     //
-    String dr = Util.get(req, "dr", "0");
+    String s_dr = session.getFilters("income_direction", "0");
+    String dr = Util.get(req, "dr", s_dr);
+    session.setFilters("income_direction", dr);
+    //
+    String s_ins_flag = session.getFilters("income_ins_flag", "0");
+    String ins_flag = Util.get(req, "ins_flag", s_ins_flag);
+    session.setFilters("income_ins_flag", ins_flag);
+    //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
@@ -965,7 +976,7 @@ public class CHeadNurse {
     dh.put("hn_income", endDate);
     session.setDateEnd(dh);
     //
-    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where direction.id in " + arr + " And date(regDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc");
+    List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where direction.id in " + arr + " And date(regDate) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' " + (!ins_flag.equals("0") ? " And insFlag = '" + ins_flag + "'" : "") + " Order By id Desc");
     List<ObjList> list = new ArrayList<ObjList>();
     //
     for(DrugOuts act : acts) {
@@ -987,12 +998,14 @@ public class CHeadNurse {
       obj.setC7(Util.dateTimeToString(act.getCrOn()));
       obj.setC8(Util.dateTimeToString(act.getSendOn()));
       obj.setC9(Util.dateTimeToString(act.getConfirmOn()));
+      obj.setC10(act.getInsFlag());
       list.add(obj);
     }
     //
     List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     m.addAttribute("directions", directions);
     m.addAttribute("filter_direction", dr);
+    m.addAttribute("ins_flag", ins_flag);
     m.addAttribute("rows", list);
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
@@ -1014,7 +1027,7 @@ public class CHeadNurse {
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + " And (direction.shock != 'Y' Or direction.shock = null)");
     model.addAttribute("directions", lines);
     model.addAttribute("measures", dDrugDrugMeasure.getList("From DrugDrugMeasures Order By measure.name"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs t Where Exists (Select 1 From DrugActDrugs c Where c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name"));
+    model.addAttribute("drugs", dDrug.getList("From Drugs t Where Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name"));
     model.addAttribute("obj", obj);
     Util.makeMsg(req, model);
     return "/med/head_nurse/incomes/addEdit";
@@ -1043,6 +1056,7 @@ public class CHeadNurse {
             drug.setNds(row.getIncome().getNds());
             drug.setCrBy(session.getUserId());
             drug.setCrOn(new Date());
+            drug.setHistory(0);
             dhnDrug.saveAndReturn(drug);
             row.setHndrug(drug.getId());
             dDrugOutRow.save(row);
@@ -1072,6 +1086,7 @@ public class CHeadNurse {
       obj.setState("ENT");
       obj.setCrOn(obj.getId() == null ? new Date() : obj.getCrOn());
       obj.setInfo(Util.get(req, "info"));
+      obj.setInsFlag("N");
       dDrugOut.saveAndReturn(obj);
       json.put("id", obj.getId());
       json.put("success", true);
@@ -1164,7 +1179,9 @@ public class CHeadNurse {
   protected String shock(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/transfer.s");
-    String dr = Util.get(req, "dr", "0");
+    String s_dr = session.getFilters("trasfer_direction", "0");
+    String dr = Util.get(req, "dr", s_dr);
+    session.setFilters("trasfer_direction", dr);
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
@@ -1192,7 +1209,7 @@ public class CHeadNurse {
     dh.put("hn_shock", endDate);
     session.setDateEnd(dh);
     //
-    m.addAttribute("rows", dhnDate.getList("From HNOpers Where (parent.id in " + arr + " Or direction.id in " + arr + ") And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By crOn Desc"));
+    m.addAttribute("rows", dhnDate.getList("From HNOpers Where (parent.id in " + arr + " Or direction.id in " + arr + ") And date(date) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By crOn Desc"));
     //
     List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     m.addAttribute("directions", directions);
@@ -1283,6 +1300,9 @@ public class CHeadNurse {
       row.setDirection(dhnOper.get(Util.getInt(req, "doc")).getDirection());
       row.setDrugCount(Double.parseDouble(Util.get(req, "rasxod")));
       row.setRasxod(0D);
+      row.setHistory(0);
+      row.setCrBy(session.getUserId());
+      row.setCrOn(new Date());
       sDrug.hndrug_rasxod(Util.getInt(req, "id"), row.getDrugCount());
       dhnDrug.save(row);
       json.put("success", true);
@@ -1406,7 +1426,7 @@ public class CHeadNurse {
         depIds += dep.getDept().getId() + ",";
     }
     depIds = depIds.substring(0, depIds.length() - 1);
-    List<Patients> patients = dPatient.getList("From Patients t Where t.state != 'ARCH' And " + where + " dept.id in (" + depIds + ") And  t.dateBegin Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By Id Desc");
+    List<Patients> patients = dPatient.getList("From Patients t Where t.state != 'ARCH' And " + where + " dept.id in (" + depIds + ") And  date(t.dateBegin) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By Id Desc");
     //
     List<Patients> rows = new ArrayList<Patients>();
     for(Patients patient: patients) {
@@ -2332,7 +2352,7 @@ public class CHeadNurse {
       where = " (Upper(patient.surname) like '%" + filter + "%' Or Upper(patient.name) like '%" + filter + "%' Or Upper(patient.middlename) like '%" + filter + "%' Or Upper(patient.yearNum) like '%" + filter + "%') And ";
     }
     //
-    m.addAttribute("list", dhnPatient.getList("From HNPatients t Where " + where + " (t.dateEnd = null Or t.dateEnd = '' Or t.dateEnd Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "') Order By t.id Desc"));
+    m.addAttribute("list", dhnPatient.getList("From HNPatients t Where " + where + " (t.dateEnd = null Or t.dateEnd = '' Or date(t.dateEnd) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "') Order By t.id Desc"));
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
     m.addAttribute("filter_word", filter);

@@ -4304,9 +4304,9 @@ public class SRepImp implements SRep {
 				ps = conn.prepareStatement(
 					" Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio, " +
 						" 			   t.yearNum name, " +
-						"				   0.02 * c.koykoPrice * c.dayCount summ, " +
-						"				   2 partnerProc, " +
-						"					 c.koykoPrice * c.dayCount price, " +
+						"				   0.1 * (c.koykoPrice / 112 * 100) * c.dayCount summ, " +
+						"				   10 partnerProc, " +
+						"					 (c.koykoPrice / 112 * 100) * c.dayCount price, " +
 						"					 t.date_end " +
 						" From Patients t, Hn_Patients c " +
 						"Where t.id = c.patient_id " +
@@ -5265,7 +5265,7 @@ public class SRepImp implements SRep {
 					"                 t.patient_Id, " +
 					"                 r.roomType, " +
 					"                 t.dayCount - (Select ifnull(Sum(g.koyko), 0) From Lv_Epics g Where g.patientId = c.id) Koyko, " +
-					"                 t.koykoPrice " +
+					"                 t.koykoPrice / 112 * 100 koykoPrice " +
 					"          From Hn_Patients t, Patients c, Rooms r " +
 					"        Where t.patient_Id = c.id " +
 					"           And t.dateEnd between ? And ? " +
@@ -5419,7 +5419,7 @@ public class SRepImp implements SRep {
 					"           t.patient_Id, " +
 					"           r.roomType,  " +
 					"           t.dayCount - (Select ifnull(Sum(g.koyko), 0) From Lv_Epics g Where g.patientId = c.id) Koyko,  " +
-					"           t.koykoPrice, " +
+					"           t.koykoPrice / 112 * 100 koykoPrice, " +
 					"           date(t.dateEnd) date_end " +
 					"      From Hn_Patients t, Patients c, Rooms r  " +
 					"     Where t.patient_Id = c.id  " +

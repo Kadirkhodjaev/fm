@@ -25,6 +25,7 @@ public class DrugActDrugs extends GenId {
   @Column private Date endDate;
   @Column private Double ndsProc;
   @Column private Double nds;
+  @Column private String done = "N";
 
   @Column private Integer crBy;
   @Column private Date crOn;
@@ -155,5 +156,13 @@ public class DrugActDrugs extends GenId {
     } else {
       return nds == null ? countPrice * 0.12 : nds;
     }
+  }
+
+  public String getDone() {
+    return done;
+  }
+
+  public void setDone(String done) {
+    this.done = done;
   }
 }

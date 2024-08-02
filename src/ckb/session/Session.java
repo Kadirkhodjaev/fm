@@ -1,5 +1,6 @@
 package ckb.session;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ public class Session {
   private HashMap<String, String> ambFilters = new HashMap<String, String>();
   private HashMap<String, String> dateBegin = new HashMap<String, String>();
   private HashMap<String, String> dateEnd = new HashMap<String, String>();
+  private List<Integer> drugs = new ArrayList<>();
 
   public String getFilterSql(){
     String sql = "";
@@ -76,6 +78,10 @@ public class Session {
 
   public HashMap<String, String> getFilters() {
     return filters;
+  }
+
+  public String getFilters(String name, String defVal) {
+    return filters == null || filters.get(name) == null ? defVal : filters.get(name);
   }
 
   public void clearFilter() {
@@ -230,5 +236,18 @@ public class Session {
 
   public boolean isReg() {
     return roleId == 22;
+  }
+
+  public List<Integer> getDrugs() {
+    return drugs;
+  }
+
+  public void setDrugs(List<Integer> drugs) {
+    this.drugs = drugs;
+  }
+
+  public void setFilters(String name, String value) {
+    if(filters == null) filters = new HashMap<>();
+    filters.put(name, value);
   }
 }

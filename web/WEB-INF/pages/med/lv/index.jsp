@@ -92,9 +92,9 @@
               <li class="paginate_button" id="planAdd" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="lvContent.location = '/lv/plan/kdos.s';return false;"><i title="Добавить новое обследование" class="fa fa-plus"></i> Добавить</a></li>
               <li class="paginate_button" id="saveForm" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="saveForm();return false;"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
               <li class="paginate_button" id="printBtn" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPrint();return false;"><i title="Печать" class="fa fa-print"></i> Печать</a></li>
-              <c:if test="${roleId == 3}">
+              <%--<c:if test="${roleId == 3}">
                 <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setReg();return false;"><i title="Печать" class="fa fa-pencil"></i> Регистрация</a></li>
-              </c:if>
+              </c:if>--%>
               <c:if test="${roleId == 17}">
                 <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setBooking();return false;"><i title="Бронирование" class="fa fa-pencil"></i> Бронирование</a></li>
               </c:if>

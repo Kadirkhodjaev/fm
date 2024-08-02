@@ -1,6 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
+<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
+<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
+<link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<script src="/res/js/common.js" type="text/javascript"></script>
+<link href="/res/css/styles.css" rel="stylesheet">
 <script>
   function saveLv() {
     $.ajax({
@@ -9,13 +15,21 @@
       data: ($('#lv').val() != '' && $('#lv').val() != undefined ? 'lv=' + $('#lv').val(): '') + '&zavlv=' + $('#zavlv').val(),
       dataType: 'json',
       success: function (data) {
+        openMsg(data);
         if (data.success) {
-          alert("<ui:message code="successSave"/>");
           parent.openMainPage('/patients/list.s?curPat=Y');
         }
-      },
-      error: function (data, err) {
-        alert(err);
+      }
+    });
+  }
+  function setLvPartner(lvpartner) {
+    $.ajax({
+      url: "/reg/lvpartner.s",
+      method: "post",
+      data: 'id=${pat.id}&lvpartner=' + lvpartner,
+      dataType: 'json',
+      success: function (data) {
+        openMsg(data);
       }
     });
   }
@@ -137,5 +151,17 @@
       <td class="right bold">Йулланмадаги ташхис:</td>
       <td colspan="3">${pat.diagnoz}</td>
     </tr>
+    <c:if test="${sessionScope.ENV.userId == 1}">
+      <tr>
+        <td class="right bold" nowrap>Йуналтирган мутахасис коди:</td>
+        <td colspan="3">
+          <select name="lvpartner_id" class="form-control" onchange="setLvPartner(this.value)">
+            <option value=""></option>
+            <c:forEach items="${lvpartners}" var="lvp">
+              <option <c:if test="${pat.lvpartner.id == lvp.id}">selected</c:if> value="${lvp.id}">${lvp.code}</option>
+            </c:forEach>
+          </select>
+      </tr>
+    </c:if>
   </table>
 </div>

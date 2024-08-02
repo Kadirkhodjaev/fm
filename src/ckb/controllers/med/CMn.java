@@ -25,6 +25,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/mn/")
@@ -47,11 +48,11 @@ public class CMn {
     ResultSet rs = null;
     String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
     String endDate = Util.get(req, "period_end", Util.getCurDate());
-    if(Util.stringToDate(startDate).after(Util.stringToDate(endDate)))
+    if(Objects.requireNonNull(Util.stringToDate(startDate)).after(Util.stringToDate(endDate)))
       startDate = endDate;
     try {
       cn = DB.getConnection();
-      ps = cn.prepareStatement(
+      ps = Objects.requireNonNull(cn).prepareStatement(
         "Select c.id, c.Name, " +
           "    Sum(f.saldo_in) saldo_in, " +
           "    Sum(f.saldo_in_sum) saldo_in_sum, " +
@@ -140,7 +141,7 @@ public class CMn {
       ps.setString(8, Util.dateDB(startDate));
       ps.setString(9, Util.dateDB(endDate));
       rs = ps.executeQuery();
-      List<ObjList> rows = new ArrayList<ObjList>();
+      List<ObjList> rows = new ArrayList<>();
       while (rs.next()) {
         ObjList row = new ObjList();
         row.setC1(rs.getString("name"));
@@ -238,10 +239,10 @@ public class CMn {
           "                  Group By f.drug_id) f  " +
           "          Group By f.drug_id) f, drug_s_names a  " +
           "  Where a.id = f.drug_id " +
-          "    And a.state = 'A' " +
+          "    And a.state = 'A' And a.id = 376 " +
           "  Order By a.name ");
       rs = ps.executeQuery();
-      List<ObjList> rows = new ArrayList<ObjList>();
+      List<ObjList> rows = new ArrayList<>();
       while (rs.next()) {
         ObjList row = new ObjList();
         row.setC10(rs.getString("name"));
@@ -321,7 +322,7 @@ public class CMn {
           "    And (t.Rasxod != 0 Or t.saldo_count != 0)" +
           "  Group By t.Drug_Id Order By c.name");
       rs = ps.executeQuery();
-      List<ObjList> rows = new ArrayList<ObjList>();
+      List<ObjList> rows = new ArrayList<>();
       while (rs.next()) {
         ObjList row = new ObjList();
         row.setC1(rs.getString("drug_id"));
@@ -360,7 +361,7 @@ public class CMn {
     String endDate = Util.get(req, "period_end", Util.getCurDate());
     try {
       cn = DB.getConnection();
-      List<Obj> kdoTypes = new ArrayList<Obj>();
+      List<Obj> kdoTypes = new ArrayList<>();
       List<KdoTypes> types = dKdoType.getList("From KdoTypes Where state = 'A'");
       for(KdoTypes type: types) {
         Obj obj = new Obj();
@@ -368,15 +369,15 @@ public class CMn {
         obj.setPrice(0D);
         ps = cn.prepareStatement(
           "Select c.id kdo_id, c.name, " +
-            "  (Select Count(*) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "') counter, " +
-            "  ifnull((Select sum(t.price) From lv_plans t Where t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "'), 0) total " +
+            "  (Select Count(*) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "') counter, " +
+            "  ifnull((Select sum(t.price) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "'), 0) total " +
             "  From kdos c " +
             " Where c.kdo_type = ? " +
             "   And c.state = 'A'");
         ps.setInt(1, type.getId());
         ps.execute();
         rs = ps.getResultSet();
-        List<ObjList> stats = new ArrayList<ObjList>();
+        List<ObjList> stats = new ArrayList<>();
         while (rs.next()) {
           ObjList row = new ObjList();
           row.setC1(rs.getString("kdo_id"));
@@ -398,15 +399,15 @@ public class CMn {
         obj.setPrice(0D);
         ps = cn.prepareStatement(
           "Select c.id service_Id, c.name, " +
-            " (Select count(*) From Amb_Patient_Services t Where t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id) counter, " +
-            " ifnull((Select sum(t.price) From Amb_Patient_Services t Where t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id), 0) total " +
+            " (Select count(*) From Amb_Patient_Services t Where t.state = 'DONE' And t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id) counter, " +
+            " ifnull((Select sum(t.price) From Amb_Patient_Services t Where t.state = 'DONE' And t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id), 0) total " +
             "  From Amb_Services c " +
             " Where c.group_id = ? " +
             "   And c.state = 'A'");
         ps.setInt(1, group.getId());
         ps.execute();
         rs = ps.getResultSet();
-        List<ObjList> amb = new ArrayList<ObjList>();
+        List<ObjList> amb = new ArrayList<>();
         while (rs.next()) {
           ObjList row = new ObjList();
           row.setC1(rs.getString("service_Id"));
@@ -444,7 +445,7 @@ public class CMn {
     String endDate = Util.get(req, "period_end", Util.getCurDate());
     try {
       cn = DB.getConnection();
-      List<Obj> kdoTypes = new ArrayList<Obj>();
+      List<Obj> kdoTypes = new ArrayList<>();
       List<Users> users = dUser.getList("From Users");
       for(Users user: users) {
         Obj obj = new Obj();
@@ -454,6 +455,7 @@ public class CMn {
           "Select t.id, c.`name`, Count(*) counter, Sum(t.price) price " +
             "  From Lv_Plans t, Kdos c " +
             " Where date(t.Result_Date) Between ? And ? " +
+            "   And t.done_flag = 'Y' " +
             "   And c.id = t.Kdo_Id " +
             "   And t.conf_user = ? " +
             " Group By c.name");
@@ -462,7 +464,7 @@ public class CMn {
         ps.setInt(3, user.getId());
         ps.execute();
         rs = ps.getResultSet();
-        List<ObjList> stats = new ArrayList<ObjList>();
+        List<ObjList> stats = new ArrayList<>();
         while (rs.next()) {
           ObjList row = new ObjList();
           row.setC1(rs.getString("id"));
@@ -476,6 +478,7 @@ public class CMn {
           "Select c.Id, c.name, Count(*) Counter, Sum(t.price) price " +
             "  From Amb_Patient_Services t, Amb_Services c " +
             " Where date(t.confDate) Between ? And ? " +
+            "   And t.state = 'DONE' " +
             "   And c.id = t.service_Id " +
             "   And c.id = t.service_Id " +
             "   And t.worker_Id = ? " +
@@ -494,7 +497,7 @@ public class CMn {
           stats.add(row);
           obj.setPrice(obj.getPrice() + rs.getDouble("price"));
         }
-        if(stats.size() > 0) {
+        if(!stats.isEmpty()) {
           obj.setList(stats);
           kdoTypes.add(obj);
         }
@@ -559,7 +562,7 @@ public class CMn {
       );
       ps.execute();
       rs = ps.getResultSet();
-      List<ObjList> list = new ArrayList<ObjList>();
+      List<ObjList> list = new ArrayList<>();
       double summ = 0;
       while (rs.next()) {
         ObjList obj = new ObjList();
@@ -600,7 +603,7 @@ public class CMn {
     try {
       cn = DB.getConnection();
       List<DrugDirections> directions = dDrugDirection.getAll();
-      List<Obj> stores = new ArrayList<Obj>();
+      List<Obj> stores = new ArrayList<>();
       double tprixod = 0, trasxod = 0;
       for(DrugDirections direction: directions) {
         Obj o = new Obj();
@@ -624,7 +627,7 @@ public class CMn {
         ps.setInt(1, direction.getId());
         ps.execute();
         rs = ps.getResultSet();
-        List<ObjList> list = new ArrayList<ObjList>();
+        List<ObjList> list = new ArrayList<>();
         while (rs.next()) {
           ObjList obj = new ObjList();
           obj.setC1(rs.getString("name"));
@@ -667,7 +670,7 @@ public class CMn {
     String direction = Util.get(req, "direction", "0");
     String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
     String endDate = Util.get(req, "period_end", Util.getCurDate());
-    if(Util.stringToDate(startDate).after(Util.stringToDate(endDate)))
+    if(Objects.requireNonNull(Util.stringToDate(startDate)).after(Util.stringToDate(endDate)))
       startDate = endDate;
     try {
       cn = DB.getConnection();
@@ -683,10 +686,8 @@ public class CMn {
           "  And f.regDate <= DATE_ADD(CURRENT_DATE(), Interval 30 day) " +
           "  And s.id = a.income_id " +
           "Order By " + (order.equals("income") ? "f.regDate" : "s.endDate"));
-      /*ps.setString(1, Util.dateDB(startDate));
-      ps.setString(2, Util.dateDB(startDate));*/
       rs = ps.executeQuery();
-      List<ObjList> rows = new ArrayList<ObjList>();
+      List<ObjList> rows = new ArrayList<>();
       while (rs.next()) {
         ObjList row = new ObjList();
         row.setC1(rs.getString("direction"));
@@ -723,7 +724,7 @@ public class CMn {
     Connection cn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     double summ = 0D, cont = 0D;
     int id = Util.getInt(req, "id");
     try {
@@ -757,8 +758,7 @@ public class CMn {
       m.addAttribute("inCount", cont);
       m.addAttribute("inSum", summ);
       m.addAttribute("ins", rows);
-      rows = new ArrayList<ObjList>();
-      summ = 0D;
+      rows = new ArrayList<>();
       cont = 0D;
       ps = cn.prepareStatement(
         " Select ifnull(Sum(c.rasxod), 0) rasxod " +
@@ -812,7 +812,7 @@ public class CMn {
       }
       m.addAttribute("poutCount", cont);
       m.addAttribute("pouts", rows);
-      rows = new ArrayList<ObjList>();
+      rows = new ArrayList<>();
       cont = 0D;
       ps = cn.prepareStatement(
         "Select ff.name receiver, dd.name direction, d.date, c.rasxod  " +
@@ -837,7 +837,7 @@ public class CMn {
       }
       m.addAttribute("outCount", cont);
       m.addAttribute("outs", rows);
-      rows = new ArrayList<ObjList>();
+      rows = new ArrayList<>();
       cont = 0D;
       ps = cn.prepareStatement(
         "Select c.fio, t.crOn, t.drugCount, d.name  " +
@@ -862,7 +862,7 @@ public class CMn {
       }
       m.addAttribute("ssCount", cont);
       m.addAttribute("sss", rows);
-      rows = new ArrayList<ObjList>();
+      rows = new ArrayList<>();
       cont = 0D;
       ps = cn.prepareStatement(
         "Select d.name, Sum(t.drugCount - t.rasxod) counter  " +

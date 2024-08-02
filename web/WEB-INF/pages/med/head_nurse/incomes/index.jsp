@@ -25,6 +25,13 @@
         <td style="vertical-align: middle">
           <button onclick="setCashStat()" class="btn btn-success btn-sm">Поиск</button>
         </td>
+        <td style="width:150px; padding-right:5px">
+          <select class="form-control" required id="ins_flag" onchange="setCashStat()">
+            <option <c:if test="${ins_flag == '0'}">selected</c:if> value="0">Все</option>
+            <option <c:if test="${ins_flag == 'Y'}">selected</c:if> value="Y">Принятые на склад</option>
+            <option <c:if test="${ins_flag == 'N'}">selected</c:if> value="N">Непринятые на склад</option>
+          </select>
+        </td>
         <td style="width:250px">
           <select class="form-control" required id="dr" onchange="setCashStat()">
             <option <c:if test="${filter_direction == '0'}">selected</c:if> value="0">Все</option>
@@ -53,6 +60,7 @@
           <th>Создания</th>
           <th>Отправка</th>
           <th>Подтверждения</th>
+          <th>Склад</th>
           <th style="width:40px">Удалить</th>
         </tr>
         </thead>
@@ -78,6 +86,14 @@
             <td align="center" style="width:150px">${obj.c7}</td>
             <td align="center" style="width:150px">${obj.c8}</td>
             <td align="center" style="width:150px">${obj.c9}</td>
+            <td align="center" style="width:30px">
+              <c:if test="${obj.c10 == 'Y'}">
+                <img src="/res/imgs/green.gif">
+              </c:if>
+              <c:if test="${obj.c10 != 'Y'}">
+                <img src="/res/imgs/red.gif">
+              </c:if>
+            </td>
             <td class="center">
               <c:if test="${obj.c5 == 'ENT'}">
                 <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.ib})"><i class="fa fa-minus"></i></button>
@@ -158,6 +174,7 @@
     var start = document.getElementById("period_start");
     var end = document.getElementById("period_end");
     var direction = document.getElementById("dr");
-    setPage('/head_nurse/incomes.s?period_start=' + start.value + '&period_end=' + end.value + '&dr=' + direction.value);
+    var ins_flag = document.getElementById("ins_flag");
+    setPage('/head_nurse/incomes.s?period_start=' + start.value + '&period_end=' + end.value + '&dr=' + direction.value + '&ins_flag=' + ins_flag.value);
   }
 </script>

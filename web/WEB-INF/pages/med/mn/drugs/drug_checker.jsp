@@ -96,7 +96,7 @@
           <tr>
             <td class="center" style="width:40px">${loop.index + 1}</td>
             <td><a href="#" onclick="drug_detail('drug', ${row.id})">${row.drug.name}</a></td>
-            <td class="right" style="width:150px">${row.drugCount}</td>
+            <td class="right" style="width:150px">${row.counter}</td>
             <td class="right" style="width:150px">${row.rasxod}</td>
             <td class="right" style="width:150px">${row.price}</td>
             <td class="right" style="width:150px">${row.price - row.rasxod}</td>

@@ -145,6 +145,23 @@ public class CReg {
     return json.toString();
   }
 
+  @RequestMapping(value = "lvpartner.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String lvpartner(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Patients p = dPatient.get(Util.getInt(req, "id"));
+      p.setLvpartner(dLvPartner.get(Util.getInt(req, "lvpartner")));
+      dPatient.save(p);
+      json.put("id", p.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
   @RequestMapping(value = "nurse/kdo/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String nurseNecKdoSave(HttpServletRequest req) throws JSONException {
@@ -231,6 +248,7 @@ public class CReg {
     model.addAttribute("zavs", dUser.getList("From Users Where zavlv = 1"));
     model.addAttribute("country", pat.getCounteryId() != null ? dCountery.get(pat.getCounteryId()).getName() : "");
     model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
+    model.addAttribute("lvpartners", dLvPartner.getList("From LvPartners Where state = 'A' Order By code"));
     return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
   }
 

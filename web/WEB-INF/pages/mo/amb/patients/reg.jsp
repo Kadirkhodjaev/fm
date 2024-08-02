@@ -222,6 +222,7 @@
               <td class="right" nowrap>Область:</td>
               <td>
                 <select name="cl_region_id" class="form-control">
+                  <option value=""></option>
                   <c:forEach items="${regions}" var="reg">
                     <option value="${reg.id}">${reg.name}</option>
                   </c:forEach>
@@ -459,6 +460,7 @@
   }
   function addClient() {
     getDOM('clientForm').reset();
+    $('select[name=cl_country_id]').val('199')
     $('#btn_client_view').click();
   }
   //endregion

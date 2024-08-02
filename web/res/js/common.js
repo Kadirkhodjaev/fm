@@ -209,6 +209,18 @@ function closeMedMsg() {
   $('.med-msg').slideUp(500);
 }
 function openMsg(res) {
+  if($('.med-msg').length === 0) {
+    $('body').append('<div class="med-msg" style="display: none"> ' +
+      '      <table style="width:100%"> ' +
+      '        <tr> ' +
+      '          <td id="med-msg-text" style="overflow: hidden;color:white"></td> ' +
+      '          <td style="width:35px;border-left: 1px solid #ababab; cursor: pointer;color:white" onClick="closeMedMsg()"> ' +
+      '            <div class="close-msg" title="Закрыть">X</div> ' +
+      '          </td> ' +
+      '        </tr> ' +
+      '      </table> ' +
+      '    </div>');
+  }
   if(res.success) {
     openMedMsg("Данные успешно сохранены", true);
   } else {

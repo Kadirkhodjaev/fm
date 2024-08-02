@@ -475,8 +475,8 @@ public class CPatient {
         ObjList obj = new ObjList();
         obj.setC1(rs.getString(1));
         obj.setC2(rs.getString(2));
-        Long reg = dPatient.getCount("From Patients Where state = 'LV' And DAY(dateBegin) = DAY(CURRENT_TIMESTAMP()) And YEAR(dateBegin) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateBegin) = MONTH(CURRENT_TIMESTAMP()) And lv_Id = " + obj.getC1());
-        Long vyp = dPatient.getCount("From Patients Where state = 'LV' And DAY(dateEnd) = DAY(CURRENT_TIMESTAMP()) And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_Id = " + obj.getC1());
+        Long reg = dPatient.getCount("From Patients Where state = 'LV' And date(dateBegin) = date(CURRENT_TIMESTAMP()) And lv_Id = " + obj.getC1());
+        Long vyp = dPatient.getCount("From Patients Where state = 'LV' And date(dateEnd) = date(CURRENT_TIMESTAMP()) And lv_Id = " + obj.getC1());
         Long cur = dPatient.getCount("From Patients Where state = 'LV' And lv_Id = " + obj.getC1());
         obj.setC3("" + reg);
         obj.setC4("" + vyp);
@@ -502,8 +502,8 @@ public class CPatient {
       DB.done(conn);
     }
     model.addAttribute("cur", dPatient.getCount("From Patients Where state = 'LV'"));
-    model.addAttribute("vyp", dPatient.getCount("From Patients Where DAY(dateEnd) = DAY(CURRENT_TIMESTAMP()) And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP())"));
-    model.addAttribute("curMonth", dPatient.getCount("From Patients Where YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP())"));
+    model.addAttribute("vyp", dPatient.getCount("From Patients Where date(dateEnd) = date(CURRENT_TIMESTAMP())"));
+    model.addAttribute("curMonth", dPatient.getCount("From Patients Where YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And Month(dateEnd) = MONTH(CURRENT_TIMESTAMP())"));
     model.addAttribute("curYear", dPatient.getCount("From Patients Where YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP())"));
     model.addAttribute("lvs", list);
     return "med/patients/stat";

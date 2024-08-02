@@ -15,6 +15,7 @@ import ckb.models.Menu;
 import ckb.services.admin.user.SUser;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONObject;
@@ -32,10 +33,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -100,6 +101,7 @@ public class  CApp {
     if(roleId == 3) { // Приемное – медсестра
       session.setCurUrl(session.getCurUrl().equals("") ? "/reg/nurse/index.s" : session.getCurUrl());
       m.add(new Menu("Регистрация", "/reg/nurse/index.s", "fa fa-edit fa-fw", session.getCurUrl().equals("/reg/nurse/index.s")));
+      m.add(new Menu("Клиенты", "/clients/list.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Брон", "/booking/nurse.s", "fa fa-th fa-fw", session.getCurUrl().equals("/booking/nurse.s")));
       m.add(new Menu("Пациенты", "/patients/list.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/patients/list.s")));
       m.add(new Menu("Архив", "/patients/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/archive/list.s")));
@@ -490,6 +492,70 @@ public class  CApp {
     File file = new File("D:\\dump\\" + Util.getCurDate().replace(".", "") + ".sql");
     file.delete();
     return "test";
+  }
+
+  @RequestMapping("/loganalys.s")
+  protected String ddd(Model model) {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    List<String> exceptions = new ArrayList<String>();
+    List<String> likes = new ArrayList<String>();
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement("Select * From log_exceptions");
+      rs = ps.executeQuery();
+      while (rs.next()) exceptions.add(rs.getString("name").replaceAll(" ", ""));
+
+      ps = conn.prepareStatement("Select * From log_exception_likes");
+      rs = ps.executeQuery();
+      while (rs.next()) likes.add(rs.getString("name").replaceAll(" ", ""));
+
+      File file = new File("C:\\mysql_logs\\mysql-slow.log");
+      BufferedReader br = new BufferedReader(new FileReader(file));
+      String st;
+      List<String> rows = new ArrayList<String>();
+      int i = 0;
+      while ((st = br.readLine()) != null) {
+        if(!exceptions.contains(st.replaceAll(" ", ""))) {
+          boolean isOK = true;
+          for(String like: likes) {
+            if(st.toLowerCase().replaceAll(" ", "").contains(like.toLowerCase()))
+              isOK = false;
+          }
+          if(isOK) {
+            if(st.replaceAll(" ", "").contains("#Query_time") || st.replaceAll(" ", "").contains("#Time")) {
+              String last = rows.get(rows.size() - 1);
+              if(last.replaceAll(" ", "").contains("#Query_time")) {
+                rows.remove(rows.size() - 1);
+              }
+            }
+            if(st.replaceAll(" ", "").contains("#Time")) {
+              String last = rows.get(rows.size() - 1);
+              if(last.replaceAll(" ", "").contains("#Time")) {
+                rows.remove(rows.size() - 1);
+              }
+            }
+            rows.add(st);
+          }
+        }
+      }
+      ps = conn.prepareStatement("Delete t From log_slows t");
+      ps.executeUpdate();
+      for(String row: rows) {
+        ps = conn.prepareStatement("Insert into log_slows Values(?)");
+        ps.setString(1, row);
+        ps.executeUpdate();
+      }
+      model.addAttribute("rows", rows);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    return "logfile";
   }
 
 }

@@ -7,6 +7,7 @@ import ckb.domains.med.head_nurse.HNDrugs;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 public class SDrugImp implements SDrug {
 
@@ -32,6 +33,7 @@ public class SDrugImp implements SDrug {
     if(drug.getRasxod() > drug.getDrugCount())
       throw new Exception("Расход не может быть больше прихода. Факт: " + drug.getRasxod() + " Расход: " + Math.abs(rasxod));
     drug.setRasxod(drug.getRasxod() + rasxod);
+    drug.setHistory(0);
     dhnDrug.save(drug);
   }
 

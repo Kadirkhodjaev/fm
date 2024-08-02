@@ -307,10 +307,11 @@
   }
   function addClient() {
     getDOM('clientForm').reset();
+    $('select[name=cl_country_id]').val('199')
     $('#btn_client_view').click();
   }
   //endregion
-
+  $(".date-format").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
 </script>
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
 <div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
@@ -380,6 +381,7 @@
               <td class="right" nowrap>Область:</td>
               <td>
                 <select name="cl_region_id" class="form-control">
+                  <option value=""></option>
                   <c:forEach items="${regions}" var="reg">
                     <option value="${reg.id}">${reg.name}</option>
                   </c:forEach>
@@ -433,9 +435,9 @@
       <c:if test="${done}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="archiveIt()"><i title="Отправить в архив" class="fa fa-arrow-right"></i> Архивация</a></li>
       </c:if>
-      <c:if test="${patient.state == 'ARCH' && sessionScope.ENV.roleId == 15}">
+      <%--<c:if test="${patient.state == 'ARCH' && sessionScope.ENV.roleId == 15}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="ambReg()"><i title="Регистрация" class="fa fa-reorder"></i> Регистрация</a></li>
-      </c:if>
+      </c:if>--%>
       <c:if test="${patient.id != null && patient.state != 'ENT' && sessionScope.ENV.roleId == 15}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="loadPdf()"><i title="Генерация PDF файла" class="fa fa-reorder"></i> Результаты PDF</a></li>
         <iframe name="pdffile" id="pdffile" src="about:blank" style="display: none"></iframe>

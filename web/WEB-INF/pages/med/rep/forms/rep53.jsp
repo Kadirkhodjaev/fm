@@ -26,7 +26,7 @@
 <table border="1" width="100%">
   <c:forEach items="${rows}" var="row">
     <tr>
-      <td colspan="5" class="bold" style="padding:10px">${row.fio}</td>
+      <td colspan="5" style="padding:10px;font-weight: bold">${row.fio}</td>
     </tr>
     <c:forEach items="${row.list}" var="ls">
       <tr>

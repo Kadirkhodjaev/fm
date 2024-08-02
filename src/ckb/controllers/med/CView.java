@@ -2,6 +2,7 @@ package ckb.controllers.med;
 
 import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.depts.DDept;
+import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
@@ -139,7 +140,7 @@ public class CView {
   }
 
   @RequestMapping("/reg.s")
-  protected String reg(HttpServletRequest request){
+  protected String reg(HttpServletRequest request, Model m){
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/view/reg.s");
     return "/med/lv/reg";
