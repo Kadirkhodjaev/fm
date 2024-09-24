@@ -53,8 +53,7 @@ public class CReg {
   @Autowired SUser sUser;
   @Autowired DDept dDept;
   @Autowired DPatientLink dPatientLink;
-  @Autowired
-  DCountry dCountery;
+  @Autowired DCountry dCountery;
   @Autowired DRegion dRegion;
   @Autowired DOpt dOpt;
   @Autowired DUser dUser;
@@ -377,6 +376,22 @@ public class CReg {
           dPatientWatchers.delete(Util.getInt(req, "id"));
         }
       }
+      data.put("success", true);
+    } catch (Exception e) {
+      data.put("success", false);
+      data.put("msg", e.getMessage());
+    }
+    return data.toString();
+  }
+
+  @RequestMapping(value = "doctor/archive.s", method = RequestMethod.POST)
+  protected @ResponseBody String doctor_archive(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    JSONObject data = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      Patients pat = dPatient.get(session.getCurPat());
+      pat.setState("ARCH");
+      dPatient.save(pat);
       data.put("success", true);
     } catch (Exception e) {
       data.put("success", false);

@@ -1033,6 +1033,32 @@ public class CHeadNurse {
     return "/med/head_nurse/incomes/addEdit";
   }
 
+  @RequestMapping(value = "incomes/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String incomeSave(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      String id = Util.nvl(req, "id", "0");
+      DrugOuts obj = id.equals("0") || id.equals("") ? new DrugOuts() : dDrugOut.get(Integer.parseInt(id));
+      obj.setRegNum(Util.get(req, "reg_num"));
+      obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
+      obj.setRegDate(Util.getDate(req, "reg_date"));
+      obj.setState("ENT");
+      obj.setCrOn(obj.getId() == null ? new Date() : obj.getCrOn());
+      obj.setInfo(Util.get(req, "info"));
+      obj.setInsFlag("N");
+      if(dDrugOut.getCount("From DrugOuts Where direction.id = " + obj.getDirection().getId() + " And insFlag = 'N' And id != " + obj.getId()) > 0)
+        return Util.err(json, "Есть не принятые документы по данному Складу");
+      dDrugOut.saveAndReturn(obj);
+      json.put("id", obj.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
   @RequestMapping(value = "incomes/drop.s", method = RequestMethod.POST)
   @ResponseBody
   protected String dropIncome(HttpServletRequest req) throws JSONException {
@@ -1065,30 +1091,6 @@ public class CHeadNurse {
       }
       doc.setInsFlag("Y");
       dDrugOut.save(doc);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "incomes/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String incomeSave(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      String id = Util.nvl(req, "id", "0");
-      DrugOuts obj = id.equals("0") || id.equals("") ? new DrugOuts() : dDrugOut.get(Integer.parseInt(id));
-      obj.setRegNum(Util.get(req, "reg_num"));
-      obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
-      obj.setRegDate(Util.getDate(req, "reg_date"));
-      obj.setState("ENT");
-      obj.setCrOn(obj.getId() == null ? new Date() : obj.getCrOn());
-      obj.setInfo(Util.get(req, "info"));
-      obj.setInsFlag("N");
-      dDrugOut.saveAndReturn(obj);
-      json.put("id", obj.getId());
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1782,7 +1784,7 @@ public class CHeadNurse {
   }
 
   @RequestMapping("eat.s")
-  public String eatEdit(HttpServletRequest req, Model model){
+  public String eatEdit(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     NurseEats eat = dNurseEat.get(Util.getInt(req, "id"));
     session.setCurUrl("/head_nurse/eat.s?id=" + eat.getId());
@@ -1986,6 +1988,38 @@ public class CHeadNurse {
       json.put("msg", e.getMessage());
     }
     return json.toString();
+  }
+
+  @RequestMapping("eat/print.s")
+  public String nurseEatPrint(HttpServletRequest req, Model model){
+    NurseEats eat = dNurseEat.get(Util.getInt(req, "id"));
+    List<EatMenuTable> rows = new ArrayList<EatMenuTable>();
+    List<NurseEatPatients> patients = dNurseEatPatient.list("From NurseEatPatients Where nurseEat.id = " + eat.getId() + " Order By table.id");
+    int table = 0;
+    EatMenuTable r = new EatMenuTable();
+    List<PatientList> pats = new ArrayList<>();
+    for(NurseEatPatients patient: patients) {
+      if(table != patient.getTable().getId()) {
+        r = new EatMenuTable();
+        r.setName(patient.getTable().getName());
+        pats = new ArrayList<>();
+        r.setPatients(pats);
+        rows.add(r);
+      }
+      PatientList p = new PatientList();
+      if(patient.getPatient() != null) {
+        p.setId(patient.getPatient().getId());
+        p.setFio(patient.getPatient().getFio());
+        p.setMetka(patient.getPatient().getRoom().getName());
+      } else {
+        p.setFio(patient.getComment());
+      }
+      pats.add(p);
+      table = patient.getTable().getId();
+    }
+    model.addAttribute("eat", eat);
+    model.addAttribute("rows", rows);
+    return "med/head_nurse/eat/print";
   }
   //endregion
 

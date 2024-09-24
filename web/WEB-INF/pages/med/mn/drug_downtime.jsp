@@ -14,6 +14,17 @@
     direction = dir == null ? direction : dir;
     setPage('/mn/drug_downtime.s?order=' + order + '&direction=' + direction);
   }
+  function changeDowntime(id, date) {
+    $.ajax({
+      url: '/mn/downtime.s',
+      method: 'post',
+      data: 'id=' + id + '&date=' + date,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+      }
+    });
+  }
 </script>
 <div class="panel panel-info" style="width: 100%; margin-top:10px">
   <div class="panel-heading">
@@ -51,7 +62,14 @@
           <td>${p.c1}</td>
           <td>${p.c2}</td>
           <td style="text-align: center">${p.c3}</td>
-          <td style="text-align: center">${p.c7}</td>
+          <td style="text-align: center; width:130px">
+            <c:if test="${sessionScope.ENV.userId == 1}">
+              <input name="period_start" id="period_start${p.id}" type="text" readonly onchange="changeDowntime(${p.id}, this.value)" class="form-control datepicker" value="${p.c7}"/>
+            </c:if>
+            <c:if test="${sessionScope.ENV.userId != 1}">
+              ${p.c7}
+            </c:if>
+          </td>
           <td class="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${p.c4}"/></td>
           <td class="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${p.c5}"/></td>
           <td class="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${p.c6}"/></td>

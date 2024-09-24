@@ -282,6 +282,15 @@
             </tr>
             <tr>
               <td class="center">
+                <input type="checkbox" id="onlineCheck" tabindex="-1" onclick="setPay('online', this)"/>
+              </td>
+              <td class="center bold">Онлайн</td>
+              <td class="center">
+                <input  class="form-control center" style="font-size:20px" id="onlineInput" readonly onblur="calcSum(this)" type="number"/>
+              </td>
+            </tr>
+            <tr>
+              <td class="center">
                 &nbsp;
               </td>
               <td class="center bold">ИТОГО</td>

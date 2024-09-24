@@ -446,7 +446,6 @@
   </div>
   <f:form commandName="patient" action='/amb/reg.s' method="post" id='bf' target="frm">
     <f:hidden path="id"/>
-    <input type="hidden" name="regId" value="${regId}"/>
     <div class="panel-body">
       <%@include file="/incs/msgs/successError.jsp"%>
       <table class="formTable">

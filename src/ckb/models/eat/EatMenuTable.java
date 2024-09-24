@@ -12,6 +12,7 @@ public class EatMenuTable {
   private List<EatMenuTableEat> eats = new ArrayList<EatMenuTableEat>();
   private List<PatientList> patients = new ArrayList<PatientList>();
   private String eatJson;
+  private String extra;
 
   public Integer getId() {
     return id;
@@ -51,5 +52,13 @@ public class EatMenuTable {
 
   public void setPatients(List<PatientList> patients) {
     this.patients = patients;
+  }
+
+  public String getExtra() {
+    return extra;
+  }
+
+  public void setExtra(String extra) {
+    this.extra = extra;
   }
 }

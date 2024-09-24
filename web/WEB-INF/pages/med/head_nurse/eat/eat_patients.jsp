@@ -214,6 +214,6 @@
     }
   }
   function printEat() {
-    alert('Клиникани фирменный бланкаси буйича формани берсез печатьная формани кибераман')
+    window.open("/head_nurse/eat/print.s?id=${eat.id}")
   }
 </script>

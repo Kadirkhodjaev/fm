@@ -7,7 +7,7 @@
 </style>
 <script>
   function addAmb() {
-    setPage('/core/stat/groups.s');
+    setPage('/core/stat/group/save.s');
   }
 </script>
 <style>

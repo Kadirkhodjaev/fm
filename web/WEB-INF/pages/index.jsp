@@ -63,9 +63,9 @@
       </c:if>
       <c:if test="${fn:indexOf(session.curUrl, 'amb') != -1}">
         if ($('#filterInput').val() != '')
-          $('#mainWindow').load('${session.curUrl}?filter=Y&filterInput=' + val);
+          $('#mainWindow').load('/${session.curUrl}?filter=Y&filterInput=' + val);
         else
-          $('#mainWindow').load('${session.curUrl}?filter=Y');
+          $('#mainWindow').load('/${session.curUrl}?filter=Y');
       </c:if>
     }
     </c:if>

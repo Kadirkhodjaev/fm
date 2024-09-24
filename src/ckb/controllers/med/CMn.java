@@ -2,11 +2,13 @@ package ckb.controllers.med;
 
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbGroup;
+import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.kdos.DKdoTypes;
 import ckb.domains.admin.KdoTypes;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbGroups;
+import ckb.domains.med.drug.DrugActDrugs;
 import ckb.domains.med.drug.dict.DrugDirections;
 import ckb.models.Obj;
 import ckb.models.ObjList;
@@ -14,10 +16,14 @@ import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.DB;
 import ckb.utils.Util;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
@@ -37,6 +43,7 @@ public class CMn {
   @Autowired private DAmbGroup dAmbGroup;
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DUser dUser;
+  @Autowired private DDrugActDrug dDrugActDrug;
 
   // Медикаменты
   @RequestMapping("drugs.s")
@@ -239,7 +246,7 @@ public class CMn {
           "                  Group By f.drug_id) f  " +
           "          Group By f.drug_id) f, drug_s_names a  " +
           "  Where a.id = f.drug_id " +
-          "    And a.state = 'A' And a.id = 376 " +
+          "    And a.state = 'A' " +
           "  Order By a.name ");
       rs = ps.executeQuery();
       List<ObjList> rows = new ArrayList<>();
@@ -675,7 +682,7 @@ public class CMn {
     try {
       cn = DB.getConnection();
       ps = cn.prepareStatement(
-        "Select d.name direction, c.name drug, date(f.regDate) Doc_Date, t.drugCount, t.rasxod, t.drugCount - t.rasxod saldo, date(s.endDate) endDate " +
+        "Select s.id, d.name direction, c.name drug, date(f.regDate) Doc_Date, t.drugCount, t.rasxod, t.drugCount - t.rasxod saldo, date(s.endDate) endDate " +
           "  From hn_drugs t, Drug_s_Names c, Drug_s_Directions d, Drug_Out_Rows a, Drug_Outs f, Drug_Act_Drugs s " +
           "Where c.id = t.drug_id " +
           "  And t.rasxod - t.drugCount <> 0 " +
@@ -690,6 +697,7 @@ public class CMn {
       List<ObjList> rows = new ArrayList<>();
       while (rs.next()) {
         ObjList row = new ObjList();
+        row.setId(rs.getInt("id"));
         row.setC1(rs.getString("direction"));
         row.setC2(rs.getString("drug"));
         row.setC3(Util.dateToString(rs.getDate("doc_date")));
@@ -715,6 +723,22 @@ public class CMn {
     m.addAttribute("direction", direction);
     m.addAttribute("directions", dDrugDirection.getAll());
     return "med/mn/drug_downtime";
+  }
+
+  @RequestMapping(value = "/downtime.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String claimSave(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      DrugActDrugs drug = dDrugActDrug.get(Util.getInt(req, "id"));
+      drug.setEndDate(Util.getDate(req, "date"));
+      dDrugActDrug.save(drug);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
   }
 
   @RequestMapping("drug/analys.s")

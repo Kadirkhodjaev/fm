@@ -81,9 +81,18 @@
   function ekg() {
     window.open('/reg/ekg.s?id=${patient.id}');
   }
-  function rejectPatient() {
-    if(confirm('Вы действительно хотите отправть данного пациента в Архив')) {
-
+  function archPatient() {
+    if(confirm('Вы действительно хотите архивировать данные?')) {
+      $.ajax({
+        url: '/reg/doctor/archive.s',
+        method: 'post',
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success)
+            setPage('/patients/index.s');
+        }
+      });
     }
   }
 </script>
@@ -95,8 +104,8 @@
       <c:if test="${date_Begin != '' && patient.state == 'PRD'}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="confPatient()"><i title="Подтвердить" class="fa fa-check"></i> Подтвердить</a></li>
       </c:if>
-      <c:if test="${false && date_Begin != '' && patient.state == 'PRD'}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="rejectPatient()"><i title="Отказ" class="fa fa-check"></i> Отказ</a></li>
+      <c:if test="${patient.state == 'PRD'}">
+        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="archPatient()"><i title="Архивация" class="fa fa-archive"></i> Архивация</a></li>
       </c:if>
       <c:if test="${date_Begin == '' && patient.state == 'PRD'}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="ekg()"><i title="Подтвердить" class="fa fa-check"></i> ЭКГ</a></li>
