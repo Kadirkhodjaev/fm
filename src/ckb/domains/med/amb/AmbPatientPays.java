@@ -16,6 +16,7 @@ public class AmbPatientPays extends GenId {
   @Column private Double cash;
   @Column private Double card;
   @Column private Double transfer;
+  @Column private Double online;
   @Column private String payType;
   //
   @Column private Integer crBy;
@@ -75,5 +76,13 @@ public class AmbPatientPays extends GenId {
 
   public void setCrOn(Date crOn) {
     this.crOn = crOn;
+  }
+
+  public Double getOnline() {
+    return online;
+  }
+
+  public void setOnline(Double online) {
+    this.online = online;
   }
 }

@@ -193,6 +193,7 @@
             <td class="center bold">Дата</td>
             <td class="center bold">Наличные</td>
             <td class="center bold">Карта</td>
+            <td class="center bold">Online</td>
             <td class="center bold">Перечисление</td>
             <td class="center bold">Удалить</td>
           </tr>
@@ -207,6 +208,7 @@
               </td>
               <td align="center"><fmt:formatNumber value="${pay.cash}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.card}" type = "number"/></td>
+              <td align="center"><fmt:formatNumber value="${pay.online}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.transfer}" type = "number"/></td>
               <td align="center">
                 <c:if test="${pat.paid != 'CLOSED'}">
@@ -363,6 +365,15 @@
                 </tr>
                 <tr>
                   <td class="center">
+                    <input type="checkbox" id="onlineCheck" tabindex="-1" onclick="setPay('online', this)"/>
+                  </td>
+                  <td class="center bold" style="vertical-align: middle">Online</td>
+                  <td class="center">
+                    <input  class="form-control center" style="font-size:20px" readonly id="onlineInput" onblur="calcSum(this)" type="number"/>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="center">
                     <input type="checkbox" id="transferCheck" tabindex="-1" onclick="setPay('transfer', this)"/>
                   </td>
                   <td class="center bold" style="vertical-align: middle">Перечисление</td>
@@ -468,17 +479,21 @@
     var total = document.getElementById("totalInput"),
       card = document.getElementById('cardInput'),
       cash = document.getElementById('cashInput'),
+      online = document.getElementById('onlineInput'),
       transfer = document.getElementById('transferInput');
     var sum = 0;
     var cCard = document.getElementById("cardCheck"),
       cCash = document.getElementById("cashCheck"),
+      cOnline = document.getElementById("onlineCheck"),
       cTransfer = document.getElementById("transferCheck");
     var checkedCount = 0, valueCount = 0;
     if (card.value !== '') {valueCount++; sum = parseFloat(card.value);}
     if (cash.value !== '') {valueCount++; sum += parseFloat(cash.value);}
+    if (online.value !== '') {valueCount++; sum += parseFloat(online.value);}
     if (transfer.value !== '') {valueCount++; sum += parseFloat(transfer.value);}
     if (cCard.checked) checkedCount++;
     if (cCash.checked) checkedCount++;
+    if (cOnline.checked) checkedCount++;
     if (cTransfer.checked) checkedCount++;
     if (valueCount + 1 !== checkedCount) {
       alert('Есть не заполненные поля');
@@ -486,6 +501,7 @@
     }
     if (cCard.checked && card.value === '') card.value = totalSum - sum;
     if (cCash.checked && cash.value === '') cash.value = totalSum - sum;
+    if (cOnline.checked && online.value === '') online.value = totalSum - sum;
     if (cTransfer.checked && transfer.value === '') transfer.value = totalSum - sum;
     total.value = totalSum;
 
@@ -496,6 +512,7 @@
       var total = document.getElementById("totalInput");
       var card = document.getElementById('cardInput'),
         cash = document.getElementById('cashInput'),
+        online = document.getElementById('onlineInput'),
         transfer = document.getElementById('transferInput');
       var sum = 0;
       total.style.border = '1px solid #eee';
@@ -503,6 +520,7 @@
       total.title = 'Сумма оплаты';
       if (card.value !== '') sum = parseFloat(card.value);
       if (cash.value !== '') sum += parseFloat(cash.value);
+      if (online.value !== '') sum += parseFloat(online.value);
       if (transfer.value !== '') sum += parseFloat(transfer.value);
       //
       if(payType !== 'pay') {
@@ -532,10 +550,12 @@
     payType = $('#pay_type').val();
     var card = document.getElementById('cardInput'),
       cash = document.getElementById('cashInput'),
+      online = document.getElementById('onlineInput'),
       transfer = document.getElementById('transferInput');
     var sum = 0, params = 'id=${pat.id}&pay_type=' + payType + '&';
     if (card.value !== '') {sum += parseFloat(card.value); params += 'card=' + card.value + '&';}
     if (cash.value !== '') {sum += parseFloat(cash.value); params += 'cash=' + cash.value + '&';}
+    if (online.value !== '') {sum += parseFloat(online.value); params += 'online=' + online.value + '&';}
     if (transfer.value !== '') {sum += parseFloat(transfer.value); params += 'transfer=' + transfer.value + '&';}
     if (payType === 'pay' && totalSum === 0) {
       alert('Сумма не верна. Проверьте правильности итоговой суммы');

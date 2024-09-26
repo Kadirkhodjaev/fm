@@ -1288,7 +1288,7 @@ public class CView {
     List<PatientPays> pays = dPatientPays.byPatient(pat.getId());
     Double paid = 0D;
     for(PatientPays pay: pays) {
-      paid += pay.getCard() + pay.getTransfer() + pay.getCash();
+      paid += pay.getCard() + pay.getTransfer() + pay.getCash() + pay.getOnline();
     }
     List<LvPlans> plans = dLvPlan.getByPatientId(pat.getId());
     for(LvPlans plan: plans) {

@@ -4,6 +4,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<link href="/res/css/styles.css" rel="stylesheet">
 <script>
   var totalSum = +Number(${ndsTotal});
   function delService(id, state) {
@@ -182,6 +183,7 @@
             <td class="center bold">Дата</td>
             <td class="center bold">Наличные</td>
             <td class="center bold">Карта</td>
+            <td class="center bold">Онлайн</td>
             <td class="center bold">Перечисление</td>
             <td width="80px" class="center bold">Чек</td>
             <td width="80px" class="center bold">Удалить</td>
@@ -197,6 +199,7 @@
               </td>
               <td align="center"><fmt:formatNumber value="${pay.cash}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.card}" type = "number"/></td>
+              <td align="center"><fmt:formatNumber value="${pay.online}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.transfer}" type = "number"/></td>
               <td class="center">
                 <button type="button" class="btn btn-info" style="height:20px;padding:0 10px" onclick="printCheck(${pay.id})"><b class="fa fa-print"></b></button>
@@ -254,43 +257,43 @@
         <div class="tab-pane active fade in" id="pager">
           <table class="table table-bordered">
             <tr>
-              <td class="center">
+              <td class="center vertical-align-middle hand" onclick="tdClick('card')">
                 <input type="checkbox" id="cardCheck" tabindex="-1" onchange="setPay('card', this)" />
               </td>
-              <td class="center bold">Пластиковая карта</td>
+              <td class="center bold vertical-align-middle hand" onclick="tdClick('card')">Пластиковая карта</td>
               <td class="center">
                 <input class="form-control center" style="font-size:20px" id="cardInput" onblur="calcSum(this)" type="number" value="" readonly />
               </td>
             </tr>
             <tr>
-              <td class="center">
+              <td class="center vertical-align-middle hand" onclick="tdClick('cash')">
                 <input type="checkbox" id="cashCheck" tabindex="-1" onclick="setPay('cash', this)"/>
               </td>
-              <td class="center bold">Наличные</td>
+              <td class="center bold vertical-align-middle hand" onclick="tdClick('cash')">Наличные</td>
               <td class="center">
                 <input  class="form-control center" style="font-size:20px" id="cashInput" readonly onblur="calcSum(this)" type="number"/>
               </td>
             </tr>
             <tr>
-              <td class="center">
+              <td class="center vertical-align-middle hand" onclick="tdClick('transfer')">
                 <input type="checkbox" id="transferCheck" tabindex="-1" onclick="setPay('transfer', this)"/>
               </td>
-              <td class="center bold">Печисление</td>
+              <td class="center bold vertical-align-middle hand" onclick="tdClick('transfer')">Печисление</td>
               <td class="center">
                 <input  class="form-control center" style="font-size:20px" id="transferInput" readonly onblur="calcSum(this)" type="number"/>
               </td>
             </tr>
             <tr>
-              <td class="center">
+              <td class="center vertical-align-middle hand" onclick="tdClick('online')">
                 <input type="checkbox" id="onlineCheck" tabindex="-1" onclick="setPay('online', this)"/>
               </td>
-              <td class="center bold">Онлайн</td>
+              <td class="center bold vertical-align-middle hand" onclick="tdClick('online')">Онлайн</td>
               <td class="center">
                 <input  class="form-control center" style="font-size:20px" id="onlineInput" readonly onblur="calcSum(this)" type="number"/>
               </td>
             </tr>
             <tr>
-              <td class="center">
+              <td class="center">я
                 &nbsp;
               </td>
               <td class="center bold">ИТОГО</td>
@@ -384,21 +387,30 @@
     }
     calcSum(null);
   }
+  function tdClick(type) {
+    if(event.target.tagName === 'TD') {
+      getDOM(type + 'Check').click();
+    }
+  }
   function calcTotal(){
     var total = document.getElementById("totalInput"),
       card = document.getElementById('cardInput'),
       transfer = document.getElementById('transferInput'),
+      online = document.getElementById('onlineInput'),
       cash = document.getElementById('cashInput');
     var sum = 0;
     var cCard = document.getElementById("cardCheck"),
       cTransfer = document.getElementById("transferCheck"),
+      cOnline = document.getElementById("onlineCheck"),
       cCash = document.getElementById("cashCheck");
     var checkedCount = 0, valueCount = 0;
     if (card.value !== '') {valueCount++; sum = parseFloat(card.value);}
     if (cash.value !== '') {valueCount++; sum += parseFloat(cash.value);}
     if (transfer.value !== '') {valueCount++; sum += parseFloat(transfer.value);}
+    if (online.value !== '') {valueCount++; sum += parseFloat(online.value);}
     if (cCard.checked) checkedCount++;
     if (cTransfer.checked) checkedCount++;
+    if (cOnline.checked) checkedCount++;
     if (cCash.checked) checkedCount++;
     if (valueCount + 1 !== checkedCount) {
       alert('Есть не заполненные поля');
@@ -406,6 +418,7 @@
     }
     if (cCard.checked && card.value === '') card.value = totalSum - sum;
     if (cTransfer.checked && transfer.value === '') transfer.value = totalSum - sum;
+    if (cOnline.checked && online.value === '') online.value = totalSum - sum;
     if (cCash.checked && cash.value === '') cash.value = totalSum - sum;
     total.value = totalSum;
   }
@@ -415,6 +428,7 @@
       var total = document.getElementById("totalInput");
       var transfer = document.getElementById('transferInput'),
         card = document.getElementById('cardInput'),
+        online = document.getElementById('onlineInput'),
         cash = document.getElementById('cashInput');
       var sum = 0;
       total.style.border = '1px solid #eee';
@@ -423,6 +437,7 @@
       if (card.value !== '') sum = parseFloat(card.value);
       if (cash.value !== '') sum += parseFloat(cash.value);
       if (transfer.value !== '') sum += parseFloat(transfer.value);
+      if (online.value !== '') sum += parseFloat(online.value);
       //
       if(payType !== 'pay') {
         if(sum > paidSum) {
@@ -451,11 +466,13 @@
     var payType = $('#pay_type').val();
     var transfer = document.getElementById('transferInput'),
       card = document.getElementById('cardInput'),
+      online = document.getElementById('onlineInput'),
       cash = document.getElementById('cashInput');
     var sum = 0, params = 'id=${patient.id}&pay_type=' + payType + '&';
     if (card.value !== '') {sum += parseFloat(card.value); params += 'card=' + card.value + '&';}
     if (cash.value !== '') {sum += parseFloat(cash.value); params += 'cash=' + cash.value + '&';}
-    if (transfer.value !== '') {sum += parseFloat(transfer.value); params += 'humo=' + transfer.value + '&';}
+    if (transfer.value !== '') {sum += parseFloat(transfer.value); params += 'transfer=' + transfer.value + '&';}
+    if (online.value !== '') {sum += parseFloat(online.value); params += 'online=' + online.value + '&';}
     if (payType === 'pay' && totalSum !== sum) {
       alert('Сумма не верна. Проверьте правильности итоговой суммы');
       return;

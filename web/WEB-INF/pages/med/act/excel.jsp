@@ -57,8 +57,8 @@
   <tr style="font-size: 14px">
     <td colspan="2" style="font-weight: bold; text-align: center; border-width: thin; border-color: black; border-style: solid;">Наличные</td>
     <td style="text-align: center; border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${cashSum}"/></td>
-    <td style="font-weight: bold; text-align: center; border-width: thin; border-color: black; border-style: solid;">Терминал</td>
-    <td style="text-align: center; border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${cardSum}"/></td>
+    <td style="font-weight: bold; text-align: center; border-width: thin; border-color: black; border-style: solid;">Online</td>
+    <td style="text-align: center; border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${cardSum + onlineSum}"/></td>
     <td style="font-weight: bold; text-align: center; border-width: thin; border-color: black; border-style: solid;">Перечисление</td>
     <td style="text-align: center; border-width: thin; border-color: black; border-style: solid;"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${transferSum}"/></td>
   </tr>

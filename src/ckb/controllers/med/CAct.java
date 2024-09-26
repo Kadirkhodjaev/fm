@@ -444,7 +444,7 @@ public class CAct {
       //
       List<PatientPays> pays = dPatientPay.byPatient(hnPatient.getPatient().getId());
       for(PatientPays pay: pays) {
-        paidSum += pay.getCash() + pay.getCard() + pay.getTransfer();
+        paidSum += pay.getCash() + pay.getCard() + pay.getTransfer() + pay.getOnline();
       }
       discountSum = dCashDiscount.patientStatDiscountSum(hnPatient.getPatient().getId());
       //
@@ -584,16 +584,18 @@ public class CAct {
       m.addAttribute("kdoSum", kdoSum);
       m.addAttribute("consulSum", consulSum);
       //
-      double cash = 0D, card = 0D, transfer = 0D;
+      double cash = 0D, card = 0D, transfer = 0D, online = 0D;
       List<PatientPays> pays = dPatientPay.byPatient(hnPatient.getPatient().getId());
       for(PatientPays pay: pays) {
         cash += pay.getCash();
         card += pay.getCard();
         transfer += pay.getTransfer();
+        online += pay.getOnline();
       }
       m.addAttribute("cashSum", cash);
       m.addAttribute("cardSum", card);
       m.addAttribute("transferSum", transfer);
+      m.addAttribute("onlineSum", online);
       // Переводной эпикриз
       List<LvEpics> epics = dLvEpic.getPatientEpics(hnPatient.getPatient().getId());
       List<ObjList> epicRows = new ArrayList<ObjList>();

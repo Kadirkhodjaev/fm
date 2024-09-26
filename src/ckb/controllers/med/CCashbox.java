@@ -191,7 +191,7 @@ public class CCashbox {
     List<AmbPatientPays> pays = dAmbPatientPay.byPatient(session.getCurPat());
     Double paid = 0D;
     for(AmbPatientPays pay: pays) {
-      paid += pay.getCard() + pay.getCash() + pay.getTransfer();
+      paid += pay.getCard() + pay.getCash() + pay.getTransfer() + pay.getOnline();
     }
     m.addAttribute("paidSum", paid);
     m.addAttribute("pays", pays);
@@ -300,9 +300,11 @@ public class CCashbox {
       pay.setCard(Double.parseDouble(Util.get(req, "card", "0")));
       pay.setCash(Double.parseDouble(Util.get(req, "cash", "0")));
       pay.setTransfer(Double.parseDouble(Util.get(req, "transfer", "0")));
+      pay.setOnline(Double.parseDouble(Util.get(req, "online", "0")));
       if(!pay.getPayType().equals("pay")) {
         pay.setCard(pay.getCard() > 0 ? -1*pay.getCard() : 0D);
         pay.setCash(pay.getCash() > 0 ? -1*pay.getCash() : 0D);
+        pay.setOnline(pay.getOnline() > 0 ? -1*pay.getOnline() : 0D);
         pay.setTransfer(pay.getTransfer() > 0 ? -1*pay.getTransfer() : 0D);
       }
       //
@@ -596,7 +598,7 @@ public class CCashbox {
     //
     List<PatientPays> pays = dPatientPays.byPatient(pat.getId());
     for(PatientPays pay: pays) {
-      total = total - (pay.getCard() + pay.getCash() + pay.getTransfer());
+      total = total - (pay.getCard() + pay.getCash() + pay.getTransfer() + pay.getOnline());
     }
     model.addAttribute("pays", pays);
     model.addAttribute("discountSum", discountSum);
@@ -606,7 +608,7 @@ public class CCashbox {
     model.addAttribute("discounts", dCashDiscount.stat(pat.getId()));
     double paid = 0D;
     for(PatientPays pay: pays) {
-      paid += pay.getCard() + pay.getCash() + pay.getTransfer();
+      paid += pay.getCard() + pay.getCash() + pay.getTransfer() + pay.getOnline();
     }
     model.addAttribute("paidSum", paid);
     try {
@@ -639,11 +641,13 @@ public class CCashbox {
       pay.setCrOn(new Date());
       pay.setCard(Double.parseDouble(Util.nvl(req, "card", "0")));
       pay.setTransfer(Double.parseDouble(Util.nvl(req, "transfer", "0")));
+      pay.setOnline(Double.parseDouble(Util.nvl(req, "online", "0")));
       pay.setCash(Double.parseDouble(Util.nvl(req, "cash", "0")));
       pay.setPayType(Util.get(req, "pay_type"));
       if(!pay.getPayType().equals("pay")) {
         pay.setCard(pay.getCard() > 0 ? -1*pay.getCard() : pay.getCard());
         pay.setCash(pay.getCash() > 0 ? -1*pay.getCash() : pay.getCash());
+        pay.setOnline(pay.getOnline() > 0 ? -1*pay.getOnline() : pay.getOnline());
         pay.setTransfer(pay.getTransfer() > 0 ? -1*pay.getTransfer() : pay.getTransfer());
       }
       dPatientPays.save(pay);
@@ -685,7 +689,7 @@ public class CCashbox {
       Double paid = 0D;
       List<PatientPays> pays = dPatientPays.getList("From PatientPays t Where t.patient_id = " + pat.getId());
       for(PatientPays py: pays)
-        paid += py.getCard() + py.getTransfer() + py.getCash();
+        paid += py.getCard() + py.getTransfer() + py.getCash() + py.getOnline();
       for(PatientWatchers watcher: watchers) {
         total += watcher.getTotal();
       }
@@ -777,7 +781,7 @@ public class CCashbox {
       conn = DB.getConnection();
       String startDate = Util.get(req, "period_start", Util.getCurDate());
       String endDate = Util.get(req, "period_end", Util.getCurDate());
-      ps = conn.prepareStatement("SELECT Sum(t.card + t.transfer + t.cash) total, Sum(t.card) card, Sum(t.transfer) transfer, Sum(t.cash) cash FROM Amb_Patient_Pays t Where t.crOn between ? and ? ");
+      ps = conn.prepareStatement("SELECT Sum(t.card + t.transfer + t.cash + t.online) total, Sum(t.card) card, Sum(t.transfer) transfer, Sum(t.cash) cash, Sum(t.online) online FROM Amb_Patient_Pays t Where t.crOn between ? and ? ");
       ps.setString(1, Util.dateDBBegin(startDate));
       ps.setString(2, Util.dateDBEnd(endDate));
       rs = ps.executeQuery();
@@ -793,7 +797,7 @@ public class CCashbox {
         obj.setC3("0");
         obj.setC4("0");
       }
-      ps = conn.prepareStatement("SELECT Sum(t.card + t.transfer + t.cash) total, Sum(t.card) card, Sum(t.transfer) transfer, Sum(t.cash) cash FROM Patient_Pays t WHERE date(t.crOn) between ? and ? ");
+      ps = conn.prepareStatement("SELECT Sum(t.card + t.transfer + t.cash + t.online) total, Sum(t.card) card, Sum(t.transfer) transfer, Sum(t.cash) cash, Sum(t.online) online FROM Patient_Pays t WHERE date(t.crOn) between ? and ? ");
       ps.setString(1, Util.dateDB(startDate));
       ps.setString(2, Util.dateDB(endDate));
       rs = ps.executeQuery();

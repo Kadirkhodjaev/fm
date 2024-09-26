@@ -15,6 +15,7 @@ public class PatientPays extends GenId {
   @Column private Double cash;
   @Column private Double card;
   @Column private Double transfer;
+  @Column private Double online;
   @Column private String payType = "pay";
 
   @Column private Integer crBy;
@@ -74,5 +75,13 @@ public class PatientPays extends GenId {
 
   public void setPayType(String payType) {
     this.payType = payType;
+  }
+
+  public Double getOnline() {
+    return online;
+  }
+
+  public void setOnline(Double online) {
+    this.online = online;
   }
 }

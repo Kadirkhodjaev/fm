@@ -161,6 +161,7 @@ public class CAmbCash {
       pay.setPayType(Util.get(req, "pay_type"));
       pay.setCard(Double.parseDouble(Util.get(req, "card", "0")));
       pay.setCash(Double.parseDouble(Util.get(req, "cash", "0")));
+      pay.setOnline(0D);
       pay.setTransfer(0D);
       if(pay.getPayType().equals("ret"))
         pay.setCash(pay.getCash() > 0 ? -1*pay.getCash() : 0D);
