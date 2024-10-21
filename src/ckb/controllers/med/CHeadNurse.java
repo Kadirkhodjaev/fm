@@ -9,6 +9,8 @@ import ckb.dao.med.amb.DAmbDrugDate;
 import ckb.dao.med.amb.DAmbDrugRow;
 import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.dicts.rooms.DRooms;
+import ckb.dao.med.drug.act.DDrugAct;
+import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
@@ -32,6 +34,8 @@ import ckb.domains.med.amb.AmbDrugDates;
 import ckb.domains.med.amb.AmbDrugRows;
 import ckb.domains.med.amb.AmbPatients;
 import ckb.domains.med.dicts.Rooms;
+import ckb.domains.med.drug.DrugActDrugs;
+import ckb.domains.med.drug.DrugActs;
 import ckb.domains.med.drug.DrugOutRows;
 import ckb.domains.med.drug.DrugOuts;
 import ckb.domains.med.drug.dict.DrugDirectionDeps;
@@ -86,6 +90,8 @@ public class CHeadNurse {
   @Autowired private DPatient dPatient;
   @Autowired private DDrugOut dDrugOut;
   @Autowired private DDrugOutRow dDrugOutRow;
+  @Autowired private DDrugActDrug dDrugActDrug;
+  @Autowired private DDrugAct dDrugAct;
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugDate dPatientDrugDate;
@@ -2552,6 +2558,23 @@ public class CHeadNurse {
       e.printStackTrace();
     }
     return "med/head_nurse/new_drugs";
+  }
+
+  @RequestMapping("/new_income_drugs.s")
+  protected String new_income_drugs(HttpServletRequest req, Model model){
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/head_nurse/new_income_drugs.s");
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(new Date());
+    cal.add(Calendar.DATE, -7);
+    List<DrugActs> acts = dDrugAct.list("From DrugActs Where regDate > '" + Util.dateDB(cal.getTime()) + "' Order By regDate Desc");
+    List<DrugActDrugs> drugs = new ArrayList<>();
+    for(DrugActs act: acts) {
+      List<DrugActDrugs> ds = dDrugActDrug.list("From DrugActDrugs Where act.id = " + act.getId());
+      drugs.addAll(ds);
+    }
+    model.addAttribute("drugs", drugs);
+    return "/med/head_nurse/new_income_drugs";
   }
 
   @RequestMapping(value = "stat.s")

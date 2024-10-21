@@ -22,6 +22,7 @@ import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.*;
 import ckb.domains.admin.Clients;
 import ckb.domains.admin.Kdos;
+import ckb.domains.admin.Users;
 import ckb.domains.med.RoomBookings;
 import ckb.domains.med.dicts.Rooms;
 import ckb.domains.med.lv.*;
@@ -740,11 +741,30 @@ public class SPatientImp implements SPatient {
           }
         }
       }
+      if(d.getKdo().getId() == 288) {
+        List<ObjList> us = new ArrayList<>();
+        List<Users> users = dUser.list("Select t From Users t Join t.kdoTypes c Where c.state = 'A' And c.id = 17");
+        for(Users u : users) {
+          ObjList user = new ObjList();
+          user.setId(u.getId());
+          user.setC1(u.getFio());
+          us.add(user);
+        }
+        if(!us.isEmpty()) {
+          o.setList(us);
+        }
+      }
       o.setC7(d.getDone());
       o.setC8(d.getResultId().toString());
       o.setC10(d.getUserId() + "");
+      o.setC11(d.getKdo().getId().toString());
+      if(d.getConfUser() != null && d.getConfUser() > 0) {
+        o.setC12(dUser.get(d.getConfUser()).getFio());
+        o.setC13(d.getConfUser().toString());
+      }
       if(d.getUserId() != null)
         o.setC9(dUser.get(d.getUserId()).getFio());
+
       //
       list.add(o);
     }
@@ -778,6 +798,12 @@ public class SPatientImp implements SPatient {
           p.setPrice(0D);
           p.setCashState("PAID");
           p.setPayDate(new Date());
+        }
+        if(kdo.getId() == 288) {
+          List<Users> users = dUser.list("Select t From Users t Join t.kdoTypes c Where c.state = 'A' And c.id = 17");
+          if(users != null && !users.isEmpty()) {
+            p.setConfUser(users.get(0).getId());
+          }
         }
         dLvPlan.save(p);
         if(kdo.getPriced() != null && kdo.getPriced().equals("Y"))

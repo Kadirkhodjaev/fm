@@ -175,8 +175,12 @@ public class CAdmin {
   protected String lvpartners(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/admin/lvpartners.s");
+    String state = Util.get(req, "state", "A");
+    String word = Util.get(req, "word", "");
     //
-    model.addAttribute("rows", dLvPartner.getAll());
+    model.addAttribute("rows", dLvPartner.list("From LvPartners Where state = '" + state + "' And (code like '%" + word + "%' Or fio like '%" + word + "%')"));
+    model.addAttribute("state", state);
+    model.addAttribute("word", word);
     //
     return "/admin/lvpartners";
   }

@@ -2,11 +2,9 @@ package ckb.controllers.med;
 
 import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.depts.DDept;
-import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.eat.dict.table.DEatTable;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
 import ckb.dao.med.kdos.DKdoTypes;
 import ckb.dao.med.kdos.DKdos;
@@ -14,16 +12,10 @@ import ckb.dao.med.kdos.forms.f13.DF13;
 import ckb.dao.med.lv.bio.DLvBio;
 import ckb.dao.med.lv.consul.DLvConsul;
 import ckb.dao.med.lv.coul.DLvCoul;
+import ckb.dao.med.lv.docs.DLvDoc;
 import ckb.dao.med.lv.drug.DLvDrug;
 import ckb.dao.med.lv.fizio.DLvFizio;
 import ckb.dao.med.lv.fizio.DLvFizioDate;
-import ckb.dao.med.lv.form1.DLvForm1;
-import ckb.dao.med.lv.form2.DLvForm2;
-import ckb.dao.med.lv.form3.DLvForm3;
-import ckb.dao.med.lv.form4.DLvForm4;
-import ckb.dao.med.lv.form5.DLvForm5;
-import ckb.dao.med.lv.form6.DLvForm6;
-import ckb.dao.med.lv.form7.DLvForm7;
 import ckb.dao.med.lv.garmon.DLvGarmon;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.lv.torch.DLvTorch;
@@ -50,7 +42,6 @@ import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -68,31 +59,24 @@ public class CView {
 
   Date startDate = Util.stringToDate("31.03.2024");
 
-  @Autowired DPatient dPatient;
-  @Autowired DLvForm1 dLvForm1;
-  @Autowired DLvForm2 dLvForm2;
-  @Autowired DLvForm3 dLvForm3;
-  @Autowired DLvForm4 dLvForm4;
-  @Autowired DLvForm5 dLvForm5;
-  @Autowired DLvForm6 dLvForm6;
-  @Autowired DLvForm7 dLvForm7;
-  @Autowired DLvPlan  dLvPlan;
-  @Autowired DLvConsul dLvConsul;
-  @Autowired SPatient sPatient;
-  @Autowired DParam dParam;
-  @Autowired DUser dUser;
-  @Autowired DLvDrug dLvDrug;
-  @Autowired DKdos dKdos;
-  @Autowired DKdoTypes dKdoType;
-  @Autowired DLvFizio dLvFizio;
-  @Autowired DLvBio dLvBio;
-  @Autowired DLvCoul dLvCoul;
-  @Autowired DLvGarmon dLvGarmon;
-  @Autowired DLvTorch dLvTorch;
-  @Autowired DPatientWatchers dPatientWatchers;
-  @Autowired DPatientPays dPatientPays;
-  @Autowired DEatTable dEatTable;
-  @Autowired DPatientEat dPatientEat;
+  @Autowired private DPatient dPatient;
+  @Autowired private DLvDoc dLvDoc;
+  @Autowired private DLvPlan  dLvPlan;
+  @Autowired private DLvConsul dLvConsul;
+  @Autowired private SPatient sPatient;
+  @Autowired private DParam dParam;
+  @Autowired private DUser dUser;
+  @Autowired private DLvDrug dLvDrug;
+  @Autowired private DKdos dKdos;
+  @Autowired private DKdoTypes dKdoType;
+  @Autowired private DLvFizio dLvFizio;
+  @Autowired private DLvBio dLvBio;
+  @Autowired private DLvCoul dLvCoul;
+  @Autowired private DLvGarmon dLvGarmon;
+  @Autowired private DLvTorch dLvTorch;
+  @Autowired private DPatientWatchers dPatientWatchers;
+  @Autowired private DPatientPays dPatientPays;
+  @Autowired private DPatientEat dPatientEat;
   @Autowired private DPatientDrugDate dPatientDrugDate;
   @Autowired private DDept dDep;
   @Autowired private DLvFizioDate dLvFizioDate;
@@ -102,19 +86,19 @@ public class CView {
   @Autowired private DHNPatient dhnPatient;
 
   @RequestMapping("/index.s")
-  protected String main(HttpServletRequest request, Model model){
+  protected String mains(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     int id = Req.getInt(request, "id");
     session.setCurPat(id);
     Patients pat = dPatient.get(session.getCurPat());
     session.setCurUrl("/view/index.s?id=" + id);
     //
-    List<Menu> m = new ArrayList<Menu>();
+    List<Menu> m = new ArrayList<>();
     session.setCurSubUrl("/view/reg.s");
     m.add(new Menu("Регистация", "/view/reg.s", "fa fa-medkit fa-fw", false));
     //m.add(new Menu("Оплата", "/view/cashbox.s", "fa fa-money fa-fw", false));
     m.add(new Menu("Осмотр врача", "/view/osm.s", "fa fa-stethoscope fa-fw", false));
-    if(dLvDrug.getPatientDrugs(session.getCurPat()).size() > 0)
+    if(!dLvDrug.getPatientDrugs(session.getCurPat()).isEmpty())
       m.add(new Menu("Назначение", "/view/drug/index.s", "fa fa-th-list fa-fw", false));
     else
       m.add(new Menu("Назначение", "/view/drugs.s", "fa fa-th-list fa-fw", false));
@@ -140,7 +124,7 @@ public class CView {
   }
 
   @RequestMapping("/reg.s")
-  protected String reg(HttpServletRequest request, Model m){
+  protected String reg(HttpServletRequest request){
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/view/reg.s");
     return "/med/lv/reg";
@@ -162,7 +146,7 @@ public class CView {
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/osm.s");
     //
-    LvForm1 f = dLvForm1.getByPatient(session.getCurPat());
+    LvDocs f = dLvDoc.get(session.getCurPat(), "osm");
     if(f != null) {
       f.setC1(Util.nvl(f.getC1()).replaceAll("&nbsp;"," "));
       f.setC2(Util.nvl(f.getC2()).replaceAll("&nbsp;"," "));
@@ -188,6 +172,7 @@ public class CView {
     model.addAttribute("form", f);
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print"  + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/osm";
   }
+
   // Обоснование
   @RequestMapping("/obos.s")
   protected String obos(HttpServletRequest request, Model model){
@@ -195,7 +180,7 @@ public class CView {
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/obos.s");
     //
-    LvForm2 f = dLvForm2.getByPatient(session.getCurPat());
+    LvDocs f = dLvDoc.get(session.getCurPat(), "obos");
     if(f != null) {
       f.setC1(f.getC1().replaceAll("&nbsp;"," "));
       f.setC2(f.getC2().replaceAll("&nbsp;"," "));
@@ -212,26 +197,7 @@ public class CView {
     model.addAttribute("zavOtdel", dUser.getZavOtdel(dPatient.get(session.getCurPat()).getDept().getId()));
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/obos";
   }
-  // Предоперационный эпикрез
-  @RequestMapping("/predoper.s")
-  protected String predoper(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    if(Req.isNull(request, "print"))
-      session.setCurSubUrl("/view/predoper.s");
-    //
-    LvForm7 f = dLvForm7.getByPatient(session.getCurPat());
-    if(f != null) {
-      f.setC1(f.getC1().replaceAll("&nbsp;"," "));
-      f.setC2(f.getC2().replaceAll("&nbsp;"," "));
-      f.setC3(f.getC3().replaceAll("&nbsp;"," "));
-      f.setC4(f.getC4().replaceAll("&nbsp;"," "));
-      f.setC5(f.getC5().replaceAll("&nbsp;"," "));
-      model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
-    }
-    //
-    model.addAttribute("form", f);
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/predoper";
-  }
+
   // Дневник
   @RequestMapping("/dairy.s")
   protected String dnevnikIndex(HttpServletRequest request, Model model) {
@@ -241,14 +207,14 @@ public class CView {
 
     String dairyId = Util.nvl(SessionUtil.getSession(request, "dairyId"));
     String dairyIds = Util.nvl(SessionUtil.getSession(request, "dairyIds"));
-    if(!"".equals(dairyId)) {
-      list = new ArrayList<ObjList>();
+    if(!dairyId.isEmpty()) {
+      list = new ArrayList<>();
       for(ObjList obj : dairies)
         if(obj.getC1().equals(dairyId))
            list.add(obj);
     }
-    if(!"".equals(Util.nvl(dairyIds))) {
-      list = new ArrayList<ObjList>();
+    if(!Util.nvl(dairyIds).isEmpty()) {
+      list = new ArrayList<>();
       for(ObjList obj : dairies)
         if(dairyIds.contains(obj.getC1() + ","))
           list.add(obj);
@@ -259,30 +225,7 @@ public class CView {
     model.addAttribute("dairies", list);
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : ("print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : ""))) + "/dairy";
   }
-  // Совместный осмотр
-  @RequestMapping("/sov.s")
-  protected String sov(@ModelAttribute("sov") LvForm3 sov, HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    if(Req.isNull(request, "print"))
-      session.setCurSubUrl("/view/sov.s");
-    //
-    LvForm3 f = dLvForm3.getByPatient(session.getCurPat());
-    if(f != null) {
-      f.setC1(f.getC1().replaceAll("&nbsp;"," "));
-      f.setC2(f.getC2().replaceAll("&nbsp;"," "));
-      f.setC3(f.getC3().replaceAll("&nbsp;"," "));
-      f.setC4(f.getC4().replaceAll("&nbsp;"," "));
-      f.setC5(f.getC5().replaceAll("&nbsp;"," "));
-      f.setC6(f.getC6().replaceAll("&nbsp;"," "));
-      model.addAttribute("zavOtdel", dUser.getZavOtdel(f.getPatient().getDept().getId()));
-      model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
-    }
-    model.addAttribute("glb", dParam.byCode("GLB"));
-    model.addAttribute("zamGlb", dParam.byCode("GLB_NEXT"));
-    //
-    model.addAttribute("form", f);
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/sov";
-  }
+
   // Консультация
   @RequestMapping("/consul.s")
   protected String konsulIndex(HttpServletRequest request, Model model){
@@ -306,10 +249,10 @@ public class CView {
     model.addAttribute("pat", dPatient.get(session.getCurPat()));
     List<LvConsuls> cls = dLvConsul.getUserConsul(session.getUserId(), session.getCurPat());
     List<LvConsuls> consuls = dLvConsul.getByPat(session.getCurPat());
-    List<LvConsuls> list = new ArrayList<LvConsuls>();
+    List<LvConsuls> list = new ArrayList<>();
     String consulId = SessionUtil.getSession(request, "consulId");
 
-    if (!Req.isNull(request, "print") && !consulId.equals("")) {
+    if (!Req.isNull(request, "print") && !consulId.isEmpty()) {
       for (LvConsuls consul : consuls) {
         if (consul.getId().toString().equals(consulId)) {
           list.add(consul);
@@ -317,7 +260,7 @@ public class CView {
         }
       }
     } else {
-      if (cls.size() > 0 && Req.isNull(request, "print")) {
+      if (!cls.isEmpty() && Req.isNull(request, "print")) {
         for (LvConsuls consul : consuls) {
           boolean isExist = true;
           for (LvConsuls cl : cls)
@@ -332,7 +275,7 @@ public class CView {
         list = consuls;
       }
     }
-    model.addAttribute("consulFlag", cls.size() > 0);
+    model.addAttribute("consulFlag", !cls.isEmpty());
     model.addAttribute("cls", cls);
     model.addAttribute("consuls", list);
     Util.getMsg(request, model);
@@ -345,7 +288,7 @@ public class CView {
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/vypiska.s");
     //
-    LvForm4 f = dLvForm4.getByPatient(session.getCurPat());
+    LvDocs f = dLvDoc.get(session.getCurPat(), "vypiska");
     //
     if(f != null) {
       //
@@ -365,7 +308,6 @@ public class CView {
       model.addAttribute("dateEnd", Util.dateToString(f.getPatient().getDateEnd()));
       model.addAttribute("zavOtdel", dUser.getZavOtdel(f.getPatient().getDept().getId()));
     }
-    model.addAttribute("dieFlag", dLvForm6.getByPatient(session.getCurPat()).getC4() != null);
     model.addAttribute("zamGlb", dParam.byCode("GLB_NEXT"));
     if(Util.get(request, "diagnoz") != null)
       return "/med/lv/view/diagnoz";
@@ -380,10 +322,10 @@ public class CView {
       session.setCurSubUrl("/view/plan/index.s");
     model.addAttribute("pat", dPatient.get(session.getCurPat()));
     model.addAttribute("plans", sPatient.getPlans(session.getCurPat()));
-    List<LvConsuls> list = new ArrayList<LvConsuls>();
+    List<LvConsuls> list = new ArrayList<>();
     List<LvConsuls> cons = dLvConsul.getByPat(session.getCurPat());
     for(LvConsuls con : cons) {
-      if(con.getText() == null || con.getText().equals("")) {
+      if(con.getText() == null || con.getText().isEmpty()) {
         try {
           con.setCopied(dUser.get(con.getLvId()).getProfil());
           list.add(con);
@@ -408,7 +350,7 @@ public class CView {
     String action = Util.get(req, "action");
     Patients pat = dPatient.get(session.getCurPat());
     List<LvFizios> fizios = dLvFizio.getList("From LvFizios Where patientId = " + pat.getId());
-    List<ObjList> printFizio = new ArrayList<ObjList>();
+    List<ObjList> printFizio = new ArrayList<>();
     for(LvFizios fizio: fizios) {
       ObjList d = new ObjList();
       d.setC1(fizio.getKdo().getName());
@@ -458,7 +400,7 @@ public class CView {
     if(pat.getDateBegin().after(end) || pat.getDateBegin().equals(end)) {
       return "redirect:/view/fizio/index.s";
     }
-    List<LvFizioDates> dates = new ArrayList<LvFizioDates>();
+    List<LvFizioDates> dates = new ArrayList<>();
     int i = 0;
     while(true) {
       LvFizioDates date = new LvFizioDates();
@@ -472,7 +414,7 @@ public class CView {
       if(cl.getTime().equals(end)) break;
     }
     model.addAttribute("dates", dates);
-    HashMap<Integer, List<LvFizioDates>> ds = new HashMap<Integer, List<LvFizioDates>>();
+    HashMap<Integer, List<LvFizioDates>> ds = new HashMap<>();
     for(LvFizios fizio: fizios) {
       if(dLvFizioDate.getCount("From LvFizioDates Where fizio.id = " + fizio.getId()) == 0)
         ds.put(fizio.getId(), dates);
@@ -484,7 +426,7 @@ public class CView {
   }
   // Физиотерапия список
   @RequestMapping("/fizio/list.s")
-  protected String fizioList(HttpServletRequest request, Model model) {
+  protected String fizioList(Model model) {
     model.addAttribute("fizios", dKdos.getTypeKdos(8));
     return "/med/lv/fizio/list";
   }
@@ -537,7 +479,7 @@ public class CView {
   // Добавить
   @RequestMapping(value = "/fizio/set.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String addFizio(HttpServletRequest request, Model model){
+  protected String addFizio(HttpServletRequest request){
     Session session = SessionUtil.getUser(request);
     String[] ids = request.getParameterValues("ids");
     Patients patient = dPatient.get(session.getCurPat());
@@ -581,8 +523,6 @@ public class CView {
     String[] comments = request.getParameterValues("comment");
     for(int i = 0;i<ids.length;i++) {
       LvFizios fizios = dLvFizio.get(Integer.parseInt(ids[i]));
-      //dLvFizioDate.delFizio(fizios.getId());
-      //fizios.setCount(Integer.parseInt(counts[i]));
       fizios.setOblast(oblast[i]);
       fizios.setComment(comments[i]);
       fizios.setFizei(Double.parseDouble(fizeis[i]));
@@ -633,14 +573,14 @@ public class CView {
   protected String naznachIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     List<LvDrugs> list = dLvDrug.getPatientTabs(session.getCurPat());
-    List<LvDrugs> drugs = new ArrayList<LvDrugs>();
+    List<LvDrugs> drugs = new ArrayList<>();
     for(LvDrugs drug : list) {
       drug.setCat("Таблетка");
       drugs.add(drug);
     }
     model.addAttribute("tabs", drugs);
     list = dLvDrug.getPatientInes(session.getCurPat());
-    drugs = new ArrayList<LvDrugs>();
+    drugs = new ArrayList<>();
     for(LvDrugs drug : list) {
       if(drug.getCat().equals("ine-ven")) drug.setCat("Вена ичига");
       if(drug.getCat().equals("ine-mus")) drug.setCat("Мускул орасига");
@@ -670,20 +610,6 @@ public class CView {
     model.addAttribute("pat", pat);
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/drugObos";
   }
-  // Протокол операции
-  @RequestMapping("/prot.s")
-  protected String prot(@ModelAttribute("prot") LvForm5 prot, HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    if(Req.isNull(request, "print"))
-      session.setCurSubUrl("/view/prot.s");
-    LvForm5 form = dLvForm5.getByPatient(session.getCurPat());
-    model.addAttribute("form", form);
-    if(form != null) {
-      model.addAttribute("operDate", Util.dateToString(form.getOperDate()));
-      model.addAttribute("lvFio", dUser.get(form.getPatient().getLv_id()).getFio());
-    }
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/prot";
-  }
   // Переводной эпикриз
   @RequestMapping("/epic.s")
   protected String epic(HttpServletRequest request, Model model){
@@ -693,19 +619,6 @@ public class CView {
     model.addAttribute("epics", sPatient.getEpicGrid(session.getCurPat()));
     model.addAttribute("patient", dPatient.get(session.getCurPat()));
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/epic";
-  }
-  // Дополнительные данные
-  @RequestMapping("/extra.s")
-  protected String extra(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    if(Req.isNull(request, "print"))
-      session.setCurSubUrl("/view/extra.s");
-    Patients pat = dPatient.get(session.getCurPat());
-    model.addAttribute("obos", dLvForm2.getByPatient(session.getCurPat()));
-    model.addAttribute("vyp", dLvForm4.getByPatient(session.getCurPat()));
-    model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
-    model.addAttribute("zavOtdel", dUser.getZavOtdel(pat.getLv_dept_id()).getFio());
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/extra";
   }
   // Статистика отделения
   @RequestMapping("/stat.s")
@@ -755,11 +668,11 @@ public class CView {
     String date = Util.get(req, "date");
     Connection conn = null;
     PreparedStatement ps = null;
-    ResultSet rs = null, rc = null;
+    ResultSet rs = null, rc;
     try {
       Calendar calendar = Calendar.getInstance();
       int day = calendar.get(Calendar.DAY_OF_WEEK);
-      List<ObjList> list = new ArrayList<ObjList>();
+      List<ObjList> list = new ArrayList<>();
       String dt = date;
       if(type == 2 || type == 4) {
         Calendar c = Calendar.getInstance();
@@ -771,7 +684,7 @@ public class CView {
         //
         model.addAttribute("deptName", dep == null ? dUser.get(session.getUserId()).getDept().getName() : dDep.get(Integer.parseInt(dep)).getName());
         conn = DB.getConnection();
-        List<Integer> kdoIds = new ArrayList<Integer>();
+        List<Integer> kdoIds = new ArrayList<>();
         ps = conn.prepareStatement(
           "Select t.Id, t.Name " +
             "From Kdo_Types t " +
@@ -779,13 +692,13 @@ public class CView {
         ps.setInt(1, dep == null ? session.getDeptId() : Integer.parseInt(dep));
         ps.setString(2, Util.dateDB(dt));
         rs = ps.executeQuery();
-        List<String> kdos = new ArrayList<String>();
+        List<String> kdos = new ArrayList<>();
         while(rs.next()){
           kdoIds.add(rs.getInt(1));
           kdos.add(rs.getString(2));
         }
         for(int i = 0;i<kdos.size();i++) {
-          List<ObjList> patients = new ArrayList<ObjList>();
+          List<ObjList> patients = new ArrayList<>();
           ps = conn.prepareStatement(
             "SELECT Concat(d.surname, ' ', d.name, ' ', d.middlename) fio," +
               "         c.id, " +
@@ -923,7 +836,7 @@ public class CView {
             obj.setC5(rs.getString("comment"));
             patients.add(obj);
           }
-          if(patients.size() > 0) {
+          if(!patients.isEmpty()) {
             ObjList obj = new ObjList();
             obj.setC1(kdos.get(i));
             obj.setC30("Y");
@@ -947,7 +860,7 @@ public class CView {
         ps.setInt(1, dep == null ? session.getDeptId() : Integer.parseInt(dep));
         ps.setString(2, dt);
         rs = ps.executeQuery();
-        List<ObjList> patients = new ArrayList<ObjList>();
+        List<ObjList> patients = new ArrayList<>();
         while(rs.next()){
           ObjList obj = new ObjList();
           obj.setC1(rs.getString("fio"));
@@ -957,7 +870,7 @@ public class CView {
           obj.setC5(rs.getString("lvName"));
           patients.add(obj);
         }
-        if(patients.size() > 0) {
+        if(!patients.isEmpty()) {
           ObjList obj = new ObjList();
           obj.setC1("Консультация");
           obj.setC30("Y");
@@ -968,7 +881,7 @@ public class CView {
         model.addAttribute("currTime", Util.getCurDate() + " " + Util.getCurTime());
         return "/med/lv/print/stat/page1";
       } else {
-        List<ObjList> rows = new ArrayList<ObjList>();
+        List<ObjList> rows = new ArrayList<>();
         List<KdoTypes> types = dKdoType.getList("From KdoTypes Where state = 'A'");
         conn = DB.getConnection();
         ps = conn.prepareStatement(
@@ -1185,94 +1098,18 @@ public class CView {
     }
   }
 
-  // Документы
-  @RequestMapping(value = "/docs.s")
-  protected String docPrint(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    Patients pat = dPatient.get(session.getCurPat());
-    // Reg Forma
-    model.addAttribute("p", pat);
-    // Extra form
-    model.addAttribute("obos", dLvForm2.getByPatient(session.getCurPat()));
-    model.addAttribute("vyp", dLvForm4.getByPatient(session.getCurPat()));
-    model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
-    model.addAttribute("zavOtdel", dUser.getZavOtdel(pat.getDept().getId()).getFio());
-    // OSM
-    LvForm1 f = dLvForm1.getByPatient(session.getCurPat());
-    if(f != null) {
-      f.setC1(f.getC1().replaceAll("&nbsp;"," "));
-      f.setC2(f.getC2().replaceAll("&nbsp;"," "));
-      f.setC3(f.getC3().replaceAll("&nbsp;"," "));
-      f.setC4(f.getC4().replaceAll("&nbsp;"," "));
-      f.setC5(f.getC5().replaceAll("&nbsp;"," "));
-      f.setC6(f.getC6().replaceAll("&nbsp;"," "));
-      f.setC7(Util.nvl(f.getC7()).replaceAll("&nbsp;"," "));
-      f.setC8(Util.nvl(f.getC8()).replaceAll("&nbsp;"," "));
-      f.setC9(Util.nvl(f.getC9()).replaceAll("&nbsp;"," "));
-      f.setC10(Util.nvl(f.getC10()).replaceAll("&nbsp;"," "));
-      f.setC11(Util.nvl(f.getC11()).replaceAll("&nbsp;"," "));
-      f.setC12(Util.nvl(f.getC12()).replaceAll("&nbsp;"," "));
-      f.setC13(Util.nvl(f.getC13()).replaceAll("&nbsp;"," "));
-      f.setC14(Util.nvl(f.getC14()).replaceAll("&nbsp;"," "));
-      f.setC15(Util.nvl(f.getC15()).replaceAll("&nbsp;"," "));
-      f.setC16(Util.nvl(f.getC16()).replaceAll("&nbsp;"," "));
-      f.setC17(Util.nvl(f.getC17()).replaceAll("&nbsp;"," "));
-      f.setC18(Util.nvl(f.getC18()).replaceAll("&nbsp;"," "));
-      f.setC19(Util.nvl(f.getC19()).replaceAll("&nbsp;"," "));
-      model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
-    }
-    model.addAttribute("form", f);
-    // Obos
-    /*LvForm2 f = dLvForm2.getByPatient(session.getCurPat());
-    if(f != null) {
-      f.setC1(f.getC1().replaceAll("&nbsp;"," "));
-      f.setC2(f.getC2().replaceAll("&nbsp;"," "));
-      f.setC3(f.getC3().replaceAll("&nbsp;"," "));
-      f.setC4(f.getC4().replaceAll("&nbsp;"," "));
-      f.setC5(f.getC5().replaceAll("&nbsp;"," "));
-      f.setC6(Util.nvl(f.getC6()).replaceAll("&nbsp;"," "));
-      f.setC7(Util.nvl(f.getC7()).replaceAll("&nbsp;"," "));
-      f.setC8(Util.nvl(f.getC8()).replaceAll("&nbsp;"," "));
-      model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
-    }
-    //
-    model.addAttribute("form", f);*/
-    return "/med/lv/print/docs";
-  }
-
   // Статистика отделения
   @RequestMapping("/cashbox.s")
   protected String cashBox(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/view/cashbox.s");
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     //
     Patients pat = dPatient.get(session.getCurPat());
-    /*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
-    Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
-    Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));
-    Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
-    Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
-    Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));*/
     Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
     Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
     Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
     Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
-    /*if(pat.getCounteryId() == 199) { // Узбекистан
-      if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-        total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX_UZB;
-      else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-        total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE_UZB;
-      else // Полулюкс
-        total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX_UZB;
-    } else {
-      if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-        total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX;
-      else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-        total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE;
-      else // Полулюкс
-        total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX;
-    }*/
     ObjList obj = new ObjList();
     obj.setC1("Оплата за койку: Кол-во дней: " + pat.getDayCount());
     obj.setC2(total + "");
@@ -1304,9 +1141,22 @@ public class CView {
     return "/med/lv/cashbox";
   }
 
+  @RequestMapping("/extra.s")
+  protected String extra(HttpServletRequest request, Model model){
+    Session session = SessionUtil.getUser(request);
+    if(Req.isNull(request, "print"))
+      session.setCurSubUrl("/view/extra.s");
+    Patients pat = dPatient.get(session.getCurPat());
+    model.addAttribute("obos", dLvDoc.get(session.getCurPat(), "obos"));
+    model.addAttribute("vyp", dLvDoc.get(session.getCurPat(), "vypiska"));
+    model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
+    model.addAttribute("zavOtdel", dUser.getZavOtdel(pat.getLv_dept_id()).getFio());
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/extra";
+  }
+
   // Статистика отделения
   @RequestMapping("/stat_card.s")
-  protected String stat_card(HttpServletRequest request, Model model){
+  protected String stat_card(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("country", dCountery.get(pat.getCounteryId()));
@@ -1314,15 +1164,15 @@ public class CView {
       model.addAttribute("region", dRegion.get(pat.getRegionId()));
     model.addAttribute("lvfio", dUser.get(pat.getLv_id()).getFio());
     List<LvPlans> plan = dLvPlan.getList("From LvPlans Where patientId = " + session.getCurPat() + " And kdo.id = 153"); // RW
-    if(plan.size() > 0) {
+    if(!plan.isEmpty()) {
       F13 rw = df13.get(plan.get(0).getResultId());
       model.addAttribute("rw", rw);
       model.addAttribute("plan", plan.get(0));
     }
     List<HNPatients> patients = dhnPatient.getList("From HNPatients Where patient.id = " + session.getCurPat());
-    if(patients.size() > 0)
+    if(!patients.isEmpty())
       model.addAttribute("days", patients.get(0).getDayCount());
-    model.addAttribute("vypiska", dLvForm4.getByPatient(session.getCurPat()));
+    model.addAttribute("vypiska", dLvDoc.get(session.getCurPat(), "vypiska"));
     model.addAttribute("pat", pat);
     return "/med/lv/print/stat_card";
   }

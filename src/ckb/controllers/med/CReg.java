@@ -11,6 +11,7 @@ import ckb.dao.admin.users.DUser;
 import ckb.dao.med.client.DClient;
 import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.kdos.DKdos;
+import ckb.dao.med.lv.docs.DLvDoc;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.patient.*;
 import ckb.domains.admin.Kdos;
@@ -66,6 +67,7 @@ public class CReg {
   @Autowired DDict dDict;
   @Autowired DClient dClient;
   @Autowired private DLvPartner dLvPartner;
+  @Autowired private DLvDoc dLvDoc;
 
   @RequestMapping("nurse/index.s")
   protected String view(@ModelAttribute("patient") Patients p, HttpServletRequest req, Model m) {
@@ -93,7 +95,7 @@ public class CReg {
     m.addAttribute("lvs", sUser.getLvs());
     //
     List<Rooms> list = dRooms.getActives();
-    List<Rooms> rooms = new ArrayList<Rooms>();
+    List<Rooms> rooms = new ArrayList<>();
     for(Rooms room: list) {
       Long count = dPatient.getCount("From Patients Where state Not In ('ARCH', 'ZGV') And room.id = " + room.getId());
       if(count < room.getKoykoLimit() || room.getAccess().equals("Y"))
@@ -108,7 +110,7 @@ public class CReg {
     m.addAttribute("reg", Util.nvl(Util.get(req, "reg")).equals("Y") ? session.getCurPat() : "");
     m.addAttribute("booking", Util.get(req, "booking", ""));
     List<Kdos> kdos = dKdos.getList("From Kdos Where necKdo = 'Y'");
-    List<Kdos> kkk = new ArrayList<Kdos>();
+    List<Kdos> kkk = new ArrayList<>();
     for(Kdos kdo: kdos) {
       kdo.setShortName("_" + kdo.getId() + "_");
       kkk.add(kdo);
@@ -294,7 +296,7 @@ public class CReg {
   }
 
   @RequestMapping(value = "nurse/watcher/day.s", method = RequestMethod.POST)
-  protected @ResponseBody String setWatcherDay(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+  protected @ResponseBody String setWatcherDay(HttpServletRequest req) throws JSONException {
     JSONObject data = new JSONObject();
     try {
       PatientWatchers watcher = dPatientWatchers.get(Util.getInt(req, "id"));
@@ -336,11 +338,11 @@ public class CReg {
       msg += Req.isNull(req, "date_Begin") ? "Не заполнено поле - Дата поступление\n" : "";
       msg += Req.isNull(req, "yearNum") ? "Не заполнено поле - Номер история болезни\n" : "";
       Patients pat = dPatient.get(Util.getInt(req, "id"));
-      if (msg.equals("") && pat.getYearNum() != null && pat.getYearNum() != Util.getInt(req, "yearNum"))
+      if (msg.isEmpty() && pat.getYearNum() != null && pat.getYearNum() != Util.getInt(req, "yearNum"))
         if (dPatient.existIbNum(Util.getInt(req, "id"), Util.getInt(req, "yearNum")))
           msg += "Номер история болезни - такой номер уже существует\n";
       //
-      if (msg.equals("")) {
+      if (msg.isEmpty()) {
         Patients p = sPatient.docSave(req);
         data.put("success", true);
         data.put("id", p.getId());
@@ -385,10 +387,12 @@ public class CReg {
   }
 
   @RequestMapping(value = "doctor/archive.s", method = RequestMethod.POST)
-  protected @ResponseBody String doctor_archive(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+  protected @ResponseBody String doctor_archive(HttpServletRequest req) throws JSONException {
     JSONObject data = new JSONObject();
     session = SessionUtil.getUser(req);
     try {
+      if(dLvDoc.hasOSM(session.getCurPat()))
+        return Util.err(data, "Данный пациент уже в процессе обработке нельзя Архивировать");
       Patients pat = dPatient.get(session.getCurPat());
       pat.setState("ARCH");
       dPatient.save(pat);
@@ -469,7 +473,7 @@ public class CReg {
       try {
         LvPlans plan = dLvPlan.getObj("Select t From LvPlans t Where t.id in (Select Min(c.id) From LvPlans c Where c.isDone = 'Y' And c.kdo.id = 50 And c.patientId = " + id + ") And t.kdo.id = 50 And t.patientId = " + id);
         model.addAttribute("printPage", "/kdo/obs.s?print=Y&id=" + plan.getId() + "&kdo=" + plan.getKdo().getId());
-      } catch (Exception e) {}
+      } catch (Exception ignored) {}
     }
     return "med/registration/doctor/fm/ekg";
   }

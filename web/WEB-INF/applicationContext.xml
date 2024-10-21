@@ -38,13 +38,7 @@
   <bean id="dReport" class="ckb.dao.admin.reports.DReportImp" parent="daoImpl"/>
   <bean id="dFormLog" class="ckb.dao.admin.forms.DFormLogImp" parent="daoImpl"/>
   <bean id="dDept" class="ckb.dao.admin.depts.DDeptImp" parent="daoImpl"/>
-  <bean id="dLvForm1" class="ckb.dao.med.lv.form1.DLvForm1Imp" parent="daoImpl"/>
-  <bean id="dLvForm2" class="ckb.dao.med.lv.form2.DLvForm2Imp" parent="daoImpl"/>
-  <bean id="dLvForm3" class="ckb.dao.med.lv.form3.DLvForm3Imp" parent="daoImpl"/>
-  <bean id="dLvForm4" class="ckb.dao.med.lv.form4.DLvForm4Imp" parent="daoImpl"/>
-  <bean id="dLvForm5" class="ckb.dao.med.lv.form5.DLvForm5Imp" parent="daoImpl"/>
-  <bean id="dLvForm6" class="ckb.dao.med.lv.form6.DLvForm6Imp" parent="daoImpl"/>
-  <bean id="dLvForm7" class="ckb.dao.med.lv.form7.DLvForm7Imp" parent="daoImpl"/>
+  <bean id="dLvDoc" class="ckb.dao.med.lv.docs.DLvDocImp" parent="daoImpl"/>
   <bean id="dLvFizioDate" class="ckb.dao.med.lv.fizio.DLvFizioDateImp" parent="daoImpl"/>
   <bean id="dLvFizioDateH" class="ckb.dao.med.lv.fizio.DLvFizioDateHImp" parent="daoImpl"/>
   <bean id="dPatient" class="ckb.dao.med.patient.DPatientImp" parent="daoImpl"/>

@@ -104,7 +104,7 @@
       <c:if test="${date_Begin != '' && patient.state == 'PRD'}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="confPatient()"><i title="Подтвердить" class="fa fa-check"></i> Подтвердить</a></li>
       </c:if>
-      <c:if test="${patient.state == 'PRD'}">
+      <c:if test="${patient.state == 'PRD' || patient.state == 'LV'}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="archPatient()"><i title="Архивация" class="fa fa-archive"></i> Архивация</a></li>
       </c:if>
       <c:if test="${date_Begin == '' && patient.state == 'PRD'}">

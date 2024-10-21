@@ -920,6 +920,7 @@ public class SRepImp implements SRep {
           " From Lv_Plans t, Kdos c, Patients p " +
           " Where t.Kdo_Id = c.id " +
           "   And t.patientId = p.id " +
+					"   And t.done_flag = 'Y' " +
           "   And c.Kdo_Type = 10 " + (catStat.equals("") ? "" : " And c.id = " + catStat) +
           "   And date (t.Result_Date) Between ? AND ? " +
           " Union All " +
@@ -931,6 +932,7 @@ public class SRepImp implements SRep {
           "   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
           "  Where ser.Id = t.Service_Id " +
           "    And p.Id = t.Patient " +
+					"    And t.state = 'DONE' " +
           "		 And ser.Group_Id = 8 " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
           " 	 And date (t.confDate) Between ? and ? "+
           " Order By 5 "
@@ -2394,6 +2396,7 @@ public class SRepImp implements SRep {
           "   And f.plan_id = t.id" +
           "   And c.kdo_type = 14 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
           "   And u.id = p.lv_id " +
+					"   And t.done_flag = 'Y' " +
           "   And date (t.Result_Date) Between ? and ? " +
           " UNION ALL " +
           " Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -2406,6 +2409,7 @@ public class SRepImp implements SRep {
           "   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
           "  Where ser.Id = t.Service_Id " +
           "    And p.Id = t.Patient " +
+					"    And t.state = 'DONE' " +
           "		 And ser.Group_Id = 5 " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
           " 	 And date (t.confDate) Between ? and ? "+
           " Order By 7 "
@@ -2469,6 +2473,7 @@ public class SRepImp implements SRep {
           "         t.result_date " +
           " From Lv_Plans t, Kdos c, Patients p, Users u, F999 f  " +
           " Where t.Kdo_Id = c.id " +
+					"   And t.done_flag = 'Y' " +
           "   And t.patientId = p.id " +
           "   And f.plan_id = t.id" + (catStat.equals("") ? "" : " And c.id = " + catStat) +
           "   And c.kdo_type = 13 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
@@ -2484,6 +2489,7 @@ public class SRepImp implements SRep {
           "        t.confDate " +
           "   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
           "  Where ser.Id = t.Service_Id " +
+					"    And t.state = 'DONE' " +
           "    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
           "		 And ser.Group_Id = 4 " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
           " 	 And date (t.confDate) Between ? and ? "+
@@ -5135,6 +5141,7 @@ public class SRepImp implements SRep {
 					"         t.result_date " +
 					" From Lv_Plans t, Kdos c, Patients p, Users u, F999 f  " +
 					" Where t.Kdo_Id = c.id " +
+					"   And t.done_flag = 'Y' " +
 					"   And t.patientId = p.id " +
 					"   And f.plan_id = t.id" + (catStat.equals("") ? "" : " And c.id = " + catStat) +
 					"   And c.kdo_type = 3 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
@@ -5150,6 +5157,7 @@ public class SRepImp implements SRep {
 					"        t.confDate " +
 					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
 					"  Where ser.Id = t.Service_Id " +
+					"    And t.state = 'DONE' " +
 					"    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
 					"		 And ser.Group_Id = 12 " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
 					" 	 And date (t.confDate) Between ? and ? "+

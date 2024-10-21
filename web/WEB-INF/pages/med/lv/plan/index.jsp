@@ -50,12 +50,24 @@
     if (es.length > 0)
       window.open('/kdo/printPlans.s?' + params);
   }
+  function setConfUser(plan, user) {
+    if(confirm('Вы действительно хотите изменить данные?'))
+      $.ajax({
+        url: '/lv/plan/change/confuser.s',
+        method: 'post',
+        data: 'plan=' + plan + '&user=' + user,
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+        }
+      });
+  }
 </script>
 <iframe src="about:blank" id="frmDiv" name="frm" style="display: none"></iframe>
 <button data-toggle="modal" data-target="#myModal" style="display: none" id="modalBtn"></button>
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" style="display: none;"></div>
 <f:form method="post">
-  <div class="panel panel-info" style="width: 1100px !important; margin: auto">
+  <div class="panel panel-info" style="width: 1200px !important; margin: auto">
     <%@include file="/incs/msgs/successError.jsp"%>
     <div class="panel-heading">
       План обследования
@@ -72,12 +84,13 @@
       </tr>
       <tr>
         <td>&nbsp;</td>
-        <td align="center" width="30"><b><a href="#" onclick="printPlans()">Печать</a></b></td>
-        <td align="center" width="300"><b>Наименование</b></td>
-        <td align="center" width="140"><b>Дата</b></td>
+        <td align="center"><b><a href="#" onclick="printPlans()">Печать</a></b></td>
+        <td align="center"><b>Наименование</b></td>
+        <td align="center" style="width:140px"><b>Дата</b></td>
         <td align="center"><b>Примечание</b></td>
+        <td align="center"><b>Врач</b></td>
         <td align="center"><b>Назначил</b></td>
-        <td align="center" width="30">&nbsp;</td>
+        <td align="center">&nbsp;</td>
       </tr>
       <c:forEach items="${plans}" var="p" varStatus="loop">
         <tr>
@@ -87,7 +100,7 @@
               <input type="checkbox" name="plans" value="${p.c1}" checked>
             </c:if>
           </td>
-          <td width="300">
+          <td>
             <c:if test="${p.c7 == 'N' && p.c3 == '153'}">
               <a style="cursor: pointer" onclick="bioCheck('${p.c1}')">${p.c4}</a>
             </c:if>
@@ -130,7 +143,19 @@
               <input type=text class="form-control" name="comments" value="${p.c6}"/>
             </c:if>
           </td>
-          <td>
+          <td nowrap>
+            <c:if test="${p.c11 == '288'}">
+              <select class="form-control" onchange="setConfUser(${p.c1}, this.value)">
+                <c:forEach items="${p.list}" var="u">
+                  <option value="${u.id}" <c:if test="${u.id == p.c13}">selected</c:if>>${u.c1}</option>
+                </c:forEach>
+              </select>
+            </c:if>
+            <c:if test="${p.c11 != '288'}">
+              ${p.c12}
+            </c:if>
+          </td>
+          <td nowrap>
               ${p.c9}
           </td>
           <td align="center">

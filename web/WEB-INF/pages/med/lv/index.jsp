@@ -6,7 +6,7 @@
     dom.className = "active";
     lvContent.location = dom.id;
     var o = dom.getAttribute("ord");
-    $('#saveForm').css('display', (o == 1 && ${sessionScope.ENV.roleId} === 6) || o == 2 || o == 4 || o == 5 || o == 6 || o == 7 || o == 8 || o == 9 || o == 10 || o == 11 || o == 12 ||o == 13 || o == 14 || o == 16 ? 'inline' : "none");
+    $('#saveForm').css('display', (o == 1 && ${sessionScope.ENV.roleId} === 6) || o == 2 || o == 4 || o == 5 || o == 6 || o == 7 || o == 8 || o == 9 || o == 10 || o == 11 || o == 12 ||o == 13 || o == 16 ? 'inline' : "none");
     $('#planResult').css('display', o == 10 ? 'inline' : "none");
     $('#planResultPage').css('display', o == 6 || o == 8  ? 'inline' : "none");
     $('#statCard').css('display', o == 9  ? 'inline' : "none");

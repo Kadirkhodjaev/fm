@@ -376,8 +376,8 @@ public class CMn {
         obj.setPrice(0D);
         ps = cn.prepareStatement(
           "Select c.id kdo_id, c.name, " +
-            "  (Select Count(*) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "') counter, " +
-            "  ifnull((Select sum(t.price) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBEnd(endDate) + "'), 0) total " +
+            "  (Select Count(*) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "') counter, " +
+            "  ifnull((Select sum(t.price) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "'), 0) total " +
             "  From kdos c " +
             " Where c.kdo_type = ? " +
             "   And c.state = 'A'");

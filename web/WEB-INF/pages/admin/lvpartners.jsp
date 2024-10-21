@@ -13,9 +13,13 @@
     Партнеры
     <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
     <button  class="btn btn-sm btn-success" onclick="addDrugDict()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
+    <select class="form-control wpx-100 float-right" id="sel_state" style="margin-right:5px" onchange="setState(this.value)">
+      <option <c:if test="${state == 'A'}">selected</c:if> value="A">Активные</option>
+      <option <c:if test="${state == 'P'}">selected</c:if> value="P">Пассивные</option>
+    </select>
+    <input type="text" class="form-control wpx-200 float-right" placeholder="Поиск" style="margin-right:5px" value="${word}" onkeydown="setFilter(event, this.value)"/>
   </div>
   <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
     <div class="table-responsive">
       <table class="miniGrid table table-striped table-bordered">
         <thead>
@@ -146,5 +150,12 @@
         }
       }
     });
+  }
+  function setState(val) {
+    setPage('admin/lvpartners.s?state=' + val);
+  }
+  function setFilter(evt, str) {
+    if(evt.keyCode === 13)
+      setPage('admin/lvpartners.s?state=' + $('#sel_state').val() + '&word=' + str);
   }
 </script>

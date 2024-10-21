@@ -81,7 +81,7 @@
         <tbody>
         <c:forEach items="${services}" var="s" varStatus="loop">
           <tr>
-            <td style="vertical-align: middle" class="center">${loop.index + 1}</td>
+            <td style="vertical-align: middle" class="center">${s.id}</td>
             <td style="vertical-align: middle">${s.kdoType.name}</td>
             <td style="vertical-align: middle">
               <a href="#" onclick="editDict(${s.id});return false;">${s.name}</a>

@@ -6,36 +6,31 @@ import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.dicts.rooms.DRooms;
-import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.eat.dict.menuTypes.DEatMenuType;
 import ckb.dao.med.eat.dict.table.DEatTable;
 import ckb.dao.med.head_nurse.drug.DHNDrug;
+import ckb.dao.med.kdos.DKdoTypes;
 import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.bio.DLvBio;
 import ckb.dao.med.lv.consul.DLvConsul;
 import ckb.dao.med.lv.coul.DLvCoul;
 import ckb.dao.med.lv.dairy.DLvDairy;
+import ckb.dao.med.lv.docs.DLvDoc;
 import ckb.dao.med.lv.drug.DLvDrug;
 import ckb.dao.med.lv.drug.goal.DLvDrugGoal;
-import ckb.dao.med.lv.epic.DLvEpic;
 import ckb.dao.med.lv.fizio.DLvFizio;
 import ckb.dao.med.lv.fizio.DLvFizioDate;
-import ckb.dao.med.lv.form1.DLvForm1;
-import ckb.dao.med.lv.form2.DLvForm2;
-import ckb.dao.med.lv.form3.DLvForm3;
-import ckb.dao.med.lv.form4.DLvForm4;
-import ckb.dao.med.lv.form5.DLvForm5;
-import ckb.dao.med.lv.form6.DLvForm6;
-import ckb.dao.med.lv.form7.DLvForm7;
 import ckb.dao.med.lv.garmon.DLvGarmon;
 import ckb.dao.med.lv.plan.DKdoChoosen;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.*;
 import ckb.dao.med.template.DDrugTemplate;
+import ckb.domains.admin.KdoTypes;
+import ckb.domains.admin.Kdos;
 import ckb.domains.med.drug.dict.DrugDirections;
 import ckb.domains.med.drug.dict.Drugs;
 import ckb.domains.med.eat.dict.EatMenuTypes;
@@ -43,14 +38,13 @@ import ckb.domains.med.head_nurse.HNDrugs;
 import ckb.domains.med.lv.*;
 import ckb.domains.med.patient.*;
 import ckb.models.Menu;
+import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.models.PatientList;
 import ckb.models.drugs.PatientDrug;
 import ckb.models.drugs.PatientDrugDate;
 import ckb.models.drugs.PatientDrugRow;
-import ckb.services.admin.form.SForm;
 import ckb.services.admin.user.SUser;
-import ckb.services.med.kdo.SKdo;
 import ckb.services.med.patient.SPatient;
 import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
@@ -83,40 +77,31 @@ import java.util.concurrent.TimeUnit;
 public class CLv {
 
   //region AUTOWIRED
-  @Autowired SPatient sPatient;
-  @Autowired DPatient dPatient;
-  @Autowired DLvForm1 dLvForm1;
-  @Autowired DLvForm2 dLvForm2;
-  @Autowired DLvForm3 dLvForm3;
-  @Autowired DLvForm4 dLvForm4;
-  @Autowired DLvForm5 dLvForm5;
-  @Autowired DLvForm6 dLvForm6;
-  @Autowired DLvForm7 dLvForm7;
-  @Autowired DLvDairy dLvDairy;
-  @Autowired DKdos dKdos;
-  @Autowired SForm sForm;
-  @Autowired SKdo sKdo;
-  @Autowired SRkdo sRkdo;
-  @Autowired DLvPlan dLvPlan;
-  @Autowired SUser sUser;
-  @Autowired DUser dUser;
-  @Autowired DDept dDept;
-  @Autowired DLvEpic dLvEpic;
-  @Autowired DLvConsul dLvConsul;
-  @Autowired DLvBio dLvBio;
-  @Autowired DPatientEat dPatientEat;
-  @Autowired DParam dParam;
-  @Autowired DPatientPlan dPatientPlan;
-  @Autowired DPatientLink dPatientLink;
-  @Autowired DLvDrug dLvDrug;
-  @Autowired DLvGarmon dLvGarmon;
-  @Autowired DLvTorch dLvTorch;
-  @Autowired DLvCoul dLvCoul;
-  @Autowired DLvDrugGoal dLvDrugGoal;
-  @Autowired DLvFizio dLvFizio;
-  @Autowired DDrugTemplate dDrugTemplate;
+  @Autowired private SPatient sPatient;
+  @Autowired private DPatient dPatient;
+  @Autowired private DLvDairy dLvDairy;
+  @Autowired private DKdos dKdos;
+  @Autowired private SRkdo sRkdo;
+  @Autowired private DLvPlan dLvPlan;
+  @Autowired private SUser sUser;
+  @Autowired private DUser dUser;
+  @Autowired private DDept dDept;
+  @Autowired private DLvConsul dLvConsul;
+  @Autowired private DLvBio dLvBio;
+  @Autowired private DPatientEat dPatientEat;
+  @Autowired private DParam dParam;
+  @Autowired private DPatientPlan dPatientPlan;
+  @Autowired private DPatientLink dPatientLink;
+  @Autowired private DLvDrug dLvDrug;
+  @Autowired private DLvGarmon dLvGarmon;
+  @Autowired private DLvTorch dLvTorch;
+  @Autowired private DLvCoul dLvCoul;
+  @Autowired private DLvDrugGoal dLvDrugGoal;
+  @Autowired private DLvFizio dLvFizio;
+  @Autowired private DLvDoc dLvDoc;
+  @Autowired private DDrugTemplate dDrugTemplate;
   @Autowired private DDrug dDrug;
-  @Autowired DRooms dRooms;
+  @Autowired private DRooms dRooms;
   @Autowired private DKdoChoosen dKdoChoosen;
   @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugRow dPatientDrugRow;
@@ -125,7 +110,7 @@ public class CLv {
   @Autowired private DEatTable dEatTable;
   @Autowired private DEatMenuType dEatMenuType;
   @Autowired private DDict dDict;
-  @Autowired private DDrugActDrug dDrugActDrug;
+  @Autowired private DKdoTypes dKdoType;
   @Autowired private DHNDrug dhnDrug;
   @Autowired private DPatientDrugTemp dPatientDrugTemp;
   @Autowired private DPatientDrugRowTemp dPatientDrugRowTemp;
@@ -135,13 +120,13 @@ public class CLv {
   //endregion
 
   @RequestMapping("/index.s")
-  protected String main(HttpServletRequest request, Model model) {
+  protected String mains(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     int id = Req.getInt(request, "id");
     session.setCurPat(id);
     session.setCurUrl("/lv/index.s?id=" + id);
     //
-    List<Menu> m = new ArrayList<Menu>();
+    List<Menu> m = new ArrayList<>();
     session.setCurSubUrl(session.getCurSubUrl().contains("/lv/") ? (session.getCurSubUrl().contains("reg") ? "/view/reg.s" : session.getCurSubUrl()) : "/view/reg.s");
     m.add(new Menu(1,"Регистрация", "/view/reg.s", "fa fa-medkit fa-fw", false));
     m.add(new Menu(18,"Оплата", "/view/cashbox.s", "fa fa-money fa-fw", false));
@@ -160,9 +145,6 @@ public class CLv {
     m.add(new Menu(9,"Выписка", "/lv/vypiska.s", "fa fa-check fa-fw", false));
     m.add(new Menu(14,"Дополнительные данные", "/lv/extra.s", "fa fa-plus-square fa-fw", false));
     m.add(new Menu(13,"Перевод", "/lv/epic.s", "fa fa-random fa-fw", false));
-    /*if(dPatientLink.getCount("From PatientLinks Where parent = " + session.getCurPat()) > 0)
-      m.add(new Menu(15, "История", "/lv/history.s", "fa fa-bars fa-fw", false));*/
-    //m.add(new Menu(16, "Все документы", "/lv/docs.s", "fa fa-bars fa-fw", false));
     model.addAttribute("menuList", m);
     model.addAttribute("id", id);
     model.addAttribute("p", dPatient.get(session.getCurPat()));
@@ -172,36 +154,36 @@ public class CLv {
     return "/med/lv/index";
   }
 
-  //region CODES
-  // Осмотр леч врача
+  //region Осмотр леч врача
   @RequestMapping("/osm.s")
-  protected String osm(@ModelAttribute("osm") LvForm1 osm, HttpServletRequest request, Model model){
+  protected String osm(@ModelAttribute("osm") LvDocs osm, HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/lv/osm.s");
-    LvForm1 o = dLvForm1.getByPatient(session.getCurPat());
-    if(o != null) {
-      osm.setId(o.getId());
-      osm.setPatient(o.getPatient());
-      osm.setC1(o.getC1());
-      osm.setC2(o.getC2());
-      osm.setC3(o.getC3());
-      osm.setC4(o.getC4());
-      osm.setC5(o.getC5());
-      osm.setC6(o.getC6());
-      osm.setC7(o.getC7());
-      osm.setC8(o.getC8());
-      osm.setC9(o.getC9());
-      osm.setC10(o.getC10());
-      osm.setC11(o.getC11());
-      osm.setC12(o.getC12());
-      osm.setC13(o.getC13());
-      osm.setC14(o.getC14());
-      osm.setC15(o.getC15());
-      osm.setC16(o.getC16());
-      osm.setC17(o.getC17());
-      osm.setC18(o.getC18());
-      osm.setC19(o.getC19());
-      osm.setMkb(o.getMkb());
+    LvDocs doc = dLvDoc.get(session.getCurPat(), "osm");
+
+    if(doc != null) {
+      osm.setId(doc.getId());
+      osm.setPatient(doc.getPatient());
+      osm.setC1(doc.getC1());
+      osm.setC2(doc.getC2());
+      osm.setC3(doc.getC3());
+      osm.setC4(doc.getC4());
+      osm.setC5(doc.getC5());
+      osm.setC6(doc.getC6());
+      osm.setC7(doc.getC7());
+      osm.setC8(doc.getC8());
+      osm.setC9(doc.getC9());
+      osm.setC10(doc.getC10());
+      osm.setC11(doc.getC11());
+      osm.setC12(doc.getC12());
+      osm.setC13(doc.getC13());
+      osm.setC14(doc.getC14());
+      osm.setC15(doc.getC15());
+      osm.setC16(doc.getC16());
+      osm.setC17(doc.getC17());
+      osm.setC18(doc.getC18());
+      osm.setC19(doc.getC19());
+      osm.setMkb(doc.getMkb());
     } else {
       Patients p = dPatient.get(session.getCurPat());
       osm.setPatient(p);
@@ -222,19 +204,19 @@ public class CLv {
     return "/med/lv/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "osm";
   }
 
-  // Осмотр леч врача
   @RequestMapping(value = "/osm.s", method = RequestMethod.POST)
-  protected String osm(@ModelAttribute("osm") LvForm1 osm){
-    dLvForm1.save(osm);
+  protected String osm(@ModelAttribute("osm") LvDocs osm){
+    dLvDoc.save(osm);
     return "redirect:/lv/osm.s?msgState=1&msgCode=successSave";
   }
+  //endregion
 
-  // Обоснование
+  //region Обоснование
   @RequestMapping("/obos.s")
-  protected String obos(@ModelAttribute("obos") LvForm2 obos, HttpServletRequest request, Model model) {
+  protected String obos(@ModelAttribute("obos") LvDocs obos, HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/lv/obos.s");
-    LvForm2 o = dLvForm2.getByPatient(session.getCurPat());
+    LvDocs o = dLvDoc.get(session.getCurPat(), "obos");
     if(o != null) {
       obos.setId(o.getId());
       obos.setPatient(o.getPatient());
@@ -249,7 +231,7 @@ public class CLv {
       obos.setMkb(o.getMkb());
       obos.setMkb_id(o.getMkb_id());
     } else {
-      LvForm1 osm = dLvForm1.getByPatient(session.getCurPat());
+      LvDocs osm = dLvDoc.get(session.getCurPat(), "osm");
       obos.setPatient(dPatient.get(session.getCurPat()));
       if(osm != null) {
         obos.setC1(osm.getC1());
@@ -272,55 +254,19 @@ public class CLv {
     return "/med/lv/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "obos";
   }
 
-  // Обоснование
   @RequestMapping(value = "/obos.s", method = RequestMethod.POST)
-  protected String obos(@ModelAttribute("obos") LvForm2 obos, Errors errors) {
+  protected String obos(@ModelAttribute("obos") LvDocs obos, Errors errors) {
     ValidationUtils.rejectIfEmpty(errors, "mkb_id", "МКБ 10 не выбран", "МКБ 10 не выбран");
     if (errors.hasErrors()) {
       obos.setMkb("");
       return "/med/lv/fm/obos";
     }
-    dLvForm2.save(obos);
+    dLvDoc.save(obos);
     return "redirect:/lv/obos.s?msgState=1&msgCode=successSave";
   }
+  //endregion
 
-  // Обоснование
-  @RequestMapping("/predoper.s")
-  protected String predOper(@ModelAttribute("predoper") LvForm7 predoper, HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/predoper.s");
-    LvForm7 o = dLvForm7.getByPatient(session.getCurPat());
-    if(o != null) {
-      predoper.setId(o.getId());
-      predoper.setPatient(o.getPatient());
-      predoper.setC1(o.getC1());
-      predoper.setC2(o.getC2());
-      predoper.setC3(o.getC3());
-      predoper.setC4(o.getC4());
-      predoper.setC5(o.getC5());
-    } else {
-      LvForm1 osm = dLvForm1.getByPatient(session.getCurPat());
-      predoper.setPatient(dPatient.get(session.getCurPat()));
-      if(osm != null) {
-        predoper.setC1(osm.getC1());
-        predoper.setC2(osm.getC2());
-        predoper.setC3(osm.getC3());
-        predoper.setC4(osm.getC4());
-        predoper.setC5(osm.getC5());
-      }
-    }
-    Util.getMsg(request, model);
-    return "/med/lv/predoper";
-  }
-
-  // Обоснование
-  @RequestMapping(value = "/predoper.s", method = RequestMethod.POST)
-  protected String predOper(@ModelAttribute("predoper") LvForm7 predoper){
-    dLvForm7.save(predoper);
-    return "redirect:/lv/predoper.s?msgState=1&msgCode=successSave";
-  }
-
-  // Дневник
+  //region Дневник
   @RequestMapping("/dairy.s")
   protected String dnevnikIndex(@ModelAttribute("dairy") LvDairies dairy, HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -331,55 +277,53 @@ public class CLv {
     model.addAttribute("dairies", sPatient.getDairies(session.getCurPat()));
     // Creating model
     String dairyId = Util.get(request, "dairyId");
-    if(!Util.nvl(dairyId).equals("")) {
+    if(!Util.nvl(dairyId).isEmpty()) {
       LvDairies d = dLvDairy.get(Integer.parseInt(dairyId));
-      dairy.setId(Util.nvl(Util.get(request, "copy")).equals("") ? d.getId() : null);
+      dairy.setId(Util.nvl(Util.get(request, "copy")).isEmpty() ? d.getId() : null);
       dairy.setPuls(d.getPuls());
       dairy.setTemp(d.getTemp());
       dairy.setDav1(d.getDav1());
       dairy.setDav2(d.getDav2());
       dairy.setText(d.getText());
-      model.addAttribute("act_Date", Util.nvl(Util.get(request, "copy")).equals("") ? Util.dateToString(d.getActDate()) : null);
+      model.addAttribute("act_Date", Util.nvl(Util.get(request, "copy")).isEmpty() ? Util.dateToString(d.getActDate()) : null);
     } else {
       if(session.isParamEqual("CLINIC_CODE", "fm")) {
-        StringBuffer sb = new StringBuffer();
-        sb.append("Шикоятлари </br>");
-        sb.append("Умумий ахволи </br>");
-        sb.append("Териси </br>");
-        sb.append("Упка </br>");
-        sb.append("Юрак </br>");
-        sb.append("Корин </br>");
-        sb.append("Жигар </br>");
-        sb.append("Пешоб </br>");
-        sb.append("Ич келиши </br>");
-        sb.append("Текширув ва тахлил натижалари </br>");
-        sb.append("Тавсия </br>");
-        dairy.setText(sb.toString());
+        String sb = "Шикоятлари </br>" +
+          "Умумий ахволи </br>" +
+          "Териси </br>" +
+          "Упка </br>" +
+          "Юрак </br>" +
+          "Корин </br>" +
+          "Жигар </br>" +
+          "Пешоб </br>" +
+          "Ич келиши </br>" +
+          "Текширув ва тахлил натижалари </br>" +
+          "Тавсия </br>";
+        dairy.setText(sb);
       }
     }
     //
     return "/med/lv/dairy";
   }
 
-  // Дневник
   @RequestMapping(value = "/dairy.s", method = RequestMethod.POST)
   protected String addDnevnik(@ModelAttribute("dairy") LvDairies dairy, Errors err, HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     String actDate = Util.get(request, "act_Date");
     dairy.setActDate(Util.toDate(Util.getCurDate()));
     // Validation
-    if(Util.nvl(actDate).equals("") || dairy.getText().equals("<br>") || (!Util.nvl(actDate).equals("") && Util.toDate(actDate).after(Util.toDate(Util.getCurDate())))){
+    if(Util.nvl(actDate).isEmpty() || dairy.getText().equals("<br>") || (!Util.nvl(actDate).isEmpty() && Util.toDate(actDate).after(Util.toDate(Util.getCurDate())))){
       Patients m = dPatient.get(session.getCurPat());
       model.addAttribute("fio", Util.nvl(m.getSurname()) + " " + Util.nvl(m.getName()) + " " + Util.nvl(m.getMiddlename()));
       model.addAttribute("birthyear", m.getBirthyear());
       model.addAttribute("dairies", sPatient.getDairies(session.getCurPat()));
       model.addAttribute("act_Date", Util.nvl(actDate));
       //
-      if(Util.nvl(actDate).equals(""))
+      if(Util.nvl(actDate).isEmpty())
         err.rejectValue("actDate", "", "Поле 'Дата' не может быть пустым");
-      if(Util.nvl(dairy.getText()).equals("<br>") || Util.nvl(dairy.getText()).equals(""))
+      if(Util.nvl(dairy.getText()).equals("<br>") || Util.nvl(dairy.getText()).isEmpty())
         err.rejectValue("text", "", "Поле 'Состояние' не может быть пустым");
-      if(!Util.nvl(actDate).equals("") && Util.toDate(actDate).after(Util.toDate(Util.getCurDate())))
+      if(!Util.nvl(actDate).isEmpty() && Util.toDate(actDate).after(Util.toDate(Util.getCurDate())))
         err.rejectValue("text", "", "Поле 'Дата' не может быть больше текущий даты");
       return "/med/lv/dairy";
     }
@@ -397,45 +341,9 @@ public class CLv {
     //
     return "redirect:/lv/dairy.s?msgState=1&msgCode=successSave";
   }
+  //endregion
 
-  // Совместный осмотр
-  @RequestMapping("/sov.s")
-  protected String sov(@ModelAttribute("sov") LvForm3 sov, HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/sov.s");
-    LvForm3 o = dLvForm3.getByPatient(session.getCurPat());
-    if(o != null) {
-      sov.setId(o.getId());
-      sov.setPatient(o.getPatient());
-      sov.setC1(o.getC1());
-      sov.setC2(o.getC2());
-      sov.setC3(o.getC3());
-      sov.setC4(o.getC4());
-      sov.setC5(o.getC5());
-      sov.setC6(o.getC6());
-    } else {
-      LvForm2 osm = dLvForm2.getByPatient(session.getCurPat());
-      sov.setPatient(dPatient.get(session.getCurPat()));
-      if(osm != null) {
-        sov.setC1(osm.getC1());
-        sov.setC2(osm.getC2());
-        sov.setC3(osm.getC3());
-        sov.setC4(osm.getC4());
-        sov.setC5(osm.getC5());
-      }
-    }
-    Util.getMsg(request, model);
-    return "/med/lv/sov";
-  }
-
-  // Совместный осмотр
-  @RequestMapping(value = "/sov.s", method = RequestMethod.POST)
-  protected String sov(@ModelAttribute("sov") LvForm3 sov){
-    dLvForm3.save(sov);
-    return "redirect:/lv/sov.s?msgState=1&msgCode=successSave";
-  }
-
-  // Консультация
+  //region Консультация
   @RequestMapping("/consul.s")
   protected String konsulIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -506,14 +414,14 @@ public class CLv {
     //
     return "redirect:/view/consul.s?msgState=1&msgCode=successSave";
   }
+  //endregion
 
-  // Выписка
+  //region Выписка
   @RequestMapping("/vypiska.s")
-  protected String vypiska(@ModelAttribute("vyp") LvForm4 vyp, HttpServletRequest request, Model model) {
+  protected String vypiska(@ModelAttribute("vyp") LvDocs vyp, HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/lv/vypiska.s");
-    LvForm4 o = dLvForm4.getByPatient(session.getCurPat());
-    model.addAttribute("dieFlag", dLvForm6.getByPatient(session.getCurPat()).getC4() != null);
+    LvDocs o = dLvDoc.get(session.getCurPat(), "vypiska");
     vyp.setPatient(dPatient.get(session.getCurPat()));
     if(o != null) {
       vyp.setId(o.getId());
@@ -530,46 +438,34 @@ public class CLv {
       vyp.setMkb_id(o.getMkb_id());
       model.addAttribute("Date_End", Util.dateToString(o.getPatient().getDateEnd()));
     } else {
-      if(session.isParamEqual("CLINIC_CODE", "fm")) {
-        LvForm2 obos = dLvForm2.getByPatient(session.getCurPat());
-        if(obos != null) {
-          vyp.setC2(obos.getC1());
-          vyp.setC3(obos.getC2());
-          vyp.setC1(obos.getC5());
-          vyp.setC8(obos.getC6());
-          vyp.setC9(obos.getC7());
-          vyp.setC4(obos.getC3());
-          vyp.setMkb(obos.getMkb());
-          vyp.setMkb_id(obos.getMkb_id());
-        }
-      } else {
-        LvForm3 sov = dLvForm3.getByPatient(session.getCurPat());
-        if (sov != null) {
-          vyp.setC1(sov.getC5());
-          vyp.setC2(sov.getC1());
-          vyp.setC3(sov.getC2());
-          vyp.setC4(sov.getC3());
-          vyp.setC5(sov.getC4());
-        }
+      LvDocs obos = dLvDoc.get(session.getCurPat(), "obos");
+      if(obos != null) {
+        vyp.setC2(obos.getC1());
+        vyp.setC3(obos.getC2());
+        vyp.setC1(obos.getC5());
+        vyp.setC8(obos.getC6());
+        vyp.setC9(obos.getC7());
+        vyp.setC4(obos.getC3());
+        vyp.setMkb(obos.getMkb());
+        vyp.setMkb_id(obos.getMkb_id());
       }
     }
     Util.getMsg(request, model);
-    return "/med/lv/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "vypiska";
+    return "/med/lv/fm/vypiska";
   }
 
-  // Выписка
   @RequestMapping(value = "/vypiska.s", method = RequestMethod.POST)
-  protected String vypiska(@ModelAttribute("vyp") LvForm4 vyp, Errors errors, HttpServletRequest request) {
+  protected String vypiska(@ModelAttribute("vyp") LvDocs vyp, Errors errors, HttpServletRequest request) {
     ValidationUtils.rejectIfEmpty(errors, "mkb_id", "МКБ 10 не выбран", "МКБ 10 не выбран");
-    LvForm2 obos = dLvForm2.getByPatient(vyp.getPatient().getId());
+    LvDocs obos = dLvDoc.get(vyp.getPatient().getId(), "obos");
     if(obos == null)
       errors.rejectValue("mkb_id", "По данному пациенту не заполнен документ 'Обоснование'", "По данному пациенту не заполнен документ 'Обоснование'");
     if (errors.hasErrors()) {
       return "/med/lv/fm/vypiska";
     }
-    LvForm4 vp = dLvForm4.getByPatient(vyp.getPatient().getId());
+    LvDocs vp = dLvDoc.get(vyp.getPatient().getId(), "vypiska");
     if(vp == null) {
-      dLvForm4.save(vyp);
+      dLvDoc.save(vyp);
     } else {
       vp.setC1(vyp.getC1());
       vp.setC2(vyp.getC2());
@@ -581,15 +477,16 @@ public class CLv {
       vp.setC8(vyp.getC8());
       vp.setC9(vyp.getC9());
       vp.setPatient(vyp.getPatient());
-      dLvForm4.save(vyp);
+      dLvDoc.save(vyp);
     }
     Patients pat = dPatient.get(vyp.getPatient().getId());
     pat.setDateEnd(Req.getDate(request, "Date_End"));
     dPatient.save(pat);
     return "redirect:/lv/vypiska.s?msgState=1&msgCode=successSave";
   }
+  //endregion
 
-  // Физиотерапия
+  //region Физиотерапия
   @RequestMapping("/fizio/index.s")
   protected String fizio(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -613,7 +510,7 @@ public class CLv {
         dates.add(date);
         if (cl.getTime().equals(end)) break;
       }
-      HashMap<Integer, List<LvFizioDates>> ds = new HashMap<Integer, List<LvFizioDates>>();
+      HashMap<Integer, List<LvFizioDates>> ds = new HashMap<>();
       for (LvFizios fizio : fizios) {
         if (dLvFizioDate.getCount("From LvFizioDates Where fizio.id = " + fizio.getId()) == 0)
           ds.put(fizio.getId(), dates);
@@ -640,37 +537,9 @@ public class CLv {
     Util.getMsg(request, model);
     return res.toString();
   }
+  //endregion
 
-  // Протокол операции
-  @RequestMapping("/prot.s")
-  protected String prot(@ModelAttribute("prot") LvForm5 prot, HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/prot.s");
-    LvForm5 o = dLvForm5.getByPatient(session.getCurPat());
-    if(o != null) {
-      prot.setId(o.getId());
-      prot.setPatient(o.getPatient());
-      prot.setC1(o.getC1());
-      prot.setC2(o.getC2());
-      model.addAttribute("oper_Date", Util.dateToString(o.getOperDate()));
-      prot.setC3(o.getC3());
-      prot.setC4(o.getC4());
-    } else {
-      prot.setPatient(dPatient.get(session.getCurPat()));
-    }
-    Util.getMsg(request, model);
-    return "/med/lv/prot";
-  }
-
-  // Выписка
-  @RequestMapping(value = "/prot.s", method = RequestMethod.POST)
-  protected String prot(@ModelAttribute("prot") LvForm5 prot, HttpServletRequest request){
-    prot.setOperDate(Util.stringToDate(Req.get(request, "oper_Date")));
-    dLvForm5.save(prot);
-    return "redirect:/lv/prot.s?msgState=1&msgCode=successSave";
-  }
-
-  // Переводной эпикриз
+  //region Переводной эпикриз
   @RequestMapping("/epic.s")
   protected String epic(@ModelAttribute("epic") LvEpics epic, HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
@@ -710,117 +579,8 @@ public class CLv {
     sPatient.saveEpic(epic);
     return "redirect:/lv/epic.s?msgState=1&msgCode=successSave";
   }
-
-  // Дополнительные данные
-  @RequestMapping("/extra.s")
-  protected String extra(@ModelAttribute("edt") LvForm6 edt, HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    edt = dLvForm6.getByPatient(session.getCurPat());
-    edt.setPatient(dPatient.get(session.getCurPat()));
-    session.setCurSubUrl("/lv/extra.s");
-    sForm.setSelectOptionModel(model, 3, "c5");
-    sForm.setSelectOptionModel(model, 3, "c6");
-    sForm.setSelectOptionModel(model, 3, "c7");
-    sForm.setSelectOptionModel(model, 3, "c8");
-    model.addAttribute("C2_Date", Util.dateToString(edt.getC2()));
-    model.addAttribute("C3_Date", Util.dateToString(edt.getC3()));
-    model.addAttribute("C4_Date", Util.dateToString(edt.getC4()));
-    model.addAttribute("edt", edt);
-    Util.getMsg(request, model);
-    return "/med/lv/extra";
-  }
-
-  // Дополнительные данные
-  @RequestMapping(value = "/extra.s", method = RequestMethod.POST)
-  protected String saveExtra(@ModelAttribute("edt") LvForm6 edt, HttpServletRequest request){
-    edt.setC2(Req.getDate(request, "C2_Date"));
-    edt.setC3(Req.getDate(request, "C3_Date"));
-    edt.setC4(Req.getDate(request, "C4_Date"));
-    edt.setC5(edt.getC5().getId() == null ? null : edt.getC5());
-    edt.setC6(edt.getC6().getId() == null ? null : edt.getC6());
-    edt.setC7(edt.getC7().getId() == null ? null : edt.getC7());
-    edt.setC8(edt.getC8().getId() == null ? null : edt.getC8());
-    dLvForm6.save(edt);
-    return "redirect:/lv/extra.s?msgState=1&msgCode=successSave";
-  }
-
-  // Печать
-  @RequestMapping("/print.s")
-  protected String print(HttpServletRequest req, Model model){
-    Session session = SessionUtil.getUser(req);
-    SessionUtil.addSession(req, "dairyId", Req.get(req, "dairyId"));
-    SessionUtil.addSession(req, "consulId", Req.get(req, "consul"));
-    SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
-    SessionUtil.addSession(req, "dairyIds", Util.nvl(req.getParameter("dairyIds")));
-    if(session.getCurPat() != 0)
-      model.addAttribute("patFio", dPatient.getFio(session.getCurPat()));
-    model.addAttribute("printPage", session.getCurSubUrl().replace("/lv", "/view"));
-    if(!Util.isNull(req, "diagnoz"))
-      model.addAttribute("printPage", "/view/vypiska.s?diagnoz=Y");
-    if(session.getCurSubUrl().contains("reg") || session.getCurUrl().contains("reg"))
-      model.addAttribute("printPage", "/reg/print.s");
-    if(req.getParameterValues("obos") != null)
-      model.addAttribute("printPage", "/view/drug/obos.s");
-    if(req.getParameterValues("statcard") != null)
-      model.addAttribute("printPage", "/view/stat_card.s");
-    return "/med/lv/print";
-  }
-
-  // Печать
-  @RequestMapping("/stat.s")
-  protected String stat(HttpServletRequest req, Model model){
-    Session session = SessionUtil.getUser(req);
-    SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
-    int type = Util.getInt(req, "stat");
-    model.addAttribute("printPage", "/view/stat/home.s?stat=" + type);
-    return "/med/lv/print/stat/print";
-  }
-  // История
-  @RequestMapping(value = "/history.s")
-  protected String history(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/history.s");
-    List<PatientLinks> patients= dPatientLink.getList("From PatientLinks Where parent = " + session.getCurPat());
-    List<PatientList> list = new ArrayList<PatientList>();
-    for(PatientLinks patient : patients){
-      PatientList p = new PatientList();
-      Patients pat = dPatient.get(patient.getChild());
-      p.setId(pat.getId());
-      p.setFio(Util.nvl(pat.getSurname()) + " " + Util.nvl(pat.getName()) + " " + Util.nvl(pat.getMiddlename()));
-      p.setDateBegin(Util.dateToString(pat.getDateBegin()));
-      p.setIbNum(pat.getYearNum().toString());
-      p.setOtdPal(pat.getDept().getName() + " / " + pat.getPalata());
-      p.setCat(pat.getCat().getName());
-      p.setMetka(pat.getMetka().getName());
-      p.setLv(dUser.get(pat.getLv_id()).getFio());
-      list.add(p);
-    }
-    model.addAttribute("patients", list);
-    return "/med/lv/history";
-  }
-
-  // Документы
-  @RequestMapping(value = "/docs.s")
-  protected String docs(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/docs.s");
-    model.addAttribute("dairies", dLvDairy.getByPatientId(session.getCurPat()));
-    return "/med/lv/docs";
-  }
-
-  @RequestMapping(value = "/results.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String results(HttpServletRequest req) throws JSONException {
-    Session session = SessionUtil.getUser(req);
-    JSONObject res = new JSONObject();
-    List<String> list = sRkdo.getResults(session.getCurPat());
-    StringBuilder sb = new StringBuilder();
-    for(String l : list) sb.append(l);
-    res.put("results", sb.toString());
-    return res.toString();
-  }
   //endregion
-
+  
   //region PLAN
   // Результаты всех обследования
   @RequestMapping("/plan.s")
@@ -829,7 +589,7 @@ public class CLv {
     //session.setCurSubUrl("/lv/plan.s");
     Patients m = dPatient.get(session.getCurPat());
     model.addAttribute("pat", m);
-    model.addAttribute("newWindow", !Req.get(request, "new").equals(""));
+    model.addAttribute("newWindow", !Req.get(request, "new").isEmpty());
     model.addAttribute("fio", Util.nvl(m.getSurname()) + " " + Util.nvl(m.getName()) + " " + Util.nvl(m.getMiddlename()));
     model.addAttribute("birthyear", m.getBirthyear());
     model.addAttribute("results", sRkdo.getResults(session.getCurPat()));
@@ -891,23 +651,27 @@ public class CLv {
 
   // План обследования
   @RequestMapping("/plan/kdos.s")
-  protected String kdos(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    //session.setCurSubUrl("/lv/plan/kdos.s");
-    model.addAttribute("labs",  dKdos.getLabKdos());
-    model.addAttribute("uzis",  dKdos.getTypeKdos(4));
-    model.addAttribute("rens",  dKdos.getTypeKdos(3));
-    model.addAttribute("vems",  dKdos.getTypeKdos(5));
-    model.addAttribute("sms",   dKdos.getTypeKdos(6));
-    model.addAttribute("mskt",  dKdos.getTypeKdos(7));
-    model.addAttribute("fizio", dKdos.getTypeKdos(8));
-    model.addAttribute("endos", dKdos.getTypeKdos(9));
-    model.addAttribute("neyros", dKdos.getTypeKdos(10));
-    model.addAttribute("xolters", dKdos.getTypeKdos(11));
-    model.addAttribute("gineks", dKdos.getTypeKdos(12));
-    model.addAttribute("lors", dKdos.getTypeKdos(13));
-    model.addAttribute("okulists", dKdos.getTypeKdos(14));
-    model.addAttribute("consuls", dKdos.getTypeKdos(16));
+  protected String kdos(Model model) {
+    List<KdoTypes> types = dKdoType.list("From KdoTypes t Where t.state = 'A' And Exists (Select 1 From Kdos c Where c.kdoType.id = t.id And c.state = 'A')");
+    List<Obj> rows = new ArrayList<>();
+    for(KdoTypes type: types) {
+      Obj row = new Obj();
+      row.setId(type.getId());
+      row.setName(type.getName());
+      List<Kdos> ss = dKdos.list("From Kdos Where state = 'A' And kdoType.id = " + type.getId());
+      List<ObjList> kdos = new ArrayList<>();
+      for(Kdos s: ss) {
+        ObjList k = new ObjList();
+        k.setId(s.getId());
+        k.setC1(s.getName());
+        kdos.add(k);
+      }
+      if(!kdos.isEmpty()) {
+        row.setList(kdos);
+        rows.add(row);
+      }
+    }
+    model.addAttribute("types", rows);
     return "/med/lv/plan/kdos";
   }
 
@@ -1150,8 +914,8 @@ public class CLv {
     model.addAttribute("patient", patient);
     List<PatientEats> eats = dPatientEat.getPatientEat(patient.getId());
     List<EatMenuTypes> menuTypes = dEatMenuType.getList("From EatMenuTypes Where state = 'A'");
-    if(eats == null || eats.size() == 0) {
-      eats = new ArrayList<PatientEats>();
+    if(eats == null || eats.isEmpty()) {
+      eats = new ArrayList<>();
       int count = patient.getDayCount();
       if(patient.getDateEnd() != null && patient.getDateEnd().after(patient.getDateBegin())) {
         count = Integer.parseInt("" + ((patient.getDateEnd().getTime() - patient.getDateBegin().getTime()) / (1000 * 60 * 60 * 24))) + 1;
@@ -1195,6 +959,22 @@ public class CLv {
     return "/med/lv/eat";
   }
 
+  @RequestMapping(value = "plan/change/confuser.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String change_conf_user(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      LvPlans plan = dLvPlan.get(Util.getInt(req, "plan"));
+      plan.setConfUser(Util.getInt(req, "user"));
+      dLvPlan.save(plan);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
   @RequestMapping(value = "/eat.s", method = RequestMethod.POST)
   @ResponseBody
   protected String saveEat(HttpServletRequest req) throws JSONException {
@@ -1204,7 +984,7 @@ public class CLv {
       String[] tables = req.getParameterValues("table");
       for(int i=0;i<ids.length;i++) {
         PatientEats eat = dPatientEat.get(Integer.parseInt(ids[i]));
-        if(!tables[i].equals("")) {
+        if(!tables[i].isEmpty()) {
           if(tables[i].equals("-1")) {
             eat.setTable(null);
             eat.setState("REF");
@@ -1258,7 +1038,7 @@ public class CLv {
   // Удаление
   @RequestMapping(value = "/drug/delete.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String delIndex(HttpServletRequest request, Model model){
+  protected String delIndex(HttpServletRequest request){
     dLvDrug.delete(Util.getInt(request, "id"));
     return "{}";
   }
@@ -1266,7 +1046,7 @@ public class CLv {
   // Удаление
   @RequestMapping(value = "/drug/addgoal.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String addgoal(HttpServletRequest request, Model model) throws JSONException {
+  protected String addgoal(HttpServletRequest request) throws JSONException {
     LvDrugGoals goals = new LvDrugGoals();
     JSONObject res = new JSONObject();
     if(Util.isNotNull(request, "goal")) {
@@ -1294,11 +1074,11 @@ public class CLv {
     String[] startDates = req.getParameterValues("startDate");
     String[] endDates = req.getParameterValues("endDate");
     String[] notes = req.getParameterValues("note");
-    Set<LvDrugs> drugsList = new HashSet<LvDrugs>();
+    Set<LvDrugs> drugsList = new HashSet<>();
     //
     if(idx != null) {
       for(int i=0;i<idx.length;i++) {
-        LvDrugs lvDrug = ids[i].equals("") ? new LvDrugs() : dLvDrug.get(Integer.parseInt(ids[i]));
+        LvDrugs lvDrug = ids[i].isEmpty() ? new LvDrugs() : dLvDrug.get(Integer.parseInt(ids[i]));
         lvDrug.setPatient(session.getCurPat());
         lvDrug.setDrugName(drugNames[i]);
         lvDrug.setType(types[i]);
@@ -1320,7 +1100,7 @@ public class CLv {
 
   // Назначение - список препаратов
   @RequestMapping("/drug/home.s")
-  protected String drugHome(HttpServletRequest request, Model model){
+  protected String drugHome(HttpServletRequest request){
     Session session = SessionUtil.getUser(request);
     Patients m = dPatient.get(session.getCurPat());
     session.setCurSubUrl("/lv/drug/home.s");
@@ -1342,7 +1122,6 @@ public class CLv {
     List<Integer> drugs = session.getDrugs();
     List<Drugs> dds = new ArrayList<>();
     if(drugs == null || drugs.isEmpty()) {
-      HashMap<Integer, Drugs> ads = new HashMap<>();
       drugs = new ArrayList<>();
       try {
         conn = DB.getConnection();
@@ -1395,7 +1174,7 @@ public class CLv {
         drug.setEveningTimeBefore(tm.isEveningTimeBefore());
         //
         List<PatientDrugRowTemps> tempRows = dPatientDrugRowTemp.getList("From PatientDrugRowTemps Where patientDrug.id = " + tm.getId());
-        List<PatientDrugRow> rws = new ArrayList<PatientDrugRow>();
+        List<PatientDrugRow> rws = new ArrayList<>();
         for(PatientDrugRowTemps tempRow : tempRows) {
           PatientDrugRow rw = new PatientDrugRow();
           rw.setSource(tempRow.getSource());
@@ -1419,7 +1198,7 @@ public class CLv {
       Calendar cal = Calendar.getInstance();
       cal.setTime(pat.getDateBegin());
       cal.add(Calendar.DATE, 10);
-      List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
+      List<PatientDrugDate> dates = new ArrayList<>();
       for(int i=0;i<=10;i++) {
         PatientDrugDate date = new PatientDrugDate();
         Calendar cl = Calendar.getInstance();
@@ -1498,27 +1277,27 @@ public class CLv {
   @ResponseBody
   protected String drug_results(HttpServletRequest req) throws JSONException {
     Session session = SessionUtil.getUser(req);
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     JSONObject res = new JSONObject();
     // Инъекции
     List<PatientDrug> ines = sPatient.getDrugsByType(session.getCurPat(), 16, true);
-    if(ines.size() > 0) sb.append("<b>Инъекции:</b> ");
+    if(!ines.isEmpty()) sb.append("<b>Инъекции:</b> ");
     for(PatientDrug drug : ines) {
       for(PatientDrugRow d : drug.getRows())
-        sb.append(d.getName() + "; ");
+        sb.append(d.getName()).append("; ");
     }
     // Таблетки
-    if(ines.size() > 0) sb.append("<br/>");
+    if(!ines.isEmpty()) sb.append("<br/>");
     List<PatientDrug> tabs = sPatient.getDrugsByType(session.getCurPat(), 15, true);
-    if(tabs.size() > 0) sb.append("<b>Таблетки:</b> ");
+    if(!tabs.isEmpty()) sb.append("<b>Таблетки:</b> ");
     for(PatientDrug drug : tabs) {
       for(PatientDrugRow d : drug.getRows())
         sb.append(d.getName() + "; ");
     }
-    if(tabs.size() > 0) sb.append("<br/>");
+    if(!tabs.isEmpty()) sb.append("<br/>");
     // Физиотерапия
     List<LvFizios> fizios = dLvFizio.getList("From LvFizios Where patientId = " + session.getCurPat());
-    if(fizios != null && fizios.size() > 0) {
+    if(fizios != null && !fizios.isEmpty()) {
       sb.append("<b>Физиотерапия: </b>");
       for(LvFizios fizio : fizios) sb.append(fizio.getKdo().getName() + "; ");
     }
@@ -1546,15 +1325,15 @@ public class CLv {
       //
       for(int i=0;i<sources.length;i++) {
         PatientDrugRows row = new PatientDrugRows();
-        if(!row_ids[i].equals("0") && !row_ids[i].equals("")) row.setId(Integer.parseInt(row_ids[i]));
+        if(!row_ids[i].equals("0") && !row_ids[i].isEmpty()) row.setId(Integer.parseInt(row_ids[i]));
         row.setSource(sources[i]);
         if(sources[i].equals("own")) {
           row.setName(names[i]);
-          if(!names[i].equals("")) {
+          if(!names[i].isEmpty()) {
             rows.add(row);
           }
         } else {
-          if(row_ids[i].equals("0") || row_ids[i].equals("")) {
+          if(row_ids[i].equals("0") || row_ids[i].isEmpty()) {
             row.setDrug(dDrug.get(Integer.parseInt(drugs[i])));
             row.setMeasure(row.getDrug().getMeasure());
           }
@@ -1573,7 +1352,7 @@ public class CLv {
           json.put("success", false);
           return json.toString();
         }
-        if(rows.size() == 0) {
+        if(rows.isEmpty()) {
           json.put("msg", "Список препаратов не может быть пустым");
           json.put("success", false);
           return json.toString();
@@ -1656,7 +1435,7 @@ public class CLv {
         //
         drug.setNote(Util.get(req, "note"));
         //
-        if(rows.size() == 0) {
+        if(rows.isEmpty()) {
           json.put("msg", "Список препаратов не может быть пустым");
           json.put("success", false);
           return json.toString();
@@ -1710,7 +1489,7 @@ public class CLv {
     try {
       PatientDrugs d = dPatientDrug.get(Util.getInt(req, "id"));
       List<PatientDrugRows> rws = dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + d.getId());
-      if(rws.size() == 0) {
+      if(rws.isEmpty()) {
         json.put("success", false);
         json.put("msg", "Нельзя сохранить шаблон с пустой детализацией");
         return json.toString();
@@ -1753,7 +1532,7 @@ public class CLv {
   protected String userDrugTemps(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     String filter = Util.get(req, "filter", "");
-    List<PatientDrug> rows = new ArrayList<PatientDrug>();
+    List<PatientDrug> rows = new ArrayList<>();
     List<PatientDrugTemps> list = dPatientDrugTemp.getList("From PatientDrugTemps Where crBy = " + session.getUserId());
     boolean isOK;
     for(PatientDrugTemps l: list) {
@@ -1775,7 +1554,7 @@ public class CLv {
       r.setEveningTimeBefore(l.isEveningTimeBefore());
       r.setEveningTimeAfter(l.isEveningTimeAfter());
       List<PatientDrugRowTemps> tempRows = dPatientDrugRowTemp.getList("From PatientDrugRowTemps Where patientDrug.id = " + l.getId());
-      List<PatientDrugRow> rws = new ArrayList<PatientDrugRow>();
+      List<PatientDrugRow> rws = new ArrayList<>();
       for(PatientDrugRowTemps tempRow : tempRows) {
         PatientDrugRow rw = new PatientDrugRow();
         rw.setId(0);
@@ -1783,7 +1562,7 @@ public class CLv {
           rw.setName(tempRow.getName());
         else
           rw.setName(tempRow.getDrug().getName());
-        if(!filter.equals("") && rw.getName().toUpperCase().contains(filter.toUpperCase())) {
+        if(!filter.isEmpty() && rw.getName().toUpperCase().contains(filter.toUpperCase())) {
           isOK = true;
         }
         rw.setExpanse(tempRow.getExpanse());
@@ -1793,10 +1572,10 @@ public class CLv {
       r.setRows(rws);
       String time = "";
       if(r.isMorningTime()) time += "Утром" + (r.isMorningTimeBefore() ? " до еды" : "") + (r.isMorningTimeAfter() ? " после еды" : "");
-      if(r.isNoonTime()) time += (time.equals("") ? "" : ", ") + "Днем" + (r.isNoonTimeBefore() ? " до еды" : "") + (r.isNoonTimeAfter() ? " после еды" : "");
-      if(r.isEveningTime()) time += (time.equals("") ? "" : ", ") + "Вечером" + (r.isEveningTimeBefore() ? " до еды" : "") + (r.isEveningTimeAfter() ? " после еды" : "");
-      r.setNote((time.equals("") ? "" : time + "; ") + " " + r.getNote());
-      if(filter.equals("") || isOK)
+      if(r.isNoonTime()) time += (time.isEmpty() ? "" : ", ") + "Днем" + (r.isNoonTimeBefore() ? " до еды" : "") + (r.isNoonTimeAfter() ? " после еды" : "");
+      if(r.isEveningTime()) time += (time.isEmpty() ? "" : ", ") + "Вечером" + (r.isEveningTimeBefore() ? " до еды" : "") + (r.isEveningTimeAfter() ? " после еды" : "");
+      r.setNote((time.isEmpty() ? "" : time + "; ") + " " + r.getNote());
+      if(filter.isEmpty() || isOK)
         rows.add(r);
     }
     model.addAttribute("rows", rows);
@@ -1917,12 +1696,94 @@ public class CLv {
   }
   //endregion
 
+  @RequestMapping("/extra.s")
+  protected String extra(HttpServletRequest req){
+    Session session = SessionUtil.getUser(req);
+    session.setCurSubUrl("/lv/extra.s");
+    return "/med/lv/extra";
+  }
+
+  // Печать
+  @RequestMapping("/print.s")
+  protected String print(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    SessionUtil.addSession(req, "dairyId", Req.get(req, "dairyId"));
+    SessionUtil.addSession(req, "consulId", Req.get(req, "consul"));
+    SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
+    SessionUtil.addSession(req, "dairyIds", Util.nvl(req.getParameter("dairyIds")));
+    if(session.getCurPat() != 0)
+      model.addAttribute("patFio", dPatient.getFio(session.getCurPat()));
+    model.addAttribute("printPage", session.getCurSubUrl().replace("/lv", "/view"));
+    if(!Util.isNull(req, "diagnoz"))
+      model.addAttribute("printPage", "/view/vypiska.s?diagnoz=Y");
+    if(session.getCurSubUrl().contains("reg") || session.getCurUrl().contains("reg"))
+      model.addAttribute("printPage", "/reg/print.s");
+    if(req.getParameterValues("obos") != null)
+      model.addAttribute("printPage", "/view/drug/obos.s");
+    if(req.getParameterValues("statcard") != null)
+      model.addAttribute("printPage", "/view/stat_card.s");
+    return "/med/lv/print";
+  }
+
+  // Печать
+  @RequestMapping("/stat.s")
+  protected String stat(HttpServletRequest req, Model model){
+    SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
+    int type = Util.getInt(req, "stat");
+    model.addAttribute("printPage", "/view/stat/home.s?stat=" + type);
+    return "/med/lv/print/stat/print";
+  }
+  // История
+  @RequestMapping(value = "/history.s")
+  protected String history(HttpServletRequest request, Model model){
+    Session session = SessionUtil.getUser(request);
+    session.setCurSubUrl("/lv/history.s");
+    List<PatientLinks> patients= dPatientLink.getList("From PatientLinks Where parent = " + session.getCurPat());
+    List<PatientList> list = new ArrayList<>();
+    for(PatientLinks patient : patients){
+      PatientList p = new PatientList();
+      Patients pat = dPatient.get(patient.getChild());
+      p.setId(pat.getId());
+      p.setFio(Util.nvl(pat.getSurname()) + " " + Util.nvl(pat.getName()) + " " + Util.nvl(pat.getMiddlename()));
+      p.setDateBegin(Util.dateToString(pat.getDateBegin()));
+      p.setIbNum(pat.getYearNum().toString());
+      p.setOtdPal(pat.getDept().getName() + " / " + pat.getPalata());
+      p.setCat(pat.getCat().getName());
+      p.setMetka(pat.getMetka().getName());
+      p.setLv(dUser.get(pat.getLv_id()).getFio());
+      list.add(p);
+    }
+    model.addAttribute("patients", list);
+    return "/med/lv/history";
+  }
+
+  // Документы
+  @RequestMapping(value = "/docs.s")
+  protected String docs(HttpServletRequest request, Model model){
+    Session session = SessionUtil.getUser(request);
+    session.setCurSubUrl("/lv/docs.s");
+    model.addAttribute("dairies", dLvDairy.getByPatientId(session.getCurPat()));
+    return "/med/lv/docs";
+  }
+
+  @RequestMapping(value = "/results.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String results(HttpServletRequest req) throws JSONException {
+    Session session = SessionUtil.getUser(req);
+    JSONObject res = new JSONObject();
+    List<String> list = sRkdo.getResults(session.getCurPat());
+    StringBuilder sb = new StringBuilder();
+    for(String l : list) sb.append(l);
+    res.put("results", sb.toString());
+    return res.toString();
+  }
+
   @RequestMapping(value = "/print_recommend.s")
   protected String print_recommend(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("pat", pat);
-    model.addAttribute("doc", dLvForm4.getByPatient(pat.getId()));
+    model.addAttribute("doc", dLvDoc.get(pat.getId(), "vypiska"));
     model.addAttribute("lv", dUser.get(pat.getLv_id()));
     return "/med/lv/print/recommend";
   }

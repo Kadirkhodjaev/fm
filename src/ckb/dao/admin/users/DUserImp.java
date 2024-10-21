@@ -51,7 +51,7 @@ public class  DUserImp extends DaoImp<Users> implements DUser {
 
   @Override
   public List<Users> getConsuls() {
-    return getList("From Users Where (dept.id > 0 Or Consul = 1) And active = 1 Order By fio");
+    return getList("From Users Where Consul = 1 And active = 1 Order By fio");
   }
 
   @Override

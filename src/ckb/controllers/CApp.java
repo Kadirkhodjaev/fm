@@ -227,8 +227,10 @@ public class  CApp {
       if(isTransfer || session.getUserId() == 1)
         m.add(new Menu("Перевод", "/head_nurse/transfer.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/transfer.s")));
       m.add(new Menu("Приход", "/head_nurse/incomes.s", "fa fa-stack-overflow fa-fw", session.getCurUrl().equals("/head_nurse/incomes.s")));
-      if(user.isMainNurse())
+      if(user.isMainNurse()) {
         m.add(new Menu("Пациенты", "/head_nurse/total/patients.s", "fa fa-barcode fa-fw", session.getCurUrl().equals("/head_nurse/total/patients.s")));
+        m.add(new Menu("Новые медикаменты", "/head_nurse/new_income_drugs.s", "fa fa-folder-o fa-fw", session.getCurUrl().equals("/head_nurse/new_income_drugs.s")));
+      }
     }
     if(roleId == 20) {
       session.setCurUrl(session.getCurUrl().equals("") ? "/act/index.s" : session.getCurUrl());
