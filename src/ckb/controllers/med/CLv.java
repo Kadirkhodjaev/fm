@@ -5,6 +5,7 @@ import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
+import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.drugs.DDrug;
@@ -31,6 +32,7 @@ import ckb.dao.med.patient.*;
 import ckb.dao.med.template.DDrugTemplate;
 import ckb.domains.admin.KdoTypes;
 import ckb.domains.admin.Kdos;
+import ckb.domains.med.amb.AmbPatients;
 import ckb.domains.med.drug.dict.DrugDirections;
 import ckb.domains.med.drug.dict.Drugs;
 import ckb.domains.med.eat.dict.EatMenuTypes;
@@ -40,7 +42,6 @@ import ckb.domains.med.patient.*;
 import ckb.models.Menu;
 import ckb.models.Obj;
 import ckb.models.ObjList;
-import ckb.models.PatientList;
 import ckb.models.drugs.PatientDrug;
 import ckb.models.drugs.PatientDrugDate;
 import ckb.models.drugs.PatientDrugRow;
@@ -59,7 +60,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
-import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -91,7 +91,6 @@ public class CLv {
   @Autowired private DPatientEat dPatientEat;
   @Autowired private DParam dParam;
   @Autowired private DPatientPlan dPatientPlan;
-  @Autowired private DPatientLink dPatientLink;
   @Autowired private DLvDrug dLvDrug;
   @Autowired private DLvGarmon dLvGarmon;
   @Autowired private DLvTorch dLvTorch;
@@ -117,6 +116,7 @@ public class CLv {
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DPatientShock dPatientShock;
   @Autowired private DLvFizioDate dLvFizioDate;
+  @Autowired private DAmbPatient dAmbPatient;
   //endregion
 
   @RequestMapping("/index.s")
@@ -131,9 +131,7 @@ public class CLv {
     m.add(new Menu(1,"Регистрация", "/view/reg.s", "fa fa-medkit fa-fw", false));
     m.add(new Menu(18,"Оплата", "/view/cashbox.s", "fa fa-money fa-fw", false));
     m.add(new Menu(2,"Питание", "/lv/eat.s", "fa fa-cutlery fa-fw", false));
-    //m.add(new Menu(3,"Первичный осмотр", "/view/firstView.s", "fa fa-file-o fa-fw", false));
-    m.add(new Menu(4,"Осмотр врача", "/lv/osm.s", "fa fa-stethoscope fa-fw", false));
-    //m.add(new Menu(11,"Назначение", "/lv/drug/index.s", "fa fa-th-list fa-fw", false));
+    m.add(new Menu(4,"Осмотр врача", "/lv/doc.s?doc_code=osm", "fa fa-stethoscope fa-fw", false));
     m.add(new Menu(20,"Назначение", "/lv/drugs.s", "fa fa-th-list fa-fw", false));
     if(session.getRoleId() == 8)
       m.add(new Menu(21,"Экстренный", "/lv/shock.s", "fa fa-bars fa-fw", false));
@@ -141,10 +139,11 @@ public class CLv {
     m.add(new Menu(8,"Консультация", "/lv/consul.s", "fa fa-stethoscope fa-fw", false));
     m.add(new Menu(17,"Физиотерапия", "/lv/fizio/index.s", "fa fa-asterisk fa-fw", false));
     m.add(new Menu(6,"Дневник", "/lv/dairy.s", "fa fa-calendar fa-fw", false));
-    m.add(new Menu(5,"Обоснование", "/lv/obos.s", "fa fa-retweet fa-fw", false));
-    m.add(new Menu(9,"Выписка", "/lv/vypiska.s", "fa fa-check fa-fw", false));
+    m.add(new Menu(5,"Обоснование", "/lv/doc.s?doc_code=obos", "fa fa-retweet fa-fw", false));
+    m.add(new Menu(9,"Выписка", "/lv/doc.s?doc_code=vypiska", "fa fa-check fa-fw", false));
     m.add(new Menu(14,"Дополнительные данные", "/lv/extra.s", "fa fa-plus-square fa-fw", false));
     m.add(new Menu(13,"Перевод", "/lv/epic.s", "fa fa-random fa-fw", false));
+    m.add(new Menu(15,"История", "/lv/history.s", "fa fa-users fa-fw", false));
     model.addAttribute("menuList", m);
     model.addAttribute("id", id);
     model.addAttribute("p", dPatient.get(session.getCurPat()));
@@ -154,115 +153,133 @@ public class CLv {
     return "/med/lv/index";
   }
 
-  //region Осмотр леч врача
-  @RequestMapping("/osm.s")
-  protected String osm(@ModelAttribute("osm") LvDocs osm, HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/osm.s");
-    LvDocs doc = dLvDoc.get(session.getCurPat(), "osm");
-
-    if(doc != null) {
-      osm.setId(doc.getId());
-      osm.setPatient(doc.getPatient());
-      osm.setC1(doc.getC1());
-      osm.setC2(doc.getC2());
-      osm.setC3(doc.getC3());
-      osm.setC4(doc.getC4());
-      osm.setC5(doc.getC5());
-      osm.setC6(doc.getC6());
-      osm.setC7(doc.getC7());
-      osm.setC8(doc.getC8());
-      osm.setC9(doc.getC9());
-      osm.setC10(doc.getC10());
-      osm.setC11(doc.getC11());
-      osm.setC12(doc.getC12());
-      osm.setC13(doc.getC13());
-      osm.setC14(doc.getC14());
-      osm.setC15(doc.getC15());
-      osm.setC16(doc.getC16());
-      osm.setC17(doc.getC17());
-      osm.setC18(doc.getC18());
-      osm.setC19(doc.getC19());
-      osm.setMkb(doc.getMkb());
-    } else {
-      Patients p = dPatient.get(session.getCurPat());
-      osm.setPatient(p);
-      osm.setC1(p.getJaloby());
-      osm.setC2(p.getAnamnez());
-      osm.setC3("Умумий ахволи: . Тери копламлари: . Тери ости ег кавати: . Лимфа безлари: . Периферик шишлари: ");
-      osm.setC8("Насл: . Ўтказилган касалликлар: . Турмуш шароитлари: . Зарарли одатлар: . Медикаментларга нохуш реакциялар борлиги: ");
-      osm.setC9("1 мин. нафас олиш сони: . Кўкрак кафаси: . Перкутор товуш: . Аускультатив овоз: ");
-      osm.setC10("Юрак чегараси: юкоридан: II-III к/о. Чап тарафдан: L. media clvikularis. Ўнг тарафдан: L. parasternalis dext. Аускультатив юрак тонлари: . Пульс:  марта 1 мин. КБ: мм сим уст");
-      osm.setC11("Иштахаси: . Тили: . Корин: . Жигар: . Талок: . Ич келиши: ");
-      osm.setC12("Пастернацкий симптоми: . Пешоб: ");
-      osm.setC13("Бош мия нервлари: . Харакат системаси: . Сезувчанлик: . Харакат координацияси: ");
-      osm.setC5(p.getStartDiagnoz());
-      osm.setC18(p.getSopustDBolez());
-      osm.setC19(p.getOslojn());
-    }
-    Util.getMsg(request, model);
-    return "/med/lv/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "osm";
-  }
-
-  @RequestMapping(value = "/osm.s", method = RequestMethod.POST)
-  protected String osm(@ModelAttribute("osm") LvDocs osm){
-    dLvDoc.save(osm);
-    return "redirect:/lv/osm.s?msgState=1&msgCode=successSave";
-  }
-  //endregion
-
-  //region Обоснование
-  @RequestMapping("/obos.s")
-  protected String obos(@ModelAttribute("obos") LvDocs obos, HttpServletRequest request, Model model) {
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/obos.s");
-    LvDocs o = dLvDoc.get(session.getCurPat(), "obos");
-    if(o != null) {
-      obos.setId(o.getId());
-      obos.setPatient(o.getPatient());
-      obos.setC1(o.getC1());
-      obos.setC2(o.getC2());
-      obos.setC3(o.getC3());
-      obos.setC4(o.getC4());
-      obos.setC5(o.getC5());
-      obos.setC6(o.getC6());
-      obos.setC7(o.getC7());
-      obos.setC8(o.getC8());
-      obos.setMkb(o.getMkb());
-      obos.setMkb_id(o.getMkb_id());
-    } else {
-      LvDocs osm = dLvDoc.get(session.getCurPat(), "osm");
-      obos.setPatient(dPatient.get(session.getCurPat()));
-      if(osm != null) {
-        obos.setC1(osm.getC1());
-        obos.setC2(osm.getC2());
-        obos.setC3(
-          osm.getC3() +
-          "<br/><b>Нафас олиш системаси:</b> " +  osm.getC9() +
-          "<br/><b>Кон айланиш системаси:</b> " + osm.getC10() +
-          "<br/><b>Хазм килиш cистемаси:</b> " + osm.getC11() +
-          "<br/><b>Сийдик-таносил системаси:</b> " + osm.getC12() +
-          "<br/><b>Нерв системаси:</b> " + osm.getC13()
-        );
-        obos.setC4(osm.getC4());
-        obos.setC5(osm.getC5());
-        obos.setMkb(osm.getPatient().getMkb());
-        obos.setMkb_id(osm.getPatient().getMkb_id());
+  //region Документы => osm - Осмотр врача, obos - Обоснование, vypiska - Выписка
+  @RequestMapping("/doc.s")
+  protected String doc(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    String docCode = Util.get(req, "doc_code");
+    session.setCurSubUrl("/lv/doc.s?doc_code=" + docCode);
+    LvDocs doc = dLvDoc.get(session.getCurPat(), docCode);
+    Patients p = dPatient.get(session.getCurPat());
+    if(doc == null) {
+      doc = new LvDocs();
+      if(docCode.equals("osm")) {
+        doc.setC1(p.getJaloby());
+        doc.setC2(p.getAnamnez());
+        doc.setC3("Умумий ахволи: . Тери копламлари: . Тери ости ег кавати: . Лимфа безлари: . Периферик шишлари: ");
+        doc.setC8("Насл: . Ўтказилган касалликлар: . Турмуш шароитлари: . Зарарли одатлар: . Медикаментларга нохуш реакциялар борлиги: ");
+        doc.setC9("1 мин. нафас олиш сони: . Кўкрак кафаси: . Перкутор товуш: . Аускультатив овоз: ");
+        doc.setC10("Юрак чегараси: юкоридан: II-III к/о. Чап тарафдан: L. media clvikularis. Ўнг тарафдан: L. parasternalis dext. Аускультатив юрак тонлари: . Пульс:  марта 1 мин. КБ: мм сим уст");
+        doc.setC11("Иштахаси: . Тили: . Корин: . Жигар: . Талок: . Ич келиши: ");
+        doc.setC12("Пастернацкий симптоми: . Пешоб: ");
+        doc.setC13("Бош мия нервлари: . Харакат системаси: . Сезувчанлик: . Харакат координацияси: ");
+        doc.setC5(p.getStartDiagnoz());
+        doc.setC18(p.getSopustDBolez());
+        doc.setC19(p.getOslojn());
+      }
+      if(docCode.equals("obos")) {
+        LvDocs osm = dLvDoc.get(session.getCurPat(), "osm");
+        doc.setPatient(dPatient.get(session.getCurPat()));
+        if(osm != null) {
+          doc.setC1(osm.getC1());
+          doc.setC2(osm.getC2());
+          doc.setC3(
+            osm.getC3() +
+              "<br/><b>Нафас олиш системаси:</b> " +  osm.getC9() +
+              "<br/><b>Кон айланиш системаси:</b> " + osm.getC10() +
+              "<br/><b>Хазм килиш cистемаси:</b> " + osm.getC11() +
+              "<br/><b>Сийдик-таносил системаси:</b> " + osm.getC12() +
+              "<br/><b>Нерв системаси:</b> " + osm.getC13()
+          );
+          doc.setC4(osm.getC4());
+          doc.setC5(osm.getC5());
+          doc.setMkb(osm.getPatient().getMkb());
+          doc.setMkb_id(osm.getPatient().getMkb_id());
+        }
+      }
+      if(docCode.equals("vypiska")) {
+        LvDocs obos = dLvDoc.get(session.getCurPat(), "obos");
+        if(obos != null) {
+          doc.setC2(obos.getC1());
+          doc.setC3(obos.getC2());
+          doc.setC1(obos.getC5());
+          doc.setC8(obos.getC6());
+          doc.setC9(obos.getC7());
+          doc.setC4(obos.getC3());
+          doc.setMkb(obos.getMkb());
+          doc.setMkb_id(obos.getMkb_id());
+        }
       }
     }
-    Util.getMsg(request, model);
-    return "/med/lv/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "obos";
+    model.addAttribute("patient", p);
+    model.addAttribute("doc", doc);
+    return "/med/lv/" + docCode;
   }
 
-  @RequestMapping(value = "/obos.s", method = RequestMethod.POST)
-  protected String obos(@ModelAttribute("obos") LvDocs obos, Errors errors) {
-    ValidationUtils.rejectIfEmpty(errors, "mkb_id", "МКБ 10 не выбран", "МКБ 10 не выбран");
-    if (errors.hasErrors()) {
-      obos.setMkb("");
-      return "/med/lv/fm/obos";
+  @RequestMapping(value = "/doc/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String osm(HttpServletRequest req) throws JSONException {
+    Session session = SessionUtil.getUser(req);
+    JSONObject json = new JSONObject();
+    try {
+      String docCode = Util.get(req, "doc_code");
+      Patients p = dPatient.get(session.getCurPat());
+      if(docCode.equals("vypiska") && Util.isNotNull(req, "Date_End")) {
+        List<ObjList> plans = sPatient.getPlans(p.getId());
+        for (ObjList plan : plans)
+          if (plan.getC7().equals("N"))
+            return Util.err(json, "Нельзя установить даты выписки! Не все обследования подтверждены");
+        LvDocs obos = dLvDoc.get(p.getId(), "obos");
+        if(obos == null)
+          return Util.err(json, "По данному пациенту не заполнен документ 'Обоснование'");
+      }
+      if(!docCode.equals("osm") && Util.isNull(req, "mkb_id")) {
+        return Util.err(json, "МКБ 10 не выбрана");
+      }
+      int id = Util.getInt(req, "id", 0);
+      LvDocs doc = id == 0 ? new LvDocs() : dLvDoc.get(session.getCurPat(), docCode);
+      doc.setPatient(p);
+      doc.setDocCode(docCode);
+      doc.setDocDate(new Date());
+      doc.setC1(Util.get(req, "c1"));
+      doc.setC2(Util.get(req, "c2"));
+      doc.setC3(Util.get(req, "c3"));
+      doc.setC4(Util.get(req, "c4"));
+      doc.setC5(Util.get(req, "c5"));
+      doc.setC6(Util.get(req, "c6"));
+      doc.setC7(Util.get(req, "c7"));
+      doc.setC8(Util.get(req, "c8"));
+      doc.setC9(Util.get(req, "c9"));
+      doc.setC10(Util.get(req, "c10"));
+      doc.setC11(Util.get(req, "c11"));
+      doc.setC12(Util.get(req, "c12"));
+      doc.setC13(Util.get(req, "c13"));
+      doc.setC14(Util.get(req, "c14"));
+      doc.setC15(Util.get(req, "c15"));
+      doc.setC16(Util.get(req, "c16"));
+      doc.setC17(Util.get(req, "c17"));
+      doc.setC18(Util.get(req, "c18"));
+      doc.setC19(Util.get(req, "c19"));
+      doc.setC20(Util.get(req, "c20"));
+      doc.setC21(Util.get(req, "c21"));
+      doc.setC22(Util.get(req, "c22"));
+      doc.setC23(Util.get(req, "c23"));
+      doc.setC24(Util.get(req, "c24"));
+      doc.setC25(Util.get(req, "c25"));
+      doc.setMkb(Util.get(req, "mkb"));
+      if(doc.getId() == null) {
+        doc.setCrOn(new Date());
+        doc.setCrBy(session.getUserId());
+      }
+      dLvDoc.save(doc);
+      if(docCode.equals("vypiska") && Util.isNotNull(req, "Date_End")) {
+        p.setDateEnd(Req.getDate(req, "Date_End"));
+        dPatient.save(p);
+      }
+      return Util.success(json);
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
     }
-    dLvDoc.save(obos);
-    return "redirect:/lv/obos.s?msgState=1&msgCode=successSave";
   }
   //endregion
 
@@ -413,76 +430,6 @@ public class CLv {
     }
     //
     return "redirect:/view/consul.s?msgState=1&msgCode=successSave";
-  }
-  //endregion
-
-  //region Выписка
-  @RequestMapping("/vypiska.s")
-  protected String vypiska(@ModelAttribute("vyp") LvDocs vyp, HttpServletRequest request, Model model) {
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/vypiska.s");
-    LvDocs o = dLvDoc.get(session.getCurPat(), "vypiska");
-    vyp.setPatient(dPatient.get(session.getCurPat()));
-    if(o != null) {
-      vyp.setId(o.getId());
-      vyp.setC1(o.getC1());
-      vyp.setC2(o.getC2());
-      vyp.setC3(o.getC3());
-      vyp.setC4(o.getC4());
-      vyp.setC5(o.getC5());
-      vyp.setC6(o.getC6());
-      vyp.setC7(o.getC7());
-      vyp.setC8(o.getC8());
-      vyp.setC9(o.getC9());
-      vyp.setMkb(o.getMkb());
-      vyp.setMkb_id(o.getMkb_id());
-      model.addAttribute("Date_End", Util.dateToString(o.getPatient().getDateEnd()));
-    } else {
-      LvDocs obos = dLvDoc.get(session.getCurPat(), "obos");
-      if(obos != null) {
-        vyp.setC2(obos.getC1());
-        vyp.setC3(obos.getC2());
-        vyp.setC1(obos.getC5());
-        vyp.setC8(obos.getC6());
-        vyp.setC9(obos.getC7());
-        vyp.setC4(obos.getC3());
-        vyp.setMkb(obos.getMkb());
-        vyp.setMkb_id(obos.getMkb_id());
-      }
-    }
-    Util.getMsg(request, model);
-    return "/med/lv/fm/vypiska";
-  }
-
-  @RequestMapping(value = "/vypiska.s", method = RequestMethod.POST)
-  protected String vypiska(@ModelAttribute("vyp") LvDocs vyp, Errors errors, HttpServletRequest request) {
-    ValidationUtils.rejectIfEmpty(errors, "mkb_id", "МКБ 10 не выбран", "МКБ 10 не выбран");
-    LvDocs obos = dLvDoc.get(vyp.getPatient().getId(), "obos");
-    if(obos == null)
-      errors.rejectValue("mkb_id", "По данному пациенту не заполнен документ 'Обоснование'", "По данному пациенту не заполнен документ 'Обоснование'");
-    if (errors.hasErrors()) {
-      return "/med/lv/fm/vypiska";
-    }
-    LvDocs vp = dLvDoc.get(vyp.getPatient().getId(), "vypiska");
-    if(vp == null) {
-      dLvDoc.save(vyp);
-    } else {
-      vp.setC1(vyp.getC1());
-      vp.setC2(vyp.getC2());
-      vp.setC3(vyp.getC3());
-      vp.setC4(vyp.getC4());
-      vp.setC5(vyp.getC5());
-      vp.setC6(vyp.getC6());
-      vp.setC7(vyp.getC7());
-      vp.setC8(vyp.getC8());
-      vp.setC9(vyp.getC9());
-      vp.setPatient(vyp.getPatient());
-      dLvDoc.save(vyp);
-    }
-    Patients pat = dPatient.get(vyp.getPatient().getId());
-    pat.setDateEnd(Req.getDate(request, "Date_End"));
-    dPatient.save(pat);
-    return "redirect:/lv/vypiska.s?msgState=1&msgCode=successSave";
   }
   //endregion
 
@@ -1711,17 +1658,21 @@ public class CLv {
     SessionUtil.addSession(req, "consulId", Req.get(req, "consul"));
     SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
     SessionUtil.addSession(req, "dairyIds", Util.nvl(req.getParameter("dairyIds")));
+    String subUrl = session.getCurSubUrl();
     if(session.getCurPat() != 0)
       model.addAttribute("patFio", dPatient.getFio(session.getCurPat()));
-    model.addAttribute("printPage", session.getCurSubUrl().replace("/lv", "/view"));
+    model.addAttribute("printPage", subUrl.replace("/lv", "/view"));
     if(!Util.isNull(req, "diagnoz"))
       model.addAttribute("printPage", "/view/vypiska.s?diagnoz=Y");
-    if(session.getCurSubUrl().contains("reg") || session.getCurUrl().contains("reg"))
+    if(subUrl.contains("reg") || session.getCurUrl().contains("reg"))
       model.addAttribute("printPage", "/reg/print.s");
     if(req.getParameterValues("obos") != null)
       model.addAttribute("printPage", "/view/drug/obos.s");
     if(req.getParameterValues("statcard") != null)
       model.addAttribute("printPage", "/view/stat_card.s");
+    if(subUrl.contains("/lv/doc.s")) {
+      model.addAttribute("printPage", "/view/" + subUrl.substring(subUrl.indexOf("=") + 1) + ".s");
+    }
     return "/med/lv/print";
   }
 
@@ -1735,25 +1686,17 @@ public class CLv {
   }
   // История
   @RequestMapping(value = "/history.s")
-  protected String history(HttpServletRequest request, Model model){
+  protected String history(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/lv/history.s");
-    List<PatientLinks> patients= dPatientLink.getList("From PatientLinks Where parent = " + session.getCurPat());
-    List<PatientList> list = new ArrayList<>();
-    for(PatientLinks patient : patients){
-      PatientList p = new PatientList();
-      Patients pat = dPatient.get(patient.getChild());
-      p.setId(pat.getId());
-      p.setFio(Util.nvl(pat.getSurname()) + " " + Util.nvl(pat.getName()) + " " + Util.nvl(pat.getMiddlename()));
-      p.setDateBegin(Util.dateToString(pat.getDateBegin()));
-      p.setIbNum(pat.getYearNum().toString());
-      p.setOtdPal(pat.getDept().getName() + " / " + pat.getPalata());
-      p.setCat(pat.getCat().getName());
-      p.setMetka(pat.getMetka().getName());
-      p.setLv(dUser.get(pat.getLv_id()).getFio());
-      list.add(p);
+    Patients p = dPatient.get(session.getCurPat());
+    if(p.getClient() != null) {
+      List<Patients> stats = dPatient.list("From Patients Where client.id = " + p.getClient().getId() + " And id != " + p.getId());
+      model.addAttribute("stats", stats);
+      List<AmbPatients> ambs = dAmbPatient.list("From AmbPatients Where client.id = " + p.getClient().getId());
+      model.addAttribute("ambs", ambs);
     }
-    model.addAttribute("patients", list);
+    model.addAttribute("pat", p);
     return "/med/lv/history";
   }
 

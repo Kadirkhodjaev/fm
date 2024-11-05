@@ -478,7 +478,7 @@ public class CHeadNurse {
           depIds += dep.getDept().getId() + ",";
       }
       depIds = depIds.substring(0, depIds.length() - 1);
-      ps = conn.prepareStatement("Select * From Patients t Where " + (dept.equals("0") ? "" : " t.dept_id = " + dept + " And ") + (depIds.equals("0") ? "" : " t.dept_id in (" + depIds + ") And") + " t.date_begin <= '" + Util.dateDB(Util.dateToString(date.getDate())) + "' And (t.date_end >= '" + Util.dateDB(Util.dateToString(date.getDate())) + "' Or t.date_end is null) And t.state in ('LV', 'ZGV', 'ARCH') And id not in (Select c.patient_id From HN_Date_Patients c Where c.date_id = ?) Order By surname");
+      ps = conn.prepareStatement("Select * From Patients t Where " + (dept.equals("0") ? "" : " t.dept_id = " + dept + " And ") + (depIds.equals("0") ? "" : " t.dept_id in (" + depIds + ") And") + " t.date_begin <= '" + Util.dateDB(Util.dateToString(date.getDate())) + "' And (t.date_end >= '" + Util.dateDB(Util.dateToString(date.getDate())) + "' Or t.date_end is null) And t.state in ('LV') And id not in (Select c.patient_id From HN_Date_Patients c Where c.date_id = ?) Order By surname");
       ps.setInt(1, date.getId());
       rs = ps.executeQuery();
       List<PatientList> pats = new ArrayList<PatientList>();

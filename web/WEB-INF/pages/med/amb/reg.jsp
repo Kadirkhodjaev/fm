@@ -249,8 +249,20 @@
         dataType: 'json',
         success: function (res) {
           openMsg(res);
-          if(res.success) {
-            updateClientInfo(res.id);
+          if(res.dublicate) {
+            getDOM('close_client_info').click();
+            $('#client_list_content').load('/clients/exists_list.s?amb_id=${patient.id}', () => {
+              getDOM('btn_client_list').click();
+            });
+          } else {
+            if (res.success) {
+              if('${patient.state}' === 'ARCH') {
+                getDOM('close_client_info').click();
+                getDOM('add_arch_client').style.display = 'none';
+              } else {
+                updateClientInfo(res.id);
+              }
+            }
           }
         }
       });
@@ -312,6 +324,58 @@
   }
   //endregion
   $(".date-format").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
+  function addArchClient(id) {
+    $.ajax({
+      url: '/amb/patient/get.s',
+      method: 'post',
+      data: 'id=' + id,
+      dataType: 'json',
+      success: function (res) {
+        if(res.success) {
+          $('input[name=cl_surname]').val(res.surname);
+          $('input[name=cl_name]').val(res.name);
+          $('input[name=cl_middlename]').val(res.middlename);
+          $('input[name=cl_birthdate]').val(res.birthdate);
+          $('select[name=cl_sex_id]').val(res.sex_id);
+          $('input[name=cl_tel]').val(res.tel);
+          $('select[name=cl_country_id]').val(res.country_id);
+          $('select[name=cl_region_id]').val(res.region_id);
+          $('input[name=cl_address]').val(res.address);
+          $('#btn_client_view').click();
+        } else
+          openMsg(res);
+      }
+    });
+  }
+  function chooseClient(id) {
+    $.ajax({
+      url: '/clients/get.s',
+      method: 'post',
+      data: 'id=' + id,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success) {
+          getDOM('client_list_close').click();
+          $('input[name=cl_id]').val(res.id);
+          $('input[name=cl_surname]').val(res.surname);
+          $('input[name=cl_name]').val(res.name);
+          $('input[name=cl_middlename]').val(res.middlename);
+          $('input[name=cl_birthdate]').val(res.birthdate);
+          $('select[name=cl_sex_id]').val(res.sex_id);
+          $('input[name=cl_birthdate]').val(res.birthdate);
+          $('input[name=cl_doc_seria]').val(res.doc_seria);
+          $('input[name=cl_doc_num]').val(res.doc_num);
+          $('input[name=cl_doc_info]').val(res.passport);
+          $('input[name=cl_tel]').val(res.tel);
+          $('select[name=cl_country_id]').val(res.country_id);
+          $('select[name=cl_region_id]').val(res.region_id);
+          $('input[name=cl_address]').val(res.address);
+          $('#btn_client_view').click();
+        }
+      }
+    });
+  }
 </script>
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
 <div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
@@ -324,6 +388,7 @@
       <div class="modal-body">
         <form id="clientForm" name="clientForm">
           <input type="hidden" name="cl_id"/>
+          <input type="hidden" name="amb_id" value="${patient.id}"/>
           <table class="formTable w-100">
             <tr>
               <td class="right" nowrap>ФИО <req>*</req>:</td>
@@ -409,6 +474,19 @@
   <!-- /.modal-dialog -->
 </div>
 
+<button class="hidden" id="btn_client_list" data-toggle="modal" data-target="#client_list"></button>
+<div class="modal fade" id="client_list" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog wpx-1000">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" id="client_list_close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title text-danger"><b class="fa fa-list"></b> Список клиентов</h4>
+      </div>
+      <div class="modal-body" id="client_list_content"></div>
+    </div>
+  </div>
+</div>
+
 <iframe id="frmDiv" name="frm" class="hidden"></iframe>
 <div class="panel panel-info" style="width: 900px !important; margin: auto">
   <div class="panel-heading">
@@ -442,13 +520,16 @@
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="loadPdf()"><i title="Генерация PDF файла" class="fa fa-reorder"></i> Результаты PDF</a></li>
         <iframe name="pdffile" id="pdffile" src="about:blank" style="display: none"></iframe>
       </c:if>
+      <c:if test="${pat != null}">
+        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="openMainPage('/${pat.state == 'ARCH' ? 'view' : 'lv'}/index.s?id=${pat.id}', false); return false"><i title="Назад" class="fa fa-user"></i> ИБ №${pat.yearNum}</a></li>
+      </c:if>
     </ul>
   </div>
   <f:form commandName="patient" action='/amb/reg.s' method="post" id='bf' target="frm">
     <f:hidden path="id"/>
     <div class="panel-body">
       <%@include file="/incs/msgs/successError.jsp"%>
-      <table class="formTable">
+      <table class="formTable w-100">
         <tr>
           <td class="right">Клиент <req>*</req>:</td>
           <td colspan="3">
@@ -461,7 +542,7 @@
                     <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
                   </div>
                 </td>
-                <td class="center" style="<c:if test="${patient.id == null}">width:40px</c:if>" id="client_buttons">
+                <td class="center" style="<c:if test="${patient.id == null || (patient.id > 0 && patient.state == 'ARCH' && patient.client == null)}">width:40px</c:if>" id="client_buttons">
                   <c:if test="${patient.id == null}">
                     <button type="button" class="btn btn-success btn-icon" onclick="addClient()">
                       <b class="fa fa-plus"></b>
@@ -471,6 +552,11 @@
                     </button>
                     <button type="button" class="btn btn-danger btn-icon display-none">
                       <b class="fa fa-remove"></b>
+                    </button>
+                  </c:if>
+                  <c:if test="${patient.id > 0 && patient.state == 'ARCH' && patient.client == null}">
+                    <button type="button" class="btn btn-success btn-icon" id="add_arch_client" onclick="addArchClient(${patient.id})">
+                      <b class="fa fa-save"></b>
                     </button>
                   </c:if>
                 </td>

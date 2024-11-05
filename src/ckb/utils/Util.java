@@ -435,4 +435,9 @@ public class Util {
     if(c.getSex() == null) throw new Exception("Не заполненные данные: Пол");
     if(c.getBirthdate() == null) throw new Exception("Не заполненные данные: Дата рождения");
   }
+
+  public static String success(JSONObject json) throws JSONException {
+    json.put("success", true);
+    return json.toString();
+  }
 }

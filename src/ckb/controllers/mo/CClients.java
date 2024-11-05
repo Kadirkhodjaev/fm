@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 @Controller
@@ -80,10 +81,16 @@ public class CClients {
     try {
       Session session = SessionUtil.getUser(req);
       session.setCurUrl("/clients/list.s");
-
+      String flag = Util.get(req, "flag", "");
+      HashMap<String, String> filters = session.getFilters();
+      if(flag.isEmpty() && filters.containsKey("client_flag"))
+        flag = filters.get("client_flag");
+      if(flag.equals("0")) flag = "";
+      filters.put("client_flag", flag);
+      session.setFilters(filters);
       ClientGrid grid = SessionUtil.getClientGrid(req, "CLINIC_CLIENTS");
       grid.setGrid(req);
-      grid.setSql("From Crm_Clients t");
+      grid.setSql("From Crm_Clients t" + (flag.isEmpty() ? "" : flag.equals("UNDONE") ? " Where flag is null" : " Where flag = 'DONE'"));
       grid.setOrder("Order By t.id Desc");
       grid.setRowCount(sClient.getCount(grid.select()));
       grid.initPages();
@@ -92,6 +99,7 @@ public class CClients {
       model.addAttribute("rows", sClient.rows(grid, session));
       model.addAttribute("view_url", "/clients/view.s?id=");
       SessionUtil.addSession(req, "CLINIC_CLIENTS", grid);
+      model.addAttribute("flag", flag);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -186,14 +194,33 @@ public class CClients {
       client.setDocInfo(Util.get(req, "cl_doc_info"));
       client.setTel(Util.get(req, "cl_tel"));
       client.setCountry(dCountry.get(Util.getInt(req, "cl_country_id")));
-      if(Util.isNotNull(req, "cl_region_id")) client.setRegion(dRegion.get(Util.getInt(req, "cl_region_id")));
+      if(client.getCountry().getId() != 199) {
+        client.setRegion(null);
+      } else {
+        if (Util.isNotNull(req, "cl_region_id")) client.setRegion(dRegion.get(Util.getInt(req, "cl_region_id")));
+      }
       client.setAddress(Util.get(req, "cl_address"));
       if(Util.isNull(req,"cl_id")) {
         client.setCrBy(dUser.get(session.getUserId()));
         client.setCrOn(new Date());
       }
-      if(dClient.checkDublicate(client) > 0) return Util.err(json, "В реестре клиентов имеется идентичная запись");
+      if(dClient.checkDublicate(client) > 0) {
+        json.put("success", false);
+        json.put("msg", "В реестре клиентов имеется идентичная запись");
+        json.put("dublicate", true);
+        return json.toString();
+      }
       dClient.saveAndReturn(client);
+      if(Util.isNotNull(req, "stat_id")) {
+        Patients p = dPatient.get(Util.getInt(req, "stat_id"));
+        p.setClient(client);
+        dPatient.save(p);
+      }
+      if(Util.isNotNull(req, "amb_id")) {
+        AmbPatients p = dAmbPatient.get(Util.getInt(req, "amb_id"));
+        p.setClient(client);
+        dAmbPatient.save(p);
+      }
       //
       json.put("fio", client.getFio());
       json.put("id", client.getId());
@@ -236,4 +263,165 @@ public class CClients {
     return json.toString();
   }
 
+  @RequestMapping("set/flag.s")
+  @ResponseBody
+  protected String set_flag(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Clients c = dClient.get(Util.getInt(req, "id"));
+      c.setFlag("DONE");
+      dClient.save(c);
+      json.put("success", true);
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping("get/rows.s")
+  @ResponseBody
+  protected String set_client_rows(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      String[] rps = req.getParameterValues("code");
+      Clients c = dClient.get(Util.getInt(req, "id"));
+      String where = "";
+      for(String rp : rps) {
+        if(rp.equals("surname")) where += "upper(surname) = upper('" + c.getSurname() + "') And ";
+        if(rp.equals("name")) where += "upper(name) = upper('" + c.getName() + "') And ";
+        if(rp.equals("middlename")) where += "upper(middlename) = upper('" + c.getMiddlename() + "') And ";
+        if(rp.equals("birth")) where += "birthyear = " + c.getBirthyear() + " And ";
+      }
+      where = where.substring(0, where.length() - 4);
+      List<Patients> stats = dPatient.list("From Patients Where client is null And " + where + " Order By surname, name, middlename");
+      List<AmbPatients> ambs = dAmbPatient.list("From AmbPatients Where client is null And " + where + " Order By surname, name, middlename");
+      JSONArray rows = new JSONArray();
+      for(Patients p : stats) {
+        JSONObject d = new JSONObject();
+        d.put("id", p.getId());
+        d.put("type", "stat");
+        d.put("fio", p.getFio());
+        d.put("birth", p.getBirthyear() == null ? Util.dateToString(p.getBirthday()) : p.getBirthyear());
+        d.put("sex", p.getSex() == null ? "" : p.getSex().getName());
+        d.put("doc", p.getPassportInfo());
+        d.put("state", p.getState().equals("ARCH") ? "Архив" : "Текущий");
+        rows.put(d);
+      }
+      for(AmbPatients p : ambs) {
+        JSONObject d = new JSONObject();
+        d.put("id", p.getId());
+        d.put("type", "amb");
+        d.put("fio", p.getFio());
+        d.put("birth", p.getBirthyear() == null ? Util.dateToString(p.getBirthday()) : p.getBirthyear());
+        d.put("sex", p.getSex() == null ? "" : p.getSex().getName());
+        d.put("doc", p.getPassportInfo());
+        d.put("state", p.getState().equals("ARCH") ? "Архив" : "Текущий");
+        rows.put(d);
+      }
+      json.put("patients", rows);
+      json.put("success", true);
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping("set/patient.s")
+  @ResponseBody
+  protected String set_patient(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Clients c = dClient.get(Util.getInt(req, "id"));
+      if(Util.get(req, "type").equals("amb")) {
+        AmbPatients p = dAmbPatient.get(Util.getInt(req, "patient"));
+        if(p.getSex() == null)
+          p.setSex(c.getSex());
+        p.setClient(c);
+        dAmbPatient.save(p);
+      } else {
+        Patients p = dPatient.get(Util.getInt(req, "patient"));
+        p.setClient(c);
+        if(p.getSex() == null)
+          p.setSex(c.getSex());
+        dPatient.save(p);
+      }
+      json.put("success", true);
+      return json.toString();
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
+    }
+  }
+
+  @RequestMapping("update/patient.s")
+  @ResponseBody
+  protected String update_patient(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Clients c = dClient.get(Util.getInt(req, "id"));
+      if(Util.get(req, "type").equals("amb")) {
+        AmbPatients p = dAmbPatient.get(Util.getInt(req, "patient"));
+        p.setSurname(c.getSurname());
+        p.setName(c.getName());
+        p.setMiddlename(c.getMiddlename());
+        p.setBirthyear(c.getBirthyear());
+        p.setBirthday(c.getBirthdate());
+        p.setSex(c.getSex());
+        p.setAddress(c.getAddress());
+        p.setCounteryId(c.getCountry().getId());
+        p.setRegionId(c.getRegion() != null ? c.getRegion().getId() : null);
+        dAmbPatient.save(p);
+      } else {
+        Patients p = dPatient.get(Util.getInt(req, "patient"));
+        p.setSurname(c.getSurname());
+        p.setName(c.getName());
+        p.setMiddlename(c.getMiddlename());
+        p.setBirthyear(c.getBirthyear());
+        p.setBirthday(c.getBirthdate());
+        p.setSex(c.getSex());
+        p.setAddress(c.getAddress());
+        p.setCounteryId(c.getCountry().getId());
+        p.setRegionId(c.getRegion() != null ? c.getRegion().getId() : null);
+        dPatient.save(p);
+      }
+      json.put("success", true);
+      return json.toString();
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
+    }
+  }
+
+  @RequestMapping("remove/patient.s")
+  @ResponseBody
+  protected String remove_patient(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      if(Util.get(req, "type").equals("amb")) {
+        AmbPatients p = dAmbPatient.get(Util.getInt(req, "patient"));
+        p.setClient(null);
+        dAmbPatient.save(p);
+      } else {
+        Patients p = dPatient.get(Util.getInt(req, "patient"));
+        p.setClient(null);
+        dPatient.save(p);
+      }
+      json.put("success", true);
+      return json.toString();
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
+    }
+  }
+
+  @RequestMapping(value = "exists_list.s")
+  protected String exists_list(HttpServletRequest req, Model model) {
+    List<Clients> clients;
+    if(Util.isNotNull(req, "stat_id")) {
+      Patients pat = dPatient.get(Util.getInt(req, "stat_id"));
+      clients = dClient.list("From Clients Where lower(surname) = '" + pat.getSurname().toUpperCase() + "' And lower(name) = '" + pat.getName().toLowerCase() + "'");
+    } else {
+      AmbPatients pat = dAmbPatient.get(Util.getInt(req, "amb_id"));
+      clients = dClient.list("From Clients Where lower(surname) = '" + pat.getSurname().toUpperCase() + "' And lower(name) = '" + pat.getName().toLowerCase() + "'");
+    }
+    model.addAttribute("clients", clients);
+    return "/mo/client/list";
+  }
 }

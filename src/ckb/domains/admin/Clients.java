@@ -41,6 +41,8 @@ public class Clients extends GenId {
   @OneToOne @JoinColumn private Users crBy;
   @Column private Date crOn;
 
+  @Column private String flag;
+
   public String getSurname() {
     return surname;
   }
@@ -183,5 +185,13 @@ public class Clients extends GenId {
 
   public String getPassport() {
     return getDocSeria() + " " + getDocNum() + " " + getDocInfo();
+  }
+
+  public String getFlag() {
+    return flag;
+  }
+
+  public void setFlag(String flag) {
+    this.flag = flag;
   }
 }

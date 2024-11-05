@@ -97,6 +97,7 @@ public class SClientImp implements SClient {
         obj.setDocNum(rs.getString("docNum"));
         obj.setTel(rs.getString("tel"));
         obj.setDateReg(Util.dateTimeToString(rs.getTimestamp("cron")));
+        obj.setFlag(rs.getString("flag"));
         rows.add(obj);
       }
     } catch (Exception e) {

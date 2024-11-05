@@ -8,20 +8,20 @@
   }
 </script>
 <style>
-  * {font-size:${sessionScope.fontSize}px !important;}
+  * {font-size:${sessionScope.fontSize}px !important;color:black}
 </style>
 <div class="panel panel-info" style="width: 95% !important; margin: auto;">
-  <div class="panel-heading">План обследования</div>
+  <div class="panel-heading">Текширувлар</div>
   <table class="formTable" style="width:100%">
     <tr>
-      <td colspan="3"><b>Пациент(ка):</b> ${pat.surname}&nbsp;${pat.name}&nbsp;${pat.middlename}</td>
-      <td colspan="2"><b>Год рождения:</b> ${pat.birthyear}</td>
+      <td colspan="3"><b>Бемор:</b> ${pat.surname}&nbsp;${pat.name}&nbsp;${pat.middlename}</td>
+      <td colspan="2"><b>Тугилган йили:</b> ${pat.birthyear}</td>
     </tr>
     <tr>
       <td>&nbsp;</td>
-      <td align="center"><b>Наименование</b></td>
-      <td align="center"><b>Дата</b></td>
-      <td align="center"><b>Примечание</b></td>
+      <td align="center"><b>Номи</b></td>
+      <td align="center"><b>Сана</b></td>
+      <td align="center"><b>Маълумотлар</b></td>
     </tr>
     <c:forEach items="${plans}" var="p" varStatus="loop">
       <tr>

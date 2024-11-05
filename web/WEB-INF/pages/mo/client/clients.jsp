@@ -4,8 +4,15 @@
   <div class="panel-heading">
     <span class="fa fa-users"></span> Реестр клиентов
   </div>
-  <div class="right pt-5">
-    <ul class="pagination mb-0">
+  <div class="right pt-5 mb-30">
+    <div class="float-left">
+      <select class="form-control" onchange="setFlag(this.value)">
+        <option value="0">Все</option>
+        <option <c:if test="${flag == 'DONE'}">selected</c:if> value="DONE">Проверено</option>
+        <option <c:if test="${flag == 'UNDONE'}">selected</c:if> value="UNDONE">Не проверено</option>
+      </select>
+    </div>
+    <ul class="pagination mb-0 float-right">
       <li class="paginate_button" tabindex="0">
         <input type="text" class="grid-search-field uppercase" id="amb-search-field" placeholder="Поиск" onkeydown="setWord(this.value)" value="${grid.word}"/>
       </li>
@@ -32,11 +39,13 @@
       <li class="paginate_button <c:if test="${grid.page == grid.maxPage}">disabled</c:if>" tabindex="0"><a onclick="setNav('end')" href="#"><i class="fa fa-fast-forward"></i>&nbsp;</a></li>
     </ul>
   </div>
+  <div class="clearboth"></div>
   <div class="table-responsive" style="overflow-y: auto; height: 95%">
     <table class="table table-striped table-bordered table-hover grid dataTable hand">
       <thead>
       <tr>
         <th style="width:50px">№</th>
+        <th style="width:30px">#</th>
         <th>ФИО</th>
         <th style="width: 150px">Пол</th>
         <th style="width: 150px">Дата рождения</th>
@@ -51,6 +60,14 @@
       <c:forEach items="${rows}" var="p" varStatus="loop">
         <tr ondblclick="view(${p.id})" onclick="setRow(${loop.index})" id="grid_row_${loop.index}">
           <td class="center">${loop.index + 1}</td>
+          <td class="center">
+            <c:if test="${p.flag == 'DONE'}">
+              <img src="/res/imgs/green.gif"/>
+            </c:if>
+            <c:if test="${p.flag != 'DONE'}">
+              <img src="/res/imgs/red.gif"/>
+            </c:if>
+          </td>
           <td><a href="#" onclick="view(${p.id}); return false;">${p.fio}</a></td>
           <td class="center">${p.sex}</td>
           <td class="center">${p.birthdate}</td>
@@ -95,5 +112,8 @@
   }
   function view(id) {
     setPage('${view_url}' + id);
+  }
+  function setFlag(flag) {
+    setPage('${sessionScope.ENV.curUrl}?flag=' + flag);
   }
 </script>

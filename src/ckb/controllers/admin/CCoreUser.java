@@ -263,7 +263,7 @@ public class CCoreUser {
       String[] services = req.getParameterValues("service");
       String[] reportList = req.getParameterValues("report");
       boolean isKdo = false;
-      u.setKdoTypes(new ArrayList<>());
+      u.setKdoTypes(new ArrayList<KdoTypes>());
       if (reportList != null)
         for (String aReportList : reportList)
           reports.add(dReport.get(Integer.parseInt(aReportList)));

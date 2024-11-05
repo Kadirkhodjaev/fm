@@ -7,93 +7,127 @@
   }
 %>
 <style>
-  * {font-size:${sessionScope.fontSize}px !important;}
-  * {font-weight: 100}
+  * {font-size:${sessionScope.fontSize}px !important;color:black}
 </style>
-<table style="width:95%; margin:auto;">
+<table style="width:95%; margin:auto; margin-top:110px">
   <tr>
-    <td style="border-bottom:2px solid black; font-weight: bold; text-align: center" colspan="2">
-      ГЛАВНОЕ МЕДИЦИНСКОЕ УПРАВЛЕНИЕ при АДМИНИСТРАЦИИ ПРЕЗИДЕНТА РЕСПУБЛИКИ УЗБЕКИСТАН <br/>
-      ЦЕНТРАЛЬНАЯ КЛИНИЧЕСКАЯ БОЛЬНИЦА №1
+    <td style="font-weight: bold; text-align: center;font-size:${sessionScope.fontSize + 2}px !important;" colspan="2">
+      "Фарход Мадад Шифо" хусусий корхонаси" <br/>Касаллик тарихидан кучирма № ${form.patient.yearNum}
     </td>
   </tr>
   <tr>
-    <td style="font-weight: bold; text-align: center" colspan="2">
-      <c:if test="${!dieFlag}">
-        ВЫПИСКА из истории болезни №${form.patient.yearNum}
-      </c:if>
-      <c:if test="${dieFlag}">
-        ПОСМЕРТНЫЙ ЭПИКРИЗ из истории болезни №${form.patient.yearNum}
-      </c:if>
+    <td colspan="2" style="text-align:center;padding-top:10px">
+      <b>Бемор:</b> ${form.patient.surname}&nbsp;${form.patient.name}&nbsp;${form.patient.middlename}
+      <b>Тугилган йили:</b> ${form.patient.birthyear}
     </td>
   </tr>
   <tr>
-    <td><b>Пациент(ка):</b> ${form.patient.surname}&nbsp;${form.patient.name}&nbsp;${form.patient.middlename}</td>
-    <td><b>Год рождения:</b> ${form.patient.birthyear}</td>
+    <td colspan="2" style="text-align:center;padding-top:10px">
+      <b>Касалхонага келди:</b> ${dateBegin}
+      <b>Касалхонадан кетди:</b> ${dateEnd}
+    </td>
   </tr>
   <tr>
-    <td colspan="2">находился на стац. лечении в ЦКБ №1 ГМУ при АП РУз с ${dateBegin} по ${dateEnd}
+    <td colspan="2"><b>КЛИНИК ТАШХИС:</b></td>
   </tr>
   <tr>
-    <td colspan="2"><b>Клинический диагноз:</b></td>
+    <td colspan="2"><b>Асосий:</b></td>
   </tr>
   <tr>
-    <td colspan="2" align=justify>${form.c1}</td>
+    <td colspan="2" align="justify">${form.c1}</td>
   </tr>
   <tr>
-    <td colspan="2"><b>Жалобы при поступлении:</b></td>
+    <td colspan="2"><b>Хамрох:</b></td>
   </tr>
   <tr>
-    <td colspan="2" align=justify>${form.c2}</td>
+    <td colspan="2" align="justify">${form.c8}</td>
+  </tr>
+  <c:if test="${form.c9 != '' && form.c9 != null && form.c9 != '<br>'}">
+    <tr>
+      <td colspan="2"><b>Асорати:</b></td>
+    </tr>
+    <tr>
+      <td colspan="2" align="justify">${form.c9}</td>
+    </tr>
+  </c:if>
+  <tr>
+    <td colspan="2"><b>Шикоятлар:</b></td>
   </tr>
   <tr>
-    <td colspan="2"><b>Из анамнеза:</b></td>
+    <td colspan="2" align="justify">${form.c2}</td>
   </tr>
   <tr>
-    <td colspan="2" align=justify>${form.c3}</td>
+    <td colspan="2"><b>Анамнез:</b></td>
   </tr>
   <tr>
-    <td colspan="2"><b>Состояние при поступлении:</b></td>
+    <td colspan="2" align="justify">${form.c3}</td>
   </tr>
   <tr>
-    <td colspan="2" align=justify>${form.c4}</td>
+    <td colspan="2"><b>Объектив:</b></td>
   </tr>
   <tr>
-    <td colspan="2"><b>Проведённые обследования:</b></td>
+    <td colspan="2" align="justify">${form.c4}</td>
   </tr>
   <tr>
-    <td colspan="2" align=justify${form.c5}</td>
+    <td colspan="2"><b>Утказилган текширувлар:</b></td>
   </tr>
   <tr>
-    <td colspan="2"><b>Проведено лечение:</b></td>
+    <td colspan="2" align="justify">${form.c5}</td>
   </tr>
   <tr>
-    <td colspan="2" align=justify>${form.c6}</td>
+    <td colspan="2"><b>Утказилган даволашлар:</b></td>
   </tr>
+  <tr>
+    <td colspan="2" align="justify">${form.c6}</td>
+  </tr>
+  <c:if test="${form.c10 != '' && form.c10 != null && form.c10 != '<br>'}">
+    <tr>
+      <td colspan="2"><b>ЧИКАРУВ ВАКТИДАГИ ТАШХИС:</b></td>
+    </tr>
+    <tr>
+      <td colspan="2"><b>Асосий:</b></td>
+    </tr>
+    <tr>
+      <td colspan="2" align="justify">${form.c10}</td>
+    </tr>
+  </c:if>
+
+  <c:if test="${form.c11 != '' && form.c11 != null && form.c11 != '<br>'}">
+    <tr>
+      <td colspan="2"><b>Хамрох:</b></td>
+    </tr>
+    <tr>
+      <td colspan="2" align="justify">${form.c11}</td>
+    </tr>
+  </c:if>
+  <c:if test="${form.c12 != '' && form.c12 != null && form.c12 != '<br>'}">
+    <tr>
+      <td colspan="2"><b>Асорати:</b></td>
+    </tr>
+    <tr>
+      <td colspan="2" align="justify">${form.c12}</td>
+    </tr>
+  </c:if>
+
   <tr>
     <td colspan="2"><b>
-      <c:if test="${!dieFlag}">
-        Рекомендовано:
-      </c:if>
-      <c:if test="${dieFlag}">
-        Посмертный диагноз:
-      </c:if>
+      Тавсия:
     </b></td>
   </tr>
   <tr>
-    <td colspan="2" align=justify>${form.c7}</td>
+    <td colspan="2" align="justify">${form.c7}</td>
   </tr>
-  <tr><td colspan="2"><br/><br/><br/></td></tr>
+  <tr><td colspan="2"></td></tr>
   <tr>
-    <td><b>Лечащий врач</b></td>
-    <td align="right">${lvFio}</td>
-  </tr>
-  <tr>
-    <td><b>Зав. отделением</b></td>
-    <td align="right">${zavOtdel.fio}</td>
+    <td style="padding-top:10px"><b>Даволовчи шифокор</b></td>
+    <td align="right" style="padding-top:10px">${lvFio}</td>
   </tr>
   <tr>
-    <td><b>Зам главного врача</b></td>
-    <td align="right">${zamGlb}</td>
+    <td style="padding-top:10px"><b>Булим мудири</b></td>
+    <td align="right" style="padding-top:10px">${form.patient.zavlv.fio}</td>
+  </tr>
+  <tr>
+    <td width="50%" style="padding-top:10px"><b>Бош шифокор</b></td>
+    <td width="50%" align="right" style="padding-top:10px">${zamGlb}</td>
   </tr>
 </table>

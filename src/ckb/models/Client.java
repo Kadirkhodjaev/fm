@@ -14,6 +14,7 @@ public class Client {
   private String sex;
   private String docSeria;
   private String docNum;
+  private String flag;
 
   public int getId() {
     return id;
@@ -109,5 +110,13 @@ public class Client {
 
   public void setDocNum(String docNum) {
     this.docNum = docNum;
+  }
+
+  public String getFlag() {
+    return flag;
+  }
+
+  public void setFlag(String flag) {
+    this.flag = flag;
   }
 }

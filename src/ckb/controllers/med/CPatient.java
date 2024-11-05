@@ -1,11 +1,7 @@
 package ckb.controllers.med;
 
 
-import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.dicts.rooms.DRooms;
-import ckb.dao.med.head_nurse.patient.DHNPatient;
-import ckb.dao.med.kdos.DKdoTypes;
 import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.fizio.DLvFizioDate;
 import ckb.dao.med.lv.fizio.DLvFizioDateH;
@@ -19,7 +15,6 @@ import ckb.domains.med.patient.PatientPlans;
 import ckb.domains.med.patient.Patients;
 import ckb.models.Grid;
 import ckb.models.ObjList;
-import ckb.services.med.kdo.SKdo;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
@@ -27,6 +22,8 @@ import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.apache.log4j.Logger;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -50,16 +47,11 @@ public class CPatient {
 
   private Session session = null;
   @Autowired SPatient sPatient;
-  @Autowired SKdo sKdo;
   @Autowired DPatient dPatient;
   @Autowired DUser dUser;
   @Autowired DPatientPlan dPatientPlan;
-  @Autowired DKdoTypes dKdoType;
   @Autowired DKdos dKdos;
   @Autowired DLvPlan dLvPlan;
-  @Autowired DDict dDict;
-  @Autowired DRooms dRoom;
-  @Autowired DHNPatient dhnPatient;
   @Autowired DLvFizioDate dLvFizioDate;
   @Autowired DLvFizioDateH dLvFizioDateH;
 
@@ -220,14 +212,21 @@ public class CPatient {
   }
 
   @RequestMapping("/archive.s")
-  protected String archive(HttpServletRequest r, Model m){
+  protected String archive(HttpServletRequest r, Model m) {
     try {
       session = SessionUtil.getUser(r);
       session.setCurUrl("/patients/archive.s");
       session.setArchive(true);
       session.setCurPat(0);
       session.setBackUrl(session.getCurUrl());
-      String sql = " From Patients t Where t.state = 'ARCH' ";
+      String flag = Util.get(r, "flag", "");
+      HashMap<String, String> filters = session.getFilters();
+      if(flag.isEmpty() && filters.containsKey("patient_flag"))
+        flag = filters.get("patient_flag");
+      if(flag.equals("0")) flag = "";
+      filters.put("patient_flag", flag);
+      session.setFilters(filters);
+      String sql = " From Patients t Where t.state = 'ARCH' " + (flag.isEmpty() ? "" : flag.equals("DONE") ? " And client_id is not null" : " And client_Id is null");
       m.addAttribute("gridHeight", "99");
       // Фильтр
       if(!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
@@ -307,6 +306,7 @@ public class CPatient {
       m.addAttribute("roleId", session.getRoleId());
       m.addAttribute("curUrl", session.getCurUrl());
       m.addAttribute("addEditUrl", session.getRoleId() == 13 ? "/cashbox/stat.s?id=" : "/view/index.s?id=");
+      m.addAttribute("flag", flag);
       Util.makeMsg(r, m);
       return "med/patients/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "index";
     } catch (Exception e) {
@@ -380,7 +380,7 @@ public class CPatient {
   }
 
   @RequestMapping("/confirm.s")
-  protected String confirm(HttpServletRequest r){
+  protected String confirm(HttpServletRequest r) {
     try {
       session = SessionUtil.getUser(r);
       String[] ids = r.getParameterValues("id");
@@ -517,6 +517,30 @@ public class CPatient {
     model.addAttribute("price", pat.getRoomPrice());
     model.addAttribute("sysdate", Util.getCurDate());
     return "med/patients/contract";
+  }
+
+  @RequestMapping(value = "/stat/get.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String get_amb_patient(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Patients p = dPatient.get(Util.getInt(req, "id"));
+      json.put("id", p.getId());
+      json.put("surname", p.getSurname());
+      json.put("name", p.getName());
+      json.put("middlename", p.getMiddlename());
+      json.put("birthdate", Util.dateToString(p.getBirthday()));
+      json.put("sex_id", p.getSex().getId());
+      json.put("tel", p.getTel());
+      json.put("country_id", p.getCounteryId());
+      json.put("region_id", p.getRegionId());
+      json.put("address", p.getAddress());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
   }
 
   /*@RequestMapping("/cashDetails.s")

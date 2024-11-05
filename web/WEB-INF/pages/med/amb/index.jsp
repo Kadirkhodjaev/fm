@@ -148,9 +148,19 @@
     if(vals != '')
       setPage('/patients/confirm.s?' + vals);
   }
+  function setPatientFlag(flag) {
+    setPage('/amb/archive.s?flag=' + flag)
+  }
 </script>
 <div class="panel-body" style="border:1px solid #ababab; border-radius: 4px">
   <div class="paginationBlock">
+    <c:if test="${curUrl == '/amb/archive.s'}">
+      <select class="wpx-150 form-control" style="display: unset; position: relative; top:-20px" onchange="setPatientFlag(this.value)">
+        <option value="0">Все</option>
+        <option <c:if test="${flag == 'DONE'}">selected</c:if> value="DONE">С клиентом</option>
+        <option <c:if test="${flag == 'UNDONE'}">selected</c:if> value="UNDONE">Без клиента</option>
+      </select>
+    </c:if>
     <ul class="pagination">
       <li class="paginate_button disabled" tabindex="0"><a href="#">${sessionScope.patientGrid.startPos}..${sessionScope.patientGrid.endPos} из ${sessionScope.patientGrid.rowCount}</a></li>
       <c:if test="${sessionScope.patientGrid.maxPage > 1}">

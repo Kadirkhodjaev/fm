@@ -250,6 +250,9 @@ public class CReg {
     model.addAttribute("country", pat.getCounteryId() != null ? dCountery.get(pat.getCounteryId()).getName() : "");
     model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
     model.addAttribute("lvpartners", dLvPartner.getList("From LvPartners Where state = 'A' Order By code"));
+    sForm.setSelectOptionModel(model, 1, "sex");
+    model.addAttribute("countries", dCountery.getCounteries());
+    model.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
     return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
   }
 
@@ -395,6 +398,8 @@ public class CReg {
         return Util.err(data, "Данный пациент уже в процессе обработке нельзя Архивировать");
       Patients pat = dPatient.get(session.getCurPat());
       pat.setState("ARCH");
+      pat.setYearNum(0);
+      pat.setDateEnd(new Date());
       dPatient.save(pat);
       data.put("success", true);
     } catch (Exception e) {

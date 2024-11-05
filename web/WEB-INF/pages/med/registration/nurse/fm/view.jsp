@@ -2,10 +2,12 @@
 <%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <script src="/res/js/common.js" type="text/javascript"></script>
+<link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <link href="/res/css/styles.css" rel="stylesheet">
 <script>
   function saveLv() {
@@ -33,7 +35,192 @@
       }
     });
   }
+  function saveClient() {
+    if(checkForm($('#clientForm'))) {
+      $.ajax({
+        url: '/clients/save.s',
+        method: 'post',
+        data: $('#clientForm').serialize(),
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.dublicate) {
+            getDOM('close_client_info').click();
+            $('#client_list_content').load('/clients/exists_list.s?stat_id=${pat.id}', () => {
+              getDOM('btn_client_list').click();
+            });
+          } else {
+            if (res.success) setLocation('reg.s');
+          }
+        }
+      });
+    }
+  }
+  function addArchClient(id) {
+    $.ajax({
+      url: '/patients/stat/get.s',
+      method: 'post',
+      data: 'id=' + id,
+      dataType: 'json',
+      success: function (res) {
+        if(res.success) {
+          $('input[name=arch_cl_id]').val(res.id);
+          $('input[name=cl_surname]').val(res.surname);
+          $('input[name=cl_name]').val(res.name);
+          $('input[name=cl_middlename]').val(res.middlename);
+          $('input[name=cl_birthdate]').val(res.birthdate);
+          $('select[name=cl_sex_id]').val(res.sex_id);
+          $('input[name=cl_tel]').val(res.tel);
+          $('select[name=cl_country_id]').val(res.country_id);
+          $('select[name=cl_region_id]').val(res.region_id);
+          $('input[name=cl_address]').val(res.address);
+          $('#btn_client_view').click();
+        } else
+          openMsg(res);
+      }
+    });
+  }
+  function chooseClient(id) {
+    $.ajax({
+      url: '/clients/get.s',
+      method: 'post',
+      data: 'id=' + id,
+      dataType: 'json',
+      success: function (res) {
+        if(res.success) {
+          getDOM('client_list_close').click();
+          $('input[name=cl_id]').val(res.id);
+          $('input[name=cl_surname]').val(res.surname);
+          $('input[name=cl_name]').val(res.name);
+          $('input[name=cl_middlename]').val(res.middlename);
+          $('input[name=cl_birthdate]').val(res.birthdate);
+          $('select[name=cl_sex_id]').val(res.sex_id);
+          $('input[name=cl_birthdate]').val(res.birthdate);
+          $('input[name=cl_doc_seria]').val(res.doc_seria);
+          $('input[name=cl_doc_num]').val(res.doc_num);
+          $('input[name=cl_doc_info]').val(res.passport);
+          $('input[name=cl_tel]').val(res.tel);
+          $('select[name=cl_country_id]').val(res.country_id);
+          $('select[name=cl_region_id]').val(res.region_id);
+          $('input[name=cl_address]').val(res.address);
+          $('#btn_client_view').click();
+        } else {
+          openMsg(res);
+        }
+      }
+    });
+  }
 </script>
+<button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
+<div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog wpx-1000">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title text-danger"><b class="fa fa-user"></b> Реквизиты клиента</h4>
+      </div>
+      <div class="modal-body">
+        <form id="clientForm" name="clientForm">
+          <input type="hidden" name="cl_id"/>
+          <input type="hidden" name="stat_id" value="${pat.id}"/>
+          <table class="formTable w-100">
+            <tr>
+              <td class="right" nowrap>ФИО <req>*</req>:</td>
+              <td colspan="3">
+                <table class="w-100">
+                  <tr>
+                    <td>
+                      <input name="cl_surname" title="Фамилия" placeholder="Фамилия" type="text" class="form-control w-100" required="true" maxlength="64" autocomplete="off"/>
+                    </td>
+                    <td>
+                      <input name="cl_name" title="Исми" placeholder="Исми" type="text" class="form-control w-100" required="true"  maxlength="64" autocomplete="off"/>
+                    </td>
+                    <td>
+                      <input name="cl_middlename" title="Шарифи" placeholder="Шарифи" class="form-control w-100" maxlength="64" autocomplete="off"/>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Дата рождения <req>*</req>:</td>
+              <td>
+                <input name="cl_birthdate" type="text" class="form-control center date-format" placeholder="dd.mm.yyyy" style="width:100px;" maxlength="10"/>
+              </td>
+              <td class="right" nowrap>Пол <req>*</req>:</td>
+              <td>
+                <select name="cl_sex_id" class="form-control">
+                  <c:forEach items="${sex}" var="sx">
+                    <option value="${sx.id}">${sx.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Серия паспорта:</td>
+              <td><input name="cl_doc_seria" type="text" class="form-control text-center uppercase" maxlength="2" placeholder="XX"/></td>
+              <td class="right" nowrap>Номер паспорта:</td>
+              <td><input name="cl_doc_num" type="text" class="form-control text-center" maxlength="10" placeholder="XXXXXXX"/></td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Паспортные данные:</td>
+              <td><input name="cl_doc_info" type="text" class="form-control" maxlength="64"/></td>
+              <td class="right" nowrap>Номер телефона:</td>
+              <td><input name="cl_tel" type="text" class="form-control" maxlength="400"/></td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Резиденство <req>*</req>:</td>
+              <td>
+                <select name="cl_country_id" class="form-control" onchange="$('select[name=cl_region_id]').toggle(this.value === '199').val()">
+                  <c:forEach items="${countries}" var="reg">
+                    <option value="${reg.id}">${reg.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+              <td class="right" nowrap>Область:</td>
+              <td>
+                <select name="cl_region_id" class="form-control">
+                  <option value=""></option>
+                  <c:forEach items="${regions}" var="reg">
+                    <option value="${reg.id}">${reg.name}</option>
+                  </c:forEach>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="right" nowrap>Адрес:</td>
+              <td colspan="3"><input name="cl_address" type="text" class="form-control" maxlength="400"/></td>
+            </tr>
+          </table>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success btn-sm" onclick="saveClient()">
+          <i class="fa fa-save"></i> Сохранить
+        </button>
+        <button class="btn btn-danger btn-sm" id="close_client_info" data-dismiss="modal" aria-hidden="true">
+          <i class="fa fa-remove"></i> Закрыть
+        </button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+
+<button class="hidden" id="btn_client_list" data-toggle="modal" data-target="#client_list"></button>
+<div class="modal fade" id="client_list" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog wpx-1000">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" id="client_list_close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title text-danger"><b class="fa fa-list"></b> Список клиентов</h4>
+      </div>
+      <div class="modal-body" id="client_list_content"></div>
+    </div>
+  </div>
+</div>
+
 <div style="display: none">
   <button onclick="saveLv()" id="saveBtn"></button>
 </div>
@@ -41,11 +228,18 @@
   <table class="formTable">
     <tr>
       <td class="right bold" nowrap>ФИО:</td>
-      <td colspan="3"> ${pat.surname} ${pat.name} ${pat.middlename} </td>
+      <td colspan="2"> ${pat.surname} ${pat.name} ${pat.middlename}</td>
+      <td class="text-center">
+        <c:if test="${pat.id > 0 && pat.state == 'ARCH' && pat.client == null}">
+          <button type="button" class="btn btn-success btn-icon" onclick="addArchClient(${pat.id})">
+            <b class="fa fa-save"></b>
+          </button>
+        </c:if>
+      </td>
     </tr>
     <tr>
-      <td class="right bold" nowrap>Тугилган йили:</td>
-      <td>${pat.birthyear}</td>
+      <td class="right bold" nowrap>Тугилган сана:</td>
+      <td><fmt:formatDate pattern = "dd.MM.yyyy" value = "${pat.birthday}" /></td>
       <td class="right bold" nowrap>Жинси:</td>
       <td>${pat.sex.name}</td>
     </tr>

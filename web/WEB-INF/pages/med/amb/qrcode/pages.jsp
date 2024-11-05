@@ -11,7 +11,7 @@
   <table style="width:100%">
     <tr>
       <td style="padding-left:75px">
-        <img src="C:\fm.png" style="width:180px">
+        <img src="${path}\fm.png" style="width:180px">
       </td>
       <td rowspan="2" style="font-weight:bold; text-align:right;padding-top:20px">
         ЧП "Farhod Madad Shifo"<br/>

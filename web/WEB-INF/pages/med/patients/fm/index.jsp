@@ -157,12 +157,22 @@
     if(vals != '')
       setPage('/patients/confirm.s?' + vals);
   }
+  function setPatientFlag(flag) {
+    setPage('/patients/archive.s?flag=' + flag)
+  }
 </script>
 <div class="panel-body" style="border:1px solid #ababab; border-radius: 4px">
   <c:if test="${((roleId == 3 || roleId == 4 || roleId == 5 || roleId == 6) && curUrl != '/patients/consul.s' && curUrl != '/patients/archive.s') || (roleId == 6 && curUrl == '/patients/archive.s')}">
     <button class="btn btn-success btn-sm" onclick="setConfirmPatient()" title="Подтвердить" style="float:left; margin-top: -12px;">Подтвердить</button>
   </c:if>
   <div class="paginationBlock">
+    <c:if test="${curUrl == '/patients/archive.s'}">
+      <select class="wpx-150 form-control" style="display: unset; position: relative; top:-20px" onchange="setPatientFlag(this.value)">
+        <option value="0">Все</option>
+        <option <c:if test="${flag == 'DONE'}">selected</c:if> value="DONE">С клиентом</option>
+        <option <c:if test="${flag == 'UNDONE'}">selected</c:if> value="UNDONE">Без клиента</option>
+      </select>
+    </c:if>
     <ul class="pagination">
       <li class="paginate_button disabled" tabindex="0"><a href="#">${sessionScope.patientGrid.startPos}..${sessionScope.patientGrid.endPos} из ${sessionScope.patientGrid.rowCount}</a></li>
       <c:if test="${sessionScope.patientGrid.maxPage > 1}">

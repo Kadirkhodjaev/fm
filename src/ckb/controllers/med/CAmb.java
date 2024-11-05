@@ -8,10 +8,9 @@ import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
-import ckb.dao.med.client.DClient;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
-import ckb.dao.med.drug.dict.measures.DDrugMeasure;
+import ckb.dao.med.patient.DPatient;
 import ckb.dao.med.template.DTemplate;
 import ckb.domains.admin.Forms;
 import ckb.domains.admin.Users;
@@ -75,12 +74,11 @@ public class CAmb {
   @Autowired private DDrug dDrug;
   @Autowired private DDrugCount dDrugCount;
   @Autowired private DDict dDict;
-  @Autowired private DDrugMeasure dDrugMeasure;
   @Autowired private DAmbDrug dAmbDrug;
   @Autowired private DAmbDrugDate dAmbDrugDate;
   @Autowired private DAmbDrugRow dAmbDrugRow;
-  @Autowired private DClient dClient;
   @Autowired private DParam dParam;
+  @Autowired private DPatient dPatient;
   @Autowired private SRkdo sRkdo;
   @Autowired private DAmbServiceUser dAmbServiceUser;
   //endregion
@@ -199,13 +197,19 @@ public class CAmb {
       session.setArchive(true);
       session.setCurPat(0);
       session.setBackUrl(session.getCurUrl());
-      String sql = " From Amb_Patients t Where t.state = 'ARCH' ";
+      String flag = Util.get(r, "flag", "");
+      HashMap<String, String> filters = session.getFilters();
+      if(flag.isEmpty() && filters.containsKey("amb_patient_flag"))
+        flag = filters.get("amb_patient_flag");
+      if(flag.equals("0")) flag = "";
+      filters.put("amb_patient_flag", flag);
+      String sql = " From Amb_Patients t Where t.state = 'ARCH' " + (flag.isEmpty() ? "" : flag.equals("DONE") ? " And client_id is not null" : " And client_Id is null");
       //region Поиск
-      if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
+      if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).isEmpty()) {
         session.setFiltered(true);
         if (!Req.isNull(r, "filter"))
           session.setFilterFio(Req.get(r, "filterInput"));
-        if (session.getFilterFio().equals(""))
+        if (session.getFilterFio().isEmpty())
           session.setFiltered(false);
         sql += " And ( " +
           "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
@@ -221,7 +225,7 @@ public class CAmb {
       if (Req.get(r, "action").equals("sort")) {
         grid.setPage(1);
         if (grid.getOrderCol().equals(Req.get(r, "column"))) {
-          grid.setOrderType(grid.getOrderType().equals("") ? "asc" : grid.getOrderType().equals("asc") ? "desc" : grid.getOrderType().equals("desc") ? "" : grid.getOrderType());
+          grid.setOrderType(grid.getOrderType().isEmpty() ? "asc" : grid.getOrderType().equals("asc") ? "desc" : grid.getOrderType().equals("desc") ? "" : grid.getOrderType());
         } else {
           grid.setOrderType("asc");
         }
@@ -263,6 +267,7 @@ public class CAmb {
       model.addAttribute("roleId", session.getRoleId());
       model.addAttribute("curUrl", session.getCurUrl());
       sAmb.makeAddEditUrlByRole(model, session.getRoleId(), session.isArchive());
+      model.addAttribute("flag", flag);
       Util.makeMsg(r, model);
       return "med/amb/index";
     } catch (Exception e) {
@@ -336,6 +341,8 @@ public class CAmb {
     m.addAttribute("regId", Util.get(req, "reg"));
     m.addAttribute("done", isDone && session.getRoleId() == 15 && session.getCurPat() > 0 && ss.size() > 0 && !p.getState().equals("ARCH"));
     m.addAttribute("drug_exist", dAmbDrug.getCount("From AmbDrugs Where patient.id = " + session.getCurPat()) > 0);
+    if(Util.isNotNull(req, "stat"))
+      m.addAttribute("pat", dPatient.get(Util.getInt(req, "stat")));
     Util.makeMsg(req, m);
     return "med/amb/reg";
   }
@@ -941,6 +948,30 @@ public class CAmb {
     }
     model.addAttribute("rows", sAmb.getDrugs(session.getCurPat()));
     return "med/amb/drug/view";
+  }
+
+  @RequestMapping(value = "/patient/get.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String get_amb_patient(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      AmbPatients p = dAmbPatients.get(Util.getInt(req, "id"));
+      json.put("id", p.getId());
+      json.put("surname", p.getSurname());
+      json.put("name", p.getName());
+      json.put("middlename", p.getMiddlename());
+      json.put("birthdate", Util.dateToString(p.getBirthday()));
+      json.put("sex_id", p.getSex().getId());
+      json.put("tel", p.getTel());
+      json.put("country_id", p.getCounteryId());
+      json.put("region_id", p.getRegionId());
+      json.put("address", p.getAddress());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
   }
 
   @RequestMapping(value = "/drug/save.s", method = RequestMethod.POST) @ResponseBody

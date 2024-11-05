@@ -14,7 +14,7 @@
       $('#planAdd').css('display', o == 10 ? 'inline' : "none");
     </c:if>
     <c:if test="${p.paid != 'CLOSED'}">
-      $('#printBtn').css('display', o == 1 || o == 2 || o == 18 || o == 9 ? 'none' : 'inline');
+      $('#printBtn').css('display', o == 1 || o == 2 || o == 18 || o == 9 || o == 15 || o == 21 ? 'none' : 'inline');
     </c:if>
     <c:if test="${p.paid == 'CLOSED'}">
       $('#printBtn').css('display', o == 1 || o == 2 || o == 18 ? 'none' : 'inline');

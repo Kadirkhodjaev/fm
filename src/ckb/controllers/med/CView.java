@@ -59,6 +59,7 @@ public class CView {
 
   Date startDate = Util.stringToDate("31.03.2024");
 
+  //region Autowired
   @Autowired private DPatient dPatient;
   @Autowired private DLvDoc dLvDoc;
   @Autowired private DLvPlan  dLvPlan;
@@ -84,9 +85,10 @@ public class CView {
   @Autowired private DRegion dRegion;
   @Autowired private DF13 df13;
   @Autowired private DHNPatient dhnPatient;
+  //endregion
 
   @RequestMapping("/index.s")
-  protected String mains(HttpServletRequest request, Model model){
+  protected String mains(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     int id = Req.getInt(request, "id");
     session.setCurPat(id);
@@ -96,7 +98,6 @@ public class CView {
     List<Menu> m = new ArrayList<>();
     session.setCurSubUrl("/view/reg.s");
     m.add(new Menu("Регистация", "/view/reg.s", "fa fa-medkit fa-fw", false));
-    //m.add(new Menu("Оплата", "/view/cashbox.s", "fa fa-money fa-fw", false));
     m.add(new Menu("Осмотр врача", "/view/osm.s", "fa fa-stethoscope fa-fw", false));
     if(!dLvDrug.getPatientDrugs(session.getCurPat()).isEmpty())
       m.add(new Menu("Назначение", "/view/drug/index.s", "fa fa-th-list fa-fw", false));
@@ -114,6 +115,7 @@ public class CView {
     m.add(new Menu("Выписка", "/view/vypiska.s", "fa fa-check fa-fw", false));
     m.add(new Menu("Переводной эпикриз", "/view/epic.s", "fa fa-random fa-fw", false));
     m.add(new Menu("Дополнительные данные", "/view/extra.s", "fa fa-plus-square fa-fw", false));
+    m.add(new Menu("История", "/lv/history.s", "fa fa-users fa-fw", false));
     model.addAttribute("menuList", m);
     model.addAttribute("id", id);
     model.addAttribute("p", dPatient.get(session.getCurPat()));
@@ -128,16 +130,6 @@ public class CView {
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/view/reg.s");
     return "/med/lv/reg";
-  }
-
-  @RequestMapping("/firstView.s")
-  protected String firstView(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    session.setCurSubUrl("/lv/firstView.s");
-    Patients pat = dPatient.get(session.getCurPat());
-    model.addAttribute("p", pat);
-    model.addAttribute("lvFio", dUser.get(pat.getLv_id()).getFio());
-    return "/med/lv/" + (Req.isNull(request, "print") ? "" : "print/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "")) + "firstView";
   }
 
   @RequestMapping("/osm.s")
@@ -170,10 +162,9 @@ public class CView {
       model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
     }
     model.addAttribute("form", f);
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print"  + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/osm";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/osm";
   }
 
-  // Обоснование
   @RequestMapping("/obos.s")
   protected String obos(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -195,10 +186,9 @@ public class CView {
     //
     model.addAttribute("form", f);
     model.addAttribute("zavOtdel", dUser.getZavOtdel(dPatient.get(session.getCurPat()).getDept().getId()));
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/obos";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/obos";
   }
 
-  // Дневник
   @RequestMapping("/dairy.s")
   protected String dnevnikIndex(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
@@ -223,10 +213,9 @@ public class CView {
       session.setCurSubUrl("/view/dairy.s");
     model.addAttribute("pat", dPatient.get(session.getCurPat()));
     model.addAttribute("dairies", list);
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : ("print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : ""))) + "/dairy";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/dairy";
   }
 
-  // Консультация
   @RequestMapping("/consul.s")
   protected String konsulIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -279,9 +268,9 @@ public class CView {
     model.addAttribute("cls", cls);
     model.addAttribute("consuls", list);
     Util.getMsg(request, model);
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/consul";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/consul";
   }
-  // Выписка
+
   @RequestMapping("/vypiska.s")
   protected String vypiska(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -301,6 +290,9 @@ public class CView {
       f.setC7(f.getC7().replaceAll("&nbsp;"," "));
       f.setC8(Util.nvl(f.getC8()).replaceAll("&nbsp;"," "));
       f.setC9(Util.nvl(f.getC9()).replaceAll("&nbsp;"," "));
+      f.setC10(Util.nvl(f.getC10()).replaceAll("&nbsp;"," "));
+      f.setC11(Util.nvl(f.getC11()).replaceAll("&nbsp;"," "));
+      f.setC12(Util.nvl(f.getC12()).replaceAll("&nbsp;"," "));
       //
       model.addAttribute("form", f);
       model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
@@ -311,10 +303,9 @@ public class CView {
     model.addAttribute("zamGlb", dParam.byCode("GLB_NEXT"));
     if(Util.get(request, "diagnoz") != null)
       return "/med/lv/view/diagnoz";
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/vypiska";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/vypiska";
   }
 
-  // План обследования
   @RequestMapping("/plan/index.s")
   protected String planIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -339,9 +330,10 @@ public class CView {
     if(session.getRoleId() == 7) {
       return "redirect:/lv/plan/index.s";
     }
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/plan";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/plan";
   }
-  // Физиотерапия
+
+  //region FIZIO
   @RequestMapping("/fizio/index.s")
   protected String fizio(HttpServletRequest req, Model model){
     Session session = SessionUtil.getUser(req);
@@ -424,7 +416,7 @@ public class CView {
     model.addAttribute("ds", ds);
     return "/med/lv/" + (Req.isNull(req, "print") ? "view" : "print") + "/fizio_date";
   }
-  // Физиотерапия список
+
   @RequestMapping("/fizio/list.s")
   protected String fizioList(Model model) {
     model.addAttribute("fizios", dKdos.getTypeKdos(8));
@@ -476,7 +468,7 @@ public class CView {
     }
     return json.toString();
   }
-  // Добавить
+
   @RequestMapping(value = "/fizio/set.s", method = RequestMethod.POST)
   @ResponseBody
   protected String addFizio(HttpServletRequest request){
@@ -500,7 +492,7 @@ public class CView {
     }
     return "{}";
   }
-  // Удалить
+
   @RequestMapping(value = "/fizio/delete.s", method = RequestMethod.POST)
   @ResponseBody
   protected String delFizio(HttpServletRequest request) throws JSONException {
@@ -513,7 +505,7 @@ public class CView {
     res.put("msg", "Данные успешно удалены");
     return res.toString();
   }
-  // Сохранить
+
   @RequestMapping(value = "/fizio/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String saveFizio(HttpServletRequest request) throws JSONException {
@@ -550,6 +542,9 @@ public class CView {
     res.put("msg", "Данные успешно сохранены");
     return res.toString();
   }
+  //endregion
+
+  //region DRUGS
   @RequestMapping("/drugs.s")
   protected String drugs(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -610,7 +605,8 @@ public class CView {
     model.addAttribute("pat", pat);
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/drugObos";
   }
-  // Переводной эпикриз
+  //endregion
+
   @RequestMapping("/epic.s")
   protected String epic(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -618,9 +614,9 @@ public class CView {
       session.setCurSubUrl("/view/epic.s");
     model.addAttribute("epics", sPatient.getEpicGrid(session.getCurPat()));
     model.addAttribute("patient", dPatient.get(session.getCurPat()));
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/epic";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/epic";
   }
-  // Статистика отделения
+
   @RequestMapping("/stat.s")
   protected String stat(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -1098,7 +1094,6 @@ public class CView {
     }
   }
 
-  // Статистика отделения
   @RequestMapping("/cashbox.s")
   protected String cashBox(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -1151,7 +1146,7 @@ public class CView {
     model.addAttribute("vyp", dLvDoc.get(session.getCurPat(), "vypiska"));
     model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
     model.addAttribute("zavOtdel", dUser.getZavOtdel(pat.getLv_dept_id()).getFio());
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/extra";
+    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") +"/extra";
   }
 
   // Статистика отделения
