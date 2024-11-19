@@ -141,7 +141,7 @@ public class CLv {
     m.add(new Menu(6,"Дневник", "/lv/dairy.s", "fa fa-calendar fa-fw", false));
     m.add(new Menu(5,"Обоснование", "/lv/doc.s?doc_code=obos", "fa fa-retweet fa-fw", false));
     m.add(new Menu(9,"Выписка", "/lv/doc.s?doc_code=vypiska", "fa fa-check fa-fw", false));
-    m.add(new Menu(14,"Дополнительные данные", "/lv/extra.s", "fa fa-plus-square fa-fw", false));
+    m.add(new Menu(14,"Доп. данные", "/lv/extra.s", "fa fa-plus-square fa-fw", false));
     m.add(new Menu(13,"Перевод", "/lv/epic.s", "fa fa-random fa-fw", false));
     m.add(new Menu(15,"История", "/lv/history.s", "fa fa-users fa-fw", false));
     model.addAttribute("menuList", m);
@@ -267,6 +267,7 @@ public class CLv {
       doc.setC24(Util.get(req, "c24"));
       doc.setC25(Util.get(req, "c25"));
       doc.setMkb(Util.get(req, "mkb"));
+      doc.setMkb_id(Util.isNotNull(req, "mkb_id") ? Util.getInt(req, "mkb_id") : null);
       if(doc.getId() == null) {
         doc.setCrOn(new Date());
         doc.setCrBy(session.getUserId());
@@ -1668,11 +1669,10 @@ public class CLv {
       model.addAttribute("printPage", "/reg/print.s");
     if(req.getParameterValues("obos") != null)
       model.addAttribute("printPage", "/view/drug/obos.s");
+    if(subUrl.contains("/lv/doc.s"))
+      model.addAttribute("printPage", "/view/" + subUrl.substring(subUrl.indexOf("=") + 1) + ".s");
     if(req.getParameterValues("statcard") != null)
       model.addAttribute("printPage", "/view/stat_card.s");
-    if(subUrl.contains("/lv/doc.s")) {
-      model.addAttribute("printPage", "/view/" + subUrl.substring(subUrl.indexOf("=") + 1) + ".s");
-    }
     return "/med/lv/print";
   }
 

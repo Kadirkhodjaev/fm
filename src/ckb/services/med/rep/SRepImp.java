@@ -215,6 +215,10 @@ public class SRepImp implements SRep {
 			rep65(req, m);
 		} else if(id == 66) { // Талабнома (Аптека)
 			rep66(req, m);
+		} else if(id == 67) { // Иглотерапия
+			rep67(req, m);
+		} else if(id == 68) { // Подология
+			rep68(req, m);
 		}
 	}
 	// Амбулаторные услуги - По категориям
@@ -5506,6 +5510,160 @@ public class SRepImp implements SRep {
 		}
 		m.addAttribute("rows", rows);
 		m.addAttribute("ambs", ambs);
+		// Параметры отчета
+		m.addAttribute("params", params);
+	}
+
+	// Иглатерапия
+	private void rep67(HttpServletRequest req, Model m){
+		Connection conn = DB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		String params = "";
+		List<ObjList> rows = new ArrayList<ObjList>();
+		//
+		String cat = Util.get(req, "cat");
+		Date startDate = Util.getDate(req, "period_start");
+		Date endDate = Util.getDate(req, "period_end");
+		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
+		try {
+			ps = conn.prepareStatement(
+				"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio,  " +
+					"         Date_Format(t.Result_Date, '%d.%m.%Y') cr_on, " +
+					"         p.birthyear, " +
+					"         u.fio doc, " +
+					"         p.yearNum reg_num, " +
+					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex_id) Sex_Name, " +
+					"         'Стац' type_name, " +
+					"         p.Start_Diagnoz diagnoz, " +
+					"         t.Result_Date " +
+					" From Lv_Plans t, Kdos c, Patients p, Users u " +
+					" Where t.Kdo_Id = c.id " +
+					"   And t.patientId = p.id " +
+					"   And c.id = 288 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
+					"   And u.id = p.lv_id " +
+					"   And date (t.Result_Date) Between ? and ? " +
+					" Union All " +
+					" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
+					"  			 Date_Format(t.confDate, '%d.%m.%Y') cr_on, " +
+					"        p.BirthYear, " +
+					"        u.fio doc, " +
+					"        p.id reg_num, " +
+					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex) Sex_Name, " +
+					"        'Амб' type_name, " +
+					"        'Текшириш' diagnoz, " +
+					"        t.confDate " +
+					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p, Users u " +
+					"  Where ser.Id = t.Service_Id " +
+					"    And p.Id = t.Patient " +
+					"    And u.id = t.worker_id " +
+					"		 And ser.id in (314) " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
+					" 	 And date(t.confDate) Between ? and ? " +
+					" Order By 9 "
+			);
+			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+			ps.setString(3, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(4, Util.dateDB(Util.get(req, "period_end")));
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				ObjList service = new ObjList();
+				service.setC1(rs.getString("fio"));
+				service.setC2(rs.getString("sex_name"));
+				service.setC3(rs.getString("BirthYear"));
+				service.setC4(rs.getString("type_name"));
+				service.setC5(rs.getString("reg_num"));
+				service.setC6(rs.getString("diagnoz"));
+				service.setC7(rs.getString("cr_on"));
+				service.setC8(rs.getString("doc"));
+				//
+				rows.add(service);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DB.done(conn);
+			DB.done(ps);
+			DB.done(rs);
+		}
+		m.addAttribute("rows", rows);
+		// Параметры отчета
+		m.addAttribute("params", params);
+	}
+
+	// Подология
+	private void rep68(HttpServletRequest req, Model m){
+		Connection conn = DB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		String params = "";
+		List<ObjList> rows = new ArrayList<ObjList>();
+		//
+		String cat = Util.get(req, "cat");
+		Date startDate = Util.getDate(req, "period_start");
+		Date endDate = Util.getDate(req, "period_end");
+		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
+		try {
+			ps = conn.prepareStatement(
+				"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio,  " +
+					"         Date_Format(t.Result_Date, '%d.%m.%Y') cr_on, " +
+					"         p.birthyear, " +
+					"         u.fio doc, " +
+					"         p.yearNum reg_num, " +
+					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex_id) Sex_Name, " +
+					"         'Стац' type_name, " +
+					"         p.Start_Diagnoz diagnoz, " +
+					"         t.Result_Date " +
+					" From Lv_Plans t, Kdos c, Patients p, Users u " +
+					" Where t.Kdo_Id = c.id " +
+					"   And t.patientId = p.id " +
+					"   And c.id = 312 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
+					"   And u.id = p.lv_id " +
+					"   And date (t.Result_Date) Between ? and ? " +
+					" Union All " +
+					" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
+					"  			 Date_Format(t.confDate, '%d.%m.%Y') cr_on, " +
+					"        p.BirthYear, " +
+					"        u.fio doc, " +
+					"        p.id reg_num, " +
+					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex) Sex_Name, " +
+					"        'Амб' type_name, " +
+					"        'Текшириш' diagnoz, " +
+					"        t.confDate " +
+					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p, Users u " +
+					"  Where ser.Id = t.Service_Id " +
+					"    And p.Id = t.Patient " +
+					"    And u.id = t.worker_id " +
+					"		 And ser.id in (675) " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
+					" 	 And date(t.confDate) Between ? and ? " +
+					" Order By 9 "
+			);
+			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+			ps.setString(3, Util.dateDB(Util.get(req, "period_start")));
+			ps.setString(4, Util.dateDB(Util.get(req, "period_end")));
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				ObjList service = new ObjList();
+				service.setC1(rs.getString("fio"));
+				service.setC2(rs.getString("sex_name"));
+				service.setC3(rs.getString("BirthYear"));
+				service.setC4(rs.getString("type_name"));
+				service.setC5(rs.getString("reg_num"));
+				service.setC6(rs.getString("diagnoz"));
+				service.setC7(rs.getString("cr_on"));
+				service.setC8(rs.getString("doc"));
+				//
+				rows.add(service);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DB.done(conn);
+			DB.done(ps);
+			DB.done(rs);
+		}
+		m.addAttribute("rows", rows);
 		// Параметры отчета
 		m.addAttribute("params", params);
 	}

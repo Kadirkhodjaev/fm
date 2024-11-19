@@ -154,6 +154,28 @@
 <style>
   #detailedFilter {border:1px solid #ababab; position:absolute; width:500px; height:300px; border-radius:0 0 5px 5px; background:white;}
   #detailedFilter table tr td {padding:5px;}
+  @media only screen and (max-width: 1300px) {
+    .fm-logo {
+      display: unset;
+    }
+    .fm-logo-big {
+      display: none;
+    }
+    .logo-tr {
+      width:50px
+    }
+  }
+  @media not all and (max-width: 1300px) {
+    .fm-logo {
+      display: none;
+    }
+    .fm-logo-big {
+      display: unset;
+    }
+    .logo-tr {
+      width:350px
+    }
+  }
 </style>
 <style>
   .banner tr td:first-child a {text-decoration: none; cursor: pointer}
@@ -174,9 +196,10 @@
   <div class="banner">
      <table>
        <tr>
-         <td style="width: 350px">
+         <td class="logo-tr">
            <a href="/setRole.s?id=0">
-             <img src="/res/imgs/logo_forux.jpg" style="height:40px; margin-top:2px"/>
+             <img class="fm-logo" src="/res/imgs/fm_mini_logo.png" style="height:40px; margin-top:2px"/>
+             <img class="fm-logo-big" src="/res/imgs/logo_forux.jpg" style="height:40px; margin-top:2px"/>
            </a>
          </td>
          <td>&nbsp;</td>
@@ -237,7 +260,7 @@
         <td id="tdLeftMenu" valign="top" style="height:250px;">
           <ul class="leftMenu">
             <c:forEach items="${menuList}" var="m">
-              <li class="${m.state}" onclick="openPage(this)" id="${m.url}">
+              <li class="${m.state} text-nowrap" onclick="openPage(this)" id="${m.url}">
                 <i class="${m.icon}"></i> ${m.name}
               </li>
             </c:forEach>

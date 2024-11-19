@@ -4,7 +4,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <c:if test="${code == 'drug'}">
   <div style="padding:10px; font-weight: bold; text-align: center">
-      ${main.drug.name}
+      ${main.id} - ${main.drug.name}
   </div>
   <table class="table table-striped table-bordered table-hover grid dataTable hand">
     <tr>
@@ -14,7 +14,7 @@
       <td class="center bold">Разница</td>
     </tr>
     <tr>
-      <td class="center">${main.drugCount}</td>
+      <td class="center">${main.counter}</td>
       <td class="center">${main.rasxod}</td>
       <td class="center">${main.price}</td>
       <td class="center">${main.rasxod - main.price}</td>

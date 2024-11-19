@@ -63,6 +63,18 @@
     openMainPage('/booking/index.s?history=${p.id}', true);
   }
 </script>
+<style>
+  .truncate {
+    white-space: nowrap; /* Текст не переносится */
+    overflow: hidden; /* Обрезаем всё за пределами блока */
+    text-overflow: ellipsis; /* Добавляем многоточие */
+  }
+  @media only screen and (max-width: 1300px) {
+    .hidename {
+      display: none !important;
+    }
+  }
+</style>
 <table width="100%" height="100%">
   <td id="tdLeftMenu" valign="top" style="border-top:1px solid #eee; background: #f8f8f8">
     <ul class="leftMenu">
@@ -79,19 +91,18 @@
       <table width="100%">
         <tr>
           <td class="bold">
-            <div style="font-size:20px; margin-top: -12px; color: #337ab7" title="ID: ${p.id}" >
-              ИБ №${p.yearNum} - ${p.surname}&nbsp;${p.name}&nbsp;${p.middlename}-
-              Статус кассы: <c:if test="${p.paid != 'CLOSED'}"><span style="font-weight:bold;top:0;left:0;color:red">Открыт</span></c:if><c:if test="${p.paid == 'CLOSED'}"><span style="font-weight:bold;top:0;left:0;color:green">Закрыт</span></c:if>
+            <div class="truncate" style="font-size:20px; margin-top: -12px; color: #337ab7" title="ID: ${p.id}" >
+              ИБ №${p.yearNum} <b class="hidename">${p.fio}</b> - Кассы: <c:if test="${p.paid != 'CLOSED'}"><span style="font-weight:bold;top:0;left:0;color:red">Открыт</span></c:if><c:if test="${p.paid == 'CLOSED'}"><span style="font-weight:bold;top:0;left:0;color:green">Закрыт</span></c:if>
             </div>
           </td>
           <td width="500px" class="right">
             <ul class="pagination">
               <li class="paginate_button" id="statCard" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="window.open('lv/print.s?statcard=Y'); return false;"><i title="Стат карта" class="fa fa-file"></i> Стат карта</a></li>
-              <li class="paginate_button" id="planResultPage" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="window.open('lv/plan.s?new=Y'); return false;"><i title="Результаты всех обследования" class="fa fa-flask"></i> Результаты</a></li>
-              <li class="paginate_button" id="planResult" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="lvContent.location = '/lv/plan.s';return false;"><i title="Результаты всех обследования" class="fa fa-flask"></i> Результаты</a></li>
+              <li class="paginate_button hidename" id="planResultPage" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="window.open('lv/plan.s?new=Y'); return false;"><i title="Результаты всех обследования" class="fa fa-flask"></i> Результаты</a></li>
+              <li class="paginate_button hidename" id="planResult" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="lvContent.location = '/lv/plan.s';return false;"><i title="Результаты всех обследования" class="fa fa-flask"></i> Результаты</a></li>
               <li class="paginate_button" id="planAdd" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="lvContent.location = '/lv/plan/kdos.s';return false;"><i title="Добавить новое обследование" class="fa fa-plus"></i> Добавить</a></li>
               <li class="paginate_button" id="saveForm" tabindex="0" style="display:none; width: 100px !important;"><a href="#" onclick="saveForm();return false;"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
-              <li class="paginate_button" id="printBtn" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPrint();return false;"><i title="Печать" class="fa fa-print"></i> Печать</a></li>
+              <li class="paginate_button hidename" id="printBtn" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPrint();return false;"><i title="Печать" class="fa fa-print"></i> Печать</a></li>
               <%--<c:if test="${roleId == 3}">
                 <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setReg();return false;"><i title="Печать" class="fa fa-pencil"></i> Регистрация</a></li>
               </c:if>--%>

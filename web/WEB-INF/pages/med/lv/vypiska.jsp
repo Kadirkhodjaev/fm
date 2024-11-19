@@ -3,6 +3,7 @@
 <%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="/res/css/styles.css" rel="stylesheet">
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet">
@@ -89,8 +90,8 @@
           <td><b>Год рождения:</b> ${patient.birthyear}</td>
         </tr>
         <tr>
-          <td nowrap class="bold">находился на стац. лечении в клинике с ${patient.dateBegin} по:
-          <td><input name="Date_End" id="Date_End" type="text" class="form-control datepicker" value="${Date_End}"/>
+          <td nowrap class="bold">находился на стац. лечении в клинике с <fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.dateBegin}" /> по:
+          <td><input name="Date_End" id="Date_End" type="text" class="form-control datepicker" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.dateEnd}" />"/>
         </tr>
         <tr><td colspan="2"><b>Клинический диагноз</b></td></tr>
         <tr>

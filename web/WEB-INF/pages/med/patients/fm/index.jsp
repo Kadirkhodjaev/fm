@@ -200,13 +200,13 @@
         </c:if>
         <th>#</th>
         <th>&nbsp;</th>
-        <th class="sorting" id="thsurname" onclick="setSort('surname', null)">ФИО</th>
-        <th class="sorting" id="thbirthyear" onclick="setSort('birthyear', null)">Год рождения</th>
-        <th class="sorting" id="thDate_Begin" onclick="setSort('Date_Begin', null)">Дата рег.</th>
-        <th class="sorting" id="thDate_End" onclick="setSort('Date_End', null)">Дата вып.</th>
-        <th class="sorting" id="thyearnum" onclick="setSort('yearnum', null)">Номер И/Б</th>
-        <th>Отд./Пал.</th>
-        <th class="sorting" id="thlv_id" onclick="setSort('lv_id', 'lv')">ФИО ЛВ</th>
+        <th>ФИО</th>
+        <th nowrap>Год рождения</th>
+        <th nowrap>Дата рег.</th>
+        <th nowrap>Дата вып.</th>
+        <th nowrap>Номер И/Б</th>
+        <th nowrap>Отд./Пал.</th>
+        <th nowrap>ФИО ЛВ</th>
       </tr>
       </thead>
       <tbody style="overflow: scroll">
