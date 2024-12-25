@@ -311,7 +311,8 @@ public class CDrug {
             "      c.name, " +
           "        t.countPrice * (t.counter - t.rasxod) summ, " +
           "        t.counter - t.rasxod counter, " +
-          "        t.countprice Price " +
+          "        t.countprice Price," +
+            "      t.nds " +
           "   From drug_act_drugs t, drug_s_names c " +
           "  Where t.counter - t.rasxod > 0" +
           "    And t.drug_id = c.id " +
@@ -324,9 +325,12 @@ public class CDrug {
         obj.setC2(rs.getString("counter"));
         obj.setC3(rs.getString("summ"));
         obj.setC4(rs.getString("price"));
+        obj.setC5(rs.getString("nds"));
         //
         rows.add(obj);
       }
+      Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+      model.addAttribute("ndsProc", ndsProc);
       model.addAttribute("rows", rows);
     } catch (Exception e) {
       e.printStackTrace();
@@ -397,7 +401,7 @@ public class CDrug {
           "          c.name, " +
           "          t.drug_id, " +
           "          t.countprice * t.counter summ, " +
-          "          t.counter, " +
+          "          Round(t.counter * 100) / 100 counter, " +
           "          t.price, " +
           "          t.rasxod " +
           "     From drug_act_drugs t, drug_s_names c Where c.id = t.drug_id " + (code.equals("out") ? "  " : "") + (code.equals("saldo") ? " And t.counter - t.rasxod != 0 " : "") + (code.equals("rasxod") ? " And t.rasxod > 0 " : "") +
@@ -467,7 +471,7 @@ public class CDrug {
       }
       DrugActDrugs actDrug = dDrugActDrug.get(Util.getInt(req, "id"));
       json.put("name", actDrug.getDrug().getName() + "(ID: " + Util.get(req, "id") + ")");
-      json.put("drug_count", counter);
+      json.put("drug_count", actDrug.getCounter());
       json.put("rasxod", actDrug.getRasxod());
       json.put("price", actDrug.getCountPrice());
       json.put("rows", rows);

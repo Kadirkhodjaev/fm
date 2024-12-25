@@ -610,33 +610,33 @@ public class SPatientImp implements SPatient {
         String st = "";
         LvBios bio = dLvBio.getByPlan(d.getId());
         if(bio != null) {
-          if (bio.getC1() == 1) st +=  "Глюкоза крови,";
-          if (bio.getC2() == 1) st += "Холестерин,";
-          if (bio.getC3() == 1) st += "Бетта липопротеиды,";
-          if (bio.getC4() == 1) st += "Общий белок,";
-          if (bio.getC5() == 1) st += "Мочевина,";
-          if (bio.getC23() == 1) st += "Fе (железо),";
-          if (bio.getC8() == 1) st += "Билирубин,";
-          if (bio.getC7() == 1) st += "Креатинин,";
-          if (bio.getC13() == 1) st += "Амилаза крови,";
-          if (bio.getC12() == 1) st += "Трансаминазы-АЛТ,";
-          if (bio.getC14() == 1) st += "Мочевая кислота,";
-          if (bio.getC11() == 1) st += "Трансаминазы-АСТ,";
-          if (bio.getC15() == 1) st += "Сывороточное железо,";
-          if (bio.getC16() == 1) st += "К-калий,";
-          if (bio.getC17() == 1) st += "Na - натрий,";
-          if (bio.getC18() == 1) st += "Са - кальций,";
-          if (bio.getC19() == 1) st += "Cl - хлор,";
-          if (bio.getC20() == 1) st += "Phos - фосфор,";
-          if (bio.getC21() == 1) st += "Mg - магний,";
-          if (bio.getC24() == 1) st += "Альбумин,";
-          if (bio.getC25() == 1) st += "Лактатдегидрогеноза,";
-          if (bio.getC26() == 1) st += "Гамма-глутамилтрансфераза,";
-          if (bio.getC27() == 1) st += "Шелочная фосфотаза,";
-          if (bio.getC28() == 1) st += "Тимоловая проба,";
-          if (bio.getC29() == 1) st += "Креотенин киназа,";
+          if (bio.getC1() == 1) st +=  "Глюкоза крови, ";
+          if (bio.getC2() == 1) st += "Холестерин, ";
+          if (bio.getC3() == 1) st += "Бетта липопротеиды, ";
+          if (bio.getC4() == 1) st += "Общий белок, ";
+          if (bio.getC5() == 1) st += "Мочевина, ";
+          if (bio.getC23() == 1) st += "Fе (железо), ";
+          if (bio.getC8() == 1) st += "Билирубин, ";
+          if (bio.getC7() == 1) st += "Креатинин, ";
+          if (bio.getC13() == 1) st += "Амилаза крови, ";
+          if (bio.getC12() == 1) st += "Трансаминазы-АЛТ, ";
+          if (bio.getC14() == 1) st += "Мочевая кислота, ";
+          if (bio.getC11() == 1) st += "Трансаминазы-АСТ, ";
+          if (bio.getC15() == 1) st += "Сывороточное железо, ";
+          if (bio.getC16() == 1) st += "К-калий, ";
+          if (bio.getC17() == 1) st += "Na - натрий, ";
+          if (bio.getC18() == 1) st += "Са - кальций, ";
+          if (bio.getC19() == 1) st += "Cl - хлор, ";
+          if (bio.getC20() == 1) st += "Phos - фосфор, ";
+          if (bio.getC21() == 1) st += "Mg - магний, ";
+          if (bio.getC24() == 1) st += "Альбумин, ";
+          if (bio.getC25() == 1) st += "Лактатдегидрогеноза, ";
+          if (bio.getC26() == 1) st += "Гамма-глутамилтрансфераза, ";
+          if (bio.getC27() == 1) st += "Шелочная фосфотаза, ";
+          if (bio.getC28() == 1) st += "Тимоловая проба, ";
+          if (bio.getC29() == 1) st += "Креотенин киназа, ";
           if(st != "") {
-            st = st.substring(0, st.length() - 1);
+            st = st.substring(0, st.length() - 2);
             o.setC4(d.getKdo().getName() + "<br/>" + st);
           }
         }
@@ -645,32 +645,32 @@ public class SPatientImp implements SPatient {
         String st = "";
         LvBios bio = dLvBio.getByPlan(d.getId());
         if(bio != null) {
-          if (bio.getC1() == 1) st += "Умумий оксил,";
-          if (bio.getC2() == 1) st += "Холестерин,";
-          if (bio.getC3() == 1) st += "Глюкоза,";
-          if (bio.getC4() == 1) st += "Мочевина,";
-          if (bio.getC5() == 1) st += "Креатинин,";
-          if (bio.getC6() == 1) st += "Билирубин,";
-          if (bio.getC7() == 1) st += "АЛТ,";
-          if (bio.getC8() == 1) st += "АСТ,";
-          if (bio.getC9() == 1) st += "Альфа амилаза,";
-          if (bio.getC10() == 1) st += "Кальций,";
-          if (bio.getC11() == 1) st += "Сийдик кислотаси,";
-          if (bio.getC12() == 1) st += "K – калий,";
-          if (bio.getC13() == 1) st += "Na – натрий,";
-          if (bio.getC14() == 1) st += "Fe – темир,";
-          if (bio.getC15() == 1) st += "Mg – магний,";
-          if (bio.getC16() == 1) st += "Ишкорий фасфотаза,";
-          if (bio.getC17() == 1) st += "ГГТ,";
-          if (bio.getC18() == 1) st += "Гликирланган гемоглобин,";
-          if (bio.getC19() == 1) st += "РФ,";
-          if (bio.getC20() == 1) st += "АСЛО,";
-          if (bio.getC21() == 1) st += "СРБ,";
-          if (bio.getC22() == 1) st += "RW,";
-          if (bio.getC23() == 1) st += "Hbs Ag,";
-          if (bio.getC24() == 1) st += "Гепатит «С» ВГС,";
+          if (bio.getC1() == 1) st += "Умумий оксил, ";
+          if (bio.getC2() == 1) st += "Холестерин, ";
+          if (bio.getC3() == 1) st += "Глюкоза, ";
+          if (bio.getC4() == 1) st += "Мочевина, ";
+          if (bio.getC5() == 1) st += "Креатинин, ";
+          if (bio.getC6() == 1) st += "Билирубин, ";
+          if (bio.getC7() == 1) st += "АЛТ, ";
+          if (bio.getC8() == 1) st += "АСТ, ";
+          if (bio.getC9() == 1) st += "Альфа амилаза, ";
+          if (bio.getC10() == 1) st += "Кальций, ";
+          if (bio.getC11() == 1) st += "Сийдик кислотаси, ";
+          if (bio.getC12() == 1) st += "K – калий, ";
+          if (bio.getC13() == 1) st += "Na – натрий, ";
+          if (bio.getC14() == 1) st += "Fe – темир, ";
+          if (bio.getC15() == 1) st += "Mg – магний, ";
+          if (bio.getC16() == 1) st += "Ишкорий фасфотаза, ";
+          if (bio.getC17() == 1) st += "ГГТ, ";
+          if (bio.getC18() == 1) st += "Гликирланган гемоглобин, ";
+          if (bio.getC19() == 1) st += "РФ, ";
+          if (bio.getC20() == 1) st += "АСЛО, ";
+          if (bio.getC21() == 1) st += "СРБ, ";
+          if (bio.getC22() == 1) st += "RW, ";
+          if (bio.getC23() == 1) st += "Hbs Ag, ";
+          if (bio.getC24() == 1) st += "Гепатит «С» ВГС, ";
           if(st != "") {
-            st = st.substring(0, st.length() - 1);
+            st = st.substring(0, st.length() - 2);
             o.setC4(d.getKdo().getName() + "<br/>" + st);
           }
         }
@@ -679,12 +679,12 @@ public class SPatientImp implements SPatient {
         String st = "";
         LvCouls bio = dLvCoul.getByPlan(d.getId());
         if(bio != null) {
-          if (bio.isC4()) st += "ПТИ,";
-          if (bio.isC1()) st += "Фибриноген,";
-          if (bio.isC2()) st += "Тромбин вакти,";
-          if (bio.isC3()) st += "А.Ч.Т.В. (сек),";
+          if (bio.isC4()) st += "ПТИ, ";
+          if (bio.isC1()) st += "Фибриноген, ";
+          if (bio.isC2()) st += "Тромбин вакти, ";
+          if (bio.isC3()) st += "А.Ч.Т.В. (сек), ";
           if(st != "") {
-            st = st.substring(0, st.length() - 1);
+            st = st.substring(0, st.length() - 2);
             o.setC4(d.getKdo().getName() + "<br/>" + st);
           }
         }
@@ -693,36 +693,36 @@ public class SPatientImp implements SPatient {
         String st = "";
         LvGarmons bio = dLvGarmon.getByPlan(d.getId());
         if(bio != null) {
-          if (bio.isC1()) st += "ТТГ,";
-          if (bio.isC2()) st += "Т4,";
-          if (bio.isC3()) st += "Т3,";
-          if (bio.isC4()) st += "Анти-ТРО,";
-          if (bio.isC5()) st += "АН-ТГ,";
-          if (bio.isC6()) st += "ДГЭА-С,";
-          if (bio.isC7()) st += "Глобулин связующие половые ,";
-          if (bio.isC8()) st += "АКТГ,";
-          if (bio.isC9()) st += "С-пептид,";
-          if (bio.isC10()) st += "Инсулин,";
-          if (bio.isC11()) st += "Пролактин,";
-          if (bio.isC12()) st += "Тестестерон ,";
-          if (bio.isC13()) st += "Гормонроста hGH,";
-          if (bio.isC14()) st += "Кальцитонин,";
-          if (bio.isC15()) st += "Тиреоглобулин,";
-          if (bio.isC16()) st += "Эстрадиол,";
-          if (bio.isC17()) st += "Кортизол,";
-          if (bio.isC18()) st += "Прогестерон,";
-          if (bio.isC19()) st += "ЛГ,";
-          if (bio.isC20()) st += "ФСГ,";
-          if (bio.isC21()) st += "Паратгормон,";
-          if (bio.isC22()) st += "АМГ,";
-          if (bio.isC23()) st += "Витамин Д,";
-          if (bio.isC24()) st += "Обший ПСА,";
-          if (bio.isC25()) st += "Свободный ПСА,";
-          if (bio.isC26()) st += "Кросс Лапс,";
-          if (bio.isC27()) st += "Нейро-спецефическая энолаза,";
+          if (bio.isC1()) st += "ТТГ, ";
+          if (bio.isC2()) st += "Т4, ";
+          if (bio.isC3()) st += "Т3, ";
+          if (bio.isC4()) st += "Анти-ТРО, ";
+          if (bio.isC5()) st += "АН-ТГ, ";
+          if (bio.isC6()) st += "ДГЭА-С, ";
+          if (bio.isC7()) st += "Глобулин связующие половые , ";
+          if (bio.isC8()) st += "АКТГ, ";
+          if (bio.isC9()) st += "С-пептид, ";
+          if (bio.isC10()) st += "Инсулин, ";
+          if (bio.isC11()) st += "Пролактин, ";
+          if (bio.isC12()) st += "Тестестерон , ";
+          if (bio.isC13()) st += "Гормонроста hGH, ";
+          if (bio.isC14()) st += "Кальцитонин, ";
+          if (bio.isC15()) st += "Тиреоглобулин, ";
+          if (bio.isC16()) st += "Эстрадиол, ";
+          if (bio.isC17()) st += "Кортизол, ";
+          if (bio.isC18()) st += "Прогестерон, ";
+          if (bio.isC19()) st += "ЛГ, ";
+          if (bio.isC20()) st += "ФСГ, ";
+          if (bio.isC21()) st += "Паратгормон, ";
+          if (bio.isC22()) st += "АМГ, ";
+          if (bio.isC23()) st += "Витамин Д, ";
+          if (bio.isC24()) st += "Обший ПСА, ";
+          if (bio.isC25()) st += "Свободный ПСА, ";
+          if (bio.isC26()) st += "Кросс Лапс, ";
+          if (bio.isC27()) st += "Нейро-спецефическая энолаза, ";
 
           if(st != "") {
-            st = st.substring(0, st.length() - 1);
+            st = st.substring(0, st.length() - 2);
             o.setC4(d.getKdo().getName() + "<br/>" + st);
           }
         }
@@ -731,12 +731,12 @@ public class SPatientImp implements SPatient {
         String st = "";
         LvTorchs bio = dLvTorch.getByPlan(d.getId());
         if(bio != null) {
-          if (bio.isC1()) st += "Хламидия,";
-          if (bio.isC2()) st += "Токсоплазма,";
-          if (bio.isC3()) st += "ЦМВ,";
-          if (bio.isC4()) st += "ВПГ,";
+          if (bio.isC1()) st += "Хламидия, ";
+          if (bio.isC2()) st += "Токсоплазма, ";
+          if (bio.isC3()) st += "ЦМВ, ";
+          if (bio.isC4()) st += "ВПГ, ";
           if(st != "") {
-            st = st.substring(0, st.length() - 1);
+            st = st.substring(0, st.length() - 2);
             o.setC4(d.getKdo().getName() + "<br/>" + st);
           }
         }

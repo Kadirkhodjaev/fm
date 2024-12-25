@@ -67,7 +67,7 @@
 <button data-toggle="modal" data-target="#myModal" style="display: none" id="modalBtn"></button>
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" style="display: none;"></div>
 <f:form method="post">
-  <div class="panel panel-info" style="width: 1200px !important; margin: auto">
+  <div class="panel panel-info" style="width: 1400px !important; margin: auto">
     <%@include file="/incs/msgs/successError.jsp"%>
     <div class="panel-heading">
       План обследования

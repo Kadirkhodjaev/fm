@@ -21,7 +21,7 @@
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Жинси</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Тугилган йили</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Тури</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Касаллик баённомаси №</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Хизмат тури</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Сана</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Даволовчи шифокор</td>
   </tr>
@@ -32,7 +32,7 @@
       <td style="padding:5px;text-align:center">${service.c2}</td>
       <td align="center" style="padding:5px;">${service.c3}</td>
       <td align="center" style="padding:5px;text-align:center">${service.c4}</td>
-      <td align="center" style="padding:5px;">${service.c5}</td>
+      <td style="padding:5px;">${service.c5}</td>
       <td align="center" style="padding:5px;">${service.c7}</td>
       <td style="padding:5px;">${service.c8}</td>
     </tr>

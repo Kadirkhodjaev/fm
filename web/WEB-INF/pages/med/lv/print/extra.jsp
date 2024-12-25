@@ -36,17 +36,15 @@
 <p style="margin:auto">11. Касалхонада қўйилган якуний диагноз</p>
 <p style="margin:auto">а) асосий </p>
 <p style="margin:auto;padding:5px 0;">
-  <u>${vyp.c1}</u>
+  <u>${vyp.c10}</u>
 </p>
 <p style="margin:auto;padding:12px;">б) асосий касалликнинг асорати</p>
-<c:if test="${vyp.c9 != null && vyp.c9 != '' && vyp.c9 != '<br>'}">
   <p style="margin:auto;padding:5px 0;">
-    <u>${vyp.c9}</u>
+    <u>${vyp.c12}</u>
   </p>
-</c:if>
 <p style="margin:auto;padding:12px">в) аниқланган бошқа касалликлар</p>
 <p style="margin:auto;padding:5px 0;">
-  <u>${vyp.c8}</u>
+  <u>${vyp.c11}</u>
 </p>
 <p style="margin:auto;padding:5px">12. Мазкур йил давомида шу касаллик бўйича касалхонага ётиши: биринчи марта, қайта(тагига чизилсин)</p>
 <p style="margin:auto;padding:5px">Хаммаси бўлиб <span>______________________________</span> марта</p>

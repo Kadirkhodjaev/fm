@@ -16,6 +16,7 @@ public class LvConsuls extends GenId {
   @Column private String lvName;
   @Column private String date;
   @Column private String text;
+  @Column private String comment;
   @Column private String req;
   @Column private String state;
   @Column private String copied = "N";
@@ -100,5 +101,13 @@ public class LvConsuls extends GenId {
 
   public void setCrOn(Date crOn) {
     this.crOn = crOn;
+  }
+
+  public String getComment() {
+    return comment;
+  }
+
+  public void setComment(String comment) {
+    this.comment = comment;
   }
 }

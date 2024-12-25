@@ -38,10 +38,10 @@
             <%@include file="/incs/msgs/errors.jsp"%>
             <fieldset>
               <div class="form-group">
-                <f:input path='login' type='text' cssStyle="height: 50px; font-size:20px" class='form-control' placeholder='${login}' value='' autofocus="true" autocomplete="on"/>
+                <f:input path='login' type='text' cssStyle="height: 50px; font-size:20px; padding-left:10px;" class='form-control' placeholder='${login}' value='' autofocus="true" autocomplete="on"/>
               </div>
               <div class="form-group">
-                <f:input path='password' type='password' cssStyle="height: 50px; font-size:20px" class='form-control' placeholder='${password}' value='' autofocus="true" autocomplete="on"/>
+                <f:input path='password' type='password' cssStyle="height: 50px; font-size:20px; padding-left:10px;" class='form-control' placeholder='${password}' value='' autofocus="true" autocomplete="on"/>
               </div>
               <button type="submit" class="btn btn-lg btn-success btn-block" style="height:55px"><ui:message code="enter"/></button>
             </fieldset>

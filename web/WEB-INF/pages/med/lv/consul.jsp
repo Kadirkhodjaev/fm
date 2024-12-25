@@ -68,6 +68,12 @@
             </td>
           </tr>
           <tr>
+            <td colspan="2" class="bold">Комментария врача:</td>
+            <td colspan="6">
+              ${c.comment}
+            </td>
+          </tr>
+          <tr>
             <td colspan="3">
               <span class="bold">Дата и время создания:</span> <fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${c.crOn}"/>
             </td>
@@ -102,6 +108,12 @@
           </td>
           <td class="bold right">Дата: </td>
           <td width="140"><input type="text" id="conDate" name="conDate" class="form-control datepicker" value="${conDate}"/></td>
+        </tr>
+        <tr>
+          <td colspan="8">Комментария:</td>
+        </tr>
+        <tr>
+          <td colspan="8"><div id="comment"><input class="form-control" name="comment" maxlength="500" value="${comment}"></div></td>
         </tr>
         <tr>
           <td colspan="8"><div id="consulText"><textarea name="conText" rows="8" maxlength="10000" style="width:960px">${conText}</textarea></div></td>

@@ -39,6 +39,7 @@ import ckb.domains.med.drug.DrugActs;
 import ckb.domains.med.drug.DrugOutRows;
 import ckb.domains.med.drug.DrugOuts;
 import ckb.domains.med.drug.dict.DrugDirectionDeps;
+import ckb.domains.med.drug.dict.Drugs;
 import ckb.domains.med.eat.dict.EatMenuTypes;
 import ckb.domains.med.eat.dict.EatTables;
 import ckb.domains.med.head_nurse.*;
@@ -1033,7 +1034,19 @@ public class CHeadNurse {
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + " And (direction.shock != 'Y' Or direction.shock = null)");
     model.addAttribute("directions", lines);
     model.addAttribute("measures", dDrugDrugMeasure.getList("From DrugDrugMeasures Order By measure.name"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs t Where Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name"));
+    List<Integer> drugs = session.getDrugs();
+    List<Drugs> dds = new ArrayList<>();
+    if(drugs == null || drugs.isEmpty()) {
+      List<Drugs> ssd = dDrug.getList("From Drugs t Where Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name");
+      drugs = new ArrayList<>();
+      for(Drugs d: ssd)
+        drugs.add(d.getId());
+      session.setDrugs(drugs);
+    }
+    for (Integer d : drugs) {
+      dds.add(dDrug.get(d));
+    }
+    model.addAttribute("drugs", dds);
     model.addAttribute("obj", obj);
     Util.makeMsg(req, model);
     return "/med/head_nurse/incomes/addEdit";

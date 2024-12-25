@@ -33,10 +33,10 @@
           <tr id="row_${row.ib}" row_type="${row.c2}" onclick="viewDetail(${row.ib})" class="hover">
             <td align="center">${loop.index + 1}</td>
             <td>${row.c1}</td>
-            <td align="right"><fmt:formatNumber value = "${row.c3}" type = "number"/></td>
-            <td align="right"><fmt:formatNumber value = "${row.c4}" type = "number"/></td>
-            <td align="right"><fmt:formatNumber value = "${row.c6}" type = "number"/></td>
-            <td align="right"><fmt:formatNumber value = "${row.c4 - row.c6}" type = "number"/></td>
+            <td align="right"><fmt:formatNumber value = "${row.c3}" type = "number" minFractionDigits="2" maxFractionDigits="2"/></td>
+            <td align="right"><fmt:formatNumber value = "${row.c4}" type = "number" minFractionDigits="2" maxFractionDigits="2"/></td>
+            <td align="right"><fmt:formatNumber value = "${row.c6}" type = "number" minFractionDigits="2" maxFractionDigits="2"/></td>
+            <td align="right"><fmt:formatNumber value = "${row.c4 - row.c6}" type = "number" minFractionDigits="2" maxFractionDigits="2"/></td>
           </tr>
         </c:forEach>
       </tbody>
@@ -118,7 +118,7 @@
           $('#drug_count').html(res.drug_count);
           $('#rasxod_count').html(res.rasxod);
           $('#detail_count').html(res.counter);
-          if(parseFloat(res.rasxod) != parseFloat(res.drug_count))
+          if(parseFloat(res.rasxod) != parseFloat(res.counter))
             $('#error_text').show();
           res.rows.forEach(dom => {
             var tr = $('<tr></tr>');

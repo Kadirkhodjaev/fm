@@ -377,6 +377,7 @@ public class CLv {
       model.addAttribute("lvName", con.getLvName());
       model.addAttribute("conDate", con.getDate());
       model.addAttribute("conText", con.getText());
+      model.addAttribute("comment", con.getComment());
     }
     Patients patient = dPatient.get(session.getCurPat());
     model.addAttribute("patient", patient);
@@ -405,6 +406,7 @@ public class CLv {
       con.setState("REQ");
       con.setLvId(Req.getInt(request, "lvId"));
       con.setLvName(sUser.getLv(con.getLvId()).getFio());
+      con.setComment(Util.get(request, "comment"));
     }
     if(!"".equals(con.getLvName())) {
       con.setCrOn(new Date());

@@ -170,15 +170,19 @@
             <th>Остаток</th>
             <th>Цена за единицу</th>
             <th>Сумма</th>
+            <th>Цена за единицу с НДС</th>
+            <th>Сумма с НДС</th>
           </tr>
           </thead>
           <tbody>
           <c:forEach items="${rows}" var="row" varStatus="loop">
             <tr>
               <td>${row.c1}</td>
-              <td align="center">${row.c2}</td>
-              <td align="right"><fmt:formatNumber value = "${row.c4}" type = "number"/></td>
-              <td align="right"><fmt:formatNumber value = "${row.c3}" type = "number"/></td>
+              <td align="center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${row.c2}" type = "number"/></td>
+              <td align="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${row.c4}" type = "number"/></td>
+              <td align="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${row.c3}" type = "number"/></td>
+              <td align="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${row.c4 + row.c4 * ndsProc / 100}" type = "number"/></td>
+              <td align="right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${row.c2 * (row.c4 + row.c4 * ndsProc / 100)}" type = "number"/></td>
             </tr>
           </c:forEach>
           </tbody>

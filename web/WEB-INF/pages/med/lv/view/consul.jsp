@@ -62,6 +62,10 @@
               </c:if>
             </td>
           </tr>
+          <tr>
+            <td class="bold">Комментария врача:</td>
+            <td>${d.comment}</td>
+          </tr>
           <tr><td colspan="3">Консультация</td></tr>
           <tr>
             <td colspan="3"><textarea name="comment" rows="8" maxlength="10000" style="width:860px !important;">${d.text}</textarea></td>

@@ -92,9 +92,15 @@ public class CAct {
     Calendar end = Calendar.getInstance();
     end.setTime(new Date());
     end.add(Calendar.DATE, 2);
-    String startDate = Util.get(req, "period_start", Util.dateToString(start.getTime()));
-    String endDate = Util.get(req, "period_end", Util.dateToString(end.getTime()));
-    String filter = Util.get(req, "word");
+    String sd = session.getFilters("act_start_date", Util.dateToString(start.getTime()));
+    String ed = session.getFilters("act_end_date", Util.dateToString(end.getTime()));
+    String sw = session.getFilters("act_word", null);
+    String startDate = Util.get(req, "period_start", sd);
+    String endDate = Util.get(req, "period_end", ed);
+    String filter = Util.get(req, "word", sw);
+    session.setFilters("act_start_date", startDate);
+    session.setFilters("act_end_date", endDate);
+    session.setFilters("act_word", filter);
     //
     String where = "";
     if(filter != null) {
@@ -291,7 +297,7 @@ public class CAct {
       // Дополнительное место
       List<PatientWatchers> watchers = dPatientWatcher.byPatient(hnPatient.getPatient().getId());
       for(PatientWatchers watcher: watchers) {
-        if(watcher.getNds() == null) {
+        if(watcher.getNds() == null || watcher.getNds() == 0) {
           watcher.setNdsProc(ndsProc);
           watcher.setNds(watcher.getPrice() * ndsProc / 100);
           dPatientWatcher.save(watcher);

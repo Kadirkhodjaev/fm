@@ -5609,7 +5609,7 @@ public class SRepImp implements SRep {
 					"         Date_Format(t.Result_Date, '%d.%m.%Y') cr_on, " +
 					"         p.birthyear, " +
 					"         u.fio doc, " +
-					"         p.yearNum reg_num, " +
+					"         c.name ser_name, " +
 					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex_id) Sex_Name, " +
 					"         'Стац' type_name, " +
 					"         p.Start_Diagnoz diagnoz, " +
@@ -5617,7 +5617,7 @@ public class SRepImp implements SRep {
 					" From Lv_Plans t, Kdos c, Patients p, Users u " +
 					" Where t.Kdo_Id = c.id " +
 					"   And t.patientId = p.id " +
-					"   And c.id = 312 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
+					"   And c.kdo_type = 19 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
 					"   And u.id = p.lv_id " +
 					"   And date (t.Result_Date) Between ? and ? " +
 					" Union All " +
@@ -5625,7 +5625,7 @@ public class SRepImp implements SRep {
 					"  			 Date_Format(t.confDate, '%d.%m.%Y') cr_on, " +
 					"        p.BirthYear, " +
 					"        u.fio doc, " +
-					"        p.id reg_num, " +
+					"        ser.name ser_name, " +
 					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex) Sex_Name, " +
 					"        'Амб' type_name, " +
 					"        'Текшириш' diagnoz, " +
@@ -5634,8 +5634,8 @@ public class SRepImp implements SRep {
 					"  Where ser.Id = t.Service_Id " +
 					"    And p.Id = t.Patient " +
 					"    And u.id = t.worker_id " +
-					"		 And ser.id in (675) " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
-					" 	 And date(t.confDate) Between ? and ? " +
+					"		 And ser.group_id in (36) " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
+					" 	 And date(t.crOn) Between ? and ? " +
 					" Order By 9 "
 			);
 			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
@@ -5649,7 +5649,7 @@ public class SRepImp implements SRep {
 				service.setC2(rs.getString("sex_name"));
 				service.setC3(rs.getString("BirthYear"));
 				service.setC4(rs.getString("type_name"));
-				service.setC5(rs.getString("reg_num"));
+				service.setC5(rs.getString("ser_name"));
 				service.setC6(rs.getString("diagnoz"));
 				service.setC7(rs.getString("cr_on"));
 				service.setC8(rs.getString("doc"));
