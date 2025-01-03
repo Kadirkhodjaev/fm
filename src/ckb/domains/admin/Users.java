@@ -69,6 +69,7 @@ public class Users extends GenId {
   @Column private boolean mainNurse = false;
   @Column private boolean statExp = false;
   @Column private boolean procUser = false;
+  @Column private boolean needleDoc = false;
 
   @Column private Double consul_price;
   @Column private Double for_consul_price;
@@ -301,5 +302,13 @@ public class Users extends GenId {
 
   public void setAmbTreatment(boolean ambTreatment) {
     this.ambTreatment = ambTreatment;
+  }
+
+  public boolean isNeedleDoc() {
+    return needleDoc;
+  }
+
+  public void setNeedleDoc(boolean needleDoc) {
+    this.needleDoc = needleDoc;
   }
 }

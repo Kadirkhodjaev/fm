@@ -310,6 +310,8 @@ public class SPatientImp implements SPatient {
       url = "/view/index.s?id=";
     if(roleId == 13)
       url = "/cashbox/stat.s?id=";
+    if(roleId == 25 && curPat.isEmpty())
+      url = "/view/index.s?id=";
     model.addAttribute("addEditUrl", url);
   }
 
@@ -762,6 +764,7 @@ public class SPatientImp implements SPatient {
         o.setC12(dUser.get(d.getConfUser()).getFio());
         o.setC13(d.getConfUser().toString());
       }
+      o.setC14(d.getCounter() == null ? "1" : d.getCounter().toString());
       if(d.getUserId() != null)
         o.setC9(dUser.get(d.getUserId()).getFio());
 
@@ -905,7 +908,7 @@ public class SPatientImp implements SPatient {
         PatientDrugRow row = new PatientDrugRow();
         row.setId(patientDrugRow.getId());
         row.setDrug(patientDrugRow.getDrug());
-        row.setName(patientDrugRow.getSource().equals("own") ? patientDrugRow.getName() : patientDrugRow.getDrug().getName());
+        row.setName(patientDrugRow.getName());
         if(!patientDrugRow.getSource().equals("own"))
           row.setName(row.getName() + " (" + patientDrugRow.getExpanse() + " " + (patientDrugRow.getMeasure() != null ? patientDrugRow.getMeasure().getName() : "") + ")");
         row.setExpanse(patientDrugRow.getExpanse());
@@ -956,11 +959,7 @@ public class SPatientImp implements SPatient {
     for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + id)) {
       PatientDrugRow row = new PatientDrugRow();
       row.setId(patientDrugRow.getId());
-      if(patientDrugRow.getSource().equals("own")) {
-        row.setName(patientDrugRow.getName());
-      } else {
-        row.setName(patientDrugRow.getDrug().getName());
-      }
+      row.setName(patientDrugRow.getName());
       row.setExpanse(patientDrugRow.getExpanse());
       row.setSource(patientDrugRow.getSource());
       row.setState(patientDrugRow.getState());
@@ -1018,7 +1017,7 @@ public class SPatientImp implements SPatient {
       boolean canDel = true;
       for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
         PatientDrugRow row = new PatientDrugRow();
-        row.setName(patientDrugRow.getSource().equals("own") ? patientDrugRow.getName() : patientDrugRow.getDrug().getName());
+        row.setName(patientDrugRow.getName());
         if(!patientDrugRow.getSource().equals("own"))
           row.setName(row.getName() + (isLv ? "" : " (" + patientDrugRow.getExpanse() + " " + patientDrugRow.getMeasure().getName() + ")"));
         row.setExpanse(patientDrugRow.getExpanse());
@@ -1074,7 +1073,7 @@ public class SPatientImp implements SPatient {
       boolean canDel = true;
       for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
         PatientDrugRow row = new PatientDrugRow();
-        row.setName(patientDrugRow.getSource().equals("own") ? patientDrugRow.getName() : patientDrugRow.getDrug().getName());
+        row.setName(patientDrugRow.getName());
         if(!patientDrugRow.getSource().equals("own"))
           row.setName(row.getName() + (" (" + patientDrugRow.getExpanse() + " " + patientDrugRow.getMeasure().getName() + ")"));
         row.setExpanse(patientDrugRow.getExpanse());
@@ -1164,7 +1163,7 @@ public class SPatientImp implements SPatient {
           PatientDrugRow row = new PatientDrugRow();
           row.setId(patientDrugRow.getId());
           row.setDrug(patientDrugRow.getDrug());
-          row.setName(patientDrugRow.getSource().equals("own") ? patientDrugRow.getName() : patientDrugRow.getDrug().getName());
+          row.setName(patientDrugRow.getName());
           if(!patientDrugRow.getSource().equals("own"))
             row.setName(row.getName() + " (" + patientDrugRow.getExpanse() + " " + (patientDrugRow.getMeasure() != null ? patientDrugRow.getMeasure().getName() : "") + ")");
           row.setExpanse(patientDrugRow.getExpanse());

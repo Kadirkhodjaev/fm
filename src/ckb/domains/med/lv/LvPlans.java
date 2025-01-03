@@ -35,6 +35,7 @@ public class LvPlans extends GenId {
   @Column(name = "conf_user")
   private Integer confUser;
   @Column private Double price = 0D;
+  @Column private Double counter = 0D;
 
   @Column private Date payDate;
   @Column private String cashState = "ENT";
@@ -158,5 +159,13 @@ public class LvPlans extends GenId {
 
   public void setCashState(String cashState) {
     this.cashState = cashState;
+  }
+
+  public Double getCounter() {
+    return counter;
+  }
+
+  public void setCounter(Double counter) {
+    this.counter = counter;
   }
 }

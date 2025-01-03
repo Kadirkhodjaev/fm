@@ -151,6 +151,10 @@
                 <td style="text-align: left"><input type="checkbox" name="docfizio" value="1" <c:if test="${user.docfizio}">checked</c:if>/></td>
               </tr>
               <tr>
+                <td class="right">Врач иглотерапии?</td>
+                <td style="text-align: left"><input type="checkbox" name="needleDoc" value="1" <c:if test="${user.needleDoc}">checked</c:if>/></td>
+              </tr>
+              <tr>
                 <td>Стоимость консультаций:</td>
                 <td><input name="consul_price" value="${user.consul_price}" type="number" class="form-control right" autocomplete="off"/></td>
               </tr>

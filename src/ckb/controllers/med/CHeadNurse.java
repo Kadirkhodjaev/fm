@@ -905,14 +905,14 @@ public class CHeadNurse {
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
-      if(direction.equals("0") || direction.equals(""))
+      if(direction.equals("0") || direction.isEmpty())
         arr.append(line.getDirection().getId()).append(",");
       else if(direction.equals(line.getDirection().getId().toString()))
         arr.append(line.getDirection().getId()).append(",");
     }
     arr.append("0)");
     //
-    List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.equals("") ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
+    List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.isEmpty() ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
     m.addAttribute("rows", drugs);
     m.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
     m.addAttribute("receivers", lines);
@@ -940,7 +940,7 @@ public class CHeadNurse {
     }
     arr.append("0)");
     //
-    List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.equals("") ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
+    List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.isEmpty() ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
     m.addAttribute("rows", drugs);
     m.addAttribute("header_title", "Остаток на " + Util.getCurDate() + " " + Util.getCurTime());
     return "/med/head_nurse/saldo/excel";

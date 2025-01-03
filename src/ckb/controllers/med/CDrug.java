@@ -15,7 +15,6 @@ import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.drug.dict.manufacturer.DDrugManufacturer;
 import ckb.dao.med.drug.dict.measures.DDrugMeasure;
 import ckb.dao.med.drug.dict.partners.DDrugPartner;
-import ckb.dao.med.drug.drugsaldo.DDrugSaldo;
 import ckb.dao.med.drug.out.DDrugOut;
 import ckb.dao.med.drug.out.DDrugOutRow;
 import ckb.dao.med.head_nurse.direction.DHNDirection;
@@ -64,7 +63,6 @@ public class CDrug {
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DDrugAct dDrugAct;
   @Autowired private DDrugActDrug dDrugActDrug;
-  @Autowired private DDrugSaldo dDrugSaldo;
   @Autowired private DDrugOut dDrugOut;
   @Autowired private DDrugOutRow dDrugOutRow;
   @Autowired private DDrugCount dDrugCount;
@@ -489,58 +487,6 @@ public class CDrug {
   }
   //endregion
 
-  //region SALDO
-  @RequestMapping("/saldo.s")
-  protected String saldo(HttpServletRequest request, Model model) {
-    Session session = SessionUtil.getUser(request);
-    session.setCurUrl("/drugs/saldo.s");
-    model.addAttribute("list", dDrugSaldo.getList("From DrugSaldos Order By drug.name"));
-    model.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
-    model.addAttribute("categories", dDrugCategory.getList("From DrugCategories Where state = 'A' Order By Name"));
-    //
-    return "/med/drugs/saldo/index";
-  }
-
-  @RequestMapping(value = "/saldo/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String saveSaldo(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      if(Util.isNotNull(req, "drug") && !Util.get(req, "drug").equals("") && Util.isNotNull(req, "count") && Util.isNotNull(req, "price")) {
-        DrugSaldos saldo = new DrugSaldos();
-        if (Util.isNotNull(req, "id"))
-          saldo = dDrugSaldo.get(Util.getInt(req, "id"));
-        else {
-          saldo.setRasxod(0D);
-        }
-        saldo.setDrug(dDrug.get(Util.getInt(req, "drug")));
-        saldo.setDrugCount(Double.parseDouble(Util.get(req, "count")));
-        saldo.setPrice(Double.parseDouble(Util.get(req, "price")));
-        dDrugSaldo.save(saldo);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "/saldo/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String deleteSaldo(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      dDrugSaldo.delete(Util.getInt(req, "id"));
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-  //endregion
-
   //region DICTS
   @RequestMapping("/dicts.s")
   protected String dicsts(HttpServletRequest request, Model model) {
@@ -799,13 +745,6 @@ public class CDrug {
         for(DrugDrugCategories d: dDrugDrugCategory.getList("From DrugDrugCategories Where drug.id = " + obj.getId()))
           arr.put(d.getCategory().getId());
         json.put("cats", arr);
-      }
-      if(Util.get(req, "code").equals("saldo")) {
-        DrugSaldos obj = dDrugSaldo.get(Util.getInt(req, "id"));
-        json.put("id", obj.getId());
-        json.put("drug", obj.getDrug().getId());
-        json.put("count", obj.getDrugCount());
-        json.put("price", obj.getPrice());
       }
       if(Util.get(req, "code").equals("rasxodtype")) {
         HNDirections obj = dhnDirection.get(Util.getInt(req, "id"));

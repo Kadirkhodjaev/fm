@@ -65,13 +65,13 @@
             <fmt:formatDate pattern="dd.MM.yyyy" value="${row.outRow.income.endDate}"/>
           </td>
           <td class="right" style="width:150px">
-              ${row.drugCount}
+            <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.drugCount}"/>
           </td>
           <td class="right" style="width:150px">
-              ${row.rasxod}
+            <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.rasxod}"/>
           </td>
           <td class="right" style="width:150px">
-              ${row.drugCount - row.rasxod}
+            <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.drugCount - row.rasxod}"/>
           </td>
           <td>
             ${row.drug.measure.name}

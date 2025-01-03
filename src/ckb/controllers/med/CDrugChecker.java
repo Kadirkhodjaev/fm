@@ -54,10 +54,15 @@ public class CDrugChecker {
     List<HNDrugs> hnDrugs = dhnDrug.getList("From HNDrugs Where history = 0 Order By direction.id");
     for(HNDrugs hnDrug: hnDrugs) {
       int hndrug = hnDrug.getId();
-      BigDecimal r1 = BigDecimal.valueOf(dhnDateRow.getHDRasxod(hndrug));
-      BigDecimal r2 = BigDecimal.valueOf(dhnDatePatientRow.getHDRasxod(hndrug));
-      BigDecimal r3 = BigDecimal.valueOf(dhnDrug.getTransferRasxod(hndrug));
-      double rasxod = Double.parseDouble(String.valueOf(r1.add(r2).add(r3)));
+      double rasxod;
+      if(hndrug < 50436) {
+        BigDecimal r1 = BigDecimal.valueOf(dhnDateRow.getHDRasxod(hndrug));
+        BigDecimal r2 = BigDecimal.valueOf(dhnDatePatientRow.getHDRasxod(hndrug));
+        BigDecimal r3 = BigDecimal.valueOf(dhnDrug.getTransferRasxod(hndrug));
+        rasxod = Double.parseDouble(String.valueOf(r1.add(r2).add(r3)));
+      } else {
+        rasxod = hnDrug.getRasxod();
+      }
       if(rasxod != hnDrug.getRasxod()) {
         hnDrug.setPrice(rasxod);
         hnList.add(hnDrug);

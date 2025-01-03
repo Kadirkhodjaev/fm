@@ -266,6 +266,11 @@ public class  CApp {
       m.add(new Menu("Текущие", "/ambs/patients.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Архив", "/ambs/archive.s", "fa fa-group fa-fw", session));
     }
+    if(roleId == 25) { // Дежурный врач
+      session.setCurUrl(session.getCurUrl().equals("") ? "/patients/list.s" : session.getCurUrl());
+      m.add(new Menu("Пациенты", "/patients/list.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/patients/list.s")));
+      m.add(new Menu("Архив", "/patients/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/archive/list.s")));
+    }
     model.addAttribute("menuList", m);
     model.addAttribute("lvs", dUser.getLvs());
     model.addAttribute("groups", dAmbGroups.getAll());

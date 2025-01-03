@@ -7,7 +7,7 @@
     window.open('/kdo/print.s?id=' + id);
   }
 </script>
-<div class="panel panel-info" style="width: 1000px !important; margin: auto">
+<div class="panel panel-info w-100">
   <div class="panel-heading">План обследования</div>
   <table class="formTable" style="width:100%">
     <tr>
@@ -18,6 +18,7 @@
       <td>&nbsp;</td>
       <td align="center" width="400"><b>Наименование</b></td>
       <td align="center" width="140"><b>Дата</b></td>
+      <td align="center" width="140"><b>Кол-во</b></td>
       <td align="center"><b>Примечание</b></td>
       <td align="center"><b>Врач</b></td>
     </tr>
@@ -26,6 +27,7 @@
         <td align="center">${loop.index + 1}</td>
         <td width="250"><a style="cursor: pointer" onclick="printPlan('${p.c1}')">${p.c4}</a></td>
         <td align="center" nowrap>${p.c5}</td>
+        <td align="center" nowrap>${p.c14}</td>
         <td>${p.c6}</td>
         <td>${p.c9}</td>
       </tr>

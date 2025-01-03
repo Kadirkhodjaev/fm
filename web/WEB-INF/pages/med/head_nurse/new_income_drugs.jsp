@@ -3,7 +3,7 @@
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <div class="panel panel-info">
   <div class="panel-heading">
-    Новый приход по датам
+    Аптека - Новое поступление по датам
   </div>
   <table class="table">
     <tr>

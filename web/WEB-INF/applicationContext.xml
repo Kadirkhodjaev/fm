@@ -178,7 +178,6 @@
   <bean id="dDrugPartner" class="ckb.dao.med.drug.dict.partners.DDrugPartnerImp" parent="daoImpl"/>
   <bean id="dDrugActDrug" class="ckb.dao.med.drug.actdrug.DDrugActDrugImp" parent="daoImpl"/>
   <bean id="dDrugAct" class="ckb.dao.med.drug.act.DDrugActImp" parent="daoImpl"/>
-  <bean id="dDrugSaldo" class="ckb.dao.med.drug.drugsaldo.DDrugSaldoImp" parent="daoImpl"/>
   <bean id="dDrugOut" class="ckb.dao.med.drug.out.DDrugOutImp" parent="daoImpl"/>
   <bean id="dDrugOutRow" class="ckb.dao.med.drug.out.DDrugOutRowImp" parent="daoImpl"/>
 

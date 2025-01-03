@@ -17,16 +17,16 @@ public class HNDrugs extends GenId {
   @OneToOne @JoinColumn private DrugDirections direction;
   @OneToOne @JoinColumn private DrugOutRows outRow;
 
-  @Column private Double drugCount;
+  @Column(scale = 2, precision = 20) private Double drugCount;
   @OneToOne @JoinColumn private DrugMeasures measure;
-  @Column private Double rasxod;
-  @Column private Double price;
+  @Column(scale = 2, precision = 20) private Double rasxod;
+  @Column(scale = 2, precision = 20) private Double price;
 
   @Column private Integer transfer;
   @Column private Integer transfer_hndrug_id;
   @Column private Integer history;
-  @Column private Double ndsProc;
-  @Column private Double nds;
+  @Column(scale = 2, precision = 20) private Double ndsProc;
+  @Column(scale = 2, precision = 20) private Double nds;
 
   @Column private Integer crBy;
   @Column private Date crOn;

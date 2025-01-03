@@ -64,7 +64,7 @@
   }
 
   function addEditPatient(id) {
-    if(${roleId != 5 && roleId != 9 && roleId != 8 && roleId != 6 && roleId != 16 && roleId != 7 && roleId != 11 && curUrl != '/patients/archive.s'})
+    if(${roleId != 5 && roleId != 9 && roleId != 8 && roleId != 6 && roleId != 16 && roleId != 7 && roleId != 11 && roleId != 25 && curUrl != '/patients/archive.s'})
       setPage('${addEditUrl}' + id);
     else {
       <c:if test="${sessionScope.ENV.roleId == 13}">

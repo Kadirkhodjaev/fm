@@ -307,122 +307,10 @@ public class CAct {
       // Дополнительное место
       m.addAttribute("watchers", watchers);
       if(services.isEmpty()) {
-        // Лабораторные исследования
-        ps = conn.prepareStatement(
-          "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 kdo_count, t.conf_user " +
-            "  From lv_plans t, Kdos c " +
-            " Where t.patientId = ? " +
-            "    And t.Kdo_Id = c.Id " +
-            "    And t.result_id > 0 " +
-            "    And t.Kdo_Type_Id in (1, 2, 3, 19, 20) "
-        );
-        ps.setInt(1, hnPatient.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(hnPatient);
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-          obj.setServiceType(0);
-          obj.setWorker(rs.getInt("conf_user"));
-          obj.setNdsProc(ndsProc);
-          if(dKdoChoosen.getCount("From KdoChoosens Where kdo.id = " + obj.getKdo().getId()) > 0) {
-            importChoosenKdos(obj, rs.getInt("id"));
-          } else {
-            Kdos kdo = dKdo.get(obj.getKdo().getId());
-            double price = kdo.getStatusPrice(hnPatient.getPatient());
-            double real_price = kdo.getStatusRealPrice(hnPatient.getPatient());
-            obj.setPrice(hnPatient.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-            obj.setReal_price(real_price);
-            obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
-            obj.setServiceCount(rs.getDouble("kdo_count"));
-            obj.setServiceName(rs.getString("Kdo_Name"));
-            dhnPatientKdo.save(obj);
-          }
-          //
-        }
-        // Медицинские услуги
-        ps = conn.prepareStatement(
-          "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, t.conf_user " +
-            "  From lv_plans t, Kdos c " +
-            " Where t.patientId = ? " +
-            "    And t.Kdo_Id = c.Id " +
-            "    And t.result_id > 0 " +
-            "    And t.Kdo_Type_Id not in (1, 2, 3, 8, 19, 20) " +
-            "  Group By t.Kdo_Id, t.conf_user"
-        );
-        ps.setInt(1, hnPatient.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(hnPatient);
-          Kdos kdo = dKdo.get(rs.getInt("kdo_id"));
-          obj.setPrice(kdo.getStatusPrice(hnPatient.getPatient()));
-          obj.setReal_price(kdo.getStatusRealPrice(hnPatient.getPatient()));
-          obj.setNdsProc(ndsProc);
-          obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
-          obj.setServiceCount(rs.getDouble("kdo_count"));
-          obj.setServiceName(rs.getString("Kdo_Name"));
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-          obj.setServiceType(1);
-          obj.setWorker(rs.getInt("conf_user"));
-          dhnPatientKdo.save(obj);
-        }
-        // Физиотерапия
-        ps = conn.prepareStatement(
-          "Select t.Kdo_Id, " +
-            "         c.`Name` Kdo_Name, " +
-            "         (Select Count(*) From Lv_Fizio_Dates d Where d.fizio_Id = t.Id And d.state = 'Y' And d.done = 'Y') Kdo_Count, " +
-            "         t.userId " +
-            "    From lv_fizios t, Kdos c " +
-            "   Where t.patientId = ? " +
-            "     And t.Kdo_Id = c.Id " +
-            "     And c.kdo_Type = 8 "
-        );
-        ps.setInt(1, hnPatient.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(hnPatient);
-          Kdos kdo  = dKdo.get(rs.getInt("kdo_id"));
-          obj.setPrice(kdo.getStatusPrice(hnPatient.getPatient()));
-          obj.setReal_price(kdo.getStatusRealPrice(hnPatient.getPatient()));
-          obj.setNdsProc(ndsProc);
-          obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
-          obj.setServiceCount(rs.getDouble("kdo_count"));
-          obj.setServiceName(rs.getString("Kdo_Name"));
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-          obj.setServiceType(1);
-          obj.setWorker(rs.getInt("userId"));
-          dhnPatientKdo.save(obj);
-        }
-        // Консультация
-        ps = conn.prepareStatement(
-          "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price, t.lvid " +
-            "  From lv_consuls t, Users c " +
-            " Where t.patientId = ? " +
-            "    And c.Id = t.lvId " +
-            "  Group By c.profil "
-        );
-        ps.setInt(1, hnPatient.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(hnPatient);
-          if(hnPatient.getPatient().getCounteryId() == 199) {
-            obj.setPrice(rs.getDouble("price"));
-            obj.setReal_price(rs.getDouble("real_price"));
-          } else {
-            obj.setPrice(rs.getDouble("for_price"));
-            obj.setReal_price(rs.getDouble("for_real_price"));
-          }
-          obj.setNdsProc(ndsProc);
-          obj.setNds(obj.getPrice() * obj.getNdsProc() / 100);
-          obj.setServiceCount(rs.getDouble("counter"));
-          obj.setServiceName(rs.getString("profil"));
-          obj.setServiceType(2);
-          obj.setWorker(rs.getInt("lvid"));
-          dhnPatientKdo.save(obj);
-        }
+
+        updateLabServices(conn, hnPatient); // Лабораторные исследования
+        updateMedServices(conn, hnPatient); // Медицинские услуги
+        updateCounServices(conn, hnPatient); // Узкие специалисты
       }
       List<HNPatientKdos> labs = new ArrayList<>();
       List<HNPatientKdos> consuls = new ArrayList<>();
@@ -841,133 +729,13 @@ public class CAct {
     try {
       conn = DB.getConnection();
       HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
-      Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
-      List<HNPatientKdos> kdos = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + pat.getId() + " And serviceType = " + Util.get(req, "type"));
-      for(HNPatientKdos kdo: kdos) {
-        dhnPatientKdo.delete(kdo.getId());
-      }
-      if(Util.get(req, "type").equals("0")) {
-        // Лабораторные исследования
-        ps = conn.prepareStatement(
-          "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 Kdo_Count, t.conf_user " +
-            "  From lv_plans t, Kdos c " +
-            " Where t.patientId = ? " +
-            "    And t.Kdo_Id = c.Id " +
-            "    And t.result_id > 0 " +
-            "    And t.Kdo_Type_Id in (1, 2, 3, 19, 20) "
-        );
-        ps.setInt(1, pat.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(pat);
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-          obj.setWorker(rs.getInt("conf_user"));
-          obj.setServiceType(0);
-          obj.setNdsProc(ndsProc);
-          if(dKdoChoosen.getCount("From KdoChoosens Where kdo.id = " + obj.getKdo().getId()) > 0) {
-            importChoosenKdos(obj, rs.getInt("id"));
-          } else {
-            Kdos kdo = dKdo.get(obj.getKdo().getId());
-            double price = kdo.getStatusPrice(pat.getPatient());
-            double real_price = kdo.getStatusRealPrice(pat.getPatient());
-            obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
-            obj.setReal_price(real_price);
-            obj.setNds(obj.getPrice() * ndsProc / 100);
-            obj.setServiceCount(rs.getDouble("kdo_count"));
-            obj.setServiceName(rs.getString("Kdo_Name"));
-            obj.setServiceType(0);
-            dhnPatientKdo.save(obj);
-          }
-        }
-      }
+      dhnPatientKdo.delSql("From HNPatientKdos Where parent.id = " + pat.getId() + " And serviceType = " + Util.get(req, "type"));
+      // Лабораторные исследования
+      if(Util.get(req, "type").equals("0")) updateLabServices(conn, pat);
       // Медицинские услуги
-      if(Util.get(req, "type").equals("1")) {
-        ps = conn.prepareStatement(
-          "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, t.conf_user " +
-            "  From lv_plans t, Kdos c " +
-            " Where t.patientId = ? " +
-            "    And t.Kdo_Id = c.Id " +
-            "    And t.result_id > 0 " +
-            "    And t.Kdo_Type_Id not in (1, 2, 3, 8, 19, 20) " +
-            "  Group By t.Kdo_Id, t.conf_user "
-        );
-        ps.setInt(1, pat.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(pat);
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-          obj.setPrice(obj.getKdo().getStatusPrice(pat.getPatient()));
-          obj.setReal_price(obj.getKdo().getStatusRealPrice(pat.getPatient()));
-          obj.setNdsProc(ndsProc);
-          obj.setNds(obj.getPrice() * ndsProc / 100);
-          obj.setServiceCount(rs.getDouble("kdo_count"));
-          obj.setServiceName(rs.getString("Kdo_Name"));
-          obj.setServiceType(1);
-          obj.setWorker(rs.getInt("conf_user"));
-          dhnPatientKdo.save(obj);
-        }
-        // Физиотерапия
-        ps = conn.prepareStatement(
-          "Select t.Kdo_Id, " +
-            "         c.`Name` Kdo_Name, " +
-            "         (Select Count(*) From Lv_Fizio_Dates d Where d.fizio_Id = t.Id And d.state = 'Y' And d.done = 'Y') Kdo_Count, " +
-            "         t.userId " +
-            "    From lv_fizios t, Kdos c " +
-            "   Where t.patientId = ? " +
-            "     And t.Kdo_Id = c.Id " +
-            "     And c.kdo_Type = 8 "
-        );
-        ps.setInt(1, pat.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(pat);
-          obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
-          obj.setPrice(obj.getKdo().getStatusPrice(pat.getPatient()));
-          obj.setReal_price(obj.getKdo().getStatusRealPrice(pat.getPatient()));
-          obj.setNdsProc(ndsProc);
-          obj.setNds(obj.getPrice() * ndsProc / 100);
-          obj.setServiceCount(rs.getDouble("kdo_count"));
-          obj.setServiceName(rs.getString("Kdo_Name"));
-          obj.setServiceType(1);
-          obj.setWorker(rs.getInt("userId"));
-          dhnPatientKdo.save(obj);
-        }
-      }
+      if(Util.get(req, "type").equals("1")) updateMedServices(conn, pat);
       // Консультация
-      if(Util.get(req, "type").equals("2")) {
-        ps = conn.prepareStatement(
-          "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price, t.lvid" +
-            "  From lv_consuls t, Users c " +
-            " Where t.patientId = ? " +
-            "    And c.Id = t.lvId " +
-            "  Group By c.profil "
-        );
-        ps.setInt(1, pat.getPatient().getId());
-        rs = ps.executeQuery();
-        while (rs.next()) {
-          HNPatientKdos obj = new HNPatientKdos();
-          obj.setParent(pat);
-          obj.setPrice(0D);
-          if(pat.getPatient().getCounteryId() == 199) {
-            obj.setPrice(rs.getDouble("price"));
-            obj.setReal_price(rs.getDouble("real_price"));
-          } else {
-            obj.setPrice(rs.getDouble("for_price"));
-            obj.setReal_price(rs.getDouble("for_real_price"));
-          }
-          obj.setNdsProc(ndsProc);
-          obj.setNds(obj.getPrice() * ndsProc / 100);
-          obj.setServiceCount(rs.getDouble("counter"));
-          obj.setServiceName(rs.getString("profil"));
-          obj.setServiceType(2);
-          obj.setWorker(rs.getInt("lvid"));
-          dhnPatientKdo.save(obj);
-        }
-      }
+      if(Util.get(req, "type").equals("2")) updateCounServices(conn, pat);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -978,6 +746,163 @@ public class CAct {
       DB.done(conn);
     }
     return json.toString();
+  }
+
+  protected void updateLabServices(Connection conn, HNPatients pat) {
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      ps = conn.prepareStatement(
+        "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 Kdo_Count, t.conf_user " +
+          "  From lv_plans t, Kdos c " +
+          " Where t.patientId = ? " +
+          "    And t.Kdo_Id = c.Id " +
+          "    And t.result_id > 0 " +
+          "    And t.Kdo_Type_Id in (1, 2, 3, 19, 20) "
+      );
+      ps.setInt(1, pat.getPatient().getId());
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        HNPatientKdos obj = new HNPatientKdos();
+        obj.setParent(pat);
+        obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
+        obj.setWorker(rs.getInt("conf_user"));
+        obj.setServiceType(0);
+        obj.setNdsProc(ndsProc);
+        if(dKdoChoosen.getCount("From KdoChoosens Where kdo.id = " + obj.getKdo().getId()) > 0) {
+          importChoosenKdos(obj, rs.getInt("id"));
+        } else {
+          Kdos kdo = dKdo.get(obj.getKdo().getId());
+          double price = kdo.getStatusPrice(pat.getPatient());
+          double real_price = kdo.getStatusRealPrice(pat.getPatient());
+          obj.setPrice(pat.getDayCount() < lgotaDays && price == 0 ? real_price : price);
+          obj.setReal_price(real_price);
+          obj.setNds(obj.getPrice() * ndsProc / 100);
+          obj.setServiceCount(rs.getDouble("kdo_count"));
+          obj.setServiceName(rs.getString("Kdo_Name"));
+          obj.setServiceType(0);
+          dhnPatientKdo.save(obj);
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+    }
+  }
+
+  protected void updateMedServices(Connection conn, HNPatients pat) {
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      ps = conn.prepareStatement(
+        "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, t.conf_user, sum(t.counter) needlecount " +
+          "  From lv_plans t, Kdos c " +
+          " Where t.patientId = ? " +
+          "    And t.Kdo_Id = c.Id " +
+          "    And t.result_id > 0 " +
+          "    And t.Kdo_Type_Id not in (1, 2, 3, 8, 19, 20) " +
+          "  Group By t.Kdo_Id, t.conf_user "
+      );
+      ps.setInt(1, pat.getPatient().getId());
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        HNPatientKdos obj = new HNPatientKdos();
+        obj.setParent(pat);
+        obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
+        obj.setPrice(obj.getKdo().getStatusPrice(pat.getPatient()));
+        obj.setReal_price(obj.getKdo().getStatusRealPrice(pat.getPatient()));
+        obj.setNdsProc(ndsProc);
+        obj.setNds(obj.getPrice() * ndsProc / 100);
+        if(rs.getInt("kdo_id") == 288)
+          obj.setServiceCount(rs.getDouble("needlecount"));
+        else
+          obj.setServiceCount(rs.getDouble("kdo_count"));
+        obj.setServiceName(rs.getString("Kdo_Name"));
+        obj.setServiceType(1);
+        obj.setWorker(rs.getInt("conf_user"));
+        dhnPatientKdo.save(obj);
+      }
+      // Физиотерапия
+      ps = conn.prepareStatement(
+        "Select t.Kdo_Id, " +
+          "         c.`Name` Kdo_Name, " +
+          "         (Select Count(*) From Lv_Fizio_Dates d Where d.fizio_Id = t.Id And d.state = 'Y' And d.done = 'Y') Kdo_Count, " +
+          "         t.userId " +
+          "    From lv_fizios t, Kdos c " +
+          "   Where t.patientId = ? " +
+          "     And t.Kdo_Id = c.Id " +
+          "     And c.kdo_Type = 8 "
+      );
+      ps.setInt(1, pat.getPatient().getId());
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        HNPatientKdos obj = new HNPatientKdos();
+        obj.setParent(pat);
+        obj.setKdo(dKdo.get(rs.getInt("kdo_id")));
+        obj.setPrice(obj.getKdo().getStatusPrice(pat.getPatient()));
+        obj.setReal_price(obj.getKdo().getStatusRealPrice(pat.getPatient()));
+        obj.setNdsProc(ndsProc);
+        obj.setNds(obj.getPrice() * ndsProc / 100);
+        obj.setServiceCount(rs.getDouble("kdo_count"));
+        obj.setServiceName(rs.getString("Kdo_Name"));
+        obj.setServiceType(1);
+        obj.setWorker(rs.getInt("userId"));
+        dhnPatientKdo.save(obj);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+    }
+  }
+
+  protected void updateCounServices(Connection conn, HNPatients pat) {
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
+      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      ps = conn.prepareStatement(
+        "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price, t.lvid" +
+          "  From lv_consuls t, Users c " +
+          " Where t.patientId = ? " +
+          "    And c.Id = t.lvId " +
+          "  Group By c.profil "
+      );
+      ps.setInt(1, pat.getPatient().getId());
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        HNPatientKdos obj = new HNPatientKdos();
+        obj.setParent(pat);
+        obj.setPrice(0D);
+        if(pat.getPatient().getCounteryId() == 199) {
+          obj.setPrice(rs.getDouble("price"));
+          obj.setReal_price(rs.getDouble("real_price"));
+        } else {
+          obj.setPrice(rs.getDouble("for_price"));
+          obj.setReal_price(rs.getDouble("for_real_price"));
+        }
+        obj.setNdsProc(ndsProc);
+        obj.setNds(obj.getPrice() * ndsProc / 100);
+        obj.setServiceCount(rs.getDouble("counter"));
+        obj.setServiceName(rs.getString("profil"));
+        obj.setServiceType(2);
+        obj.setWorker(rs.getInt("lvid"));
+        dhnPatientKdo.save(obj);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+    }
   }
 
   @RequestMapping(value = "service/save.s", method = RequestMethod.POST)

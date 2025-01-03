@@ -465,7 +465,7 @@ public class CEat {
       mMenuTypes.add(mMenuType);
     }
     List<EatTypes> types = dEatType.getList("From EatTypes Where state = 'A'");
-    List<ObjList> eats = new ArrayList<ObjList>();
+    List<ObjList> eats = new ArrayList<>();
     for(EatTypes type: types) {
       ObjList obj = new ObjList();
       obj.setC1(type.getName());
@@ -480,7 +480,7 @@ public class CEat {
           list.add(e);
         }
       }
-      if(list.size() > 0) {
+      if(!list.isEmpty()) {
         obj.setList(list);
         eats.add(obj);
       }

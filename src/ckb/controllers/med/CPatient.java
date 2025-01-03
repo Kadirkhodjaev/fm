@@ -120,6 +120,9 @@ public class CPatient {
         ids = ids.substring(1, ids.length() - 1);
         sql += " And Exists (Select 1 From Patient_Plans c Where t.id = c.patient_id And c.actDate <= CURRENT_TIMESTAMP() And c.Kdo_Type_Id in (" + ids + ")) ";
       }
+      if (session.getRoleId() == 25) {
+        sql += " And Exists (Select 1 From Patient_Plans c Where t.id = c.patient_id And c.actDate <= CURRENT_TIMESTAMP() And c.Kdo_type_Id in (17)) ";
+      }
       if (session.getRoleId() == 8)
         sql += " And t.state = 'LV'";
       if (session.getRoleId() == 16)

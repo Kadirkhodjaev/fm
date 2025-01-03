@@ -22,6 +22,7 @@ import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.*;
 import ckb.domains.admin.KdoTypes;
 import ckb.domains.admin.Kdos;
+import ckb.domains.admin.Users;
 import ckb.domains.med.head_nurse.HNPatients;
 import ckb.domains.med.kdo.F13;
 import ckb.domains.med.lv.*;
@@ -93,6 +94,7 @@ public class CView {
     int id = Req.getInt(request, "id");
     session.setCurPat(id);
     Patients pat = dPatient.get(session.getCurPat());
+    Users user = dUser.get(session.getUserId());
     session.setCurUrl("/view/index.s?id=" + id);
     //
     List<Menu> m = new ArrayList<>();
@@ -108,6 +110,8 @@ public class CView {
     } else {
       m.add(new Menu("Обследования", "/view/plan/index.s", "fa fa-flask fa-fw", false));
     }
+    if(user.isNeedleDoc())
+      m.add(new Menu("Иглотерапия", "/view/needle.s", "fa fa-th-list fa-fw", false));
     m.add(new Menu("Консультация", "/view/consul.s", "fa fa-stethoscope fa-fw", false));
     m.add(new Menu("Физиотерапия", "/view/fizio/index.s", "fa fa-asterisk fa-fw", false));
     m.add(new Menu("Дневник", "/view/dairy.s", "fa fa-calendar fa-fw", false));
@@ -1147,6 +1151,31 @@ public class CView {
     model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
     model.addAttribute("zavOtdel", dUser.getZavOtdel(pat.getLv_dept_id()).getFio());
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") +"/extra";
+  }
+
+  @RequestMapping("/needle.s")
+  protected String needle(HttpServletRequest request, Model model){
+    Session session = SessionUtil.getUser(request);
+    Patients pat = dPatient.get(session.getCurPat());
+    Users user = dUser.get(session.getUserId());
+    model.addAttribute("pat", pat);
+    List<LvPlans> plans = dLvPlan.list("From LvPlans Where " + (user.getId() == 1 ? "" : "confUser = " + user.getId() + " And ") + " kdo.id = 288 And patientId = "  + pat.getId());
+    model.addAttribute("plans", plans);
+    return "/med/lv/view/needle";
+  }
+
+  @RequestMapping(value = "/needle.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String setNeedle(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      LvPlans p = dLvPlan.get(Util.getInt(req, "p"));
+      p.setCounter(Util.getDouble(req, "v"));
+      dLvPlan.save(p);
+      return Util.success(json);
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
+    }
   }
 
   // Статистика отделения

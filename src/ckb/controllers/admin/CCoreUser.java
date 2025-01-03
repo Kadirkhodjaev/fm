@@ -7,8 +7,8 @@ import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.admin.users.DUserIp;
 import ckb.dao.med.amb.DAmbGroup;
-import ckb.dao.med.amb.DAmbServiceUser;
 import ckb.dao.med.amb.DAmbService;
+import ckb.dao.med.amb.DAmbServiceUser;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.kdos.DKdoTypes;
 import ckb.domains.admin.*;
@@ -18,7 +18,6 @@ import ckb.domains.med.amb.AmbServices;
 import ckb.domains.med.drug.dict.DrugDirections;
 import ckb.models.Obj;
 import ckb.models.ObjList;
-import ckb.services.admin.user.SUser;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.Req;
@@ -43,7 +42,6 @@ public class CCoreUser {
 
   @Autowired private DUser dUser;
   @Autowired private DDept dDept;
-  @Autowired private SUser sUser;
   @Autowired private DRole dRole;
   @Autowired private DReport dReport;
   @Autowired private DKdoTypes dKdoType;
@@ -113,6 +111,7 @@ public class CCoreUser {
       u.setStatExp(Util.getCheckbox(req, "statExp"));
       u.setProcUser(Util.getCheckbox(req, "procUser"));
       u.setDocfizio(Util.getCheckbox(req, "docfizio"));
+      u.setNeedleDoc(Util.getCheckbox(req, "needleDoc"));
       u.setDrugDirection(Util.getCheckbox(req, "drugDirection"));
       u.setConsul_price(Util.getDouble(req, "consul_price", null));
       u.setFor_consul_price(Util.getDouble(req, "for_consul_price", null));

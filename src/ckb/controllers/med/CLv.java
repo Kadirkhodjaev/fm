@@ -1285,6 +1285,7 @@ public class CLv {
         } else {
           if(row_ids[i].equals("0") || row_ids[i].isEmpty()) {
             row.setDrug(dDrug.get(Integer.parseInt(drugs[i])));
+            row.setName(row.getDrug().getName());
             row.setMeasure(row.getDrug().getMeasure());
           }
           row.setExpanse(Double.parseDouble(expenses[i]));
@@ -1463,6 +1464,7 @@ public class CLv {
       for(PatientDrugRows rw: rws) {
         PatientDrugRowTemps r = new PatientDrugRowTemps();
         r.setDrug(rw.getDrug());
+        r.setName(rw.getDrug() != null ? rw.getDrug().getName() : null);
         r.setExpanse(rw.getExpanse());
         r.setMeasure(rw.getMeasure());
         r.setName(rw.getName());
