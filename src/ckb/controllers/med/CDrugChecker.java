@@ -40,7 +40,7 @@ public class CDrugChecker {
   
   @RequestMapping("checker.s")
   protected String checker(Model model) {
-    List<DrugActDrugs> drugList = new ArrayList<DrugActDrugs>();
+    List<DrugActDrugs> drugList = new ArrayList<>();
     List<DrugActDrugs> DrugActDrugs = dDrugInDrug.getList("From DrugActDrugs Where rasxod > 0");
     for(DrugActDrugs drugInDrug: DrugActDrugs) {
       double outRasxod = dDrugOutRow.getIncomeRasxod(drugInDrug.getId());
@@ -50,19 +50,15 @@ public class CDrugChecker {
       }
     }
     model.addAttribute("drug_rows", drugList);
-    List<HNDrugs> hnList = new ArrayList<HNDrugs>();
+    List<HNDrugs> hnList = new ArrayList<>();
     List<HNDrugs> hnDrugs = dhnDrug.getList("From HNDrugs Where history = 0 Order By direction.id");
     for(HNDrugs hnDrug: hnDrugs) {
       int hndrug = hnDrug.getId();
       double rasxod;
-      if(hndrug < 50436) {
-        BigDecimal r1 = BigDecimal.valueOf(dhnDateRow.getHDRasxod(hndrug));
-        BigDecimal r2 = BigDecimal.valueOf(dhnDatePatientRow.getHDRasxod(hndrug));
-        BigDecimal r3 = BigDecimal.valueOf(dhnDrug.getTransferRasxod(hndrug));
-        rasxod = Double.parseDouble(String.valueOf(r1.add(r2).add(r3)));
-      } else {
-        rasxod = hnDrug.getRasxod();
-      }
+      BigDecimal r1 = BigDecimal.valueOf(dhnDateRow.getHDRasxod(hndrug));
+      BigDecimal r2 = BigDecimal.valueOf(dhnDatePatientRow.getHDRasxod(hndrug));
+      BigDecimal r3 = BigDecimal.valueOf(dhnDrug.getTransferRasxod(hndrug));
+      rasxod = Double.parseDouble(String.valueOf(r1.add(r2).add(r3)));
       if(rasxod != hnDrug.getRasxod()) {
         hnDrug.setPrice(rasxod);
         hnList.add(hnDrug);

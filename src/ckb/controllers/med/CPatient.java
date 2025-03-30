@@ -1,6 +1,7 @@
 package ckb.controllers.med;
 
 
+import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.fizio.DLvFizioDate;
@@ -54,6 +55,7 @@ public class CPatient {
   @Autowired DLvPlan dLvPlan;
   @Autowired DLvFizioDate dLvFizioDate;
   @Autowired DLvFizioDateH dLvFizioDateH;
+  @Autowired DParam dParam;
 
   private final Logger logger = Logger.getLogger(CPatient.class);
 
@@ -517,7 +519,8 @@ public class CPatient {
     session = SessionUtil.getUser(req);
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("pat", pat);
-    model.addAttribute("price", pat.getRoomPrice());
+    double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+    model.addAttribute("price", pat.getRoomPrice() * (1 + ndsProc / 100));
     model.addAttribute("sysdate", Util.getCurDate());
     return "med/patients/contract";
   }

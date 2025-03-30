@@ -21,10 +21,8 @@ import ckb.dao.med.kdos.forms.f6.DF6;
 import ckb.dao.med.kdos.forms.f7.DF7;
 import ckb.dao.med.kdos.forms.f8.DF8;
 import ckb.dao.med.kdos.forms.f999.DF999;
-import ckb.dao.med.lv.bio.DLvBio;
 import ckb.dao.med.lv.consul.DLvConsul;
 import ckb.dao.med.lv.plan.DLvPlan;
-import ckb.dao.med.patient.DPatient;
 import ckb.domains.admin.FormFields;
 import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbResults;
@@ -34,7 +32,6 @@ import ckb.domains.med.lv.LvConsuls;
 import ckb.domains.med.lv.LvPlans;
 import ckb.models.result.FormRow;
 import ckb.models.result.Result;
-import ckb.services.admin.form.SForm;
 import ckb.utils.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -46,10 +43,7 @@ public class SRkdoImp implements SRkdo {
 
   @Autowired DUser dUser;
   @Autowired DLvPlan dLvPlan;
-  @Autowired SForm sForm;
-  @Autowired DPatient dPatient;
   @Autowired DFormField dFormField;
-  @Autowired DLvBio dlvBio;
   @Autowired DLvConsul dLvConsul;
   @Autowired DF1 df1;
   @Autowired DF6 df6;
@@ -73,61 +67,67 @@ public class SRkdoImp implements SRkdo {
 
   @Override
   public List<String> getResults(int curPat) {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     List<LvPlans> plans = dLvPlan.getByPatientId(curPat);
     List<LvConsuls> cons = dLvConsul.getByPat(curPat);
     for(LvPlans plan : plans) {
       if(plan.getDone().equals("Y") && plan.getResultId() > 0 && plan.getKdo().getFormId() != 889) {
         /**/
-        if(plan.getKdo().getFormId() == 999 || plan.getKdo().getFormId() == 888 || plan.getKdo().getFormId() == 777) {
-          String res = df999.get(plan.getResultId()).getC1();
-          if(res != null && !res.equals(""))
+        if(plan.getKdo().getId() == 154) {
+          String res = df999.get(plan.getResultId()).getC2();
+          if (res != null && !res.isEmpty())
             list.add("<p style='display: inline'><b>" + plan.getKdo().getShortName() + "</b>:" + res + "; " + "</p><br/>");
         } else {
-          if (plan.getKdo().getId() == 1)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF1(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 6)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF6(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 7)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF7(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 8)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF8(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 10)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF10(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 11)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF11(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 13)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF13(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 15)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF15(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 16)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF16(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 17) {
-            if(plan.getKdo().getFormId() == 75 && plan.getId() <= 27056) {
-              String res = df999.get(plan.getResultId()).getC1();
-              if(res != null && !res.equals(""))
-                list.add("<p style='display: inline'><b>" + plan.getKdo().getShortName() + "</b>:" + res + "; " + "</p><br/>");
-            } else {
-              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF17(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+          if (plan.getKdo().getFormId() == 999 || plan.getKdo().getFormId() == 888 || plan.getKdo().getFormId() == 777) {
+            String res = df999.get(plan.getResultId()).getC1();
+            if (res != null && !res.isEmpty())
+              list.add("<p style='display: inline'><b>" + plan.getKdo().getShortName() + "</b>:" + res + "; " + "</p><br/>");
+          } else {
+            if (plan.getKdo().getId() == 1)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF1(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 6)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF6(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 7)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF7(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 8)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF8(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 10)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF10(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 11)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF11(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 13)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF13(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 15)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF15(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 16)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF16(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 17) {
+              if (plan.getKdo().getFormId() == 75 && plan.getId() <= 27056) {
+                String res = df999.get(plan.getResultId()).getC1();
+                if (res != null && !res.isEmpty())
+                  list.add("<p style='display: inline'><b>" + plan.getKdo().getShortName() + "</b>:" + res + "; " + "</p><br/>");
+              } else {
+                list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF17(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+              }
             }
+            if (plan.getKdo().getId() == 56)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF56(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 120)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF120(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 121)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF121(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 152)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF152(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 153)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF13(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
+            if (plan.getKdo().getId() == 174)
+              list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF174(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
           }
-          if (plan.getKdo().getId() == 56)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF56(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 120)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF120(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 121)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF121(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 152)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF152(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 153)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF13(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
-          if (plan.getKdo().getId() == 174)
-            list.add("<b>" + plan.getKdo().getShortName() + "</b>:" + getDF174(plan.getKdo().getFormId(), plan.getResultId()) + "<br/>");
         }
       }
     }
     for(LvConsuls con : cons) {
-      if(con.getText() != null && !con.getText().equals(""))
+      if(con.getText() != null && !con.getText().isEmpty())
         if(con.getLvId() != null)
           list.add("<b>Консультацияси: " + dUser.get(con.getLvId()).getProfil() + "</b>: " + con.getText() + ";" + con.getReq() + "<br/>");
         else
@@ -138,7 +138,7 @@ public class SRkdoImp implements SRkdo {
 
   protected HashMap<String, String> getAmbHashResult(int id) {
     AmbResults r = dAmbResults.get(id);
-    HashMap<String, String> hm = new HashMap<String, String>();
+    HashMap<String, String> hm = new HashMap<>();
     hm.put("c1", r.getC1());
     hm.put("c2", r.getC2());
     hm.put("c3", r.getC3());
@@ -215,13 +215,13 @@ public class SRkdoImp implements SRkdo {
       res.setNorma(ser.getService().getNormaFrom() + " " + ser.getService().getNormaTo());
       res.setEI(ser.getService().getEi());
       String val = r.get("c1");
-      if (val == null || val.equals("") || val.equals("<br>") || val.equals("<br/>")) return null;
+      if (val == null || val.isEmpty() || val.equals("<br>") || val.equals("<br/>")) return null;
       res.setValue(val);
     } else if (form == null) {
       List<AmbServiceFields> fieds = dAmbServiceFields.byService(ser.getService().getId());
-      List<String> colName = new ArrayList<String>();
-      List<String> vals = new ArrayList<String>();
-      if(fieds != null && fieds.size() > 0)
+      List<String> colName = new ArrayList<>();
+      List<String> vals = new ArrayList<>();
+      if(fieds != null && !fieds.isEmpty())
         for(AmbServiceFields field: fieds) {
           colName.add(field.getName());
           vals.add(r.get("c" + field.getField()));
@@ -230,8 +230,8 @@ public class SRkdoImp implements SRkdo {
       res.setVals(vals);
     } else if (form != null && (form == 1000 || form == 1001 || form == 1002 || form == 1003 || form == 1005 || form == 1006 || form == 1007 || form == 1008 || form == 1009)) {
       List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
-      List<FormRow> fs = new ArrayList<FormRow>();
-      if(fieds != null && fieds.size() > 0)
+      List<FormRow> fs = new ArrayList<>();
+      if(fieds != null && !fieds.isEmpty())
         for(FormFields field: fieds) {
           FormRow f = new FormRow();
           f.setName(field.getField());
@@ -244,8 +244,8 @@ public class SRkdoImp implements SRkdo {
       res.setRows(fs);
     } else if (form != null && (form == 81 || form == 82 || form == 83 || form == 1004)) {
       List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
-      List<FormRow> fs = new ArrayList<FormRow>();
-      if(fieds != null && fieds.size() > 0)
+      List<FormRow> fs = new ArrayList<>();
+      if(fieds != null && !fieds.isEmpty())
         for(FormFields field: fieds) {
           FormRow f = new FormRow();
           f.setName(field.getField());
@@ -261,7 +261,7 @@ public class SRkdoImp implements SRkdo {
   private String makeCell(List<FormFields> cols, Integer pos, String val){
     try {
       if (Util.nvl(cols.get(pos - 1).getResFlag(), "N").equals("Y") && !"".equals(val)) {
-        return "<i>" + cols.get(pos - 1).getField() + "</i>: " + val + (Util.nvl(cols.get(pos - 1).getEI()).equals("") ? "" : " " + Util.nvl(cols.get(pos - 1).getEI())) + (cols.size() == pos ? "; " : ", ");
+        return "<i>" + cols.get(pos - 1).getField() + "</i>: " + val + (Util.nvl(cols.get(pos - 1).getEI()).isEmpty() ? "" : " " + Util.nvl(cols.get(pos - 1).getEI())) + (cols.size() == pos ? "; " : ", ");
       } else
         return "";
     } catch (Exception e) {
@@ -495,13 +495,6 @@ public class SRkdoImp implements SRkdo {
     sb.append(makeCell(c, 6 , f.getC6 ()));
     //
     return sb.toString();
-  }
-  private String getDF999(Integer resId) {
-    try {
-      return df999.get(resId).getC1() + "; ";
-    } catch(Exception e) {
-      return "; ";
-    }
   }
 
   private String getDF120(Integer formId, Integer resId) {

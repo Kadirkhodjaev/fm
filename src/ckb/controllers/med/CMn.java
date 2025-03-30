@@ -199,8 +199,8 @@ public class CMn {
           "       Round(f.out_sum / case when f.diff <=0 Then 1 Else f.diff End, 2) avgSum,  " +
           "       Case When f.out_count > 0 Then Round(ifnull(f.saldo_count, 0) / (f.out_count / case when ifnull(f.diff, 0) = 0 then 1 else ifnull(f.diff, 1) end), 2) else 0 End weekCount  " +
           "  From (Select f.drug_id,  " +
-          "               (Select timestampdiff(WEEK, ifnull(min(c.regDate), '2020-12-01'), CURRENT_DATE()) From drug_acts c, drug_act_drugs t Where t.drug_id = f.drug_id And c.id = t.act_Id) diff,  " +
-          "               (Select date(ifnull(min(c.regDate), '2020-12-01')) From drug_acts c, drug_act_drugs t Where t.drug_id = f.drug_id And c.id = t.act_Id) minDate,  " +
+          "               (Select timestampdiff(WEEK, ifnull(min(c.regDate), '2022-01-01'), CURRENT_DATE()) From drug_acts c, drug_act_drugs t Where t.drug_id = f.drug_id And c.id = t.act_Id) diff,  " +
+          "               (Select date(ifnull(min(c.regDate), '2022-01-01')) From drug_acts c, drug_act_drugs t Where t.drug_id = f.drug_id And c.id = t.act_Id) minDate,  " +
           "               Round(Sum(f.counter), 2) out_count,  " +
           "               Round(Sum(f.summ), 2) out_sum,  " +
           "               Round(Sum(f.saldo_count), 2) saldo_count,  " +
@@ -226,7 +226,7 @@ public class CMn {
           "                       Sum(t.counter),   " +
           "                       Sum(t.counter * t.countprice)  " +
           "                  From drug_act_drugs t, drug_acts c  " +
-          "                  Where c.id = t.act_Id   " +
+          "                  Where c.id = t.act_Id  " +
           "                  Group By t.drug_id  " +
           "                Union All  " +
           "                Select f.drug_id, 0, 0, -Sum(c.rasxod) counter, -Sum(c.rasxod * a.price) summ  " +
@@ -255,7 +255,7 @@ public class CMn {
         row.setC10(rs.getString("name"));
         row.setC1(rs.getString("diff"));
         row.setC2(Util.dateToString(rs.getDate("minDate")));
-        row.setC3(rs.getString("out_count"));
+        row.setC3(rs.getString("out_count")); 
         row.setC4(rs.getString("out_sum"));
         row.setC5(rs.getString("saldo_count"));
         row.setC6(rs.getString("saldo_sum"));
@@ -313,7 +313,7 @@ public class CMn {
           "   Where a.id = f.outRow_Id   " +
           "    And d.Id = c.doc_Id    " +
           "    And c.drug_Id = f.id   " +
-          "     And date(c.crOn) >= DATE_ADD(NOW(), INTERVAL -" + days + " DAY) " +
+          "    And date(c.crOn) >= DATE_ADD(NOW(), INTERVAL -" + days + " DAY) " +
           "    And f.outRow_Id > 0   " +
           "   Group By f.drug_id " +
           "  Union All " +

@@ -47,22 +47,31 @@
 </style>
 <div class="panel panel-info">
   <div class="panel-heading">
-    Список стационарных услуг
-    <div style="float:right">
-      <table style="width:400px">
-        <tr>
-          <td>
-            <select class="form-control" onchange="setPage('core/stat/services.s?group=' + this.value)" id="sel_kdo_group">
-              <option value="0">Все</option>
-              <c:forEach items="${groups}" var="g">
-                <option <c:if test="${g.id == group}">selected</c:if> value="${g.id}">${g.name}</option>
-              </c:forEach>
-            </select>
-          </td>
-          <td style="width:80px"><button class="btn btn-sm btn-success" type="button" onclick="addStatService()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button></td>
-        </tr>
-      </table>
-    </div>
+    <table class="w-100">
+      <tr>
+        <td>
+          Список стационарных услуг
+        </td>
+        <td class="wpx-400">
+          <select class="form-control" onchange="setPage('core/stat/services.s?group=' + this.value)" id="sel_kdo_group">
+            <option value="0">Все</option>
+            <c:forEach items="${groups}" var="g">
+              <option <c:if test="${g.id == group}">selected</c:if> value="${g.id}">${g.name}</option>
+            </c:forEach>
+          </select>
+        </td>
+        <td class="wpx-150">
+          <select class="form-control" onchange="setPage('core/stat/services.s?state=' + this.value)">
+            <option <c:if test="${stateCode == '0'}">selected</c:if> value="0">Все</option>
+            <option <c:if test="${stateCode == 'A'}">selected</c:if> value="A">Активный</option>
+            <option <c:if test="${stateCode == 'P'}">selected</c:if> value="P">Пассивный</option>
+          </select>
+        </td>
+        <td class="wpx-100">
+          <button class="btn btn-icon btn-success" type="button" onclick="addStatService()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
+        </td>
+      </tr>
+    </table>
   </div>
   <div class="panel-body">
     <div class="table-responsive">

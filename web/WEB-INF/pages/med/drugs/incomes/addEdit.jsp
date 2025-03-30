@@ -35,7 +35,7 @@
     <tr>
       <td style="text-align:right;font-weight:bold;vertical-align: middle">Договор: </td>
       <td colspan="3">
-        <select class="form-control" name="contract">
+        <select class="form-control chzn-select" name="contract">
           <c:forEach items="${contracts}" var="contract">
             <option <c:if test="${contract.id == obj.contract.id}">selected</c:if> value="${contract.id}">№${contract.regNum} от <fmt:formatDate pattern = "dd.MM.yyyy" value = "${contract.regDate}"/> - ${contract.partner.name}</option>
           </c:forEach>

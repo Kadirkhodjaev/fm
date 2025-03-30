@@ -120,7 +120,7 @@ public class CDrug {
     if(Util.getInt(req, "id") == 0)
       act.setRegDate(new Date());
     model.addAttribute("obj", act);
-    model.addAttribute("contracts", dDrugContract.getAll());
+    model.addAttribute("contracts", dDrugContract.list("From DrugContracts Order By partner.ord"));
     // Add Edit Act Drug models
     model.addAttribute("drug_names", dDrug.getList("From Drugs Where state = 'A' Order By Name"));
     model.addAttribute("measures", dDrugMeasure.getList("From DrugMeasures Where state = 'A'"));
@@ -608,6 +608,7 @@ public class CDrug {
         obj.setName(Util.get(req, "name"));
         obj.setEmail(Util.get(req, "email"));
         obj.setPhone(Util.get(req, "phone"));
+        obj.setOrd(Util.getDouble(req, "ord", 0D));
         if (Util.isNull(req, "id")) {
           obj.setCrBy(session.getUserId());
           obj.setCrOn(new Date());
@@ -733,6 +734,7 @@ public class CDrug {
         json.put("name", obj.getName());
         json.put("phone", obj.getPhone());
         json.put("email", obj.getEmail());
+        json.put("ord", obj.getOrd());
       }
       if(Util.get(req, "code").equals("drug")) {
         Drugs obj = dDrug.get(Util.getInt(req, "id"));

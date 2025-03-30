@@ -13,6 +13,7 @@ public class PatientDrug {
   private Integer id;
   private Dicts drugType;
   private Dicts injectionType;
+  private String tabletType;
   private Patients patient;
   private LvDrugGoals goal;
   private List<PatientDrugRow> rows;
@@ -350,5 +351,13 @@ public class PatientDrug {
 
   public void setDateId(Integer dateId) {
     this.dateId = dateId;
+  }
+
+  public String getTabletType() {
+    return tabletType;
+  }
+
+  public void setTabletType(String tabletType) {
+    this.tabletType = tabletType;
   }
 }

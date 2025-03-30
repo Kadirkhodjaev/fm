@@ -38,6 +38,7 @@ public class SUserImp implements SUser {
       user = dUser.getByLoginPassword(Req.get(request, "login"), Req.get(request, "password"));
     else
       user = dUser.get(Util.getInt(request, "session_user_id"));
+    if(!user.isActive()) return null;
     if (user != null) {
       session = new Session();
       String ip = request.getRemoteAddr();

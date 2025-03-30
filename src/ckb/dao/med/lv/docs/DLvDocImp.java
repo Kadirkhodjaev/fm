@@ -20,6 +20,10 @@ public class DLvDocImp extends DaoImp<LvDocs> implements DLvDoc {
 
   @Override
   public boolean hasOSM(int pat) {
-    return getCount("From LvDocs Where doc = 'osm' And patient.id = " + pat) > 0;
+    try {
+      return getCount("From LvDocs Where doc = 'osm' And patient.id = " + pat) > 0;
+    } catch (Exception e) {
+      return false;
+    }
   }
 }

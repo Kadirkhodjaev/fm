@@ -1,6 +1,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <script src="/res/datepicker/datetimepicker_css.js"></script>
+<link href="/res/choosen/chosen.min.css" rel="stylesheet">
+<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
+<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
+<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
+<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <script>
   $(document).ready(function(){
     $('d').html('*').css('font-weight', 'bold').css('color', 'red');
@@ -59,7 +64,7 @@
                 </c:if>
               </c:if>
               <c:if test="${p.c3 == 'select'}">
-                <select class="form-control" name="${p.c6}" field_requeired="${p.c7}">
+                <select class="form-control chzn-select" name="${p.c6}" field_requeired="${p.c7}">
                   ${p.c4}
                 </select>
               </c:if>
@@ -70,3 +75,8 @@
     </div>
   </div>
 </form>
+<script>
+  $(function(){
+    $(".chzn-select").chosen();
+  });
+</script>

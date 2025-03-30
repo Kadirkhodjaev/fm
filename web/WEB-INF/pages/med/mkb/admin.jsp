@@ -119,6 +119,7 @@
 <script src="/res/bs/jquery/jquery.min.js"></script>
 <script src="/res/jstree/jstree.min.js"></script>
 <script>
+  let elems = ${mkb};
   var to = false;
   $('#ricerca-enti').keyup(function() {
     if (to) {
@@ -133,9 +134,11 @@
   });
   $(document).ready(function() {
     $("#test").on("changed.jstree", function(e, data) {
-      $('#node-info').toggle(data.node.original.info != undefined);
-      $('#node-info-text').text(data.node.original.info == undefined ? '' : data.node.original.info);
-      $('#node-code').text(data.node.original.code);
+      try {
+        $('#node-info').toggle(data.node.original.info !== undefined);
+        $('#node-info-text').text(data.node.original.info == undefined ? '' : data.node.original.info);
+        $('#node-code').text(data.node.original.code);
+      } catch (e){}
     }).jstree({
       checkbox: {
         three_state: false
@@ -173,7 +176,7 @@
         tie_selection: false,
         undetermined: true
       },
-      core: {data: ${mkb}}
+      core: {data: elems}
     });
     $("#test").on("dblclick.jstree", function (event) {
       var node = $(event.target).closest("li");
@@ -209,20 +212,28 @@
     });
   }
 
-  function delItem(id) {
+  function delItem(pid) {
     if(confirm('Дейтвительно хотите удалить?'))
       $.ajax({
         url: '/mkb/del.s',
         method: 'post',
-        data: 'id=' + id,
+        data: 'id=' + pid,
         dataType: 'json',
         success: function (res) {
+          console.log(pid)
           if (res.success) {
-            $('*[name=id]').val(id);
+            for(let i = 0; i < elems.length; i++) {
+              if(elems[i].id === 'padre' + pid) {
+                elems.splice(i, 1);
+                break;
+              }
+            }
+            $('*[name=id]').val(pid);
             $('*[name=name]').val(res.name);
             $('*[name=info]').val(res.info);
             $('*[name=state]').prop('checked', res.state == 'A');
-            setPage('/mkb/admin.s');
+            $('#test').jstree(true).settings.core.data = elems;
+            $('#test').jstree(true).refresh();
           } else {
             alert(res.msg);
           }

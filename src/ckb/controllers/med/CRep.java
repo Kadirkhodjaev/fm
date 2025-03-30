@@ -98,9 +98,9 @@ public class CRep {
           ps.execute();
           rs = ps.getResultSet();
           StringBuffer sb = new StringBuffer();
-          sb.append("<option value=''></option>");
+          sb.append("<option style='text-align:left' value=''></option>");
           while (rs.next())
-            sb.append("<option value='" + rs.getString(1) + "'>" + rs.getString(2) + "</option>");
+            sb.append("<option style='text-align:left' value='" + rs.getString(1) + "'>" + rs.getString(2) + "</option>");
           d.setC4(sb.toString());
         }
         list.add(d);

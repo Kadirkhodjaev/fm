@@ -34,7 +34,7 @@
         <tr>
           <td class="bold" style="vertical-align: middle">Тип: </td>
           <td>
-            <select class="form-control" name="drug_type" onchange="setDrugType(this)" required >
+            <select class="form-control" id="drug_type_code" name="drug_type" onchange="setDrugType(this)" required >
               <c:forEach items="${drugTypes}" var="drugType">
                 <option <c:if test="${drug.drugType.id == drugType.id}">selected</c:if> value="${drugType.id}">${drugType.name}</option>
               </c:forEach>
@@ -42,6 +42,7 @@
           </td>
           <td colspan="3" style="vertical-align: middle; font-weight: bold" class="right">
             <span id="injection_type_label" style="<c:if test="${drug.drugType.id == 16}">display:block</c:if><c:if test="${drug.drugType.id != 16}">display:none</c:if>">Тип инъекции:</span>
+            <span id="tablet_type_label" style="<c:if test="${drug.drugType.id == 16}">display:block</c:if><c:if test="${drug.drugType.id != 16}">display:none</c:if>">Тип лекарств:</span>
           </td>
           <td colspan="2">
             <select class="form-control" style="<c:if test="${drug.drugType.id == 16}">display:block</c:if><c:if test="${drug.drugType.id != 16}">display:none</c:if>" name="injection_type" id="injection_type" >
@@ -49,6 +50,11 @@
               <c:forEach items="${injectionTypes}" var="injectionType">
                 <option <c:if test="${drug.injectionType.id == injectionType.id}">selected</c:if> value="${injectionType.id}">${injectionType.name}</option>
               </c:forEach>
+            </select>
+            <select class="form-control" style="<c:if test="${drug.drugType.id == 16}">display:block</c:if><c:if test="${drug.drugType.id != 16}">display:none</c:if>" name="tablet_type" id="tablet_type" >
+              <option value="TABLET">Таблетка</option>
+              <option value="INHA">Ингаляция</option>
+              <option value="CANDLE">Свеча</option>
             </select>
           </td>
         </tr>
@@ -92,6 +98,9 @@
                   <td align="center" style="width:120px">
                     <c:if test="${rw.source != 'own'}">
                       <input type="number" class="form-control center" value="${rw.expanse}" name="out_count"/>
+                    </c:if>
+                    <c:if test="${rw.source == 'own'}">
+                      <input type="number" class="form-control center" value="1" name="out_count"/>
                     </c:if>
                   </td>
                   <td align="center" style="width:120px">
@@ -231,7 +240,7 @@
             </a>
           </td>
           <td style="vertical-align: middle; width:220px">
-              ${d.drugType.name}<c:if test="${d.drugType.id == 16}"> - ${d.injectionType.name}</c:if>
+              ${d.drugType.name}<c:if test="${d.drugType.id == 16}"> - ${d.injectionType.name}</c:if><c:if test="${d.drugType.id != 16}"> - ${d.tabletType}</c:if>
           </td>
           <td style="vertical-align: middle">
               ${d.goal.name}
@@ -369,6 +378,7 @@
   //$('#patient-drug-add').slideToggle();
   </c:if>
   /*region Scripts*/
+  setDrugType(getDOM("drug_type_code"));
   function setSourceCode(idx) {
     if($('#line_' + idx + ' [name=source_code]').val() === 'own') {
       $('#line_' + idx).find('.source_code_own').show();
@@ -595,6 +605,8 @@
   function setDrugType(dom) {
     $('#injection_type_label').toggle(dom.value == 16);
     $('#injection_type').attr('required', dom.value == 16).toggle(dom.value == 16);
+    $('#tablet_type_label').toggle(dom.value != 16);
+    $('#tablet_type').attr('required', dom.value != 16).toggle(dom.value != 16);
   }
   function printObos() {
     window.open('/lv/print.s?obos=Y');

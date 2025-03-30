@@ -32,6 +32,7 @@ import ckb.models.ObjList;
 import ckb.models.PatientList;
 import ckb.models.drugs.PatientDrug;
 import ckb.models.drugs.PatientDrugDate;
+import ckb.models.drugs.PatientDrugNurseDate;
 import ckb.models.drugs.PatientDrugRow;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
@@ -902,6 +903,10 @@ public class SPatientImp implements SPatient {
       drug.setGoal(pd.getGoal());
       drug.setDrugType(pd.getDrugType());
       drug.setInjectionType(pd.getInjectionType());
+      if(pd.getTabletType() != null) {
+        String d = pd.getTabletType();
+        drug.setTabletType(d.equals("INHA") ? "Ингаляция" : d.equals("TABLET") ? "Таблетки" : "Свеча");
+      }
       List<PatientDrugRow> rows = new ArrayList<>();
       boolean canDel = true;
       for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
@@ -955,6 +960,7 @@ public class SPatientImp implements SPatient {
     drug.setGoal(pd.getGoal());
     drug.setDrugType(pd.getDrugType());
     drug.setInjectionType(pd.getInjectionType());
+    drug.setTabletType(pd.getTabletType());
     List<PatientDrugRow> rows = new ArrayList<>();
     for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + id)) {
       PatientDrugRow row = new PatientDrugRow();
@@ -1128,61 +1134,71 @@ public class SPatientImp implements SPatient {
   }
 
   @Override
-  public List<PatientDrug> getPatientNewDrugs(int dep) {
+  public List<PatientDrugNurseDate> getPatientNewDrugs(int dep) {
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
-    List<PatientDrug> drugs = new ArrayList<>();
+    List<PatientDrugNurseDate> nds = new ArrayList<>();
     try {
       conn = DB.getConnection();
-      ps = conn.prepareStatement(
-        "Select t.id " +
-          "     From Patient_Drugs t, Patients g " +
-          "    Where Exists (Select 1 " +
-          "                    From Patient_Drug_Dates c" +
-          "                   Where c.checked = 1 " +
-          "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
-          "                     And c.patientDrug_id = t.id " +
-          "                     And date(c.date) = CURRENT_DATE()) " +
-          "      And date(t.crOn) = CURRENT_DATE() " + //
-          "      And g.id = t.patient_id " +
-          "      And g.state != 'ARCH' " +
-          "      And g.dept_id = " + dep + // CURRENT_DATE()
-          "    Order By t.patient_id, t.Id desc ");
-      rs = ps.executeQuery();
-      while(rs.next()) {
-        PatientDrugs pd = dPatientDrug.get(rs.getInt(1));
-        PatientDrug drug = new PatientDrug();
-        drug.setId(pd.getId());
-        drug.setPatient(pd.getPatient());
-        drug.setGoal(pd.getGoal());
-        drug.setDrugType(pd.getDrugType());
-        drug.setInjectionType(pd.getInjectionType());
-        List<PatientDrugRow> rows = new ArrayList<>();
-        for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
-          PatientDrugRow row = new PatientDrugRow();
-          row.setId(patientDrugRow.getId());
-          row.setDrug(patientDrugRow.getDrug());
-          row.setName(patientDrugRow.getName());
-          if(!patientDrugRow.getSource().equals("own"))
-            row.setName(row.getName() + " (" + patientDrugRow.getExpanse() + " " + (patientDrugRow.getMeasure() != null ? patientDrugRow.getMeasure().getName() : "") + ")");
-          row.setExpanse(patientDrugRow.getExpanse());
-          row.setSource(patientDrugRow.getSource());
-          row.setState(patientDrugRow.getState());
-          row.setMeasure(patientDrugRow.getMeasure());
-          rows.add(row);
+      List<Date> dates = Util.getDateArray(new Date(), 3);
+      for(Date date : dates) {
+        PatientDrugNurseDate nd = new PatientDrugNurseDate();
+        nd.setDate(date);
+        ps = conn.prepareStatement(
+          "Select t.id " +
+            "     From Patient_Drugs t, Patients g " +
+            "    Where Exists (Select 1 " +
+            "                    From Patient_Drug_Dates c" +
+            "                   Where c.checked = 1 " +
+            "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
+            "                     And c.patientDrug_id = t.id " +
+            "                     And date(c.date) = CURRENT_DATE()) " +
+            "      And date(t.crOn) = '" + Util.dateDB(date) + "'" + //
+            "      And g.id = t.patient_id " +
+            "      And g.state != 'ARCH' " +
+            "      And g.dept_id = " + dep + // CURRENT_DATE()
+            "    Order By t.patient_id, t.Id desc ");
+        rs = ps.executeQuery();
+        List<PatientDrug> drugs = new ArrayList<>();
+        while(rs.next()) {
+          PatientDrugs pd = dPatientDrug.get(rs.getInt(1));
+          PatientDrug drug = new PatientDrug();
+          drug.setId(pd.getId());
+          drug.setPatient(pd.getPatient());
+          drug.setGoal(pd.getGoal());
+          drug.setDrugType(pd.getDrugType());
+          drug.setInjectionType(pd.getInjectionType());
+          List<PatientDrugRow> rows = new ArrayList<>();
+          for(PatientDrugRows patientDrugRow: dPatientDrugRow.getList("From PatientDrugRows Where patientDrug.id = " + drug.getId())) {
+            PatientDrugRow row = new PatientDrugRow();
+            row.setId(patientDrugRow.getId());
+            row.setDrug(patientDrugRow.getDrug());
+            row.setName(patientDrugRow.getName());
+            if(!patientDrugRow.getSource().equals("own"))
+              row.setName(row.getName() + " (" + patientDrugRow.getExpanse() + " " + (patientDrugRow.getMeasure() != null ? patientDrugRow.getMeasure().getName() : "") + ")");
+            row.setExpanse(patientDrugRow.getExpanse());
+            row.setSource(patientDrugRow.getSource());
+            row.setState(patientDrugRow.getState());
+            row.setMeasure(patientDrugRow.getMeasure());
+            rows.add(row);
+          }
+          drug.setRows(rows);
+          String time = "";
+          if(pd.isMorningTime()) time += "Утром" + (pd.isMorningTimeBefore() ? " до еды" : "") + (pd.isMorningTimeAfter() ? " после еды" : "");
+          if(pd.isNoonTime()) time += (time.equals("") ? "" : ", ") + "Днем" + (pd.isNoonTimeBefore() ? " до еды" : "") + (pd.isNoonTimeAfter() ? " после еды" : "");
+          if(pd.isEveningTime()) time += (time.equals("") ? "" : ", ") + "Вечером" + (pd.isEveningTimeBefore() ? " до еды" : "") + (pd.isEveningTimeAfter() ? " после еды" : "");
+          drug.setNote((time.equals("") ? "" : time + "; ") + " " + pd.getNote());
+          drug.setDateBegin(pd.getDateBegin());
+          drug.setDateEnd(pd.getDateEnd());
+          drug.setCrBy(pd.getCrBy());
+          drug.setCrOn(pd.getCrOn());
+          drugs.add(drug);
         }
-        drug.setRows(rows);
-        String time = "";
-        if(pd.isMorningTime()) time += "Утром" + (pd.isMorningTimeBefore() ? " до еды" : "") + (pd.isMorningTimeAfter() ? " после еды" : "");
-        if(pd.isNoonTime()) time += (time.equals("") ? "" : ", ") + "Днем" + (pd.isNoonTimeBefore() ? " до еды" : "") + (pd.isNoonTimeAfter() ? " после еды" : "");
-        if(pd.isEveningTime()) time += (time.equals("") ? "" : ", ") + "Вечером" + (pd.isEveningTimeBefore() ? " до еды" : "") + (pd.isEveningTimeAfter() ? " после еды" : "");
-        drug.setNote((time.equals("") ? "" : time + "; ") + " " + pd.getNote());
-        drug.setDateBegin(pd.getDateBegin());
-        drug.setDateEnd(pd.getDateEnd());
-        drug.setCrBy(pd.getCrBy());
-        drug.setCrOn(pd.getCrOn());
-        drugs.add(drug);
+        if(!drugs.isEmpty()) {
+          nd.setDrugs(drugs);
+          nds.add(nd);
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -1191,6 +1207,6 @@ public class SPatientImp implements SPatient {
       DB.done(ps);
       DB.done(conn);
     }
-    return drugs;
+    return nds;
   }
 }

@@ -12,6 +12,9 @@
   function setGroup(dom) {
     setPage('/core/amb/services.s?page=' + dom.value);
   }
+  function setState(state) {
+
+  }
 </script>
 <style>
   table tr.selected {background: #eee}
@@ -23,7 +26,7 @@
         <td>
           Список амбулаторных услуг
         </td>
-        <td>
+        <td class="wpx-400">
           <select class="form-control" onchange="setGroup(this)">
             <option value="0">Все</option>
             <c:forEach items="${groups}" var="g">
@@ -31,8 +34,15 @@
             </c:forEach>
           </select>
         </td>
-        <td class="right">
-          <button class="btn btn-sm btn-success" type="button" onclick="addAmb()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
+        <td class="wpx-150">
+          <select class="form-control" onchange="setPage('/core/amb/services.s?state=' + this.value);">
+            <option <c:if test="${stateCode == '0'}">selected</c:if> value="0">Все</option>
+            <option <c:if test="${stateCode == 'A'}">selected</c:if> value="A">Активный</option>
+            <option <c:if test="${stateCode == 'P'}">selected</c:if> value="P">Пассивный</option>
+          </select>
+        </td>
+        <td class="right wpx-100">
+          <button class="btn btn-success btn-icon" type="button" onclick="addAmb()" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
         </td>
       </tr>
     </table>

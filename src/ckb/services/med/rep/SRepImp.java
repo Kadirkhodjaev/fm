@@ -4290,7 +4290,7 @@ public class SRepImp implements SRep {
 						"   And s.id = c.service_id " +
 						"   And c.patient = t.id " +
 						"   And f.partnerProc > 0 " +
-						"   And c.crBy = t.crBy " +
+						"   And (c.crBy = t.crBy Or c.crBy = 1) " +
 						"   And t.lvpartner_id = ?" +
 						" Order By t.reg_date"
 				);
@@ -5093,9 +5093,10 @@ public class SRepImp implements SRep {
 			ps = conn.prepareStatement(
 				"Select t.name, Sum(Case When t.sex_id = 12 Then t.counter else 0 End) Sex_12, Sum(Case When t.sex_id = 13 Then t.counter else 0 End) Sex_13 From (" +
 					  "Select d.name, t.sex_id, Count(*) counter" +
-						"  From Patients t, Lv_Form_4 c, Mkb d  " +
+						"  From Patients t, Lv_Docs c, Mkb d  " +
 						" Where date (t.Date_End) Between ? And ? " +
-					  "   And c.patient_id = t.id " +
+					  "   And c.patient_id = t.id" +
+					  "   And c.docCode = 'vypiska'  " +
 						"		And d.id = c.mkb_id " +
 						" Group By d.name, t.sex_id) t Group By t.name "
 			);

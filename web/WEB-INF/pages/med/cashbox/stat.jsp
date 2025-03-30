@@ -73,7 +73,7 @@
     <div style="float: left">Реквизиты пациента <span style="color:red">ID: ${pat.id}</span></div>
     <div style="float:right; color:red"><c:if test="${actExist}">Оплата по акту</c:if></div>
     <ul class="pagination" style="float:right; margin-top:-5px">
-      <c:if test="${pat.paid != 'CLOSED' && serviceTotal <= 0}">
+      <c:if test="${pat.paid != 'CLOSED' && serviceTotal <= 1}">
         <li class="paginate_button" tabindex="0"><a href="#" onclick="closeIB()"><i title="Закрыть историю болезни" class="fa fa-print"></i> Закрыть ИБ</a></li>
       </c:if>
     </ul>
@@ -299,7 +299,7 @@
               <td style="padding:5px;width:25%" class="right">Кол-во дней: </td>
               <td style="padding:5px;width:25%" class="center">${watcher.dayCount}</td>
               <td style="padding:5px;width:25%" class="right">Итого к оплате: </td>
-              <td style="padding:5px;width:25%" class="right"><fmt:formatNumber value="${watcher.total}" type = "number"/></td>
+              <td style="padding:5px;width:25%" class="right"><fmt:formatNumber value="${watcher.total }" type = "number"/></td>
               <td style="width:50px">
                 <c:if test="${pat.paid != 'CLOSED'}">
                   <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delWatcher(${watcher.id})"><span class="fa fa-minus"></span></button>

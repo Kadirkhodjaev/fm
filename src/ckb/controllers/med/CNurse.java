@@ -67,7 +67,7 @@ public class CNurse {
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null, rc = null;
-    boolean is1 = false, is3 = false, is4 = false, is6 = false, is10 = false, is11 = false, is12 = false, is13 = false, is14 = false, is15 = false, is16 = false, is17 = false;
+    boolean is1 = false, is3 = false, is4 = false, is6 = false, is10 = false, is11 = false, is12 = false, is13 = false, is14 = false, is15 = false, is16 = false, is17 = false, is22 = false;
     try {
       List<Depts> depts = dDep.getAll();
       Users user = dUser.get(session.getUserId());
@@ -271,6 +271,10 @@ public class CNurse {
             is17 = true;
             row.setC27((row.getC27() == null ? "" : row.getC27() + "<br/>") + name);
           }
+          if (rc.getInt("kdo_type_id") == 22) {
+            is22 = true;
+            row.setC25((row.getC25() == null ? "" : row.getC25() + "<br/>") + name);
+          }
         }
         DB.done(rc);
         DB.done(ps);
@@ -313,6 +317,7 @@ public class CNurse {
       model.addAttribute("is15", is15);
       model.addAttribute("is16", is16);
       model.addAttribute("is17", is17);
+      model.addAttribute("is22", is22);
       model.addAttribute("types", dKdoType.getList("From KdoTypes Where state = 'A'"));
       model.addAttribute("rows", rows);
     } catch (Exception e) {

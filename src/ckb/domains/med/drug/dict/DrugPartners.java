@@ -17,6 +17,7 @@ public class DrugPartners extends GenId {
   private String phone;
   @Column
   private String email;
+  @Column private Double ord;
 
   @Column
   private Integer crBy;
@@ -61,5 +62,13 @@ public class DrugPartners extends GenId {
 
   public void setCrOn(Date crOn) {
     this.crOn = crOn;
+  }
+
+  public Double getOrd() {
+    return ord;
+  }
+
+  public void setOrd(Double ord) {
+    this.ord = ord;
   }
 }

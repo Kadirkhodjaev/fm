@@ -24,6 +24,7 @@
           <th>Наименование</th>
           <th>Телефон</th>
           <th>Email</th>
+          <th>Очередь</th>
           <th style="width:40px">Удалить</th>
         </tr>
         </thead>
@@ -36,6 +37,7 @@
             </td>
             <td align="center">${obj.phone}</td>
             <td align="center">${obj.email}</td>
+            <td align="center">${obj.ord}</td>
             <td class="center">
               <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.id})"><i class="fa fa-minus"></i></button>
             </td>
@@ -70,6 +72,12 @@
               <td class="right bold">Телефон:</td>
               <td>
                 <input type="text" class="form-control" name="phone" value=""/>
+              </td>
+            </tr>
+            <tr>
+              <td class="right bold">Очередность:</td>
+              <td>
+                <input type="number" class="form-control" name="ord" value=""/>
               </td>
             </tr>
             <tr>
@@ -108,6 +116,7 @@
           $('*[name=name]').val(res.name);
           $('*[name=phone]').val(res.phone);
           $('*[name=email]').val(res.email);
+          $('*[name=ord]').val(res.ord);
         } else {
           alert(res.msg);
         }

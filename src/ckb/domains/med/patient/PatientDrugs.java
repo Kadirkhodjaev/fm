@@ -15,6 +15,7 @@ public class PatientDrugs extends GenId {
   @OneToOne @JoinColumn private LvDrugGoals goal;
   @OneToOne @JoinColumn private Dicts drugType;
   @OneToOne @JoinColumn private Dicts injectionType;
+  @Column private String tabletType;
 
   @Column private String note;
   @Column private String state;
@@ -187,4 +188,13 @@ public class PatientDrugs extends GenId {
   public void setDateEnd(Date dateEnd) {
     this.dateEnd = dateEnd;
   }
+
+  public String getTabletType() {
+    return tabletType;
+  }
+
+  public void setTabletType(String tabletType) {
+    this.tabletType = tabletType;
+  }
+
 }

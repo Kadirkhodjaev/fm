@@ -444,6 +444,31 @@ public class CAmb {
     return "med/amb/services";
   }
 
+  @RequestMapping("/prices.s")
+  protected String prices(HttpServletRequest req, Model m){
+    session = SessionUtil.getUser(req);
+    session.setCurUrl("/amb/prices.s");
+    //region Groups
+    List<AmbGroups> groups = dAmbGroups.getList("From AmbGroups t Where t.active = 1");
+    List<AmbGroup> gs = new ArrayList<>();
+    for(AmbGroups group: groups) {
+      AmbGroup g = new AmbGroup();
+      List<AmbServices> list = new ArrayList<AmbServices>();
+      List<AmbServices> services = dAmbServices.byType(group.getId());
+      for(AmbServices s: services)
+        if(dAmbServiceUsers.getCount("From AmbServiceUsers Where service = " + s.getId()) > 0)
+          list.add(s);
+      if(list.size() > 0) {
+        g.setServices(list);
+        g.setGroup(group);
+        gs.add(g);
+      }
+    }
+    m.addAttribute("groups", gs);
+    //endregion
+    return "med/amb/prices";
+  }
+
   @RequestMapping(value = "/services.s", method = RequestMethod.POST)
   @ResponseBody
   protected String services(HttpServletRequest req) throws JSONException {

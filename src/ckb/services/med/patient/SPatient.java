@@ -7,6 +7,7 @@ import ckb.models.Grid;
 import ckb.models.ObjList;
 import ckb.models.PatientList;
 import ckb.models.drugs.PatientDrug;
+import ckb.models.drugs.PatientDrugNurseDate;
 import ckb.session.Session;
 import org.springframework.ui.Model;
 
@@ -55,5 +56,5 @@ public interface SPatient {
 
   List<PatientDrug> getDrugsByTypeToDate(Integer patId, Date operDay, int i, String time);
 
-  List<PatientDrug> getPatientNewDrugs(int dep);
+  List<PatientDrugNurseDate> getPatientNewDrugs(int dep);
 }

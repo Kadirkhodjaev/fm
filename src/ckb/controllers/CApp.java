@@ -181,6 +181,7 @@ public class  CApp {
       m.add(new Menu("Текущие", "/amb/home.s", "fa fa-group fa-fw", session.getCurUrl().equals("/amb/home.s")));
       m.add(new Menu("Клиенты", "/clients/list.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Архив", "/amb/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/amb/archive.s")));
+      m.add(new Menu("Прейскурант", "/amb/prices.s", "fa fa-list-alt fa-fw", session.getCurUrl().equals("/amb/prices.s")));
     }
     if(roleId == 16) { // Физиотерапия
       if(user.isDocfizio()) {
@@ -271,14 +272,18 @@ public class  CApp {
       m.add(new Menu("Пациенты", "/patients/list.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/patients/list.s")));
       m.add(new Menu("Архив", "/patients/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/archive/list.s")));
     }
+    if(roleId == 26) { // Сотрудники
+      session.setCurUrl(session.getCurUrl().equals("") ? "/emp/index.s" : session.getCurUrl());
+      m.add(new Menu("Сотрудники", "/emp/index.s", "fa fa-align-justify fa-fw", session));
+    }
     model.addAttribute("menuList", m);
     model.addAttribute("lvs", dUser.getLvs());
     model.addAttribute("groups", dAmbGroups.getAll());
     model.addAttribute("depts", dDept.getAll());
     model.addAttribute("repList", dUser.getReports(session.getUserId()));
     model.addAttribute("openPage", roleId == 0 ? "/roles.s" : session.getCurUrl().equals("") ? dRole.get(roleId).getUrl() : session.getCurUrl());
-    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22 || session.getRoleId() == 23 || session.getRoleId() == 24);
-    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22 && roleId != 23 && roleId != 24);
+    model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22 || session.getRoleId() == 23 || session.getRoleId() == 24 || session.getRoleId() == 26);
+    model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22 && roleId != 23 && roleId != 24 && roleId != 26);
     model.addAttribute("isEnterFilter", dParam.byCode("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);
     model.addAttribute("clinicName", dParam.byCode("CLINIC_NAME"));
@@ -520,8 +525,9 @@ public class  CApp {
 
       File file = new File("C:\\mysql_logs\\mysql-slow.log");
       BufferedReader br = new BufferedReader(new FileReader(file));
-      String st;
-      List<String> rows = new ArrayList<String>();
+      String st, st1 = "", st2 = "", time = "", queryTime, lockTime, rowSent, rowsExamined;
+      List<String[]> rows = new ArrayList<>();
+      List<String> rws = new ArrayList<>();
       int i = 0;
       while ((st = br.readLine()) != null) {
         if(!exceptions.contains(st.replaceAll(" ", ""))) {
@@ -531,30 +537,73 @@ public class  CApp {
               isOK = false;
           }
           if(isOK) {
-            if(st.replaceAll(" ", "").contains("#Query_time") || st.replaceAll(" ", "").contains("#Time")) {
-              String last = rows.get(rows.size() - 1);
-              if(last.replaceAll(" ", "").contains("#Query_time")) {
-                rows.remove(rows.size() - 1);
-              }
-            }
-            if(st.replaceAll(" ", "").contains("#Time")) {
-              String last = rows.get(rows.size() - 1);
-              if(last.replaceAll(" ", "").contains("#Time")) {
-                rows.remove(rows.size() - 1);
-              }
-            }
-            rows.add(st);
+            i++;
+            //if(i > 1000) break;
+            rws.add(st);
           }
+        }
+      }
+      boolean isQuery = false;
+      String v = "";
+      for(int g=0;g<rws.size();g++) {
+        st = rws.get(g);
+        if(st.contains("# Time")) {
+          time = st.substring(8);
+          continue;
+        }
+        if(st.contains("# Query")) {
+          isQuery = true;
+          v = "";
+        }
+        if(g + 1 < rws.size() && isQuery && st.contains("# Query")) {
+          if ((rws.get(g + 1).contains("# Query_time") || rws.get(g + 1).contains("# Time"))) {
+            isQuery = false;
+            continue;
+          }
+        }
+        if(g + 1 < rws.size() && !st.contains("# Query")) {
+          if (!rws.get(g + 1).contains("# Query_time") && !rws.get(g + 1).contains("# Time")) {
+            v += st + "\n";
+            continue;
+          }
+        }
+        if(!v.isEmpty()) st = v + st;
+        st2 = st1.isEmpty() ? "" : st;
+        st1 = st.contains("# Query_time") ? st : st1;
+        if(!st.isEmpty() && !st2.isEmpty()) {
+          i++;
+          st1 = st1.substring(14);
+          queryTime = st1.substring(0, st1.indexOf(" "));
+          st1 = st1.substring(st1.indexOf("Lock_time:") + 11);
+          lockTime = st1.substring(0, st1.indexOf(" "));
+          st1 = st1.substring(st1.indexOf("Rows_sent:") + 11);
+          rowSent = st1.substring(0, st1.indexOf(" "));
+          st1 = st1.substring(st1.indexOf("Rows_examined:") + 15);
+          rowsExamined = st1.substring(0);
+          String[] row = new String[6];
+          row[0] = st2;
+          row[1] = time;
+          row[2] = queryTime;
+          row[3] = lockTime;
+          row[4] = rowSent;
+          row[5] = rowsExamined;
+          rows.add(row);
+          st1 = "";
         }
       }
       ps = conn.prepareStatement("Delete t From log_slows t");
       ps.executeUpdate();
-      for(String row: rows) {
-        ps = conn.prepareStatement("Insert into log_slows Values(?)");
-        ps.setString(1, row);
+      for(String[] row: rows) {
+        ps = conn.prepareStatement("Insert into log_slows Values(?, ?, ?, ?, ?, ?)");
+        ps.setString(1, row[0]);
+        ps.setString(2, row[1]);
+        ps.setInt(3, Integer.parseInt(row[2]));
+        ps.setInt(4, Integer.parseInt(row[3]));
+        ps.setInt(5, Integer.parseInt(row[4]));
+        ps.setInt(6, Integer.parseInt(row[5]));
         ps.executeUpdate();
       }
-      model.addAttribute("rows", rows);
+      //model.addAttribute("rows", rows);
     } catch (Exception e) {
       e.printStackTrace();
     } finally {

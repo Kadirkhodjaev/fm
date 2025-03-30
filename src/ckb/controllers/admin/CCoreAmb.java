@@ -74,13 +74,19 @@ public class CCoreAmb {
     String page = Util.get(request, "page");
     if(page == null) page = session.getDateBegin().get("admin_amb_index");
     if(page == null) page = "0";
+    String stateCode = Util.get(request, "state");
+    if(stateCode == null) stateCode = session.getFilters().get("admin_amb_state");
+    if(stateCode == null) stateCode = "A";
     //
     HashMap<String, String> dh = session.getDateBegin();
     dh.put("admin_amb_index", page);
     session.setDateBegin(dh);
+    HashMap<String, String> df = session.getFilters();
+    df.put("admin_amb_state", stateCode);
+    session.setFilters(df);
     //
     List<AmbService> services = new ArrayList<>();
-    List<AmbServices> list = dAmbServices.getList("From AmbServices t " + (page.equals("0") ? "" : " Where  group.id = " + page) + " Order By t.state, t.group.id");
+    List<AmbServices> list = dAmbServices.getList("From AmbServices t Where 1=1 " + (page.equals("0") ? "" : " And group.id = " + page) + (stateCode.equals("0") ? "" : " And state = '" + stateCode + "'") + " Order By t.state, t.group.id");
     for(AmbServices l:list) {
       AmbService s = new AmbService();
       s.setId(l.getId());
@@ -90,6 +96,7 @@ public class CCoreAmb {
     model.addAttribute("services", services);
     model.addAttribute("groups", dAmbGroups.getAll());
     model.addAttribute("page", page);
+    model.addAttribute("stateCode", stateCode);
     return "/core/amb/index";
   }
 

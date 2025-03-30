@@ -1312,6 +1312,8 @@ public class CLv {
         drug.setDrugType(dDict.get(Util.getInt(req, "drug_type")));
         if(Util.getInt(req, "drug_type") == 16)
           drug.setInjectionType(dDict.get(Util.getInt(req, "injection_type")));
+        else
+          drug.setTabletType(Util.get(req, "injection_type"));
         drug.setPatient(dPatient.get(session.getCurPat()));
         drug.setDateBegin(Util.getDate(req, "dateBegin"));
         drug.setDateEnd(Util.getDate(req, "dateEnd"));
@@ -1359,10 +1361,12 @@ public class CLv {
       } else {
         PatientDrugs drug = dPatientDrug.get(Util.getInt(req, "id"));
         drug.setDrugType(dDict.get(Util.getInt(req, "drug_type")));
+        drug.setInjectionType(null);
+        drug.setTabletType(null);
         if(Util.getInt(req, "drug_type") == 16)
           drug.setInjectionType(dDict.get(Util.getInt(req, "injection_type")));
         else
-          drug.setInjectionType(null);
+          drug.setTabletType(Util.get(req, "tablet_type"));
         drug.setDateBegin(Util.getDate(req, "dateBegin"));
         drug.setDateEnd(Util.getDate(req, "dateEnd"));
         drug.setGoal(dLvDrugGoal.get(Util.getInt(req, "goal")));

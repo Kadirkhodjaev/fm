@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 
 @Controller
 @RequestMapping("/core/stat/")
@@ -74,10 +75,17 @@ public class CCoreStat {
     Session session = SessionUtil.getUser(req);
     String group = Util.get(req, "group", "0");
     session.setCurUrl("/core/stat/services.s?group=" + group);
+    String stateCode = Util.get(req, "state");
+    if(stateCode == null) stateCode = session.getFilters().get("admin_stat_state");
+    if(stateCode == null) stateCode = "A";
+    HashMap<String, String> df = session.getFilters();
+    df.put("admin_stat_state", stateCode);
+    session.setFilters(df);
     model.addAttribute("groups", dKdoType.getList("From KdoTypes Order By id Desc"));
-    model.addAttribute("services", dKdo.getList("From Kdos Where state = 'A' " + (group.equals("0") ? "" : " And kdoType.id = " + group) + " And id not in (13, 56, 120, 121, 153) Order By kdoType.id"));
+    model.addAttribute("services", dKdo.getList("From Kdos Where 1=1 " + (group.equals("0") ? "" : " And kdoType.id = " + group) + (stateCode.equals("0") ? "" : " And state = '" + stateCode + "'") + " And id not in (13, 56, 120, 121, 153) Order By kdoType.id"));
     model.addAttribute("forms", dForm.getAll());
     model.addAttribute("group", group);
+    model.addAttribute("stateCode", stateCode);
     return "/core/stat/services";
   }
 

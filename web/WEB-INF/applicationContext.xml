@@ -188,6 +188,10 @@
 
   <bean id="dClient" class="ckb.dao.med.client.DClientImp" parent="daoImpl"/>
 
+  <!-- EMPS -->
+  <bean id="dEmp" class="ckb.dao.emp.DEmpImp" parent="daoImpl"/>
+  <bean id="dEmpDoctor" class="ckb.dao.emp.DEmpDoctorImp" parent="daoImpl"/>
+
   <!-- SERVICES -->
   <bean id="sUser" class="ckb.services.admin.user.SUserImp" scope="singleton"/>
   <bean id="sForm" class="ckb.services.admin.form.SFormImp" scope="singleton"/>
@@ -200,7 +204,6 @@
   <bean id="sDrug" class="ckb.services.med.drug.SDrugImp" scope="singleton"/>
 
   <bean id="sMoGrid" class="ckb.services.mo.amb.SMoAmbImp" scope="singleton"/>
-
 
   <bean id="cleansoftDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
     <property name="driverClass" value="${jdbc.driverClassName}"/>

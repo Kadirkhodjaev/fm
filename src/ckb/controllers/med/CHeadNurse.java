@@ -28,6 +28,7 @@ import ckb.dao.med.head_nurse.patient.drugs.DHNPatientDrug;
 import ckb.dao.med.nurse.eat.DNurseEatPatient;
 import ckb.dao.med.nurse.eat.DNurseEats;
 import ckb.dao.med.patient.*;
+import ckb.domains.admin.Depts;
 import ckb.domains.admin.UserDrugLines;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbDrugDates;
@@ -920,6 +921,7 @@ public class CHeadNurse {
     m.addAttribute("filter_word", filter);
     m.addAttribute("page_code", page_code);
     m.addAttribute("sysdate", new Date());
+    m.addAttribute("month3", Util.dateAddDay(new Date(), 90));
     return "/med/head_nurse/saldo/index";
   }
 
@@ -2564,11 +2566,10 @@ public class CHeadNurse {
   protected String patientNewDrugs(HttpServletRequest req, Model model) {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/new_drugs.s");
-    try {
-      int dep = dUser.get(session.getUserId()).getDept().getId();
+    Depts d = dUser.get(session.getUserId()).getDept();
+    if(d != null) {
+      int dep = d.getId();
       model.addAttribute("list", sPatient.getPatientNewDrugs(dep));
-    } catch (Exception e) {
-      e.printStackTrace();
     }
     return "med/head_nurse/new_drugs";
   }
