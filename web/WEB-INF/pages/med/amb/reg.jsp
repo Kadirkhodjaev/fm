@@ -396,10 +396,10 @@
                 <table class="w-100">
                   <tr>
                     <td>
-                      <input name="cl_surname" title="Фамилия" placeholder="Фамилия" type="text" class="form-control w-100" required="true" maxlength="64" autocomplete="off"/>
+                      <input name="cl_surname" title="Фамилия" placeholder="Фамилия" type="text" class="form-control w-100" required maxlength="64" autocomplete="off"/>
                     </td>
                     <td>
-                      <input name="cl_name" title="Исми" placeholder="Исми" type="text" class="form-control w-100" required="true"  maxlength="64" autocomplete="off"/>
+                      <input name="cl_name" title="Исми" placeholder="Исми" type="text" class="form-control w-100" required  maxlength="64" autocomplete="off"/>
                     </td>
                     <td>
                       <input name="cl_middlename" title="Шарифи" placeholder="Шарифи" class="form-control w-100" maxlength="64" autocomplete="off"/>
