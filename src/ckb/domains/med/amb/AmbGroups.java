@@ -16,6 +16,7 @@ public class AmbGroups extends GenId {
   @Column private boolean active;
   @Column private Double partnerProc;
   @Column private Double bonusProc;
+  @Column private Double empProc;
 
   public String getName() {
     return name;
@@ -63,5 +64,13 @@ public class AmbGroups extends GenId {
 
   public void setBonusProc(Double bonusProc) {
     this.bonusProc = bonusProc;
+  }
+
+  public Double getEmpProc() {
+    return empProc;
+  }
+
+  public void setEmpProc(Double empProc) {
+    this.empProc = empProc;
   }
 }

@@ -173,8 +173,9 @@ public class  CApp {
       m.add(new Menu("Архив (Стац)", "/patients/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/patients/archive.s")));
     }
     if(roleId == 14) {  // Амбулаторные услуги
-      m.add(new Menu("Текущие", "/amb/home.s", "fa fa-group fa-fw", session.getCurUrl().equals("/amb/home.s")));
-      m.add(new Menu("Архив", "/amb/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/amb/archive.s")));
+      m.add(new Menu("Текущие", "/amb/home.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Сотрудники", "/emp/doctor/emps.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Архив", "/amb/archive.s", "fa fa-archive fa-fw", session));
     }
     if(roleId == 15) { // Амбулаторная регистрация
       m.add(new Menu("Регистрация", "/amb/reg.s", "fa fa-edit fa-fw", session.getCurUrl().contains("/amb/reg.s")));

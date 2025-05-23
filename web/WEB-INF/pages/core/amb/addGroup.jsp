@@ -44,7 +44,11 @@
         </tr>
         <tr>
           <td class="bold">Процент бонуса (%):</td>
-          <td><input type="number" class="form-control right" value="${ser.bonusProc}" name="bonusProc" required></td>
+          <td><input type="number" class="form-control right" value="${ser.bonusProc}" name="bonusProc"></td>
+        </tr>
+        <tr>
+          <td class="bold">Процент для сотрудников (%):</td>
+          <td><input type="number" class="form-control right" value="${ser.empProc}" name="empProc" required></td>
         </tr>
         <tr>
           <td class="bold">Группа?:</td>

@@ -14,6 +14,7 @@ public class Emps extends GenId {
   @OneToOne @JoinColumn private Clients client;
   @OneToOne @JoinColumn private Depts dept;
   @Column private String text;
+  @Column private String state;
 
   @Column private Integer crBy;
   @Column private Date crOn;
@@ -56,5 +57,13 @@ public class Emps extends GenId {
 
   public void setText(String text) {
     this.text = text;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String state) {
+    this.state = state;
   }
 }

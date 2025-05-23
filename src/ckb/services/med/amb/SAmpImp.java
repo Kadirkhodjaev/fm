@@ -193,12 +193,12 @@ public class SAmpImp implements SAmb {
       pat.setCrBy(SessionUtil.getUser(req).getUserId());
     }
     AmbPatients pp = dAmpPatients.saveAndReturn(pat);
-    if(Util.isNotNull(req, "regId")) {
+    /*if(Util.isNotNull(req, "regId")) {
       AmbPatientLinks link = new AmbPatientLinks();
       link.setParent(Util.getInt(req, "regId"));
       link.setChild(pp.getId());
       dAmbPatientLinks.save(link);
-    }
+    }*/
     return pp;
   }
 

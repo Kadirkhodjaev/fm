@@ -7,10 +7,6 @@
       <tr>
         <td>Сотрудники</td>
         <td class="wpx-100 text-right">
-          <button class="btn btn-icon btn-success" onclick="setPage('/emp/addEdit.s?id=0')">
-            <span class="fa fa-plus"></span>
-            Добавить
-          </button>
         </td>
       </tr>
     </table>
@@ -28,7 +24,7 @@
       </thead>
       <tbody>
         <c:forEach items="${rows}" var="a" varStatus="loop">
-          <tr class="hand hover" ondblclick="setPage('emp/addEdit.s?id=${a.id}')">
+          <tr class="hand hover" ondblclick="setPage('emp/doctor/emp.s?id=${a.id}')">
             <td class="p-3 text-center">${loop.index + 1}</td>
             <td class="p-3">${a.client.fio}</td>
             <td class="p-3">${a.text}</td>

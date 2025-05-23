@@ -31,13 +31,13 @@ public class  DUserImp extends DaoImp<Users> implements DUser {
     try {
       return entityManager.createQuery("Select t.reports from Users t Where t.id = " + id).getResultList();
     } catch (Exception ex) {
-      return new ArrayList<Reports>();
+      return new ArrayList<>();
     }
   }
 
   @Override
   public List<Users> getLvs() {
-    return getList("From Users Where dept.id > 0 And lv = 1 Order By fio");
+    return getList("From Users Where (dept.id > 0 And lv = 1) Or id = 1 Order By fio");
   }
 
   @Override
@@ -45,7 +45,7 @@ public class  DUserImp extends DaoImp<Users> implements DUser {
     try {
       return entityManager.createQuery("Select t.kdoTypes from Users t Where t.id = " + id).getResultList();
     } catch (Exception ex) {
-      return new ArrayList<KdoTypes>();
+      return new ArrayList<>();
     }
   }
 
@@ -63,7 +63,7 @@ public class  DUserImp extends DaoImp<Users> implements DUser {
         list.add(kdo.getId());
       return list;
     } catch (Exception ex) {
-      return new ArrayList<Integer>();
+      return new ArrayList<>();
     }
   }
 

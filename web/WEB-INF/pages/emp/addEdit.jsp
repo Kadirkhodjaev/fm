@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jstl/fmt" %>
+<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
 <div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog wpx-1000">
@@ -102,11 +102,10 @@
     <table class="w-100">
       <tr>
         <td>Реквизиты сотрудника</td>
-        <td class="wpx-100 text-right">
-          <button class="btn btn-icon btn-success" onclick="saveEmp()">
-            <span class="fa fa-save"></span>
-            Сохранить
-          </button>
+        <td class="wpx-300 text-right">
+          <button class="btn btn-icon btn-success" onclick="saveEmp()"><span class="fa fa-save"></span> Сохранить</button>
+          <button class="btn btn-icon btn-danger" onclick="delEmp()"><span class="fa fa-remove"></span> Удалить</button>
+          <button class="btn btn-icon btn-default" onclick="setPage('/emp/index.s')"><span class="fa fa-close"></span> Назад</button>
         </td>
       </tr>
     </table>
@@ -148,13 +147,13 @@
           <td class="right" nowrap>
             Дата рождения:
           </td>
-          <td><input type="text" name="birthday" class="form-control center" readonly value="" placeholder="dd.mm.yyyy"/></td>
+          <td><input type="text" name="birthday" class="form-control center" readonly value="<fmt:formatDate pattern="dd.MM.yyyy" value = "${emp.client.birthdate}" />"/></td>
           <td class="right" nowrap>Пол :</td>
           <td><input type="text" name="sex_id" class="form-control center" readonly value="${emp.client.sex.name}"/></td>
         </tr>
         <tr>
           <td class="right" nowrap>Телефон :</td>
-          <td><input name="tel" type="text" class="form-control" maxlength="400"/></td>
+          <td><input name="tel" type="text" class="form-control" maxlength="400" value="${emp.client.tel}"/></td>
           <td class="right" nowrap>Паспортные данные:</td>
           <td><input type="text" name="passport" class="form-control center" readonly value="${emp.client.docSeria} от ${emp.client.docNum} "/></td>
         </tr>
@@ -169,17 +168,106 @@
           <td colspan="3"><input name="address" type="text" class="form-control" maxlength="400"/></td>
         </tr>
         <tr>
-          <td class="right bold">Активный?:</td>
+          <td class="text-right">Описание: </td>
+          <td colspan="3">
+            <input type="text" name="text" maxlength="250" class="form-control" value="${emp.text}"/>
+          </td>
+        </tr>
+        <tr>
+          <td class="right">Активный?:</td>
           <td class="left">
-            <input type="checkbox" checked name="state" value="Y"/>
+            <input type="checkbox" <c:if test="${emp.state == 'A'}">checked</c:if> name="state" value="Y"/>
+          </td>
+        </tr>
+        <tr>
+          <td class="text-right">Прикрепленные врачи:</td>
+          <td colspan="3" style="padding:10px">
+            <c:forEach items="${emp_lvs}" var="a">
+              <div style="border:1px solid #ababab; padding:5px;display: inline; margin-right:5px; border-radius: 3px">
+                  ${a.doctor.fio}
+                    <button type="button" class="btn btn-danger btn-icon" style="margin-top:-4px" onclick="delEmpDoctor(${a.id})"><span class="fa fa-close"></span></button>
+              </div>
+            </c:forEach>
           </td>
         </tr>
       </table>
     </form>
   </div>
 </div>
+<c:if test="${emp.id > 0}">
+  <div class="panel panel-info">
+    <div class="panel-heading">
+      <table class="w-100">
+        <tr>
+          <td>Прикрепить ответветственного врача</td>
+          <td class="wpx-200 text-right">
+            <button class="btn btn-icon btn-success" onclick="saveDoctor()"><span class="fa fa-save"></span> Сохранить</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="panel-body">
+      <form id="addEditDoctor">
+        <input type="hidden" name="id" value="${emp.id}" />
+        <table class="table table-bordered">
+          <tr>
+            <td class="right bold">Врач*:</td>
+            <td colspan="4">
+              <select class="form-control" name="doctor">
+                <c:forEach items="${lvs}" var="a">
+                  <option value="${a.id}">${a.fio}</option>
+                </c:forEach>
+              </select>
+            </td>
+          </tr>
+        </table>
+      </form>
+    </div>
+  </div>
+</c:if>
 <script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
 <script>
+  function delEmp() {
+    if(confirm('Вы действительно хотите удалить данного сотрудника?'))
+      $.ajax({
+        url: 'emp/del.s',
+        method: 'post',
+        data: 'id=${emp.id}',
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success)
+            setPage('emp/index.s');
+        }
+      });
+  }
+  function delEmpDoctor(id) {
+    if(confirm('Вы действительно хотите удалить выбранную запись?'))
+      $.ajax({
+        url: 'emp/doctor/del.s',
+        method: 'post',
+        data: 'id=' + id,
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success)
+            setPage('emp/addEdit.s?id=${emp.id}');
+        }
+      });
+  }
+  function saveDoctor() {
+    $.ajax({
+      url: 'emp/doctor/save.s',
+      method: 'post',
+      data: $('#addEditDoctor').serialize(),
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success)
+          setPage('emp/addEdit.s?id=${emp.id}');
+      }
+    });
+  }
   function saveEmp() {
     $.ajax({
       url: 'emp/addEdit.s',
@@ -188,7 +276,7 @@
       dataType: 'json',
       success: function (res) {
         openMsg(res);
-        if(res.succes) {
+        if(res.success) {
           setPage('/emp/addEdit.s?id=' + res.id);
         }
       }

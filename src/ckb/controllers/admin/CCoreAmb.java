@@ -191,7 +191,8 @@ public class CCoreAmb {
       ser.setFizio(Util.isNotNull(req, "fizio"));
       ser.setActive(Util.isNotNull(req, "active"));
       ser.setPartnerProc(Util.getDouble(req, "partnerProc", 0D));
-      ser.setBonusProc(Util.getDouble(req, "bonusProc", 0D));
+      ser.setBonusProc(Util.isNull(req, "bonusProc") ? null : Util.getDouble(req, "bonusProc"));
+      ser.setEmpProc(Util.getDouble(req, "empProc", 0D));
       dAmbGroups.save(ser);
       json.put("success", true);
     } catch (Exception e) {

@@ -109,7 +109,6 @@ public class CAmb {
       session.setBackUrl(session.getCurUrl());
       String sql = " From Amb_Patients t Where t.state != 'ARCH' ";
       Users user = dUser.get(session.getUserId());
-      // ???????????? ??????
       if (session.getRoleId() == 14) {
         sql += " And (t.state in ('WORK', 'DONE') And Exists (Select 1 From Amb_Patient_Services c Where t.id = c.patient And c.State Not In ('DEL', 'AUTO_DEL') And c.worker_id = " + session.getUserId() + "))";
         if(user.isAmbFizio())
@@ -203,7 +202,7 @@ public class CAmb {
         flag = filters.get("amb_patient_flag");
       if(flag.equals("0")) flag = "";
       filters.put("amb_patient_flag", flag);
-      String sql = " From Amb_Patients t Where t.state = 'ARCH' " + (flag.isEmpty() ? "" : flag.equals("DONE") ? " And client_id is not null" : " And client_Id is null");
+      String sql = " From Amb_Patients t Where emp is null And t.state = 'ARCH' " + (flag.isEmpty() ? "" : flag.equals("DONE") ? " And client_id is not null" : " And client_Id is null");
       //region Поиск
       if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).isEmpty()) {
         session.setFiltered(true);
@@ -484,10 +483,16 @@ public class CAmb {
         ser.setCrOn(new Date());
         ser.setPatient(session.getCurPat());
         ser.setService(s);
-        ser.setPrice(s.getStatusPrice(pat));
+        if(pat.getEmp() != null) {
+          Double proc = ser.getService().getGroup().getEmpProc() > 0 ? ser.getService().getGroup().getEmpProc() : 0D;
+          ser.setPrice(ser.getService().getPrice() * proc);
+          ser.setState("PAID");
+        } else {
+          ser.setPrice(s.getStatusPrice(pat));
+          ser.setState("ENT");
+        }
         ser.setNdsProc(Double.parseDouble(dParam.byCode("NDS_PROC")));
         ser.setNds(ser.getPrice() * (ser.getNdsProc() == 0 ? 100 : ser.getNdsProc()) / 100);
-        ser.setState("ENT");
         ser.setResult(0);
         ser.setAmb_repeat("N");
         ser.setWorker(dAmbServiceUsers.getFirstUser(Integer.parseInt(id)));

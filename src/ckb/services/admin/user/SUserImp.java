@@ -32,38 +32,36 @@ public class SUserImp implements SUser {
 
   @Override
   public Session login(HttpServletRequest request) {
-    Session session = null;
+    Session session;
     Users user;
     if(Util.isNull(request, "session_user_id"))
       user = dUser.getByLoginPassword(Req.get(request, "login"), Req.get(request, "password"));
     else
       user = dUser.get(Util.getInt(request, "session_user_id"));
-    if(!user.isActive()) return null;
-    if (user != null) {
-      session = new Session();
-      String ip = request.getRemoteAddr();
-      if(dUserIp.getCount("From UserIps Where user.id = " + user.getId()) > 0) {
-        if(dUserIp.getCount("From UserIps Where user.id = " + user.getId() + " And ip = '" + ip + "'") == 0) {
-          session.setUserId(-1);
-          return session;
-        }
+    if(user == null || !user.isActive()) return null;
+    session = new Session();
+    String ip = request.getRemoteAddr();
+    if(dUserIp.getCount("From UserIps Where user.id = " + user.getId()) > 0) {
+      if(dUserIp.getCount("From UserIps Where user.id = " + user.getId() + " And ip = '" + ip + "'") == 0) {
+        session.setUserId(-1);
+        return session;
       }
-      session.setUserId(user.getId());
-      session.setUserName(user.getFio());
-      session.setDeptId(user.getDept() != null ? user.getDept().getId() : 0);
-      session.setKdoTypesIds(dUser.getKdoTypesIds(user.getId()));
-      List<Params> params = dParam.getAll();
-      Map<String, String> list = new HashMap<String, String>();
-      for(Params param : params) {
-        list.put(param.getCode(), param.getVal());
-      }
-      session.setParams(list);
-      UserLogs log = new UserLogs();
-      log.setUser(user);
-      log.setIp(ip);
-      log.setDateTime(new Date());
-      dUserLog.save(log);
     }
+    session.setUserId(user.getId());
+    session.setUserName(user.getFio());
+    session.setDeptId(user.getDept() != null ? user.getDept().getId() : 0);
+    session.setKdoTypesIds(dUser.getKdoTypesIds(user.getId()));
+    List<Params> params = dParam.getAll();
+    Map<String, String> list = new HashMap<String, String>();
+    for(Params param : params) {
+      list.put(param.getCode(), param.getVal());
+    }
+    session.setParams(list);
+    UserLogs log = new UserLogs();
+    log.setUser(user);
+    log.setIp(ip);
+    log.setDateTime(new Date());
+    dUserLog.save(log);
     return session;
   }
 

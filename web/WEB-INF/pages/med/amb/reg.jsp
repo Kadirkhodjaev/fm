@@ -488,7 +488,7 @@
 </div>
 
 <iframe id="frmDiv" name="frm" class="hidden"></iframe>
-<div class="panel panel-info" style="width: 900px !important; margin: auto">
+<div class="panel panel-info" style="width: 1200px !important; margin: auto">
   <div class="panel-heading">
     <span title="${patient.id}" onclick="setPage('/ambs/reg.s?id=${patient.id}')">Реквизиты пациента</span>
     <ul class="pagination" style="float:right; margin-top:-5px">

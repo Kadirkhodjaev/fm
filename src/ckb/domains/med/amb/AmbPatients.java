@@ -66,6 +66,7 @@ public class AmbPatients extends GenId {
   @Column(nullable = false) private Double card = 0D;
   @Column(nullable = false) private Double transfer = 0D;
   @Column private Double paySum = 0D;
+  @Column private Integer emp;
 
   @OneToOne @JoinColumn private LvPartners lvpartner;
   @OneToOne @JoinColumn private Clients client;
@@ -291,5 +292,13 @@ public class AmbPatients extends GenId {
 
   public void setBirthday(Date birthday) {
     this.birthday = birthday;
+  }
+
+  public Integer getEmp() {
+    return emp;
+  }
+
+  public void setEmp(Integer emp) {
+    this.emp = emp;
   }
 }
