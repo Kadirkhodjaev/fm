@@ -673,7 +673,7 @@ public class SKdoImp implements SKdo {
           f = new F999();
         }
       } else f = df999.get(p.getResultId());
-      f.setId(f.getId());
+       f.setId(f.getId());
       f.setPatientId(p.getPatientId());
       f.setPlan_id(p.getId());
       f.setKdoId(p.getKdo().getId());
