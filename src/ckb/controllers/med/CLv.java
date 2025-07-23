@@ -1294,7 +1294,7 @@ public class CLv {
         }
       }
       //
-      List<String> states = new ArrayList<String>();
+      List<String> states = new ArrayList<>();
       if(dateStates != null && dateStates.length > 0) Collections.addAll(states, dateStates);
       //
       if(id == null || id == 0) {

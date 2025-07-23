@@ -58,7 +58,7 @@ public class SRepImp implements SRep {
 	@Autowired private DAmbGroup dAmbGroup;
 	@Autowired private DReport dReport;
 	@Autowired private DUser dUser;
-	@Autowired private DCountry dCountery;
+	@Autowired private DCountry dCountry;
 	@Autowired private DParam dParam;
 	//
 	@Autowired private DPatientWatchers dPatientWatchers;
@@ -82,7 +82,7 @@ public class SRepImp implements SRep {
 
 	@Override
 	public void gRep(HttpServletRequest req, Model m) {
-		Integer id = Util.getInt(req, "repId");
+		int id = Util.getInt(req, "repId");
 		m.addAttribute("rep", dReport.get(id));
 		// Амбулаторные услуги - По категориям
 		if(id == 1) { // Амбулаторные услуги - По категориям
@@ -227,7 +227,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<Rep1> rows = new ArrayList<Rep1>();
+		List<Rep1> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
@@ -235,7 +235,7 @@ public class SRepImp implements SRep {
 		try {
 			conn = DB.getConnection();
 			List<AmbGroups> groups = dAmbGroup.getAll();
-			Integer counter = 0;
+			int counter = 0;
 
 			for (AmbGroups group : groups) {
 				Rep1 r = new Rep1();
@@ -256,11 +256,11 @@ public class SRepImp implements SRep {
 				ps.setString(2, Util.dateDB(Util.get(req, "period_start")));
 				ps.setString(3, Util.dateDB(Util.get(req, "period_end")));
 				rs = ps.executeQuery();
-				List<ObjList> services = new ArrayList<ObjList>();
-				Integer groupCounter = 0;
+				List<ObjList> services = new ArrayList<>();
+				int groupCounter = 0;
 				while(rs.next()) {
 					ObjList service = new ObjList();
-					Integer serCount = rs.getInt(2);
+					int serCount = rs.getInt(2);
 					service.setC1(rs.getString(1));
 					service.setC2("" + serCount);
 					service.setC3(rs.getString(3));
@@ -270,7 +270,7 @@ public class SRepImp implements SRep {
 				counter += groupCounter;
 				r.setServices(services);
 				r.setCounter(groupCounter);
-				if(services.size() > 0)
+				if(!services.isEmpty())
 					rows.add(r);
 			}
 			Rep1 total = new Rep1();
@@ -294,20 +294,20 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<Rep1> rows = new ArrayList<Rep1>();
+		List<Rep1> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		String dateBegin = Util.dateDB(Util.get(req, "period_start"));
 		String dateEnd = Util.dateDB(Util.get(req, "period_end"));
-		Integer deptId = !req.getParameter("dept").equals("") ? Util.getInt(req, "dept") : null;
+		Integer deptId = !req.getParameter("dept").isEmpty() ? Util.getInt(req, "dept") : null;
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
 		Integer total = 0;
 		// Если выбран врач
-		if (!req.getParameter("doctor").equals("")) {
+		if (!req.getParameter("doctor").isEmpty()) {
 			Integer doctorId = Util.getInt(req, "doctor");
 			Users user = dUser.get(doctorId);
-			List<ObjList> patients = new ArrayList<ObjList>();
+			List<ObjList> patients = new ArrayList<>();
 			Rep1 r = new Rep1();
 			r.setGroupName(user.getFio());
 			try {
@@ -417,37 +417,9 @@ public class SRepImp implements SRep {
 						" 	 And p.Lv_Id = " + user.getId() +
 						" 	 And e.patientId = p.Id " +
 					(deptId != null ? " And e.DeptId = " + deptId : "");
-					ps = conn.prepareStatement(
-						sql
-						/*"Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio , " +
-							"				 (Select dept.name From Depts dept Where dept.Id = t.Dept_Id) depName, " +
-							"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = t.Room_Id) Palata, " +
-							"				 Date_Format(t.Date_Begin, '%d.%m.%Y') dateBegin, " +
-							"				 Date_Format(d.dateEnd, '%d.%m.%Y') dateEnd, " +
-							"				 Datediff(d.dateEnd, t.Date_Begin) bunkDay " +
-							"   From Patients t, Hn_Patients d" +
-							"  Where d.dateEnd Is Not Null" +
-              "    AND t.lv_id != 1 " +
-							"    And d.patient_id = t.id " +
-							"    AND t.id != d.patient_id " +
-							"    And d.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
-							(deptId != null ? " And t.Dept_Id = " + deptId : "") +
-							" And t.Lv_Id = " + user.getId() +
-							" Union " +
-							"Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
-							"				 (Select dept.name From Depts dept Where dept.Id = p.Dept_Id) depName, " +
-							"				 (Select concat(f.Name, ' - ', ff.name)  From Rooms f, Dicts ff Where ff.typeCode = 'roomType' And ff.id = f.roomType And f.id = e.Room_Id) Palata, " +
-							"				 (Case When e.dateBegin Is Not Null Then DATE_FORMAT(e.dateBegin, '%d.%m.%Y') Else Date_Format(p.Start_Epic_Date, '%d.%m.%Y') End) dateBegin, " +
-							"				 Date_Format(e.dateEnd, '%d.%m.%Y') dateEnd, " +
-							"				 (Case When e.dateBegin Is Not Null Then Datediff(e.dateEnd, e.dateBegin) Else Datediff(e.dateEnd, p.Start_Epic_Date) End) bunkDay " +
-							"   From Lv_Epics e, Patients p" +
-							"  Where e.dateEnd Between '" + dateBegin + "' And '" + dateEnd + "'" +
-              "    AND p.lv_id != 1 " +
-							" 	 And e.patientId = p.Id " +
-							(deptId != null ? " And e.DeptId = " + deptId : "")*/
-					);
+					ps = conn.prepareStatement(sql);
 					rs = ps.executeQuery();
-					List<ObjList> services = new ArrayList<ObjList>();
+					List<ObjList> services = new ArrayList<>();
 					Integer diff = 0, counter = 0;
 					while(rs.next()) {
 						ObjList service = new ObjList();
@@ -462,7 +434,7 @@ public class SRepImp implements SRep {
 						services.add(service);
 					}
 					// Если есть запись
-					if(services.size() > 0) {
+					if(!services.isEmpty()) {
 						ObjList service = new ObjList();
 						service.setC1("Кол-во по врачу " + counter);
 						service.setC2("");
@@ -477,8 +449,8 @@ public class SRepImp implements SRep {
 						rows.add(r);
 					}
 				}
-				if(rows.size() > 0) {
-					List<ObjList> services = new ArrayList<ObjList>();
+				if(!rows.isEmpty()) {
+					List<ObjList> services = new ArrayList<>();
 					ObjList service = new ObjList();
 					Rep1 r = new Rep1();
 					service.setC1("ИТОГО ПО КЛИНИКЕ");
@@ -510,20 +482,20 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<AmbGroups> groups = new ArrayList<AmbGroups>();
-    if (!req.getParameter("group").equals("")) {
+    List<AmbGroups> groups = new ArrayList<>();
+    if (!req.getParameter("group").isEmpty()) {
       Integer groupId = Util.getInt(req, "group");
       AmbGroups group = dAmbGroup.get(groupId);
       groups.add(group);
     } else
       groups = dAmbGroup.getAll();
     for (AmbGroups group : groups) {
-      List<ObjList> patients = new ArrayList<ObjList>();
+      List<ObjList> patients = new ArrayList<>();
       Rep1 r = new Rep1();
       r.setGroupName(group.getName());
       try {
@@ -543,7 +515,7 @@ public class SRepImp implements SRep {
         ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
         ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
         rs = ps.executeQuery();
-        Integer counter = 0;
+        int counter = 0;
         String fio = "";
         while (rs.next()) {
           if (!rs.getString("fio").equals(fio))
@@ -565,7 +537,7 @@ public class SRepImp implements SRep {
 				DB.done(rs);
 				DB.done(conn);
 			}
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     }
     m.addAttribute("rows", rows);
@@ -578,14 +550,14 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
 		String cat = Util.get(req, "cat");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate) + " Категория: " + (cat.equals("1") ? "Амбулатория" : "Стационар");
-    List<Users> doctors = new ArrayList<Users>();
-    if (!req.getParameter("doctor").equals("")) {
+    List<Users> doctors = new ArrayList<>();
+    if (!req.getParameter("doctor").isEmpty()) {
       Integer doctorId = Util.getInt(req, "doctor");
       Users doctor = dUser.get(doctorId);
       doctors.add(doctor);
@@ -604,7 +576,7 @@ public class SRepImp implements SRep {
 			Double total = 0D;
 			if(cat.equals("1")) {
 				for (Users doctor : doctors) {
-					List<ObjList> patients = new ArrayList<ObjList>();
+					List<ObjList> patients = new ArrayList<>();
 					Rep1 r = new Rep1();
 					r.setGroupName(doctor.getFio());
 					ps = conn.prepareStatement(
@@ -650,7 +622,7 @@ public class SRepImp implements SRep {
 				}
 			} else {
 				for (Users doctor : doctors) {
-					List<ObjList> patients = new ArrayList<ObjList>();
+					List<ObjList> patients = new ArrayList<>();
 					Rep1 r = new Rep1();
 					r.setGroupName(doctor.getFio());
 					ps = conn.prepareStatement(
@@ -723,7 +695,7 @@ public class SRepImp implements SRep {
 											if ("27".equals(choosen.getColName()) && bio.isC27()) { patients.add(service); continue; }
 											if ("28".equals(choosen.getColName()) && bio.isC28()) { patients.add(service); continue; }
 											if ("29".equals(choosen.getColName()) && bio.isC29()) { patients.add(service); continue; }
-											if ("30".equals(choosen.getColName()) && bio.isC30()) { patients.add(service); continue; }
+											if ("30".equals(choosen.getColName()) && bio.isC30()) { patients.add(service); }
 										}
 									}
 								}
@@ -753,8 +725,8 @@ public class SRepImp implements SRep {
 						rows.add(r);
 				}
 			}
-      if(rows.size() > 0) {
-				List<ObjList> patients = new ArrayList<ObjList>();
+      if(!rows.isEmpty()) {
+				List<ObjList> patients = new ArrayList<>();
 				Rep1 r = new Rep1();
 				ObjList service = new ObjList();
 				service.setC1("Итого по клинике");
@@ -781,14 +753,14 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<Counteries> counteries = dCountery.getCounteries();
-    for (Counteries country : counteries) {
-      List<ObjList> patients = new ArrayList<ObjList>();
+    List<Counteries> countries = dCountry.getCounteries();
+    for (Counteries country : countries) {
+      List<ObjList> patients = new ArrayList<>();
       Rep1 r = new Rep1();
       r.setGroupName(country.getName());
       try {
@@ -829,7 +801,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
@@ -905,14 +877,14 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
 		String catStat = Util.get(req, "cat_stat");
 		String catAmb = Util.get(req, "cat_amb");
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -925,7 +897,7 @@ public class SRepImp implements SRep {
           " Where t.Kdo_Id = c.id " +
           "   And t.patientId = p.id " +
 					"   And t.done_flag = 'Y' " +
-          "   And c.Kdo_Type = 10 " + (catStat.equals("") ? "" : " And c.id = " + catStat) +
+          "   And c.Kdo_Type = 10 " + (catStat.isEmpty() ? "" : " And c.id = " + catStat) +
           "   And date (t.Result_Date) Between ? AND ? " +
           " Union All " +
           " Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -937,7 +909,7 @@ public class SRepImp implements SRep {
           "  Where ser.Id = t.Service_Id " +
           "    And p.Id = t.Patient " +
 					"    And t.state = 'DONE' " +
-          "		 And ser.Group_Id = 8 " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
+          "		 And ser.Group_Id = 8 " + (catAmb.isEmpty() ? "" : " And ser.id = " + catAmb) +
           " 	 And date (t.confDate) Between ? and ? "+
           " Order By 5 "
       );
@@ -961,7 +933,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -980,7 +952,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
 		String cat = Util.get(req, "cat");
     Date startDate = Util.getDate(req, "period_start");
@@ -1002,7 +974,7 @@ public class SRepImp implements SRep {
           "    And p.Id = t.Patient " +
 					"    And t.State = 'DONE' " +
           "    And u.id = t.worker_id " +
-          "		 And ser.Group_Id = 2 " + (cat.equals("") ? "" : " And ser.id = " + cat) +
+          "		 And ser.Group_Id = 2 " + (cat.isEmpty() ? "" : " And ser.id = " + cat) +
           " 	 And date (t.confDate) Between ? and ? " +
           "   Order By t.confDate "
       );
@@ -1050,7 +1022,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
 		String catStat = Util.get(req, "cat_stat");
 		String catAmb = Util.get(req, "cat_amb");
@@ -1075,7 +1047,7 @@ public class SRepImp implements SRep {
           "  Where ser.Id = t.Service_Id " +
           "    And p.Id = t.Patient " +
           "    And u.id = t.worker_id " + ("2".equals(cat) ? " And 1 = 0 " : "") +
-          "		 And ser.id in (98, 99) " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
+          "		 And ser.id in (98, 99) " + (catAmb.isEmpty() ? "" : " And ser.id = " + catAmb) +
           " 	 And date(t.confDate) Between ? and ? " +
 					" Union All " +
 					" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio,  " +
@@ -1092,7 +1064,7 @@ public class SRepImp implements SRep {
 					" From Lv_Plans t, Kdos c, Patients p, Users u " +
 					" Where t.Kdo_Id = c.id " +
 					"   And t.patientId = p.id " + ("1".equals(cat) ? " And 1 = 0 " : "") +
-					"   And c.kdo_type = 12 " + (catStat.equals("") ? "" : " And c.id = " + catStat) +
+					"   And c.kdo_type = 12 " + (catStat.isEmpty() ? "" : " And c.id = " + catStat) +
 					"   And u.id = p.lv_id " +
 					"   And date (t.Result_Date) Between ? and ? " +
 					" Order By 11 "
@@ -1144,7 +1116,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
 		String cat = Util.get(req, "cat");
     Date startDate = Util.getDate(req, "period_start");
@@ -1220,7 +1192,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
@@ -1275,7 +1247,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
 		String cat = Util.get(req, "cat");
     Date startDate = Util.getDate(req, "period_start");
@@ -1296,7 +1268,7 @@ public class SRepImp implements SRep {
           "   And t.patientId = p.id " +
           "   And f.plan_id = t.id" +
           "   And c.kdo_type = 4 " +
-          "   And u.id = p.lv_id " + (cat.equals("") ? "" : " And c.id = " + cat) +
+          "   And u.id = p.lv_id " + (cat.isEmpty() ? "" : " And c.id = " + cat) +
           "   And date (t.Result_Date) Between ? and ? " +
 					"	 Order By p.id, t.Result_Date "
       );
@@ -1340,7 +1312,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
@@ -1397,7 +1369,7 @@ public class SRepImp implements SRep {
     ResultSet rs = null;
     String params = "";
     Users user = dUser.get(SessionUtil.getUser(req).getUserId());
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
@@ -1456,12 +1428,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -1510,7 +1482,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1529,12 +1501,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -1589,7 +1561,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1608,12 +1580,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -1674,7 +1646,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1693,7 +1665,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
@@ -1750,12 +1722,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -1790,7 +1762,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1809,12 +1781,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -1849,7 +1821,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1868,12 +1840,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -1909,7 +1881,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1928,12 +1900,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -1969,7 +1941,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1988,12 +1960,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -2042,7 +2014,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2061,12 +2033,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -2104,7 +2076,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2123,12 +2095,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -2163,7 +2135,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2182,12 +2154,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -2223,7 +2195,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2242,12 +2214,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -2297,7 +2269,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2316,12 +2288,12 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<Rep1> rows = new ArrayList<Rep1>();
+    List<Rep1> rows = new ArrayList<>();
     //
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> patients = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
     Rep1 r = new Rep1();
     try {
       ps = conn.prepareStatement(
@@ -2360,7 +2332,7 @@ public class SRepImp implements SRep {
         patients.add(service);
       }
       r.setServices(patients);
-      if(r.getServices() != null && r.getServices().size() > 0)
+      if(r.getServices() != null && !r.getServices().isEmpty())
         rows.add(r);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2379,7 +2351,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
 		String cat = Util.get(req, "cat");
     Date startDate = Util.getDate(req, "period_start");
@@ -2458,7 +2430,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
 		String cat = Util.get(req, "cat");
 		String catStat = Util.get(req, "cat_stat");
@@ -2479,7 +2451,7 @@ public class SRepImp implements SRep {
           " Where t.Kdo_Id = c.id " +
 					"   And t.done_flag = 'Y' " +
           "   And t.patientId = p.id " +
-          "   And f.plan_id = t.id" + (catStat.equals("") ? "" : " And c.id = " + catStat) +
+          "   And f.plan_id = t.id" + (catStat.isEmpty() ? "" : " And c.id = " + catStat) +
           "   And c.kdo_type = 13 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
           "   And u.id = p.lv_id " +
           "   And date (t.Result_Date) Between ? and ? " +
@@ -2494,7 +2466,7 @@ public class SRepImp implements SRep {
           "   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
           "  Where ser.Id = t.Service_Id " +
 					"    And t.state = 'DONE' " +
-          "    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
+          "    And p.Id = t.Patient " + (catAmb.isEmpty() ? "" : " And ser.id = " + catAmb) +
           "		 And ser.Group_Id = 4 " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
           " 	 And date (t.confDate) Between ? and ? "+
           " Order By 7 "
@@ -2539,7 +2511,7 @@ public class SRepImp implements SRep {
     PreparedStatement ps = null;
     ResultSet rs = null;
     String params = "";
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     //
 		String cat = Util.get(req, "cat");
     Date startDate = Util.getDate(req, "period_start");
@@ -2622,7 +2594,7 @@ public class SRepImp implements SRep {
     Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate) + "<br/>";
 		params += "Консультация " + user.getProfil().toLowerCase() + "а. Врач: " + user.getFio();
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     try {
       ps = conn.prepareStatement(
         " Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -2690,7 +2662,7 @@ public class SRepImp implements SRep {
     Date endDate = Util.getDate(req, "period_end");
     String doctor = req.getParameter("doctor");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<ObjList> rows = new ArrayList<ObjList>();
+    List<ObjList> rows = new ArrayList<>();
     try {
       ps = conn.prepareStatement(
         " Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -2707,7 +2679,7 @@ public class SRepImp implements SRep {
           "   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
           "  Where ser.Id = t.Service_Id " +
 					"    And p.Id = t.Patient " +
-          "    And ser.consul = 'Y'" + (cat.equals("") ? "" : " And ser.id = " + cat) +
+          "    And ser.consul = 'Y'" + (cat.isEmpty() ? "" : " And ser.id = " + cat) +
           " 	 And date (t.crOn) Between ? and ? " +
           ("".equals(doctor) ? "" : " And t.worker_id = " + doctor) +
           " Order By t.crOn "
@@ -2754,7 +2726,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		String cat = Util.get(req, "cat");
 		String catStat = Util.get(req, "cat_stat");
@@ -2774,7 +2746,7 @@ public class SRepImp implements SRep {
 					"				  Count(*) Counter" +
 					" From Lv_Fizios t, Kdos c, Patients p, Users u, Lv_Fizio_Dates g  " +
 					" Where t.Kdo_Id = c.id " +
-					"   And t.patientId = p.id " + (catStat.equals("") ? "" : " And c.id = " + catStat) +
+					"   And t.patientId = p.id " + (catStat.isEmpty() ? "" : " And c.id = " + catStat) +
 					"   And c.kdo_type = 8 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
 					"   And u.id = p.lv_id " +
 					"   And g.fizio_id = t.Id " +
@@ -2792,7 +2764,7 @@ public class SRepImp implements SRep {
 					"			   0 Counter " +
 					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
 					"  Where ser.Id = t.Service_Id " +
-					"    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
+					"    And p.Id = t.Patient " + (catAmb.isEmpty() ? "" : " And ser.id = " + catAmb) +
 					"		 And ser.Group_Id in (6, 7) " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
 					" 	 And date (t.confDate) Between ? and ? "+
 					" Order By 1, 6 "
@@ -2838,7 +2810,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
@@ -2951,7 +2923,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			Integer[] ids = {47, 54, 4, 45, 46, 52, 50, 51, 53, 48, 49, 134, 135, 136, 137, 138, 139, 5, 60, 58, 59, 65, 61, 63};
 			String query = "Select t.patient, t.fio, t.birthyear, Date_Format(t.confDate, '%d.%m.%Y') date, t.service_id, t.result1, t.result2 From (";
@@ -2966,7 +2938,7 @@ public class SRepImp implements SRep {
 			query += ") t Order By t.confDate";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
-			List<String> patIds = new ArrayList<String>();
+			List<String> patIds = new ArrayList<>();
 			while (rs.next()) {
 				if(patIds.contains(rs.getInt("patient") + rs.getString("date"))) {
 					ObjList obj = rows.get(patIds.indexOf(rs.getInt("patient") + rs.getString("date")));
@@ -3048,7 +3020,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			Integer[] ids = {75, 74, 73, 145};
 			String query = "Select t.patient, t.fio, t.birthyear, Date_Format(t.confDate, '%d.%m.%Y') date, t.service_id, t.result1, t.result2 From (";
@@ -3063,7 +3035,7 @@ public class SRepImp implements SRep {
 			query += ") t Order By t.confDate";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
-			List<String> patIds = new ArrayList<String>();
+			List<String> patIds = new ArrayList<>();
 			while (rs.next()) {
 				if(patIds.contains(rs.getInt("patient") + rs.getString("date"))) {
 					ObjList obj = rows.get(patIds.indexOf(rs.getInt("patient") + rs.getString("date")));
@@ -3105,7 +3077,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			Integer[] ids = {69, 70, 72, 71};
 			String query = "Select t.patient, t.fio, t.birthyear, Date_Format(t.confDate, '%d.%m.%Y') date, t.service_id, t.result1, t.result2 From (";
@@ -3120,7 +3092,7 @@ public class SRepImp implements SRep {
 			query += ") t Order By t.confDate";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
-			List<String> patIds = new ArrayList<String>();
+			List<String> patIds = new ArrayList<>();
 			while (rs.next()) {
 				if(patIds.contains(rs.getInt("patient") + rs.getString("date"))) {
 					ObjList obj = rows.get(patIds.indexOf(rs.getInt("patient") + rs.getString("date")));
@@ -3162,7 +3134,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			Integer[] ids = {66, 67, 153, 68};
 			String query = "Select t.fio, t.birthyear, Date_Format(t.confDate, '%d.%m.%Y') date, t.service_id, t.* From (";
@@ -3177,7 +3149,7 @@ public class SRepImp implements SRep {
 			query += ") t Order By t.confDate";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
-			List<String> patIds = new ArrayList<String>();
+			List<String> patIds = new ArrayList<>();
 			while (rs.next()) {
 				if(patIds.contains(rs.getInt("patient") + rs.getString("date"))) {
 					ObjList obj = rows.get(patIds.indexOf(rs.getInt("patient") + rs.getString("date")));
@@ -3219,7 +3191,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -3274,7 +3246,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			Integer[] ids = {1, 3};
 			String query = "Select Date_Format(t.confDate, '%d.%m.%Y') date, t.* From (";
@@ -3289,7 +3261,7 @@ public class SRepImp implements SRep {
 			query += ") t Order By t.confDate";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
-			List<String> patIds = new ArrayList<String>();
+			List<String> patIds = new ArrayList<>();
 			while (rs.next()) {
 				if(patIds.contains(rs.getInt("patient") + rs.getString("date"))) {
 					ObjList obj = rows.get(patIds.indexOf(rs.getInt("patient") + rs.getString("date")));
@@ -3369,7 +3341,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -3421,7 +3393,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -3473,7 +3445,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -3541,7 +3513,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -3614,7 +3586,7 @@ public class SRepImp implements SRep {
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio, " +
@@ -3681,7 +3653,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
@@ -3756,7 +3728,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		try {
 			ps = conn.prepareStatement(
@@ -3800,11 +3772,11 @@ public class SRepImp implements SRep {
 						service.setC10("0");
 					} else {
 						service.setC10(rs.getString("ddd") == null ? "0" : rs.getString("ddd"));
-						ser = patientMustPay(req, rs.getInt("id"));
+						ser = patientMustPay(rs.getInt("id"));
 					}
 				} catch (Exception e) {
 					service.setC10(rs.getString("ddd") == null ? "0" : rs.getString("ddd"));
-					ser = patientMustPay(req, rs.getInt("id"));
+					ser = patientMustPay(rs.getInt("id"));
 				}
 
 				tSer += ser;
@@ -3816,7 +3788,7 @@ public class SRepImp implements SRep {
 				//
 				rows.add(service);
 			}
-			if(rows.size() > 0) {
+			if(!rows.isEmpty()) {
 				ObjList service = new ObjList();
 				service.setC30("1");
 				service.setFio("ИТОГО");
@@ -3839,37 +3811,15 @@ public class SRepImp implements SRep {
 		// Параметры отчета
 		m.addAttribute("params", params);
 	}
-	private Double patientMustPay(HttpServletRequest request, int id) {
+	private Double patientMustPay(int id) {
 		//
 		Patients pat = dPatient.get(id);
-		//
-		/*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
-		Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
-		Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));
-		Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
-		Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
-		Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));*/
 
 		Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
 		Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
 		Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
 		Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
 		//
-		/*if(pat.getCounteryId() == 199) { // Узбекистан
-			if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX_UZB;
-			else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE_UZB;
-			else // Полулюкс
-				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX_UZB;
-		} else {
-			if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX;
-			else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE;
-			else // Полулюкс
-				total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX;
-		}*/
 		List<PatientWatchers> watchers = dPatientWatchers.byPatient(pat.getId());
 		for(PatientWatchers watcher: watchers) {
 			total += watcher.getTotal();
@@ -3897,23 +3847,22 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		try {
 			Calendar calendar = Calendar.getInstance();
 			int day = calendar.get(Calendar.DAY_OF_WEEK);
-			String dt = Util.getCurDate();
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			c.add(Calendar.DATE, day == 7 ? 2 : 1);
-			dt = Util.dateToString(c.getTime());
+			String dt = Util.dateToString(c.getTime());
 			conn = DB.getConnection();
-			Integer deptId = !req.getParameter("dept").equals("") ? Util.getInt(req, "dept") : null;
+			Integer deptId = !req.getParameter("dept").isEmpty() ? Util.getInt(req, "dept") : null;
 			//
 			List<Depts> depts = dDept.getAll();
 			if(deptId != null) {
 				Depts dd = dDept.get(deptId);
-				depts = new ArrayList<Depts>();
+				depts = new ArrayList<>();
 				depts.add(dd);
 			}
 			for(Depts dept: depts) {
@@ -3923,7 +3872,7 @@ public class SRepImp implements SRep {
 					obj.setC30("O");
 					rows.add(obj);
 				}
-				List<Integer> kdoIds = new ArrayList<Integer>();
+				List<Integer> kdoIds = new ArrayList<>();
 				ps = conn.prepareStatement(
 					"Select t.Id, t.Name " +
 						"From Kdo_Types t " +
@@ -3931,14 +3880,14 @@ public class SRepImp implements SRep {
 				ps.setInt(1, dept.getId());
 				ps.setString(2, Util.dateDB(dt));
 				rs = ps.executeQuery();
-				List<String> kdos = new ArrayList<String>();
+				List<String> kdos = new ArrayList<>();
 				while (rs.next()) {
 					kdoIds.add(rs.getInt(1));
 					kdos.add(rs.getString(2));
 				}
 				Integer counter = 1;
 				for (int i = 0; i < kdos.size(); i++) {
-					List<ObjList> patients = new ArrayList<ObjList>();
+					List<ObjList> patients = new ArrayList<>();
 					ps = conn.prepareStatement(
 						"SELECT Concat(d.surname, ' ', d.name, ' ', d.middlename) fio," +
 							"         c.id, " +
@@ -3991,7 +3940,7 @@ public class SRepImp implements SRep {
 								if (bio.getC27() == 1) st += "Шелочная фосфотаза,";
 								if (bio.getC28() == 1) st += "Тимоловая проба,";
 								if (bio.getC29() == 1) st += "Креотенин киназа,";
-								if (st != "") {
+								if (!st.equals("")) {
 									st = st.substring(0, st.length() - 1);
 									name = name + "<br/>" + st;
 								}
@@ -4025,7 +3974,7 @@ public class SRepImp implements SRep {
 								if (bio.getC22() == 1) st += "RW,";
 								if (bio.getC23() == 1) st += "Hbs Ag,";
 								if (bio.getC24() == 1) st += "Гепатит «С» ВГС,";
-								if (st != "") {
+								if (!st.equals("")) {
 									st = st.substring(0, st.length() - 1);
 									name = name + "<br/>" + st;
 								}
@@ -4039,7 +3988,7 @@ public class SRepImp implements SRep {
 								if (bio.isC1()) st += "Фибриноген,";
 								if (bio.isC2()) st += "Тромбин вакти,";
 								if (bio.isC3()) st += "А.Ч.Т.В. (сек),";
-								if (st != "") {
+								if (!st.equals("")) {
 									st = st.substring(0, st.length() - 1);
 									name = name + "<br/>" + st;
 								}
@@ -4053,7 +4002,7 @@ public class SRepImp implements SRep {
 								if (bio.isC2()) st += "Т4,";
 								if (bio.isC3()) st += "Т3,";
 								if (bio.isC4()) st += "Анти-ТРО,";
-								if (st != "") {
+								if (!st.equals("")) {
 									st = st.substring(0, st.length() - 1);
 									name = name + "<br/>" + st;
 								}
@@ -4067,7 +4016,7 @@ public class SRepImp implements SRep {
 								if (bio.isC2()) st += "Токсоплазма,";
 								if (bio.isC3()) st += "ЦМВ,";
 								if (bio.isC4()) st += "ВПГ,";
-								if (st != "") {
+								if (!st.equals("")) {
 									st = st.substring(0, st.length() - 1);
 									name = name + "<br/>" + st;
 								}
@@ -4079,7 +4028,7 @@ public class SRepImp implements SRep {
 						obj.setC10("" + counter++);
 						patients.add(obj);
 					}
-					if (patients.size() > 0) {
+					if (!patients.isEmpty()) {
 						ObjList obj = new ObjList();
 						obj.setC1(kdos.get(i));
 						obj.setC30("Y");
@@ -4103,7 +4052,7 @@ public class SRepImp implements SRep {
 				ps.setInt(1, dept.getId());
 				ps.setString(2, dt);
 				rs = ps.executeQuery();
-				List<ObjList> patients = new ArrayList<ObjList>();
+				List<ObjList> patients = new ArrayList<>();
 				while (rs.next()) {
 					ObjList obj = new ObjList();
 					obj.setC30("N");
@@ -4115,7 +4064,7 @@ public class SRepImp implements SRep {
 					obj.setC10("" + counter++);
 					patients.add(obj);
 				}
-				if (patients.size() > 0) {
+				if (!patients.isEmpty()) {
 					ObjList obj = new ObjList();
 					obj.setC1("Консультация");
 					obj.setC30("Y");
@@ -4139,11 +4088,11 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		Integer doctorId = Util.getNullInt(req, "doctor");
 		try {
 			ps = conn.prepareStatement(
@@ -4195,11 +4144,11 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio, " +
@@ -4217,7 +4166,9 @@ public class SRepImp implements SRep {
 					" t.address, " +
 					" t.passportInfo, " +
 					" t.Start_Diagnoz, " +
-					" t.yearNum " +
+					" t.yearNum," +
+					"	t.work," +
+					"	t.post " +
 					" From Patients t  " +
 					" Where date (t.Date_Begin) Between ? And ? " +
 					" Order By t.date_begin"
@@ -4244,6 +4195,8 @@ public class SRepImp implements SRep {
 				service.setC12(rs.getString("summ"));
 				service.setC13(rs.getString("pay_date"));
 				service.setC14(rs.getString("room_type"));
+				service.setC15(rs.getString("work"));
+				service.setC16(rs.getString("post"));
 				rows.add(service);
 			}
 		} catch (Exception e) {
@@ -4262,13 +4215,13 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<Obj> rows = new ArrayList<Obj>();
+		List<Obj> rows = new ArrayList<>();
 		//
 		String pt = Util.get(req, "cat");
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		String repType = Util.get(req, "rep_type", "1");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		double procSum = 0, totalSum = 0;
 		try {
 			List<LvPartners> partners = pt == null || pt.isEmpty() ? dLvPartner.getList("From LvPartners" + (repType.equals("0") ? " Where report != 'Y' or report is null" : "")) : dLvPartner.getList("From LvPartners Where id = " + Integer.parseInt(pt));
@@ -4342,7 +4295,7 @@ public class SRepImp implements SRep {
 					part.setClaimCount(part.getClaimCount() + rs.getDouble("summ"));
 					services.add(service);
 				}
-				if(services.size() > 0) {
+				if(!services.isEmpty()) {
 					String count =  "(" + (ambCount > 0 ? " Кол-во амб. пациентов: " + Math.round(ambCount) : "") + (statCount > 0 ? " Кол-во стац. пациентов: " + statCount : "") + " )";
 					part.setFio(partner.getCode() + " " + partner.getFio() + count);
 					procSum += part.getClaimCount();
@@ -4375,7 +4328,7 @@ public class SRepImp implements SRep {
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		try {
 			// Амбулатория
 			ps = conn.prepareStatement(
@@ -4450,11 +4403,11 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<Obj> rows = new ArrayList<Obj>();
+		List<Obj> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		try {
 			List<DrugManufacturers> partners = dDrugManufacturer.getAll();
 			for(DrugManufacturers partner: partners) {
@@ -4477,7 +4430,7 @@ public class SRepImp implements SRep {
 				ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
 				ps.setInt(3, partner.getId());
 				rs = ps.executeQuery();
-				List<ObjList> services = new ArrayList<ObjList>();
+				List<ObjList> services = new ArrayList<>();
 				while (rs.next()) {
 					ObjList service = new ObjList();
 					service.setC1(rs.getString("name"));
@@ -4487,7 +4440,7 @@ public class SRepImp implements SRep {
 					part.setPrice(part.getPrice() + rs.getDouble("summ"));
 					services.add(service);
 				}
-				if(services.size() > 0) {
+				if(!services.isEmpty()) {
 					part.setList(services);
 					rows.add(part);
 				}
@@ -4508,16 +4461,16 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<ObjList> rows = new ArrayList<ObjList>();
-		List<ObjList> dds = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
+		List<ObjList> dds = new ArrayList<>();
 		//
 		Date date = Util.getDate(req, "period");
-		String params = "" + ("Параметры: За дату: " + Util.dateToString(date));
+		String params = ("Параметры: За дату: " + Util.dateToString(date));
 		try {
 			List<Depts> depts = dDept.getList("From Depts Order By Length(name)");
 			List<EatMenuTypes> menuTypes = dEatMenuType.getAll();
-			LinkedHashMap<String, Integer> mm = new LinkedHashMap<String, Integer>();
-			LinkedHashMap<String, String> keys = new LinkedHashMap<String, String>();
+			LinkedHashMap<String, Integer> mm = new LinkedHashMap<>();
+			LinkedHashMap<String, String> keys = new LinkedHashMap<>();
 			for(Depts dept: depts) {
 				for(EatMenuTypes menuType: menuTypes) {
 					ps = conn.prepareStatement(
@@ -4646,10 +4599,10 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null, rc = null;
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date date = Util.getDate(req, "period");
-		String params = "" + ("Параметры: За дату: " + Util.dateToString(date));
+		String params = ("Параметры: За дату: " + Util.dateToString(date));
 		try {
 			List<AmbGroups> types = dAmbGroup.getAll();
 			ps = conn.prepareStatement(
@@ -4668,7 +4621,7 @@ public class SRepImp implements SRep {
 				AmbPatients d = dAmbPatient.get(rs.getInt("id"));
 				row.setC1(d.getSurname() + " " + d.getName() + " " + d.getMiddlename());
 				row.setC2(d.getBirthyear() + "");
-				row.setC3(rs.getString("confDate") + "");
+				row.setC3(rs.getString("confDate"));
 				for(AmbGroups type : types) {
 					ps = conn.prepareStatement(
 						"Select c.name " +
@@ -4722,10 +4675,10 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null, rc = null;
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date date = Util.getDate(req, "period");
-		String params = "" + ("Параметры: За дату: " + Util.dateToString(date));
+		String params = ("Параметры: За дату: " + Util.dateToString(date));
 		try {
 			List<AmbGroups> types = dAmbGroup.getAll();
 			ps = conn.prepareStatement(
@@ -4744,7 +4697,7 @@ public class SRepImp implements SRep {
 				AmbPatients d = dAmbPatient.get(rs.getInt("id"));
 				row.setC1(d.getSurname() + " " + d.getName() + " " + d.getMiddlename());
 				row.setC2(d.getBirthyear() + "");
-				row.setC3(rs.getString("confDate") + "");
+				row.setC3(rs.getString("confDate"));
 				for(AmbGroups type : types) {
 					ps = conn.prepareStatement(
 						"Select c.name " +
@@ -4798,13 +4751,13 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<Rep1> rows = new ArrayList<Rep1>();
+		List<Rep1> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		Integer dept = Util.getNullInt(req, "dept");
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate) + " Отделение: " + (dept == null ? "Все" : dDept.get(Util.getInt(req, "dept")).getName()) ;
-		List<ObjList> patients = new ArrayList<ObjList>();
+		List<ObjList> patients = new ArrayList<>();
 		Rep1 r = new Rep1();
 		try {
 			ps = conn.prepareStatement(
@@ -4839,7 +4792,7 @@ public class SRepImp implements SRep {
 			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
 			rs = ps.executeQuery();
 			while (rs.next()) {
-				if(rs.getString("c24") != null && rs.getString("c24").length() > 0) {
+				if(rs.getString("c24") != null && !rs.getString("c24").isEmpty()) {
 					ObjList service = new ObjList();
 					service.setC28(rs.getString("fio"));
 					service.setC29(rs.getString("birthyear"));
@@ -4851,7 +4804,7 @@ public class SRepImp implements SRep {
 				}
 			}
 			r.setServices(patients);
-			if(r.getServices() != null && r.getServices().size() > 0)
+			if(r.getServices() != null && !r.getServices().isEmpty())
 				rows.add(r);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -4869,11 +4822,11 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		try {
 			ps = conn.prepareStatement(
 				" Select Concat(t.surname, ' ',  t.name, ' ', t.middlename) Fio, " +
@@ -4933,13 +4886,13 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null, rc = null;
-		List<Obj> rows = new ArrayList<Obj>(), krows = new ArrayList<Obj>();
-		List<Obj> ss = new ArrayList<Obj>(), kss = new ArrayList<Obj>();
+		List<Obj> rows = new ArrayList<>(), krows = new ArrayList<>();
+		List<Obj> ss = new ArrayList<>(), kss = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
 		int cat = Util.getInt(req, "cat");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		try {
 			if(cat == 1) {
 				ps = conn.prepareStatement(
@@ -4979,7 +4932,7 @@ public class SRepImp implements SRep {
 				ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
 				rs = ps.executeQuery();
 				while (rs.next()) {
-					LinkedHashMap<Integer, String> rws = new LinkedHashMap<Integer, String>();
+					LinkedHashMap<Integer, String> rws = new LinkedHashMap<>();
 					Obj row = new Obj();
 					row.setFio(rs.getString("fio"));
 					row.setName(rs.getString("reg_date"));
@@ -5041,7 +4994,7 @@ public class SRepImp implements SRep {
 				ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
 				rs = ps.executeQuery();
 				while (rs.next()) {
-					LinkedHashMap<Integer, String> rws = new LinkedHashMap<Integer, String>();
+					LinkedHashMap<Integer, String> rws = new LinkedHashMap<>();
 					Obj row = new Obj();
 					row.setFio(rs.getString("fio"));
 					row.setName(rs.getString("reg_date"));
@@ -5084,11 +5037,11 @@ public class SRepImp implements SRep {
 		Connection conn = DB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		Date startDate = Util.getDate(req, "period_start");
 		Date endDate = Util.getDate(req, "period_end");
-		String params = "" + ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
+		String params = ("Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate));
 		try {
 			ps = conn.prepareStatement(
 				"Select t.name, Sum(Case When t.sex_id = 12 Then t.counter else 0 End) Sex_12, Sum(Case When t.sex_id = 13 Then t.counter else 0 End) Sex_13 From (" +
@@ -5127,7 +5080,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		String cat = Util.get(req, "cat");
 		String catStat = Util.get(req, "cat_stat");
@@ -5148,7 +5101,7 @@ public class SRepImp implements SRep {
 					" Where t.Kdo_Id = c.id " +
 					"   And t.done_flag = 'Y' " +
 					"   And t.patientId = p.id " +
-					"   And f.plan_id = t.id" + (catStat.equals("") ? "" : " And c.id = " + catStat) +
+					"   And f.plan_id = t.id" + (catStat.isEmpty() ? "" : " And c.id = " + catStat) +
 					"   And c.kdo_type = 3 " + (cat != null && cat.equals("1") ? " And 1=0 " : "") +
 					"   And u.id = p.lv_id " +
 					"   And date (t.Result_Date) Between ? and ? " +
@@ -5163,7 +5116,7 @@ public class SRepImp implements SRep {
 					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
 					"  Where ser.Id = t.Service_Id " +
 					"    And t.state = 'DONE' " +
-					"    And p.Id = t.Patient " + (catAmb.equals("") ? "" : " And ser.id = " + catAmb) +
+					"    And p.Id = t.Patient " + (catAmb.isEmpty() ? "" : " And ser.id = " + catAmb) +
 					"		 And ser.Group_Id = 12 " + (cat != null && cat.equals("2") ? " And 1=0 " : "") +
 					" 	 And date (t.confDate) Between ? and ? "+
 					" Order By 7 "
@@ -5521,7 +5474,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		String cat = Util.get(req, "cat");
 		Date startDate = Util.getDate(req, "period_start");
@@ -5598,7 +5551,7 @@ public class SRepImp implements SRep {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String params = "";
-		List<ObjList> rows = new ArrayList<ObjList>();
+		List<ObjList> rows = new ArrayList<>();
 		//
 		String cat = Util.get(req, "cat");
 		Date startDate = Util.getDate(req, "period_start");

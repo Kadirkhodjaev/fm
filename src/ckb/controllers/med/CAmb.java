@@ -10,14 +10,16 @@ import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
+import ckb.dao.med.kdos.DSalePack;
+import ckb.dao.med.kdos.DSalePackRow;
 import ckb.dao.med.patient.DPatient;
 import ckb.dao.med.template.DTemplate;
 import ckb.domains.admin.Forms;
+import ckb.domains.admin.SalePackRows;
+import ckb.domains.admin.SalePacks;
 import ckb.domains.admin.Users;
 import ckb.domains.med.amb.*;
-import ckb.models.AmbGroup;
-import ckb.models.AmbService;
-import ckb.models.Grid;
+import ckb.models.*;
 import ckb.models.drugs.PatientDrug;
 import ckb.models.drugs.PatientDrugDate;
 import ckb.models.result.Doctor;
@@ -56,7 +58,7 @@ public class CAmb {
   //region AUTOWIRED
   private Session session = null;
   @Autowired private SAmb sAmb;
-  @Autowired private DCountry dCountery;
+  @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
   @Autowired private SForm sForm;
   @Autowired private DForm dForm;
@@ -81,6 +83,8 @@ public class CAmb {
   @Autowired private DPatient dPatient;
   @Autowired private SRkdo sRkdo;
   @Autowired private DAmbServiceUser dAmbServiceUser;
+  @Autowired private DSalePack dSalePack;
+  @Autowired private DSalePackRow dSalePackRow;
   //endregion
 
   //region PATIENTS
@@ -90,7 +94,7 @@ public class CAmb {
     session = SessionUtil.getUser(req);
     session.clearFilter();
     String[] filters = {"birthBegin", "birthEnd", "regDateBegin", "regDateEnd", "group_id", "group_id", "state"};
-    HashMap<String, String> hash = new HashMap<String, String>();
+    HashMap<String, String> hash = new HashMap<>();
     for(String filter : filters) {
       if(Util.isNotNull(req, filter)) {
         hash.put(filter, Util.get(req, filter));
@@ -100,7 +104,7 @@ public class CAmb {
   }
 
   @RequestMapping("/home.s")
-  protected String main(HttpServletRequest r, Model model) {
+  protected String mains(HttpServletRequest r, Model model) {
     try {
       session = SessionUtil.getUser(r);
       session.setCurUrl("/amb/home.s");
@@ -118,11 +122,11 @@ public class CAmb {
       if (session.getRoleId() == 13)
         sql += " And t.state != 'PRN'";
       //region ??????
-      if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
+      if (!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).isEmpty()) {
         session.setFiltered(true);
         if (!Req.isNull(r, "filter"))
           session.setFilterFio(Req.get(r, "filterInput"));
-        if (session.getFilterFio().equals(""))
+        if (session.getFilterFio().isEmpty())
           session.setFiltered(false);
         sql += " And ( " +
           "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
@@ -138,20 +142,20 @@ public class CAmb {
       if (Req.get(r, "action").equals("sort")) {
         grid.setPage(1);
         if (grid.getOrderCol().equals(Req.get(r, "column"))) {
-          grid.setOrderType(grid.getOrderType().equals("") ? "asc" : grid.getOrderType().equals("asc") ? "desc" : grid.getOrderType().equals("desc") ? "" : grid.getOrderType());
+          grid.setOrderType(grid.getOrderType().isEmpty() ? "asc" : grid.getOrderType().equals("asc") ? "desc" : grid.getOrderType().equals("desc") ? "" : grid.getOrderType());
         } else {
           grid.setOrderType("asc");
         }
         grid.setOrderCol(Req.get(r, "column"));
-        grid.setOrderColId("th" + (Req.get(r, "colId").equals("") ? Req.get(r, "column") : Req.get(r, "colId")));
-      } else if (Req.get(r, "action").equals("") && session.getRoleId() != 5) {
+        grid.setOrderColId("th" + (Req.get(r, "colId").isEmpty() ? Req.get(r, "column") : Req.get(r, "colId")));
+      } else if (Req.get(r, "action").isEmpty() && session.getRoleId() != 5) {
         grid.init();
       }
-      if (!grid.getOrderType().equals(""))
+      if (!grid.getOrderType().isEmpty())
         sql += " Order By " + grid.getOrderCol() + " " + grid.getOrderType();
       else
         sql += " Order By t.id Desc";
-      model.addAttribute("htmlClass", grid.getOrderType().equals("") ? "sorting" : "sorting_" + grid.getOrderType());
+      model.addAttribute("htmlClass", grid.getOrderType().isEmpty() ? "sorting" : "sorting_" + grid.getOrderType());
       //endregion
       model.addAttribute("newFieldId", grid.getOrderColId());
       if (Req.get(r, "action").equals("page"))
@@ -172,7 +176,7 @@ public class CAmb {
       if (grid.getStartPos() == 1)
         grid.setEndPos(grid.getRowCount() < grid.getPageSize() ? Integer.parseInt("" + grid.getRowCount()) : grid.getPageSize());
       else
-        grid.setEndPos(grid.getStartPos() + grid.getPageSize() < grid.getRowCount() ? grid.getStartPos() + grid.getPageSize() - 1 : Integer.valueOf("" + grid.getRowCount()));
+        grid.setEndPos(grid.getStartPos() + grid.getPageSize() < grid.getRowCount() ? grid.getStartPos() + grid.getPageSize() - 1 : Integer.parseInt("" + grid.getRowCount()));
       if (grid.getEndPos() == 0)
         grid.setStartPos(0);
       SessionUtil.addSession(r, "patientGrid", grid);
@@ -229,15 +233,15 @@ public class CAmb {
           grid.setOrderType("asc");
         }
         grid.setOrderCol(Req.get(r, "column"));
-        grid.setOrderColId("th" + (Req.get(r, "colId").equals("") ? Req.get(r, "column") : Req.get(r, "colId")));
-      } else if (Req.get(r, "action").equals("") && session.getRoleId() != 5) {
+        grid.setOrderColId("th" + (Req.get(r, "colId").isEmpty() ? Req.get(r, "column") : Req.get(r, "colId")));
+      } else if (Req.get(r, "action").isEmpty() && session.getRoleId() != 5) {
         grid.init();
       }
-      if (!grid.getOrderType().equals(""))
+      if (!grid.getOrderType().isEmpty())
         sql += " Order By " + grid.getOrderCol() + " " + grid.getOrderType();
       else
         sql += " Order By t.id Desc";
-      model.addAttribute("htmlClass", grid.getOrderType().equals("") ? "sorting" : "sorting_" + grid.getOrderType());
+      model.addAttribute("htmlClass", grid.getOrderType().isEmpty() ? "sorting" : "sorting_" + grid.getOrderType());
       //endregion
       model.addAttribute("newFieldId", grid.getOrderColId());
       if (Req.get(r, "action").equals("page"))
@@ -287,8 +291,8 @@ public class CAmb {
     session.setCurUrl("/amb/reg.s" + (Req.isNull(req, "id") ? "" : "?id=" + Req.get(req, "id")));
     sAmb.createModel(req, p);
     sForm.setSelectOptionModel(m, 1, "sex");
-    List<AmbService> ss = new ArrayList<AmbService>();
-    m.addAttribute("counteries", dCountery.getCounteries());
+    List<AmbService> ss = new ArrayList<>();
+    m.addAttribute("counteries", dCountry.getCounteries());
     m.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
     if(session.getCurPat() > 0 && Util.isNull(req, "reg")) {
       List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
@@ -300,6 +304,12 @@ public class CAmb {
         d.setWorker(s.getWorker());
         d.setRepeat(false);
         d.setConfDate(s.getConfDate());
+        d.setCrBy(s.getCrBy());
+        d.setSaleProc(s.getSaleProc());
+        d.setResultId(Util.nvl(s.getResult(), 0));
+        if(Util.nvl(s.getPack(), 0) != 0) {
+          d.setPack(dSalePack.get(s.getPack()).getName());
+        }
         if("Y".equals(s.getService().getConsul()) && session.getRoleId() == 15 && "DONE".equals(s.getState())) {
           long diff = new Date().getTime() - p.getRegDate().getTime();
           if(diff / (1000*60*60*24) <= 5 && !"D".equals(s.getAmb_repeat()) && !"Y".equals(s.getAmb_repeat()))
@@ -307,7 +317,7 @@ public class CAmb {
         }
         if(!"DONE".equals(s.getState()) && !"DEL".equals(s.getState()) && !"AUTO_DEL".equals(s.getState()))
           isDone = false;
-        if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && session.getRoleId() == 15 && (s.getResult() == null || s.getResult() == 0))) {
+        if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && p.getEmp() != null && Util.nvl(s.getResult(), 0) == 0 && s.getCrBy() == session.getUserId()) || ("PAID".equals(s.getState()) && session.getRoleId() == 15 && (s.getResult() == null || s.getResult() == 0))) {
           List<Users> users = new ArrayList<>();
           List<AmbServiceUsers> serviceUsers = dAmbServiceUser.getList("From AmbServiceUsers t Where t.service = " + s.getService().getId());
           for(AmbServiceUsers serviceUser: serviceUsers) users.add(dUser.get(serviceUser.getUser()));
@@ -331,14 +341,15 @@ public class CAmb {
       m.addAttribute("ndsTotal", nds + summ);
       m.addAttribute("histories", sAmb.getHistoryServices(session.getCurPat()));
     }
-    m.addAttribute("countries", dCountery.getAll());
+    m.addAttribute("countries", dCountry.getAll());
     m.addAttribute("regions", dRegion.getAll());
-    m.addAttribute("countryName", p.getCounteryId() != null ? dCountery.get(p.getCounteryId()).getName() : "");
+    m.addAttribute("packs", dSalePack.getCount("From SalePacks Where state = 'A' And ambStat = 'AMB' "));
+    m.addAttribute("countryName", p.getCounteryId() != null ? dCountry.get(p.getCounteryId()).getName() : "");
     m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
     m.addAttribute("lvpartners", dLvPartner.getList("From LvPartners " + (session.getCurPat() > 0 ? "" : " Where state = 'A' ") + " Order By code"));
     m.addAttribute("fizio_user", dUser.get(session.getUserId()).isAmbFizio());
     m.addAttribute("regId", Util.get(req, "reg"));
-    m.addAttribute("done", isDone && session.getRoleId() == 15 && session.getCurPat() > 0 && ss.size() > 0 && !p.getState().equals("ARCH"));
+    m.addAttribute("done", isDone && session.getRoleId() == 15 && session.getCurPat() > 0 && !ss.isEmpty() && !p.getState().equals("ARCH"));
     m.addAttribute("drug_exist", dAmbDrug.getCount("From AmbDrugs Where patient.id = " + session.getCurPat()) > 0);
     if(Util.isNotNull(req, "stat"))
       m.addAttribute("pat", dPatient.get(Util.getInt(req, "stat")));
@@ -422,16 +433,16 @@ public class CAmb {
     session = SessionUtil.getUser(req);
     //region Groups
     List<AmbGroups> groups = dAmbGroups.getList("From AmbGroups t Where t.active = 1");
-    List<AmbGroup> gs = new ArrayList<AmbGroup>();
+    List<AmbGroup> gs = new ArrayList<>();
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
     for(AmbGroups group: groups) {
       AmbGroup g = new AmbGroup();
-      List<AmbServices> list = new ArrayList<AmbServices>();
+      List<AmbServices> list = new ArrayList<>();
       List<AmbServices> services = dAmbServices.byType(group.getId());
       for(AmbServices s: services)
         if(dAmbServiceUsers.getCount("From AmbServiceUsers Where service = " + s.getId()) > 0 && s.getStatusPrice(pat) > 0)
           list.add(s);
-      if(list.size() > 0) {
+      if(!list.isEmpty()) {
         g.setServices(list);
         g.setGroup(group);
         gs.add(g);
@@ -452,12 +463,12 @@ public class CAmb {
     List<AmbGroup> gs = new ArrayList<>();
     for(AmbGroups group: groups) {
       AmbGroup g = new AmbGroup();
-      List<AmbServices> list = new ArrayList<AmbServices>();
+      List<AmbServices> list = new ArrayList<>();
       List<AmbServices> services = dAmbServices.byType(group.getId());
       for(AmbServices s: services)
         if(dAmbServiceUsers.getCount("From AmbServiceUsers Where service = " + s.getId()) > 0)
           list.add(s);
-      if(list.size() > 0) {
+      if(!list.isEmpty()) {
         g.setServices(list);
         g.setGroup(group);
         gs.add(g);
@@ -483,12 +494,20 @@ public class CAmb {
         ser.setCrOn(new Date());
         ser.setPatient(session.getCurPat());
         ser.setService(s);
-        if(pat.getEmp() != null) {
-          Double proc = ser.getService().getGroup().getEmpProc() > 0 ? ser.getService().getGroup().getEmpProc() : 0D;
-          ser.setPrice(ser.getService().getPrice() * proc);
-          ser.setState("PAID");
+        ser.setSaleProc(0D);
+        if(s.getSaleStart() != null && s.getSaleEnd() != null && s.getSaleProc() != null && s.getSaleProc() > 0 && s.getSaleEnd().after(new Date()) && s.getSaleStart().before(new Date())) {
+          ser.setPrice(s.getStatusPrice(pat) - s.getStatusPrice(pat) * s.getSaleProc() / 100);
+          ser.setSaleProc(s.getSaleProc());
         } else {
           ser.setPrice(s.getStatusPrice(pat));
+        }
+        if(pat.getEmp() != null) {
+          Double proc = Util.nvl(ser.getService().getGroup().getEmpProc(), 0) > 0 ? ser.getService().getGroup().getEmpProc() : 0D;
+          ser.setPrice(ser.getService().getPrice() * proc / 100);
+          ser.setState("PAID");
+        } else {
+          if(ser.getPrice() == null)
+            ser.setPrice(s.getStatusPrice(pat));
           ser.setState("ENT");
         }
         ser.setNdsProc(Double.parseDouble(dParam.byCode("NDS_PROC")));
@@ -497,6 +516,12 @@ public class CAmb {
         ser.setAmb_repeat("N");
         ser.setWorker(dAmbServiceUsers.getFirstUser(Integer.parseInt(id)));
         dAmbPatientServices.save(ser);
+      }
+      if(pat.getEmp() != null) {
+        if(pat.getState().equals("PRN")) {
+          pat.setState("WORK");
+          dAmbPatients.save(pat);
+        }
       }
       if("DONE".equals(pat.getState())) {
         pat.setState("WORK");
@@ -518,12 +543,25 @@ public class CAmb {
     try {
       if(Util.isNull(req, "msg")) {
         AmbPatientServices ser = dAmbPatientServices.get(Util.getInt(req, "id"));
-        dAmbPatientServices.delete(ser.getId());
+        if(ser.getPack() != null && ser.getPack() > 0) {
+          if(dAmbPatientServices.getCount("From AmbPatientServices Where result > 0 And patient = " + ser.getPatient() + " And pack = " + ser.getPack()) > 0) {
+            return Util.err(json, "Нельзя удалить услугу пакета. Есть заполненные услуги из пакета");
+          }
+          dAmbPatientServices.delSql("From AmbPatientServices Where ifnull(result, 0) = 0 And patient = " + ser.getPatient() + " And pack = " + ser.getPack());
+        } else {
+          dAmbPatientServices.delete(ser.getId());
+        }
+        AmbPatients pat = dAmbPatients.get(ser.getPatient());
+        if(pat.getEmp() != null) {
+          if(dAmbPatientServices.getCount("From AmbPatientServices Where patient = " + ser.getPatient()) == 0 && pat.getState().equals("WORK")) {
+            pat.setState("PRN");
+            dAmbPatients.save(pat);
+          }
+        }
         // По пациенту имеется услуги
         if (dAmbPatientServices.getCount("From AmbPatientServices Where patient = " + ser.getPatient()) > 0) {
           // Если есть не выполненные услуги то проводим DONE
           if (dAmbPatientServices.getCount("From AmbPatientServices Where state != 'DONE' And patient = " + ser.getPatient()) == 0) {
-            AmbPatients pat = dAmbPatients.get(ser.getPatient());
             pat.setState("DONE");
             dAmbPatients.save(pat);
           }
@@ -595,7 +633,7 @@ public class CAmb {
     AmbPatients pat = dAmbPatients.get(service.getPatient());
     m.addAttribute("patient", pat);
     if(pat.getCounteryId() != null)
-      m.addAttribute("country", dCountery.get(pat.getCounteryId()).getName());
+      m.addAttribute("country", dCountry.get(pat.getCounteryId()).getName());
     if(pat.getRegionId() != null)
       m.addAttribute("region", dRegion.get(pat.getRegionId()).getName());
     m.addAttribute("service", service);
@@ -755,7 +793,7 @@ public class CAmb {
   @RequestMapping("/printPage.s")
   protected String printPage(HttpServletRequest req, Model m) {
     session = SessionUtil.getUser(req);
-    List<AmbService> list = new ArrayList<AmbService>();
+    List<AmbService> list = new ArrayList<>();
     String[] ids = Util.get(req, "ids").split("_");
     for(String id: ids) {
       AmbService ser = new AmbService();
@@ -788,7 +826,7 @@ public class CAmb {
   @RequestMapping("/word.s")
   protected String printPage(HttpServletResponse res, HttpServletRequest req, Model m){
     session = SessionUtil.getUser(req);
-    List<AmbService> list = new ArrayList<AmbService>();
+    List<AmbService> list = new ArrayList<>();
     String[] ids = Util.get(req, "ids").split("_");
     for(String id: ids) {
       AmbService ser = new AmbService();
@@ -936,7 +974,7 @@ public class CAmb {
       Calendar cal = Calendar.getInstance();
       cal.setTime(pat.getRegDate());
       cal.add(Calendar.DATE, 10);
-      List<PatientDrugDate> dates = new ArrayList<PatientDrugDate>();
+      List<PatientDrugDate> dates = new ArrayList<>();
       for (int i = 0; i <= 10; i++) {
         PatientDrugDate date = new PatientDrugDate();
         Calendar cl = Calendar.getInstance();
@@ -1005,7 +1043,7 @@ public class CAmb {
   }
 
   @RequestMapping(value = "/drug/save.s", method = RequestMethod.POST) @ResponseBody
-  protected String patientDrugSave(HttpServletRequest req) throws JSONException {
+  protected String patientDrugSave() {
     /*Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     Integer id = Util.getNullInt(req, "id");
@@ -1049,7 +1087,7 @@ public class CAmb {
         }
       }
       //
-      List<String> states = new ArrayList<String>();
+      List<String> states = new ArrayList<>();
       if(dateStates != null && dateStates.length > 0) Collections.addAll(states, dateStates);
       //
       if(id == null || id == 0) {
@@ -1145,7 +1183,7 @@ public class CAmb {
 
   @RequestMapping(value = "/drugs/setPeriod.s")
   @ResponseBody
-  protected String patientDrugPeriod(HttpServletRequest req) throws JSONException {
+  protected String patientDrugPeriod() {
     /*Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
@@ -1217,7 +1255,7 @@ public class CAmb {
     ResultSet rc = null;
     //
     List<AmbPatients> patients = dAmbPatients.getList("From AmbPatients Where qrcode = '" + Util.get(req, "id") + "'");
-    if(patients.size() > 0) {
+    if(!patients.isEmpty()) {
       int patId = patients.get(0).getId();
       m.addAttribute("patient", patients.get(0));
       List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + patId);
@@ -1232,7 +1270,7 @@ public class CAmb {
             "    And s.form_id in (777, 888) " +
             "  Group By t.worker_id, u.fio ");
         rs = ps.executeQuery();
-        List<Doctor> objs777 = new ArrayList<Doctor>();
+        List<Doctor> objs777 = new ArrayList<>();
         while(rs.next()) {
           Doctor obj = new Doctor();
           obj.setUser(rs.getInt("worker_id"));
@@ -1241,13 +1279,13 @@ public class CAmb {
           //
           ps = conn.prepareStatement("Select t.id From Amb_Patient_Services t, Amb_Services s Where t.state = 'DONE' And t.service_id = s.id And s.form_id in (777, 888) And t.patient = " + patId + " And worker_id = " + obj.getUser());
           rc = ps.executeQuery();
-          List<Result> o = new ArrayList<Result>();
+          List<Result> o = new ArrayList<>();
           while(rc.next()) {
             Result res = sRkdo.getAmbResult(rc.getInt("id"));
             if(res != null) o.add(res);
           }
           obj.setResults(o);
-          if(o.size() > 0)
+          if(!o.isEmpty())
             objs777.add(obj);
           DB.done(rc);
           DB.done(ps);
@@ -1261,7 +1299,7 @@ public class CAmb {
             "    And (s.form_id not in (777, 888) Or s.form_id is null) " +
             "  Group By t.worker_id, u.fio ");
         rs = ps.executeQuery();
-        List<Doctor> objs = new ArrayList<Doctor>();
+        List<Doctor> objs = new ArrayList<>();
         while(rs.next()) {
           Doctor obj = new Doctor();
           obj.setUser(rs.getInt("worker_id"));
@@ -1270,13 +1308,13 @@ public class CAmb {
           //
           ps = conn.prepareStatement("Select t.id From Amb_Patient_Services t, Amb_Services s Where t.state = 'DONE' And t.service_id = s.id And (s.form_id not in (777, 888) Or s.form_id is null) And t.patient = " + patId + " And worker_id = " + obj.getUser());
           rc = ps.executeQuery();
-          List<Result> o = new ArrayList<Result>();
+          List<Result> o = new ArrayList<>();
           while(rc.next()) {
             Result res = sRkdo.getAmbResult(rc.getInt("id"));
             if(res != null) o.add(res);
           }
           obj.setResults(o);
-          if(o.size() > 0)
+          if(!o.isEmpty())
             objs.add(obj);
           DB.done(rc);
           DB.done(ps);
@@ -1298,6 +1336,105 @@ public class CAmb {
     }
     //
     return "med/amb/qrcode/page_404";
+  }
+
+  @RequestMapping("/packs.s")
+  protected String packs(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    //
+    List<Obj> rows = new ArrayList<>();
+    AmbPatients pat = dAmbPatients.get(session.getCurPat());
+    double ndsProc = Double.parseDouble(session.getParam("NDS_PROC"));
+    for(SalePacks pack: dSalePack.list("From SalePacks Where ambStat != 'STAT' And state = 'A'")) {
+      Obj row = new Obj();
+      row.setPrice(0D);
+      List<ObjList> list = new ArrayList<>();
+      // Pack
+      row.setId(pack.getId());
+      row.setName(pack.getName());
+      //
+      double realSum = 0;
+      for(SalePackRows rw: dSalePackRow.list("From SalePackRows Where doc.id = " + pack.getId())) {
+        ObjList l = new ObjList();
+        AmbServices ser = dAmbServices.get(rw.getService());
+        l.setC1(ser.getId().toString());
+        l.setC2(ser.getName());
+        l.setPrice(ser.getStatusPrice(pat) * (100 - rw.getProc()) / 100);
+        row.setPrice(row.getPrice() + l.getPrice());
+        row.setClaimCount(row.getPrice() * (100 + ndsProc) / 100);
+        realSum += ser.getPrice();
+        if(dAmbServices.getCount("From AmbServices t Where t.id = " + rw.getService() + " And Exists (From AmbServiceUsers c Where c.service = t.id) And t.price > 0 And t.state = 'A'") == 0) {
+          list = new ArrayList<>();
+          break;
+        }
+        list.add(l);
+      }
+      row.setDrugCount(pack.getNdsProc());
+      row.setOutCount(realSum);
+      if(!list.isEmpty()) {
+        row.setList(list);
+        rows.add(row);
+      }
+    }
+    model.addAttribute("packs", rows);
+    model.addAttribute("id", session.getCurPat());
+    return "med/amb/packs";
+  }
+
+  @RequestMapping(value = "/pack.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String savePack(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    Session session = SessionUtil.getUser(req);
+    Connection conn = null;
+    Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+    try {
+      conn = DB.getConnection();
+      AmbPatients pat = dAmbPatients.get(session.getCurPat());
+      SalePacks pack = dSalePack.get(Util.getInt(req, "id"));
+      if(dAmbPatientServices.getCount("From AmbPatientServices Where pack = " + pack.getId() + " And patient = " + pat.getId()) == 0) {
+        for(SalePackRows row: dSalePackRow.list("From SalePackRows Where doc.id = " + pack.getId())) {
+          AmbPatientServices ser = new AmbPatientServices();
+          AmbServices s = dAmbServices.get(row.getService());
+          ser.setCrBy(session.getUserId());
+          ser.setCrOn(new Date());
+          ser.setPatient(session.getCurPat());
+          ser.setService(s);
+          ser.setPrice(row.getPrice());
+          ser.setNdsProc(ndsProc);
+          ser.setNds(ser.getPrice() * ndsProc / 100);
+          ser.setPack(pack.getId());
+          ser.setState(ser.getPrice() > 0 ? "ENT" : "PAID");
+          ser.setNdsProc(Double.parseDouble(dParam.byCode("NDS_PROC")));
+          ser.setNds(ser.getPrice() * (ser.getNdsProc() == 0 ? 100 : ser.getNdsProc()) / 100);
+          ser.setResult(0);
+          ser.setAmb_repeat("N");
+          ser.setWorker(dAmbServiceUsers.getFirstUser(row.getService()));
+          dAmbPatientServices.save(ser);
+        }
+        if(!pat.getState().equals("PRN")) {
+          Double summ = DB.getSum(conn, "Select Sum(t.price) From Amb_Patient_Services t Where t.patient = " + session.getCurPat() + " And t.state Not In ('PAID', 'DONE', 'DEL', 'REG_DEL', 'AUTO_DEL')");
+          Double count = DB.getSum(conn, "Select Count(*) From Amb_Patient_Services t Where t.patient = " + session.getCurPat() + " And t.state Not In ('DONE', 'DEL', 'REG_DEL', 'AUTO_DEL')");
+          if (summ > 0) {
+            pat.setState("CASH");
+          } else {
+            if (count == 0) {
+              pat.setState("DONE");
+            } else {
+              pat.setState("WORK");
+            }
+          }
+        }
+        dAmbPatients.save(pat);
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    } finally {
+      DB.done(conn);
+    }
+    return json.toString();
   }
 
 }

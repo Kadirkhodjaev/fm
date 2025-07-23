@@ -345,8 +345,8 @@ public class CNurse {
     Integer patId = Integer.parseInt(Util.get(req, "patient", "0"));
     Integer kdoId = Integer.parseInt(Util.get(req, "kdo", "0"));
     LinkedHashMap<Integer, Kdos> kdos = new LinkedHashMap<Integer, Kdos>();
-    List<Obj> rows = new ArrayList<Obj>();
-    List<Obj> rooms = new ArrayList<Obj>();
+    List<Obj> rows = new ArrayList<>();
+    List<Obj> rooms = new ArrayList<>();
     try {
       conn = DB.getConnection();
       ps = conn.prepareStatement("Select room From Kdos Where room is not null Group By room");

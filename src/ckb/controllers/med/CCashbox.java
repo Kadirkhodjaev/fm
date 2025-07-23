@@ -7,10 +7,12 @@ import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbPatientPay;
 import ckb.dao.med.amb.DAmbPatientService;
 import ckb.dao.med.amb.DAmbPatient;
+import ckb.dao.med.amb.DAmbService;
 import ckb.dao.med.cashbox.discount.DCashDiscount;
 import ckb.dao.med.head_nurse.date.DHNDate;
 import ckb.dao.med.head_nurse.date.DHNDateAmbRow;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
+import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.bio.DLvBio;
 import ckb.dao.med.lv.coul.DLvCoul;
 import ckb.dao.med.lv.epic.DLvEpic;
@@ -23,10 +25,8 @@ import ckb.dao.med.lv.torch.DLvTorch;
 import ckb.dao.med.patient.DPatient;
 import ckb.dao.med.patient.DPatientPays;
 import ckb.dao.med.patient.DPatientWatchers;
-import ckb.domains.med.amb.AmbPatientPays;
-import ckb.domains.med.amb.AmbPatientServices;
-import ckb.domains.med.amb.AmbPatients;
-import ckb.domains.med.amb.AmbResults;
+import ckb.domains.admin.Kdos;
+import ckb.domains.med.amb.*;
 import ckb.domains.med.cash.CashDiscounts;
 import ckb.domains.med.head_nurse.HNDateAmbRows;
 import ckb.domains.med.head_nurse.HNDates;
@@ -67,7 +67,7 @@ public class CCashbox {
   private Session session = null;
   Date startDate = Util.stringToDate("31.03.2024");
 
-  @Autowired private DCountry dCountery;
+  @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
   @Autowired private DAmbPatient dAmbPatients;
   @Autowired private DAmbPatientService dAmbPatientServices;
@@ -92,6 +92,8 @@ public class CCashbox {
   @Autowired private DHNDateAmbRow dhnDateAmbRow;
   @Autowired private DHNDate dhnDate;
   @Autowired private DParam dParam;
+  @Autowired private DKdos dKdo;
+  @Autowired private DAmbService dAmbService;
 
   @RequestMapping(value = "/setServicePayState.s", method = RequestMethod.POST)
   @ResponseBody
@@ -117,6 +119,7 @@ public class CCashbox {
     return json.toString();
   }
 
+  //region AMB
   @RequestMapping(value = "/amb/delPay.s", method = RequestMethod.POST)
   @ResponseBody
   protected String ambDelPay(HttpServletRequest req) throws JSONException {
@@ -141,7 +144,7 @@ public class CCashbox {
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
     m.addAttribute("patient", pat);
     if(pat.getCounteryId() != null)
-      m.addAttribute("country", dCountery.get(pat.getCounteryId()).getName());
+      m.addAttribute("country", dCountry.get(pat.getCounteryId()).getName());
     if(pat.getRegionId() != null)
       m.addAttribute("region", dRegion.get(pat.getRegionId()).getName());
     //
@@ -161,7 +164,7 @@ public class CCashbox {
     m.addAttribute("ndsTotal", nds + serviceTotalSum);
     m.addAttribute("serviceTotalSum", serviceTotalSum);
     List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
-    List<AmbService> ss = new ArrayList<AmbService>();
+    List<AmbService> ss = new ArrayList<>();
     for(AmbPatientServices s: services) {
       AmbService d = new AmbService();
       d.setId(s.getId());
@@ -198,47 +201,6 @@ public class CCashbox {
     return "med/cashbox/amb";
   }
 
-  @RequestMapping(value = "/delDiscount.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String delDiscount(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      dCashDiscount.delete(Util.getInt(req, "id"));
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "/discount.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String saveAmbDiscount(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    try {
-      CashDiscounts discount = Util.isNull(req, "id") ? new CashDiscounts() : dCashDiscount.get(Util.getInt(req, "id"));
-      discount.setAmbStat(Util.get(req, "code"));
-      discount.setPatient(Util.getInt(req, "patient"));
-      discount.setSumm(Double.parseDouble(Util.get(req, "summ")));
-      discount.setText(Util.get(req, "text"));
-      // Добавление
-      if(Util.isNull(req, "id")) {
-        discount.setCrBy(dUser.get(session.getUserId()));
-        discount.setCrOn(new Date());
-      }
-      //
-      dCashDiscount.save(discount);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
   @RequestMapping("/amb/check.s")
   protected String printCheck(HttpServletRequest req, Model model) {
     session = SessionUtil.getUser(req);
@@ -250,7 +212,7 @@ public class CCashbox {
     for(AmbPatientServices row: rows) {
       sum += row.getPrice() + Util.nvl(row.getNds(), 0D);
     }
-    if(pat.getQrcode() == null || pat.getQrcode().equals("")) {
+    if(pat.getQrcode() == null || pat.getQrcode().isEmpty()) {
       pat.setQrcode(Util.md5(pat.getId().toString()));
       dAmbPatients.save(pat);
     }
@@ -266,24 +228,6 @@ public class CCashbox {
     model.addAttribute("qrcodeurl", dParam.byCode("QRCODEURL"));
     model.addAttribute("casher", session.getUserName());
     return "med/cashbox/check";
-  }
-
-  @RequestMapping(value = "/getDiscount.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String getDiscount(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    try {
-      CashDiscounts discount = dCashDiscount.get(Util.getInt(req, "id"));
-      //
-      json.put("id", discount.getId());
-      json.put("summ", discount.getSumm());
-      json.put("text", discount.getText());
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
   }
 
   @RequestMapping(value = "/amb.s", method = RequestMethod.POST)
@@ -326,11 +270,72 @@ public class CCashbox {
         }
       }
       List<HNDateAmbRows> drugs = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.state = 'CON' And doc.paid != 'Y' And patient.id = " + patient.getId());
-      if(drugs.size() > 0) {
+      if(!drugs.isEmpty()) {
         HNDates date = drugs.get(0).getDoc();
         date.setPaid("Y");
         dhnDate.save(date);
       }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+  //endregion
+
+  //region DISCOUNT
+  @RequestMapping(value = "/delDiscount.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String delDiscount(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      dCashDiscount.delete(Util.getInt(req, "id"));
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/discount.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String saveAmbDiscount(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    session = SessionUtil.getUser(req);
+    try {
+      CashDiscounts discount = Util.isNull(req, "id") ? new CashDiscounts() : dCashDiscount.get(Util.getInt(req, "id"));
+      discount.setAmbStat(Util.get(req, "code"));
+      discount.setPatient(Util.getInt(req, "patient"));
+      discount.setSumm(Double.parseDouble(Util.get(req, "summ")));
+      discount.setText(Util.get(req, "text"));
+      // Добавление
+      if(Util.isNull(req, "id")) {
+        discount.setCrBy(dUser.get(session.getUserId()));
+        discount.setCrOn(new Date());
+      }
+      //
+      dCashDiscount.save(discount);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/getDiscount.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String getDiscount(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      CashDiscounts discount = dCashDiscount.get(Util.getInt(req, "id"));
+      //
+      json.put("id", discount.getId());
+      json.put("summ", discount.getSumm());
+      json.put("text", discount.getText());
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -366,7 +371,9 @@ public class CCashbox {
     }
     return data.toString();
   }
+  //endregion
 
+  //region STAT
   protected void choosenKdos(LvPlans plan, Patients pat, List<ObjList> planDetails, Double ndsProc) {
     List<KdoChoosens> choosens = dKdoChoosen.getList("From KdoChoosens Where kdo.id = " + plan.getKdo().getId());
     if (plan.getKdo().getId() == 153) {
@@ -492,18 +499,11 @@ public class CCashbox {
       model.addAttribute("lv", dUser.get(pat.getLv_id()));
     //
     Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
-
-    /*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB")) * (100 + ndsProc) / 100;
-    Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB")) * (100 + ndsProc) / 100;
-    Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB")) * (100 + ndsProc) / 100;
-    Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX")) * (100 + ndsProc) / 100;
-    Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE")) * (100 + ndsProc) / 100;
-    Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX")) * (100 + ndsProc) / 100;*/
     Double discountSum = dCashDiscount.patientStatDiscountSum(pat.getId());
     Double total = 0D;
     //
     List<LvEpics> epics = dLvEpic.getPatientEpics(pat.getId());
-    List<ObjList> eps = new ArrayList<ObjList>();
+    List<ObjList> eps = new ArrayList<>();
     Long minusDays = 0L;
     for(LvEpics epic: epics) {
       ObjList obj = new ObjList();
@@ -518,20 +518,8 @@ public class CCashbox {
       Double price = epic.getRoom().getPrice() * (100 + ndsProc) / 100, for_price = epic.getRoom().getFor_price() * (100 + ndsProc) / 100;
       if(pat.getCounteryId() == 199) { // Узбекистан
         obj.setC3((price * (pat.getDayCount() == null ? 0 : days)) + "");
-        /*if(epic.getRoom().getRoomType().getId() == 5)  // Люкс
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_LUX_UZB) + "");
-        else if(epic.getRoom().getRoomType().getId() == 6) // Протая
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_SIMPLE_UZB) + "");
-        else // Полулюкс
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_SEMILUX_UZB) + "");*/
       } else {
         obj.setC3((for_price * (pat.getDayCount() == null ? 0 : days)) + "");
-        /*if(epic.getRoom().getRoomType().getId() == 5)  // Люкс
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_LUX) + "");
-        else if(epic.getRoom().getRoomType().getId() == 6) // Протая
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_PRICE_SIMPLE) + "");
-        else // Полулюкс
-          obj.setC3(((pat.getDayCount() == null ? 0 : days) * KOYKA_SEMILUX) + "");*/
       }
       total += Double.parseDouble(obj.getC3());
       eps.add(obj);
@@ -541,20 +529,8 @@ public class CCashbox {
     Double price = pat.getRoom().getPrice() * (100 + ndsProc) / 100, for_price = pat.getRoom().getFor_price() * (100 + ndsProc) / 100;
     if(pat.getCounteryId() == 199) { // Узбекистан
       total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * price;
-      /*if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_LUX_UZB;
-      else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_SIMPLE_UZB;
-      else // Полулюкс
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_SEMILUX_UZB;*/
     } else {
       total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * for_price;
-      /*if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_LUX;
-      else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_PRICE_SIMPLE;
-      else // Полулюкс
-        total += (pat.getDayCount() == null ? 0 : pat.getDayCount() - minusDays) * KOYKA_SEMILUX;*/
     }
     model.addAttribute("minusDays", minusDays);
     model.addAttribute("koykoTotal", total);
@@ -565,7 +541,7 @@ public class CCashbox {
     model.addAttribute("watchers", watchers);
     //
     List<LvFizios> fizios = dLvFizio.getPaidServices(pat.getId());
-    List<ObjList> pfizios = new ArrayList<ObjList>();
+    List<ObjList> pfizios = new ArrayList<>();
     for(LvFizios fizio: fizios) {
       ObjList ds = new ObjList();
       ds.setC1(fizio.getKdo().getName());
@@ -581,8 +557,8 @@ public class CCashbox {
     model.addAttribute("fizios", pfizios);
     // Услуги
     List<LvPlans> plans = dLvPlan.getByPatientId(pat.getId());
-    List<LvPlans> plns = new ArrayList<LvPlans>();
-    List<ObjList> planDetails = new ArrayList<ObjList>();
+    List<LvPlans> plns = new ArrayList<>();
+    List<ObjList> planDetails = new ArrayList<>();
     for(LvPlans plan: plans) {
       if(plan.getPrice() != null)
         total += plan.getPrice() * (100 + ndsProc) / 100;
@@ -603,7 +579,7 @@ public class CCashbox {
     model.addAttribute("pays", pays);
     model.addAttribute("discountSum", discountSum);
     model.addAttribute("lvs", dUser.getLvs());
-    model.addAttribute("country", pat.getCounteryId() != null ? dCountery.get(pat.getCounteryId()).getName() : "");
+    model.addAttribute("country", pat.getCounteryId() != null ? dCountry.get(pat.getCounteryId()).getName() : "");
     model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
     model.addAttribute("discounts", dCashDiscount.stat(pat.getId()));
     double paid = 0D;
@@ -661,31 +637,9 @@ public class CCashbox {
       Patients pat = dPatient.get(Util.getInt(req, "id"));
       Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
       Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
-      /*Double KOYKA_PRICE_LUX_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX_UZB"));
-      Double KOYKA_PRICE_SIMPLE_UZB = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE_UZB"));
-      Double KOYKA_PRICE_LUX = Double.parseDouble(session.getParam("KOYKA_PRICE_LUX"));
-      Double KOYKA_PRICE_SIMPLE = Double.parseDouble(session.getParam("KOYKA_PRICE_SIMPLE"));
-      Double KOYKA_SEMILUX = Double.parseDouble(session.getParam("KOYKA_SEMILUX"));
-      Double KOYKA_SEMILUX_UZB = Double.parseDouble(session.getParam("KOYKA_SEMILUX_UZB"));*/
       //
       Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
       Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
-      //
-      /*if(pat.getCounteryId() == 199) { // Узбекистан
-        if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-          total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX_UZB;
-        else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-          total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE_UZB;
-        else // Полулюкс
-          total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX_UZB;
-      } else {
-        if(pat.getRoom().getRoomType().getId() == 5)  // Люкс
-          total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_LUX;
-        else if(pat.getRoom().getRoomType().getId() == 6) // Протая
-          total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_PRICE_SIMPLE;
-        else // Полулюкс
-          total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * KOYKA_SEMILUX;
-      }*/
       Double paid = 0D;
       List<PatientPays> pays = dPatientPays.getList("From PatientPays t Where t.patient_id = " + pat.getId());
       for(PatientPays py: pays)
@@ -840,5 +794,117 @@ public class CCashbox {
     }
     return json.toString();
   }
+  //endregion
+
+  //region SALES
+  @RequestMapping("sales.s")
+  protected String sales(HttpServletRequest req, Model m) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/cashbox/sales.s");
+    m.addAttribute("page", Util.get(req, "page", "amb"));
+    //
+    List<Kdos> kdos = dKdo.list("From Kdos Where state = 'A' Order By kdoType.id");
+    m.addAttribute("kdos", kdos);
+    //
+    List<AmbServices> services = dAmbService.list("From AmbServices Where state = 'A' Order By group.id");
+    m.addAttribute("services", services);
+    //
+    return "/med/cashbox/sales/index";
+  }
+
+  @RequestMapping(value = "/sale/row/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String saleRowSave(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      if(Util.get(req, "code").equals("stat")) {
+        Kdos kdo = dKdo.get(Util.getInt(req, "id"));
+        kdo.setSaleStart(Util.getDate(req, "start"));
+        kdo.setSaleEnd(Util.getDate(req, "end"));
+        kdo.setSaleProc(Double.parseDouble(Util.get(req, "proc")));
+        if (kdo.getSaleEnd().before(new Date())) {
+          json.put("success", false);
+          json.put("msg", "Дата начала не может быть меньше текущий");
+          return json.toString();
+        }
+        if (kdo.getSaleEnd().before(kdo.getSaleStart()) || kdo.getSaleStart().equals(kdo.getSaleEnd())) {
+          json.put("success", false);
+          json.put("msg", "Дата начала не может быть меньше или равно дата окончаний");
+          return json.toString();
+        }
+        if (kdo.getSaleProc() < 0) {
+          json.put("success", false);
+          json.put("msg", "Процентная ставка не может быть меньше 0");
+          return json.toString();
+        }
+        if (kdo.getSaleProc() > 100) {
+          json.put("success", false);
+          json.put("msg", "Процентная ставка не может быть больше 100");
+          return json.toString();
+        }
+        dKdo.save(kdo);
+      } else {
+        AmbServices kdo = dAmbService.get(Util.getInt(req, "id"));
+        kdo.setSaleStart(Util.getDate(req, "start"));
+        kdo.setSaleEnd(Util.getDate(req, "end"));
+        kdo.setSaleProc(Double.parseDouble(Util.get(req, "proc")));
+        if (kdo.getSaleEnd().before(new Date())) {
+          json.put("success", false);
+          json.put("msg", "Дата начала не может быть меньше текущий");
+          return json.toString();
+        }
+        if (kdo.getSaleEnd().before(kdo.getSaleStart()) || kdo.getSaleStart().equals(kdo.getSaleEnd())) {
+          json.put("success", false);
+          json.put("msg", "Дата начала не может быть меньше или равно дата окончаний");
+          return json.toString();
+        }
+        if (kdo.getSaleProc() < 0) {
+          json.put("success", false);
+          json.put("msg", "Процентная ставка не может быть меньше 0");
+          return json.toString();
+        }
+        if (kdo.getSaleProc() > 100) {
+          json.put("success", false);
+          json.put("msg", "Процентная ставка не может быть больше 100");
+          return json.toString();
+        }
+        dAmbService.save(kdo);
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+      e.printStackTrace();
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/sale/row/remove.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String saleRowRemove(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      if(Util.get(req, "code").equals("stat")) {
+        Kdos kdo = dKdo.get(Util.getInt(req, "id"));
+        kdo.setSaleStart(null);
+        kdo.setSaleEnd(null);
+        kdo.setSaleProc(null);
+        dKdo.save(kdo);
+      } else {
+        AmbServices service = dAmbService.get(Util.getInt(req, "id"));
+        service.setSaleStart(null);
+        service.setSaleEnd(null);
+        service.setSaleProc(null);
+        dAmbService.save(service);
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+      e.printStackTrace();
+    }
+    return json.toString();
+  }
+  //endregion
 
 }

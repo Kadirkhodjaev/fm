@@ -64,10 +64,10 @@ public class CExp {
     PreparedStatement ps = null;
     ResultSet rs = null;
     ResultSet rc = null;
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     try {
       conn = DB.getConnection();
-      HashMap<String, Double> totals = new HashMap<String, Double>();
+      HashMap<String, Double> totals = new HashMap<>();
       //region Стационар
       ps = conn.prepareStatement(
         "Select c.product_id, d.Name product_name, c.measure_id, m.Name measure_name, Sum(c.Rasxod) Rasxod " +
@@ -100,7 +100,7 @@ public class CExp {
       model.addAttribute("stats", list);
       //endregion
       //region Амбулатория
-      list = new ArrayList<ObjList>();
+      list = new ArrayList<>();
       ps = conn.prepareStatement(
         "Select c.product_id, d.Name product_name, c.measure_id, m.Name measure_name, Sum(c.Rasxod) Rasxod " +
           "  From Amb_Patient_Services t, Exp_s_Norms c, Exp_s_Products d, Exp_s_Measures m " +
@@ -132,7 +132,7 @@ public class CExp {
       model.addAttribute("ambs", list);
       //endregion
       //region Детализация
-      list = new ArrayList<ObjList>();
+      list = new ArrayList<>();
       ps = conn.prepareStatement(
         "Select c.kdo_id, c.id, c.colName " +
           "  FROM Exp_s_Norms t, Kdo_Choosens c " +
@@ -142,7 +142,7 @@ public class CExp {
       );
       ps.execute();
       rs = ps.getResultSet();
-      HashMap<String, Double> services = new HashMap<String, Double>();
+      HashMap<String, Double> services = new HashMap<>();
       while (rs.next()) {
         String table = "";
         switch (rs.getInt("kdo_id")) {
@@ -197,7 +197,7 @@ public class CExp {
       model.addAttribute("details", list);
       //endregion
       //region По всем
-      list = new ArrayList<ObjList>();
+      list = new ArrayList<>();
       Set<String> totalKeys = totals.keySet();
       for(String key: totalKeys) {
         ObjList obj = new ObjList();
@@ -270,7 +270,7 @@ public class CExp {
     session.setCurUrl("/exp/dicts.s");
     session.setCurSubUrl("/exp/dict/services.s");
     //
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     List<AmbServices> ambs = dAmbService.getList("From AmbServices Where state = 'A'");
     for(AmbServices amb: ambs) {
       ObjList d = new ObjList();
@@ -314,21 +314,28 @@ public class CExp {
     session.setCurSubUrl("/exp/dict/service.s?type=" + type + "&id=" + id);
     ObjList service = new ObjList();
     service.setC4(type);
-    if(type.equals("amb")) {
-      AmbServices sr = dAmbService.get(id);
-      service.setC1(sr.getId().toString());
-      service.setC2(sr.getName());
-      service.setC3("Амбулаторная услуга");
-    } else if (type.equals("stat")) {
-      Kdos sr = dKdo.get(id);
-      service.setC1(sr.getId().toString());
-      service.setC2(sr.getName());
-      service.setC3("Статционарная услуга");
-    } else if (type.equals("detail")) {
-      KdoChoosens sr = dKdoChoosen.get(id);
-      service.setC1(sr.getId().toString());
-      service.setC2(sr.getName());
-      service.setC3("Стационар детали");
+    switch (type) {
+      case "amb": {
+        AmbServices sr = dAmbService.get(id);
+        service.setC1(sr.getId().toString());
+        service.setC2(sr.getName());
+        service.setC3("Амбулаторная услуга");
+        break;
+      }
+      case "stat": {
+        Kdos sr = dKdo.get(id);
+        service.setC1(sr.getId().toString());
+        service.setC2(sr.getName());
+        service.setC3("Статционарная услуга");
+        break;
+      }
+      case "detail": {
+        KdoChoosens sr = dKdoChoosen.get(id);
+        service.setC1(sr.getId().toString());
+        service.setC2(sr.getName());
+        service.setC3("Стационар детали");
+        break;
+      }
     }
     List<ExpNorms> norms = dExpNorm.getList("From ExpNorms Where parentType = '" + type + "' And service = " + id);
     //

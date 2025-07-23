@@ -78,7 +78,7 @@ public class CEat {
   @Autowired private DNurseEatPatient dNurseEatPatient;
 
   @RequestMapping("/acts.s")
-  protected String acts(HttpServletRequest req, Model model){
+  protected String acts(){
     return "/med/eat/act/index";
   }
 
@@ -100,7 +100,7 @@ public class CEat {
     EatMenus menu;
     EatMenuTypes menuType;
     EatClaims claim = new EatClaims();
-    List<EatMenuTable> list = new ArrayList<EatMenuTable>();
+    List<EatMenuTable> list = new ArrayList<>();
     if(Util.isNull(req, "id")) {
       List<EatTables> tables = dEatTable.getList("From EatTables");
       menu = dEatMenu.get(Util.getInt(req, "menu"));
@@ -113,7 +113,7 @@ public class CEat {
         tb.setName(table.getName());
         // Patients
         List<NurseEatPatients> patients = dNurseEatPatient.getList("From NurseEatPatients Where nurseEat.actDate = '" + Util.dateDB(Util.dateToString(menu.getMenuDate())) + "' And nurseEat.menuType.id = " + menuType.getId() + " And table.id = " + table.getId());
-        List<PatientList> pats = new ArrayList<PatientList>();
+        List<PatientList> pats = new ArrayList<>();
         for (NurseEatPatients patient : patients) {
           PatientList pat = new PatientList();
           if(patient.getPatient() != null) {
@@ -131,7 +131,7 @@ public class CEat {
         tb.setPatients(pats);
         // Eats
         List<EatMenuRows> eats = dEatMenuRow.getList("From EatMenuRows Where menu.id = " + menu.getId() + " And table.id = " + table.getId() + " And menuType.id = " + menuType.getId());
-        List<EatMenuTableEat> mEats = new ArrayList<EatMenuTableEat>();
+        List<EatMenuTableEat> mEats = new ArrayList<>();
         for (EatMenuRows eat : eats) {
           EatMenuTableEat mEat = new EatMenuTableEat();
           mEat.setRowId(eat.getId());
@@ -155,7 +155,7 @@ public class CEat {
         tb.setName(table.getName());
         // Patients
         List<EatClaimPatients> patients = dEatClaimPatient.getList("From EatClaimPatients Where claim.id = " + claim.getId() + " And table.id = " + table.getId());
-        List<PatientList> pats = new ArrayList<PatientList>();
+        List<PatientList> pats = new ArrayList<>();
         for (EatClaimPatients patient : patients) {
           PatientList pat = new PatientList();
           if(patient.getPatient() != null) {
@@ -174,7 +174,7 @@ public class CEat {
         tb.setPatients(pats);
         // Eats
         List<EatClaimEats> eats = dEatClaimEat.getList("From EatClaimEats Where claim.id = " + claim.getId() + " And table.id = " + table.getId());
-        List<EatMenuTableEat> mEats = new ArrayList<EatMenuTableEat>();
+        List<EatMenuTableEat> mEats = new ArrayList<>();
         for (EatClaimEats eat : eats) {
           EatMenuTableEat mEat = new EatMenuTableEat();
           mEat.setRowId(eat.getId());
@@ -201,8 +201,8 @@ public class CEat {
     session.setCurUrl("/eats/claim/patients.s?id=" + claim.getId());
     model.addAttribute("claim", claim);
     //
-    List<ObjList> patients = new ArrayList<ObjList>();
-    List<ObjList> eats = new ArrayList<ObjList>();
+    List<ObjList> patients = new ArrayList<>();
+    List<ObjList> eats = new ArrayList<>();
     //
     Connection conn = null;
     PreparedStatement ps = null;
@@ -250,7 +250,7 @@ public class CEat {
   @RequestMapping("/claim/refresh.s")
   protected String claimRefresh(HttpServletRequest req, Model model) {
     //
-    List<EatMenuTable> list = new ArrayList<EatMenuTable>();
+    List<EatMenuTable> list = new ArrayList<>();
     EatClaims claim = dEatClaim.get(Util.getInt(req, "id"));
     EatMenus menu = claim.getMenu();
     EatMenuTypes menuType = claim.getMenuType();
@@ -263,7 +263,7 @@ public class CEat {
       tb.setName(table.getName());
       // Patients
       List<NurseEatPatients> patients = dNurseEatPatient.getList("From NurseEatPatients Where nurseEat.actDate = '" + Util.dateDB(Util.dateToString(menu.getMenuDate())) + "' And nurseEat.menuType.id = " + menuType.getId() + " And table.id = " + table.getId());
-      List<PatientList> pats = new ArrayList<PatientList>();
+      List<PatientList> pats = new ArrayList<>();
       for (NurseEatPatients patient : patients) {
         PatientList pat = new PatientList();
         if(patient.getPatient() != null) {
@@ -282,7 +282,7 @@ public class CEat {
       tb.setPatients(pats);
       // Eats
       List<EatMenuRows> eats = dEatMenuRow.getList("From EatMenuRows Where menu.id = " + menu.getId() + " And table.id = " + table.getId() + " And menuType.id = " + menuType.getId());
-      List<EatMenuTableEat> mEats = new ArrayList<EatMenuTableEat>();
+      List<EatMenuTableEat> mEats = new ArrayList<>();
       for (EatMenuRows eat : eats) {
         EatMenuTableEat mEat = new EatMenuTableEat();
         mEat.setRowId(eat.getId());
@@ -309,7 +309,7 @@ public class CEat {
       EatMenus menu = dEatMenu.get(Util.getInt(req, "menu"));
       EatMenuTypes menuType = dEatMenuType.get(Util.getInt(req, "menu_type"));
       String[] tIds = req.getParameterValues("table");
-      List<EatTables> tables = new ArrayList<EatTables>();
+      List<EatTables> tables = new ArrayList<>();
       if(tIds != null)
         for(String id: tIds)
           tables.add(dEatTable.get(Integer.parseInt(id)));
@@ -429,7 +429,7 @@ public class CEat {
     EatMenus menu = dEatMenu.get(Util.getInt(req, "id"));
     session.setCurUrl("/eats/menu/details.s?id=" + menu.getId());
     //
-    List<EatMenuType> mMenuTypes = new ArrayList<EatMenuType>();
+    List<EatMenuType> mMenuTypes = new ArrayList<>();
     List<EatMenuTypes> menuTypes = dEatMenuType.getList("From EatMenuTypes Where state = 'A'");
     List<EatTables> tables = dEatTable.getList("From EatTables Order By Id");
     model.addAttribute("tables", tables);
@@ -437,14 +437,14 @@ public class CEat {
       EatMenuType mMenuType = new EatMenuType();
       mMenuType.setId(menuType.getId());
       mMenuType.setName(menuType.getName());
-      List<EatMenuTable> mTables = new ArrayList<EatMenuTable>();
+      List<EatMenuTable> mTables = new ArrayList<>();
       for(EatTables table: tables) {
         EatMenuTable tbl = new EatMenuTable();
         tbl.setId(table.getId());
         tbl.setName(table.getName());
         List<EatMenuRows> rows = dEatMenuRow.getList("From EatMenuRows Where menu.id = " + menu.getId() + " And table.id = " + tbl.getId() + " And menuType.id = " + mMenuType.getId());
         JSONArray eatJson = new JSONArray();
-        List<EatMenuTableEat> mEats = new ArrayList<EatMenuTableEat>();
+        List<EatMenuTableEat> mEats = new ArrayList<>();
         for(EatMenuRows row: rows) {
           EatMenuTableEat mEat = new EatMenuTableEat();
           JSONObject mEatJson = new JSONObject();
@@ -471,7 +471,7 @@ public class CEat {
       obj.setC1(type.getName());
       obj.setC2("" + type.getId());
       List<Eats> ets = dEat.getList("From Eats Where type.id = " + type.getId() + " And state = 'A'");
-      List<ObjList> list = new ArrayList<ObjList>();
+      List<ObjList> list = new ArrayList<>();
       for(Eats et : ets) {
         ObjList e = new ObjList();
         e.setC1("" + et.getId());
@@ -641,20 +641,20 @@ public class CEat {
   @RequestMapping("/eat/filter.s")
   protected String eatFilter(HttpServletRequest req, Model model) {
     List<EatTypes> types = dEatType.getList("From EatTypes Where state = 'A'");
-    List<ObjList> eats = new ArrayList<ObjList>();
+    List<ObjList> eats = new ArrayList<>();
     for(EatTypes type: types) {
       ObjList obj = new ObjList();
       obj.setC1(type.getName());
       obj.setC2("" + type.getId());
       List<Eats> ets = dEat.getList("From Eats Where upper(name) like '%" + Util.get(req, "filter").toUpperCase() + "%' And type.id = " + type.getId() + " And state = 'A'");
-      List<ObjList> list = new ArrayList<ObjList>();
+      List<ObjList> list = new ArrayList<>();
       for(Eats et : ets) {
         ObjList e = new ObjList();
         e.setC1("" + et.getId());
         e.setC2(et.getName());
         list.add(e);
       }
-      if(list.size() > 0) {
+      if(!list.isEmpty()) {
         obj.setList(list);
         eats.add(obj);
       }
@@ -718,15 +718,6 @@ public class CEat {
         dEatMenuRowDetail.delete(detail.getId());
       }
       dEatMenuRow.delete(Util.getInt(req, "id"));
-      /*List<EatNorms> norms = dEatNorm.getList("From EatNorms Where eat.id = " + row.getEat().getId());
-      for(EatNorms norm: norms) {
-        EatMenuRowDetails detail = new EatMenuRowDetails();
-        detail.setRasxod(norm.getRasxod());
-        detail.setMeasure(norm.getMeasure());
-        detail.setProduct(norm.getProduct());
-        detail.setEatMenuRow(row);
-        dEatMenuRowDetail.save(detail);
-      }*/
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -830,14 +821,14 @@ public class CEat {
 
   @RequestMapping("/templates.s")
   protected String templates(HttpServletRequest req, Model model) {
-    List<EatMenuTable> list = new ArrayList<EatMenuTable>();
+    List<EatMenuTable> list = new ArrayList<>();
     String tableName = "", menuTypeName = "";
     List<EatMenuTemplates> temps = dEatMenuTemplate.getList("From EatMenuTemplates Where table.id = " + Util.getInt(req, "table") + " And menuType.id = " + Util.getInt(req, "type"));
     for(EatMenuTemplates temp: temps) {
       EatMenuTable obj = new EatMenuTable();
       obj.setId(temp.getId());
       obj.setName(temp.getName());
-      List<EatMenuTableEat> rows = new ArrayList<EatMenuTableEat>();
+      List<EatMenuTableEat> rows = new ArrayList<>();
       List<EatMenuTemplateRows> rws = dEatMenuTemplateRow.getList("From EatMenuTemplateRows Where templateId = " + temp.getId());
       for(EatMenuTemplateRows rw: rws) {
         EatMenuTableEat row = new EatMenuTableEat();

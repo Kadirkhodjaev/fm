@@ -110,7 +110,7 @@ public class Util {
   }
 
   public static List<String> getDateList(Date minDate, Integer counter) {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     for (int i=0;i<counter;i++) {
       Calendar cal = Calendar.getInstance();
       cal.setTime(minDate);
@@ -121,7 +121,7 @@ public class Util {
   }
 
   public static List<String> getListDates(Date minDate, Integer counter) {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     for (int i=0;i<counter;i++) {
       Calendar cal = Calendar.getInstance();
       cal.setTime(minDate);
@@ -174,6 +174,10 @@ public class Util {
 
   public static String nvl(String val) {
     return val == null || val.equals("") ? "" : val;
+  }
+
+  public static Integer nvl(Integer val, Integer def) {
+    return val == null ? def : val;
   }
 
   public static String nvl(String val, String defaultVal) {

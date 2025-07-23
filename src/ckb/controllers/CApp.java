@@ -97,6 +97,8 @@ public class  CApp {
       m.add(new Menu("Партнеры", "/admin/lvpartners.s", "fa fa-users fa-fw", session));
       m.add(new Menu("Палата", "/admin/rooms.s", "fa fa-archive fa-fw", session));
       m.add(new Menu("Протокол", "/admin/log.s", "fa fa-users fa-fw", session));
+      m.add(new Menu("Пакет услуг", "/admin/pack/index.s", "fa fa-users fa-fw", session));
+      m.add(new Menu("Акции", "/cashbox/sales.s", "fa fa-users fa-fw", session));
     }
     if(roleId == 3) { // Приемное – медсестра
       session.setCurUrl(session.getCurUrl().equals("") ? "/reg/nurse/index.s" : session.getCurUrl());
@@ -512,8 +514,8 @@ public class  CApp {
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
-    List<String> exceptions = new ArrayList<String>();
-    List<String> likes = new ArrayList<String>();
+    List<String> exceptions = new ArrayList<>();
+    List<String> likes = new ArrayList<>();
     try {
       conn = DB.getConnection();
       ps = conn.prepareStatement("Select * From log_exceptions");

@@ -12,6 +12,8 @@ import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.category.DDrugDrugCategory;
 import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
+import ckb.dao.med.drug.dict.drugs.norma.DDrugNorma;
+import ckb.dao.med.drug.dict.drugs.norma.DDrugNormaDirection;
 import ckb.dao.med.drug.dict.manufacturer.DDrugManufacturer;
 import ckb.dao.med.drug.dict.measures.DDrugMeasure;
 import ckb.dao.med.drug.dict.partners.DDrugPartner;
@@ -73,6 +75,8 @@ public class CDrug {
   @Autowired private DHNDirectionLink dhnDirectionLink;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DParam dParam;
+  @Autowired private DDrugNorma dDrugNorma;
+  @Autowired private DDrugNormaDirection dDrugNormaDirection;
   //endregion
 
   //region INCOMES
@@ -85,7 +89,7 @@ public class CDrug {
     String partner = Util.get(request, "partner");
     //
     List<DrugActs> acts = dDrugAct.getList("From DrugActs Where date(regDate) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' " + (partner != null && !partner.isEmpty() ? " And contract.partner.id = " + partner : "") + " Order By regDate Desc");
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     for(DrugActs act : acts) {
       ObjList obj = new ObjList();
       obj.setIb(act.getId().toString());
@@ -303,7 +307,7 @@ public class CDrug {
       model.addAttribute("outcome_sum", out_period);
       model.addAttribute("saldo_out", income_in - out_in + income_period - out_period);
       //
-      List<ObjList> rows = new ArrayList<ObjList>();
+      List<ObjList> rows = new ArrayList<>();
       ps = conn.prepareStatement(
           " Select t.Drug_Id, " +
             "      c.name, " +
@@ -351,7 +355,7 @@ public class CDrug {
     try {
       conn = DB.getConnection();
       //
-      List<ObjList> rows = new ArrayList<ObjList>();
+      List<ObjList> rows = new ArrayList<>();
       ps = conn.prepareStatement(
         "Select t.drug_id, t.summ, t.counter, t.price, c.name From (" +
           " Select t.Drug_Id, t.countprice * (t.counter - t.rasxod) summ, t.counter - t.rasxod counter, t.countprice Price From drug_act_drugs t Where t.counter - t.rasxod > 0 " +
@@ -393,7 +397,7 @@ public class CDrug {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      List<ObjList> rows = new ArrayList<ObjList>();
+      List<ObjList> rows = new ArrayList<>();
       ps = conn.prepareStatement(
         " Select t.id, " +
           "          c.name, " +
@@ -489,7 +493,7 @@ public class CDrug {
 
   //region DICTS
   @RequestMapping("/dicts.s")
-  protected String dicsts(HttpServletRequest request, Model model) {
+  protected String dicsts(HttpServletRequest request) {
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/drugs/dicts.s");
     if(!session.getCurSubUrl().contains("/drugs/dict/"))
@@ -767,7 +771,7 @@ public class CDrug {
   }
 
   @RequestMapping("dict/rasxodtypes.s")
-  protected String dicstDirection(HttpServletRequest request, Model model){
+  protected String dictsDirection(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurSubUrl("/drugs/dict/rasxodtypes.s");
     //
@@ -777,7 +781,7 @@ public class CDrug {
   }
 
   @RequestMapping("/dict/categories.s")
-  protected String dicstCategories(HttpServletRequest request, Model model){
+  protected String dictsCategories(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/drugs/dicts.s");
     session.setCurSubUrl("/drugs/dict/categories.s");
@@ -811,7 +815,7 @@ public class CDrug {
   }
 
   @RequestMapping("/dict/contracts.s")
-  protected String dicstContracts(HttpServletRequest request, Model model){
+  protected String dictsContracts(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/drugs/dicts.s");
     session.setCurSubUrl("/drugs/dict/contracts.s");
@@ -823,7 +827,7 @@ public class CDrug {
   }
 
   @RequestMapping("/dict/measures.s")
-  protected String dicstMeasures(HttpServletRequest request, Model model){
+  protected String dictsMeasures(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/drugs/dicts.s");
     session.setCurSubUrl("/drugs/dict/measures.s");
@@ -834,7 +838,7 @@ public class CDrug {
   }
 
   @RequestMapping("/dict/partners.s")
-  protected String dicstPartners(HttpServletRequest request, Model model){
+  protected String dictsPartners(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/drugs/dicts.s");
     session.setCurSubUrl("/drugs/dict/partners.s");
@@ -845,7 +849,7 @@ public class CDrug {
   }
 
   @RequestMapping("/dict/drugs.s")
-  protected String dicstDrugs(HttpServletRequest request, Model model) {
+  protected String dictsDrugs(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/drugs/dicts.s");
     String ct = Util.get(request, "cat", "A");
@@ -862,6 +866,65 @@ public class CDrug {
     model.addAttribute("rows", dDrugActDrug.getList("From DrugActDrugs Where drug.id = " + Util.getInt(req, "id")));
     return "/med/drugs/dicts/drugs/incomes";
   }
+
+  @RequestMapping("/dict/drug/normas.s")
+  protected String dictsDrugNormas(HttpServletRequest request, Model model) {
+    Session session = SessionUtil.getUser(request);
+    session.setCurUrl("/drugs/dicts.s");
+    session.setCurSubUrl("/drugs/dict/drug/normas.s");
+    model.addAttribute("drugs", dDrug.list("From Drugs Where Not Exists (Select 1 From DrugNormas c Where c.drug.id = id) And state = 'A' Order By Name"));
+    model.addAttribute("rows", dDrugNorma.list("From DrugNormas Order By Id Desc"));
+    model.addAttribute("directions", dDrugDirection.list("From DrugDirections Order By Name"));
+    return "/med/drugs/dicts/drugs/normas";
+  }
+
+  @RequestMapping(value = "/dict/drug/norma.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String saveDrugNorma(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      int id = Util.getInt(req, "id", 0);
+      DrugNormas norma = id == 0 ? new DrugNormas() : dDrugNorma.get(id);
+      norma.setDrug(dDrug.get(Util.getInt(req, "drug")));
+      norma.setNormaType(Util.get(req, "type"));
+      norma.setNorma(Util.getDouble(req, "norma", 0D));
+      dDrugNorma.saveAndReturn(norma);
+      if(norma.getNormaType().equals("MULTI")) {
+        if(id > 0)
+          dDrugNormaDirection.delSql("From DrugNormaDirections Where doc.id = " + norma.getId());
+        String[] ids = req.getParameterValues("ids");
+        String[] normas = req.getParameterValues("ids");
+        for(int i = 0; i < ids.length; i++) {
+          DrugNormaDirections dn = new DrugNormaDirections();
+          dn.setDoc(norma);
+          dn.setNorma(Double.parseDouble(normas[i]));
+          dn.setDirection(dDrugDirection.get(Integer.parseInt(ids[i])));
+          dDrugNormaDirection.save(dn);
+        }
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/dict/drug/norma/del.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String delDrugNorma(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      int id = Util.getInt(req, "id", 0);
+      dDrugNormaDirection.delSql("From DrugNormaDirections Where doc.id = " + id);
+      dDrugNorma.delete(id);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
   //endregion
 
   //region OUTS
@@ -875,7 +938,7 @@ public class CDrug {
     String state = Util.get(request, "state", "");
     //
     List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where (state in ('SND', 'CON') Or state = null) And date(regDate) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' " + (direction != null && !direction.isEmpty() ? "And direction.id = " + direction : "") + ( state.isEmpty() ? "" : " And insFlag != 'Y'" ) + " Order By regDate Desc, id desc");
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     //
     for(DrugOuts act : acts) {
       ObjList obj = new ObjList();
@@ -916,7 +979,7 @@ public class CDrug {
     DrugOuts obj = Util.getInt(req, "id") > 0 ? dDrugOut.get(Util.getInt(req, "id")) : new DrugOuts();
     if(Util.getInt(req, "id") == 0) obj.setId(0);
     List<DrugOutRows> rr = dDrugOutRow.getList("From DrugOutRows t Where t.doc.id = " + obj.getId());
-    List<Obj> list = new ArrayList<Obj>();
+    List<Obj> list = new ArrayList<>();
     for(DrugOutRows r: rr) {
       Obj b = new Obj();
       b.setId(r.getId());
@@ -925,8 +988,8 @@ public class CDrug {
       b.setDrugCount(r.getDrugCount());
       b.setPrice(r.getPrice());
       List<DrugActDrugs> act = dDrugActDrug.getList("From DrugActDrugs Where act.state != 'E' And counter - rasxod > 0 And drug.id = " + r.getDrug().getId());
-      List<ObjList> variuos = new ArrayList<ObjList>();
-      if(act.size() > 0)
+      List<ObjList> variuos = new ArrayList<>();
+      if(!act.isEmpty())
         for(DrugActDrugs a: act) {
           ObjList o = new ObjList();
           o.setC1(a.getId().toString());

@@ -13,7 +13,7 @@
 <div class="clearboth"></div>
 <div class="row" style="margin-right:50px; margin-left:50px">
   <c:forEach items="${roles}" var="r" varStatus="loop">
-    <div class="col-6 col-sm-6 col-md-6 col-xs-6 col-lg-3" style="padding-right:0;padding-left:0">
+    <div class="col-6 col-sm-6 col-md-6 col-xs-6 col-lg-2" style="padding-right:0;padding-left:0">
       <a onclick="setLocation('/setRole.s?id=' + ${r.id}); return false;" href="#">
         <div class="col-lg-11" style="padding-right:0;padding-left:0">
           <div class="${r.color}">

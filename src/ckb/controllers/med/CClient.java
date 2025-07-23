@@ -2,7 +2,6 @@ package ckb.controllers.med;
 
 
 import ckb.dao.admin.country.DCountry;
-import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
@@ -40,12 +39,11 @@ public class CClient {
   @Autowired private DRegion dRegion;
   @Autowired private DUser dUser;
   @Autowired private SClient sClient;
-  @Autowired private DFormField dFormField;
   @Autowired private SForm sForm;
   @Autowired private DAmbPatient dAmbPatient;
 
   @RequestMapping("list.s")
-  protected String main(HttpServletRequest req, Model model) {
+  protected String mains(HttpServletRequest req, Model model) {
     try {
       session = SessionUtil.getUser(req);
       session.setCurUrl("/client/list.s");
@@ -58,20 +56,20 @@ public class CClient {
       if (Req.get(req, "action").equals("sort")) {
         grid.setPage(1);
         if (grid.getOrderCol().equals(Req.get(req, "column"))) {
-          grid.setOrderType(grid.getOrderType().equals("") ? "asc" : grid.getOrderType().equals("asc") ? "desc" : grid.getOrderType().equals("desc") ? "" : grid.getOrderType());
+          grid.setOrderType(grid.getOrderType().isEmpty() ? "asc" : grid.getOrderType().equals("asc") ? "desc" : grid.getOrderType().equals("desc") ? "" : grid.getOrderType());
         } else {
           grid.setOrderType("asc");
         }
         grid.setOrderCol(Req.get(req, "column"));
-        grid.setOrderColId("th" + (Req.get(req, "colId").equals("") ? Req.get(req, "column") : Req.get(req, "colId")));
-      } else if (Req.get(req, "action").equals("") && session.getRoleId() != 5) {
+        grid.setOrderColId("th" + (Req.get(req, "colId").isEmpty() ? Req.get(req, "column") : Req.get(req, "colId")));
+      } else if (Req.get(req, "action").isEmpty() && session.getRoleId() != 5) {
         grid.init();
       }
-      if (!Req.isNull(req,"filter") || !Util.nvl(session.getFilterFio()).equals("")) {
+      if (!Req.isNull(req,"filter") || !Util.nvl(session.getFilterFio()).isEmpty()) {
         session.setFiltered(true);
         if (!Req.isNull(req, "filter"))
           session.setFilterFio(Req.get(req, "filterInput"));
-        if (session.getFilterFio().equals(""))
+        if (session.getFilterFio().isEmpty())
           session.setFiltered(false);
         sql += " And ( " +
           "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
@@ -82,11 +80,11 @@ public class CClient {
       if(session.getRoleId() == 21) {
         sql += " And t.id in (Select c.client_id From Ss_Contract_Clients c)";
       }
-      if (!grid.getOrderType().equals(""))
+      if (!grid.getOrderType().isEmpty())
         sql += " Order By " + grid.getOrderCol() + " " + grid.getOrderType();
       else
         sql += " Order By t.surname";
-      model.addAttribute("htmlClass", grid.getOrderType().equals("") ? "sorting" : "sorting_" + grid.getOrderType());
+      model.addAttribute("htmlClass", grid.getOrderType().isEmpty() ? "sorting" : "sorting_" + grid.getOrderType());
       //endregion
       model.addAttribute("newFieldId", grid.getOrderColId());
       if (Req.get(req, "action").equals("page"))
@@ -107,7 +105,7 @@ public class CClient {
       if (grid.getStartPos() == 1)
         grid.setEndPos(grid.getRowCount() < grid.getPageSize() ? Integer.parseInt("" + grid.getRowCount()) : grid.getPageSize());
       else
-        grid.setEndPos(grid.getStartPos() + grid.getPageSize() < grid.getRowCount() ? grid.getStartPos() + grid.getPageSize() - 1 : Integer.valueOf("" + grid.getRowCount()));
+        grid.setEndPos(grid.getStartPos() + grid.getPageSize() < grid.getRowCount() ? grid.getStartPos() + grid.getPageSize() - 1 : Integer.parseInt("" + grid.getRowCount()));
       if (grid.getEndPos() == 0)
         grid.setStartPos(0);
       SessionUtil.addSession(req, "clientGrid", grid);
@@ -144,7 +142,7 @@ public class CClient {
       Clients client = Util.isNull(req, "id") ? new Clients() : dClient.get(Util.getInt(req, "id"));
       client.setSurname(Util.get(req, "surname", "").toUpperCase());
       client.setName(Util.get(req, "name", "").toUpperCase());
-      if(client.getSurname() == null || client.getName() == null || client.getSurname().equals("") || client.getName().equals("")) {
+      if(client.getSurname() == null || client.getName() == null || client.getSurname().isEmpty() || client.getName().isEmpty()) {
         json.put("success", false);
         json.put("msg", "Заполните все обязательные поля");
         return json.toString();

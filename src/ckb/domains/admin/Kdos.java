@@ -4,6 +4,7 @@ import ckb.domains.GenId;
 import ckb.domains.med.patient.Patients;
 
 import javax.persistence.*;
+import java.util.Date;
 
 
 @Entity
@@ -39,6 +40,10 @@ public class Kdos extends GenId {
   @Column private String fizei;
   @Column private Integer minTime = 0;
   @Column private Integer maxTime = 0;
+
+  @Column private Date saleStart;
+  @Column private Date saleEnd;
+  @Column private Double saleProc;
 
   public int getFormId() {return formId;}
 
@@ -190,5 +195,29 @@ public class Kdos extends GenId {
 
   public double getStatusRealPrice(Patients patient) {
     return patient.isResident() ? getReal_price() : getFor_real_price();
+  }
+
+  public Date getSaleStart() {
+    return saleStart;
+  }
+
+  public void setSaleStart(Date saleStart) {
+    this.saleStart = saleStart;
+  }
+
+  public Date getSaleEnd() {
+    return saleEnd;
+  }
+
+  public void setSaleEnd(Date saleEnd) {
+    this.saleEnd = saleEnd;
+  }
+
+  public Double getSaleProc() {
+    return saleProc;
+  }
+
+  public void setSaleProc(Double saleProc) {
+    this.saleProc = saleProc;
   }
 }

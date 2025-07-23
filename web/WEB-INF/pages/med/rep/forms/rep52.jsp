@@ -32,6 +32,8 @@
     <td nowrap style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Адрес</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Паспортные данные</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Телефон</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Место работы</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Должность</td>
   </tr>
   <c:forEach items="${rows}" var="service" varStatus="loop">
     <tr>
@@ -52,6 +54,8 @@
       <td style="padding:5px;">${service.c6}</td>
       <td style="padding:5px;">${service.c7}</td>
       <td style="padding:5px;">${service.c11}</td>
+      <td style="padding:5px;">${service.c15}</td>
+      <td style="padding:5px;">${service.c16}</td>
     </tr>
   </c:forEach>
 </table>

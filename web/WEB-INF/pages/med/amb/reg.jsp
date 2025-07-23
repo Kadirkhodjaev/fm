@@ -377,6 +377,17 @@
     });
   }
 </script>
+<style>
+  .blink_me {
+    animation: blinker 1s linear infinite;
+  }
+
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+</style>
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
 <div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog wpx-1000">
@@ -626,6 +637,9 @@
           Услуги
           <div style="float:right">
             <button class="btn btn-sm" type="button" onclick="printService(null)" style="margin-top: -5px"><span class="fa fa-print"></span> Печать</button>
+            <c:if test="${patient.state != 'ARCH' && packs > 0 && sessionScope.ENV.roleId == 15}">
+              <button class="btn btn-sm btn-success" type="button" onclick="openMainPage('/amb/packs.s')" style="margin-top: -5px"><i class="fa fa-plus"></i> Пакеты</button>
+            </c:if>
             <c:if test="${patient.state != 'ARCH'}">
               <button class="btn btn-sm btn-success" type="button" onclick="openMainPage('/amb/services.s')" style="margin-top: -5px"><i class="fa fa-plus"></i> Услуги</button>
             </c:if>
@@ -648,7 +662,7 @@
               <td class="center bold" style="width: 30px">Пов.</td>
             </tr>
             <c:forEach items="${services}" var="ser" varStatus="loop">
-              <tr id="ser${ser.id}">
+              <tr id="ser${ser.id}" <c:if test="${ser.pack != '' && ser.pack != null}">title="Услуга пакета: ${ser.pack}"</c:if>>
                 <td class="center">${loop.index + 1}</td>
                 <td class="center hand" title="Печать">
                   <c:if test="${ser.state == 'DONE'}">
@@ -663,7 +677,13 @@
                   <c:if test="${ser.state == 'DONE'}"><img src='/res/imgs/green.gif'/></c:if>
                 </td>
                 <td <c:if test="${ser.state == 'ENT'}">style="color:red"</c:if>>
+                  <c:if test="${ser.pack != '' && ser.pack != null}">
+                    <i class="fa fa-medkit" title="Пакет: ${ser.pack}"></i>
+                  </c:if>
                   ${ser.service.name}
+                  <c:if test="${ser.saleProc > 0}">
+                    <span style="font-weight:bold; color:red" class="blink_me">(Скидка:${ser.saleProc}%)</span>
+                  </c:if>
                 </td>
                 <td class="right" style="padding-right:7px">${ser.price}</td>
                 <td class="right" style="padding-right:7px">${ser.nds}</td>
@@ -679,6 +699,9 @@
                 <c:if test="${patient.state != 'ARCH'}">
                   <td class="center">
                     <c:if test="${ser.state == 'ENT'}">
+                      <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delService(${ser.id})"><span class="fa fa-minus"></span></button>
+                    </c:if>
+                    <c:if test="${ser.state == 'PAID' && ser.resultId == 0 && patient.emp != 0 && ser.crBy == sessionScope.ENV.userId}">
                       <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delService(${ser.id})"><span class="fa fa-minus"></span></button>
                     </c:if>
                   </td>

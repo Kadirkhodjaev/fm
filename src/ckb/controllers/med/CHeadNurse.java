@@ -2303,7 +2303,7 @@ public class CHeadNurse {
     }
     //
     List<AmbDrugDates> dds = dAmbDrugDate.getList("From AmbDrugDates Where checked = 1 And ambDrug.patient.id = " + Util.get(req, "id") + " And date = '" + Util.dateDB(d) + "'");
-    List<Obj> drugs = new ArrayList<Obj>();
+    List<Obj> drugs = new ArrayList<>();
     for(AmbDrugDates dd: dds) {
       List<AmbDrugRows> rows = dAmbDrugRow.getList("From AmbDrugRows Where ambDrug.id = " + dd.getAmbDrug().getId());
       for (AmbDrugRows row : rows) {

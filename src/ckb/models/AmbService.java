@@ -29,6 +29,10 @@ public class AmbService {
   private Users worker;
   private List<Users> users;
   private AmbResults result;
+  private Integer resultId;
+  private Integer crBy;
+  private String pack;
+  private Double saleProc;
   private List<FormField> fields;
   private boolean repeat;
   private String c1_name;
@@ -292,5 +296,37 @@ public class AmbService {
 
   public void setDnds(Double dnds) {
     this.dnds = dnds;
+  }
+
+  public Integer getResultId() {
+    return resultId;
+  }
+
+  public void setResultId(Integer resultId) {
+    this.resultId = resultId;
+  }
+
+  public Integer getCrBy() {
+    return crBy;
+  }
+
+  public void setCrBy(Integer crBy) {
+    this.crBy = crBy;
+  }
+
+  public String getPack() {
+    return pack;
+  }
+
+  public void setPack(String pack) {
+    this.pack = pack;
+  }
+
+  public Double getSaleProc() {
+    return saleProc;
+  }
+
+  public void setSaleProc(Double saleProc) {
+    this.saleProc = saleProc;
   }
 }

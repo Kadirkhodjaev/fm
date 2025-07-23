@@ -44,13 +44,12 @@ import java.util.List;
 @RequestMapping("/booking/")
 public class CBooking {
 
-  private Session session = null;
-  @Autowired DRoomBookings dRoomBooking;
+  @Autowired private DRoomBookings dRoomBooking;
   @Autowired private DRooms dRoom;
   @Autowired private DUser dUser;
   @Autowired private DDept dDept;
   @Autowired private SForm sForm;
-  @Autowired private DCountry dCountery;
+  @Autowired private DCountry dCountry;
   @Autowired private DOpt dOpt;
   @Autowired private DDict dDict;
   @Autowired private DPatient dPatient;
@@ -58,7 +57,7 @@ public class CBooking {
 
   @RequestMapping("index.s")
   protected String serviceList(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurPat(0);
     String filter = Util.nvl(req, "word", "");
     session.setCurUrl("/booking/index.s?word=" + filter);
@@ -80,7 +79,7 @@ public class CBooking {
     m.addAttribute("rooms", dRoom.getActives());
     m.addAttribute("lvs", dUser.getLvs());
     m.addAttribute("depts", dDept.getAll());
-    m.addAttribute("countries", dCountery.getCounteries());
+    m.addAttribute("countries", dCountry.getCounteries());
     m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
     sForm.setSelectOptionModel(m, 1, "sex");
     //endregion
@@ -91,7 +90,6 @@ public class CBooking {
   @ResponseBody
   protected String getBooking(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       Integer history = Integer.parseInt(Util.nvl(req, "history", "0"));
       JSONObject bb = new JSONObject();
@@ -142,7 +140,7 @@ public class CBooking {
   @ResponseBody
   protected String bookingSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       int id = 0;
       if(!Util.isNull(req, "id"))
@@ -161,7 +159,7 @@ public class CBooking {
       book.setBirthyear(Util.getInt(req, "birthyear"));
       book.setTel(Util.get(req, "tel"));
       book.setPassportInfo(Util.get(req, "passport"));
-      book.setCountry(dCountery.get(Util.getInt(req, "country")));
+      book.setCountry(dCountry.get(Util.getInt(req, "country")));
       book.setSex(dOpt.get(Util.getInt(req, "sex")));
       if(Util.isNotNull(req, "lv"))
         book.setLv(dUser.get(Util.getInt(req, "lv")));
@@ -192,7 +190,7 @@ public class CBooking {
     PreparedStatement ps = null;
     ResultSet rs = null;
     Date sysdate = Util.stringToDate(Util.getCurDate());
-    List<ClinicStage> stages = new ArrayList<ClinicStage>();
+    List<ClinicStage> stages = new ArrayList<>();
     String vypDate = Util.isNull(req,"vypDate") ? Util.getCurDate() : Util.get(req, "vypDate");
     String emptyDate = Util.isNull(req,"emptyDate") ? Util.getCurDate() : Util.get(req, "emptyDate");
     int vypCount = 0, emptyCount = 0;
@@ -210,7 +208,7 @@ public class CBooking {
       }
       for(ClinicStage stage: stages) {
         List<Rooms> rooms = dRoom.getList("From Rooms Where floor.id = " + stage.getCode());
-        List<Room> stageRooms = new ArrayList<Room>();
+        List<Room> stageRooms = new ArrayList<>();
         int counter = 0;
         for (Rooms room : rooms) {
           Room rr = new Room();
@@ -223,7 +221,7 @@ public class CBooking {
           rr.setState(room.getState());
           ps = conn.prepareStatement("Select * From Patients t Where t.date_begin is not null And t.state != 'ARCH' And room_id = " + room.getId());
           rs = ps.executeQuery();
-          List<ObjList> list = new ArrayList<ObjList>();
+          List<ObjList> list = new ArrayList<>();
           while (rs.next()) {
             if(Util.isNotNull(req,"emptyDate")) {
               Date vypiska = Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count"));
@@ -246,7 +244,7 @@ public class CBooking {
             list.add(obj);
             // Ухаживающий или Брон
             List<PatientWatchers> watchers = dPatientWatcher.byPatient(rs.getInt("id"));
-            if(watchers.size() > 0) {
+            if(!watchers.isEmpty()) {
               for(PatientWatchers watcher: watchers) {
                 if(sysdate.before(Util.dateAddDay(watcher.getCrOn(), watcher.getDayCount()))) {
                   obj = new ObjList();
@@ -313,7 +311,7 @@ public class CBooking {
       model.addAttribute("rooms", dRoom.getActives());
       model.addAttribute("lvs", dUser.getLvs());
       model.addAttribute("depts", dDept.getAll());
-      model.addAttribute("countries", dCountery.getCounteries());
+      model.addAttribute("countries", dCountry.getCounteries());
       sForm.setSelectOptionModel(model, 1, "sex");
       //
     } catch (Exception e) {
@@ -328,11 +326,11 @@ public class CBooking {
 
   @RequestMapping("palata.s")
   protected String palataAccess(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/booking/palata.s");
     //region Услуги
     List<Rooms> list = dRoom.getAll();
-    List<Room> rooms = new ArrayList<Room>();
+    List<Room> rooms = new ArrayList<>();
     for(Rooms room: list) {
       Room rr = new Room();
       rr.setId(room.getId());
@@ -355,7 +353,6 @@ public class CBooking {
   @ResponseBody
   protected String palataAccess(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       Rooms room = dRoom.get(Util.getInt(req, "id"));
       room.setAccess(Util.get(req, "code").equals("set") ? "Y" : "N");
@@ -372,7 +369,7 @@ public class CBooking {
   @ResponseBody
   protected String removeBooking(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       RoomBookings book = dRoomBooking.get(Util.getInt(req, "id"));
       if(session.getUserId() != book.getCrBy() && session.getUserId() != 1) {
@@ -391,7 +388,7 @@ public class CBooking {
 
   @RequestMapping("nurse.s")
   protected String nurse(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     String filter = Util.get(req, "word");
     session.setCurUrl("/booking/nurse.s?word=" + filter);
     m.addAttribute("filter", filter);

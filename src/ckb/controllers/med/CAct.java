@@ -285,8 +285,6 @@ public class CAct {
     m.addAttribute("drugs", drugs);
     //
     Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
     try {
       conn = DB.getConnection();
       Double drugSum = DB.getSum(conn, "Select Sum((t.price + t.nds) * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
@@ -310,7 +308,7 @@ public class CAct {
 
         updateLabServices(conn, hnPatient); // Лабораторные исследования
         updateMedServices(conn, hnPatient); // Медицинские услуги
-        updateCounServices(conn, hnPatient); // Узкие специалисты
+        updateCountServices(conn, hnPatient); // Узкие специалисты
       }
       List<HNPatientKdos> labs = new ArrayList<>();
       List<HNPatientKdos> consuls = new ArrayList<>();
@@ -383,7 +381,7 @@ public class CAct {
       //
       Double disPerc = hnPatient.getPatient().getDis_perc();
       disPerc = (disPerc == null ? 0 : disPerc) / 100;
-      Double koyko = epicRows.isEmpty() ? hnPatient.getKoykoPrice() * hnPatient.getDayCount() : epicSum;
+      double koyko = epicRows.isEmpty() ? hnPatient.getKoykoPrice() * hnPatient.getDayCount() : epicSum;
       totalSum = watcherSum + drugSum + labSum + kdoSum + consulSum + koyko * (1-disPerc) + (hnPatient.getEatPrice() * hnPatient.getDayCount()) - discountSum;
       hnPatient.setPaySum((double) Math.round((totalSum - paidSum) * 100) / 100);
       hnPatient.setTotalSum((double) Math.round(totalSum * 100) / 100);
@@ -413,8 +411,6 @@ public class CAct {
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      DB.done(rs);
-      DB.done(ps);
       DB.done(conn);
     }
     return "med/act/addEdit";
@@ -434,17 +430,15 @@ public class CAct {
     m.addAttribute("drugs", dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + Util.getInt(req, "id")));
     //
     Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
     try {
       conn = DB.getConnection();
       Double drugSum =  DB.getSum(conn, "Select Sum((t.price + t.nds) * t.serviceCount) From HN_Patient_Drugs t Where t.hn_patient = " + Util.getInt(req, "id"));
       m.addAttribute("summ", drugSum);
       //
       List<HNPatientKdos> services = dhnPatientKdo.getList("From HNPatientKdos Where parent.id = " + hnPatient.getId());
-      List<HNPatientKdos> labs = new ArrayList<HNPatientKdos>();
-      List<HNPatientKdos> consuls = new ArrayList<HNPatientKdos>();
-      List<HNPatientKdos> kdos = new ArrayList<HNPatientKdos>();
+      List<HNPatientKdos> labs = new ArrayList<>();
+      List<HNPatientKdos> consuls = new ArrayList<>();
+      List<HNPatientKdos> kdos = new ArrayList<>();
       double labSum = 0D, consulSum = 0D, kdoSum = 0D, discountSum = 0;
       for(HNPatientKdos service: services) {
         if(service.getServiceType() == 0) {
@@ -492,7 +486,7 @@ public class CAct {
       m.addAttribute("onlineSum", online);
       // Переводной эпикриз
       List<LvEpics> epics = dLvEpic.getPatientEpics(hnPatient.getPatient().getId());
-      List<ObjList> epicRows = new ArrayList<ObjList>();
+      List<ObjList> epicRows = new ArrayList<>();
       Integer days = hnPatient.getDayCount();
       Double epicSum = 0D;
       for(LvEpics epic: epics) {
@@ -512,7 +506,7 @@ public class CAct {
         epicSum += epic.getKoyko() * (epic.getPrice() + epic.getNds());
         epicRows.add(obj);
       }
-      if(epicRows.size() > 0) {
+      if(!epicRows.isEmpty()) {
         ObjList obj = new ObjList();
         obj.setIb("-1");
         obj.setC1(hnPatient.getPatient().getDept().getName());
@@ -546,8 +540,6 @@ public class CAct {
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      DB.done(rs);
-      DB.done(ps);
       DB.done(conn);
     }
     return "med/act/excel";
@@ -721,11 +713,8 @@ public class CAct {
   protected String restorePatientRow(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     session = SessionUtil.getUser(req);
-    int lgotaDays = 10;
     //
     Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
     try {
       conn = DB.getConnection();
       HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
@@ -735,14 +724,12 @@ public class CAct {
       // Медицинские услуги
       if(Util.get(req, "type").equals("1")) updateMedServices(conn, pat);
       // Консультация
-      if(Util.get(req, "type").equals("2")) updateCounServices(conn, pat);
+      if(Util.get(req, "type").equals("2")) updateCountServices(conn, pat);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
     } finally {
-      DB.done(rs);
-      DB.done(ps);
       DB.done(conn);
     }
     return json.toString();
@@ -863,7 +850,7 @@ public class CAct {
     }
   }
 
-  protected void updateCounServices(Connection conn, HNPatients pat) {
+  protected void updateCountServices(Connection conn, HNPatients pat) {
     PreparedStatement ps = null;
     ResultSet rs = null;
     try {

@@ -25,6 +25,8 @@ public class AmbPatientServices extends GenId {
   @Column private String amb_repeat = "N";
   @Column private String diagnoz = "";
   @Column private Integer ambForm;
+  @Column private Integer pack;
+  @Column private Double saleProc;
   @Column(name = "treatment_id") private Integer treatmentId;
 
   @Column private Integer pay;
@@ -214,5 +216,21 @@ public class AmbPatientServices extends GenId {
 
   public void setNds(Double nds) {
     this.nds = nds;
+  }
+
+  public Integer getPack() {
+    return pack;
+  }
+
+  public void setPack(Integer pack) {
+    this.pack = pack;
+  }
+
+  public Double getSaleProc() {
+    return saleProc;
+  }
+
+  public void setSaleProc(Double saleProc) {
+    this.saleProc = saleProc;
   }
 }

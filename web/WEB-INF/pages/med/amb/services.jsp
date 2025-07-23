@@ -3,6 +3,7 @@
 <%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <script type="text/javascript">
   function saveServices() {
@@ -17,6 +18,17 @@
     });
   }
 </script>
+<style>
+  .blink_me {
+    animation: blinker 1s linear infinite;
+  }
+
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+</style>
 <f:form method="post" id="services">
   <div class="panel panel-info" style="width: 100% !important; margin: auto">
     <div class="panel-heading">
@@ -35,14 +47,22 @@
       <c:forEach items="${groups}" var="g" varStatus="loop">
         <div class="tab-pane <c:if test="${loop.index == 0}">active</c:if> fade in" id="page${g.group.id}">
           <table class="formTable" style="width:100%">
-            <tr><td align="center" width="20">&nbsp;</td><td align="center" width="250"><b>Наименование</b></td></tr>
+            <tr><td align="center" width="20">&nbsp;</td><td align="center"><b>Наименование</b></td><td align="center"><b>Стоимость</b></td></tr>
             <c:forEach items="${g.services}" var="k">
               <tr>
                 <td align="center">
                   <input type="checkbox" id="kdo${k.id}" value="${k.id}" name="ids">
                 </td>
                 <td>
-                  <label for="kdo${k.id}">${k.name}</label>
+                  <label for="kdo${k.id}">
+                    ${k.name}
+                    <c:if test="${k.saleProc > 0}">
+                      <span style="font-weight:bold; color:red" class="blink_me">(Акция! Скидка:${k.saleProc}%)</span>
+                    </c:if>
+                  </label>
+                </td>
+                <td class="text-right wpx-100">
+                  <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${k.price}"/>
                 </td>
               </tr>
             </c:forEach>

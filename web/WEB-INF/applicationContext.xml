@@ -51,6 +51,8 @@
   <bean id="dLvConsul" class="ckb.dao.med.lv.consul.DLvConsulImp" parent="daoImpl"/>
   <bean id="dKdos" class="ckb.dao.med.kdos.DKdosImp" parent="daoImpl"/>
   <bean id="dKdoTypes" class="ckb.dao.med.kdos.DKdoTypesImp" parent="daoImpl"/>
+  <bean id="dSalePack" class="ckb.dao.med.kdos.DSalePackImp" parent="daoImpl"/>
+  <bean id="dSalePackRow" class="ckb.dao.med.kdos.DSalePackRowImp" parent="daoImpl"/>
   <bean id="dLvBio" class="ckb.dao.med.lv.bio.DLvBioImp" parent="daoImpl"/>
   <bean id="dF6" class="ckb.dao.med.kdos.forms.f6.DF6Imp" parent="daoImpl"/>
   <bean id="dF13" class="ckb.dao.med.kdos.forms.f13.DF13Imp" parent="daoImpl"/>
@@ -171,6 +173,8 @@
   <bean id="dDrugDirection" class="ckb.dao.med.drug.dict.directions.DDrugDirectionImp" parent="daoImpl"/>
   <bean id="dDrugContract" class="ckb.dao.med.drug.dict.contracts.DDrugContractImp" parent="daoImpl"/>
   <bean id="dDrug" class="ckb.dao.med.drug.dict.drugs.DDrugImp" parent="daoImpl"/>
+  <bean id="dDrugNorma" class="ckb.dao.med.drug.dict.drugs.norma.DDrugNormaImp" parent="daoImpl"/>
+  <bean id="dDrugNormaDirection" class="ckb.dao.med.drug.dict.drugs.norma.DDrugNormaDirectionImp" parent="daoImpl"/>
   <bean id="dDrugDrugMeasure" class="ckb.dao.med.drug.dict.drugs.measure.DDrugDrugMeasureImp" parent="daoImpl"/>
   <bean id="dDrugCount" class="ckb.dao.med.drug.dict.drugs.counter.DDrugCountImp" parent="daoImpl"/>
   <bean id="dDrugDrugCategory" class="ckb.dao.med.drug.dict.drugs.category.DDrugDrugCategoryImp" parent="daoImpl"/>

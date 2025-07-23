@@ -3,6 +3,7 @@ package ckb.domains.med.amb;
 import ckb.domains.GenId;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "Amb_Services")
@@ -24,6 +25,10 @@ public class AmbServices extends GenId {
   @Column private String normaTo;
   @Column private int ord = 99;
   @Column private Double bonusProc = 0D;
+
+  @Column private Date saleStart;
+  @Column private Date saleEnd;
+  @Column private Double saleProc;
 
   public AmbGroups getGroup() {
     return group;
@@ -147,5 +152,29 @@ public class AmbServices extends GenId {
 
   public Double getStatusPrice(AmbPatients pat) {
     return pat.isResident() ? getPrice() : getFor_price();
+  }
+
+  public Date getSaleStart() {
+    return saleStart;
+  }
+
+  public void setSaleStart(Date saleStart) {
+    this.saleStart = saleStart;
+  }
+
+  public Date getSaleEnd() {
+    return saleEnd;
+  }
+
+  public void setSaleEnd(Date saleEnd) {
+    this.saleEnd = saleEnd;
+  }
+
+  public Double getSaleProc() {
+    return saleProc;
+  }
+
+  public void setSaleProc(Double saleProc) {
+    this.saleProc = saleProc;
   }
 }

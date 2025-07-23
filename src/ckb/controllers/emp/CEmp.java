@@ -169,6 +169,9 @@ public class CEmp {
     Session session = SessionUtil.getUser(req);
     try {
       Emps emp = dEmp.get(Util.getInt(req, "id"));
+      if(dAmbPatient.getCount("From AmbPatients Where emp = " + emp.getId() + " And state != 'ARCH'") > 0) {
+        return Util.err(json, "По данному сотруднику уже существует не завершенная запись");
+      }
       AmbPatients pat = new AmbPatients();
       pat.setClient(emp.getClient());
       Clients c = emp.getClient();
