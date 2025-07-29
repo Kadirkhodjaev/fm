@@ -2825,12 +2825,12 @@ public class SRepImp implements SRep {
 						" 			 t.transfer, " +
 						" 			 t.card " +
 						"   From Amb_Patient_Pays t, Amb_Patients c " +
-						"  Where t.crOn between ? and ? " +
+						"  Where date(t.crOn) between ? and ? " +
 						"	   And t.patient = c.id " +
 						"	 Order By t.crOn "
 				);
-				ps.setString(1, Util.dateDBBegin(Util.get(req, "period_start")));
-				ps.setString(2, Util.dateDBEnd(Util.get(req, "period_end")));
+				ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+				ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
 				rs = ps.executeQuery();
 				Double card = 0D, cash = 0D, transfer = 0D;
 				int counter = 0;
@@ -2868,12 +2868,12 @@ public class SRepImp implements SRep {
 						" 			 Sum(p.transfer) transfer, " +
 						" 			 Sum(p.card) card " +
 						"   From Patients t, Patient_Pays p " +
-						"  Where p.crOn between ? and ? " +
+						"  Where date(p.crOn) between ? and ? " +
 						"		 And p.patient_id = t.id " +
 						"  Group By t.id, p.crOn "
 				);
-				ps.setString(1, Util.dateDBBegin(Util.get(req, "period_start")));
-				ps.setString(2, Util.dateDBEnd(Util.get(req, "period_end")));
+				ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
+				ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
 				rs = ps.executeQuery();
 				Double card = 0D, cash = 0D, transfer = 0D;
 				int counter = 0;

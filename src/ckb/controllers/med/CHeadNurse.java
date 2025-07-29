@@ -191,7 +191,7 @@ public class CHeadNurse {
         model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And t.direction.id = " + obj.getDirection().getId() + " Order BY t.drug.name"));
       model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
       model.addAttribute("rows", dhnDateRow.getList("From HNDatePatientRows Where doc.id = " + obj.getId()));
-      List<PatientList> patients = new ArrayList<PatientList>();
+      List<PatientList> patients = new ArrayList<>();
       if(obj.getId() != 0) {
         List<HNDatePatients> list = dhnDatePatient.getList("From HNDatePatients Where date.id= " + obj.getId() + " Order By patient.surname");
         for(HNDatePatients pp: list) {
@@ -240,7 +240,7 @@ public class CHeadNurse {
     JSONObject json = new JSONObject();
     try {
       String id = Util.nvl(req, "id", "0");
-      HNDates obj = id.equals("0") || id.equals("") ? new HNDates() : dhnDate.get(Integer.parseInt(id));
+      HNDates obj = id.equals("0") || id.isEmpty() ? new HNDates() : dhnDate.get(Integer.parseInt(id));
       obj.setTypeCode("STAT");
       obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
       obj.setReceiver(null);
@@ -272,7 +272,7 @@ public class CHeadNurse {
     try {
       int id = Util.getInt(req, "id");
       List<HNDatePatientRows> rows = dhnDatePatientRow.getList("From HNDatePatientRows Where doc.id = " + id);
-      if(rows.size() > 0)
+      if(!rows.isEmpty())
         return Util.err(json, "Нельзя удалить документ! Документ имеет записи");
       dhnDate.delete(id);
       json.put("success", true);
@@ -346,7 +346,7 @@ public class CHeadNurse {
         for (String id : ids) {
           String hid = Util.get(req, "drug_" + id);
           String rasxod = Util.get(req, "drug_count_" + id);
-          if (hid != null && rasxod != null && !hid.equals("") && !rasxod.equals("") && Double.parseDouble(rasxod) > 0) {
+          if (hid != null && rasxod != null && !hid.isEmpty() && !rasxod.isEmpty() && Double.parseDouble(rasxod) > 0) {
             HNDatePatientRows row = new HNDatePatientRows();
             row.setDrug(dhnDrug.get(Integer.parseInt(hid)));
             row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
@@ -414,7 +414,6 @@ public class CHeadNurse {
           d = dt;
       }
       //
-      List<PatientDrugDates> dds = dPatientDrugDate.getList("From PatientDrugDates Where checked = 1 And patientDrug.patient.id = " + Util.get(req, "id") + " And date = '" + Util.dateDB(d) + "'");
       List<Obj> drugs = new ArrayList<>();
       conn = DB.getConnection();
       ps = conn.prepareStatement(
@@ -437,7 +436,7 @@ public class CHeadNurse {
         obj.setId(rs.getInt("drug_id"));
         obj.setName(rs.getString("drug_name"));
         List<HNDrugs> ffs = dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr") + " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + obj.getId());
-        List<ObjList> list = new ArrayList<ObjList>();
+        List<ObjList> list = new ArrayList<>();
         for (HNDrugs ff : ffs) {
           ObjList o = new ObjList();
           o.setC1(ff.getId().toString());
@@ -483,7 +482,7 @@ public class CHeadNurse {
       ps = conn.prepareStatement("Select * From Patients t Where " + (dept.equals("0") ? "" : " t.dept_id = " + dept + " And ") + (depIds.equals("0") ? "" : " t.dept_id in (" + depIds + ") And") + " t.date_begin <= '" + Util.dateDB(Util.dateToString(date.getDate())) + "' And (t.date_end >= '" + Util.dateDB(Util.dateToString(date.getDate())) + "' Or t.date_end is null) And t.state in ('LV') And id not in (Select c.patient_id From HN_Date_Patients c Where c.date_id = ?) Order By surname");
       ps.setInt(1, date.getId());
       rs = ps.executeQuery();
-      List<PatientList> pats = new ArrayList<PatientList>();
+      List<PatientList> pats = new ArrayList<>();
       while (rs.next()) {
         PatientList o = new PatientList();
         o.setId(rs.getInt("id"));
@@ -588,7 +587,7 @@ public class CHeadNurse {
       );
       ps.setInt(1, Util.getInt(req, "id"));
       rs = ps.executeQuery();
-      List<ObjList> list = new ArrayList<ObjList>();
+      List<ObjList> list = new ArrayList<>();
       while (rs.next()) {
         ObjList obj = new ObjList();
         obj.setC1(rs.getString("name"));
@@ -613,7 +612,7 @@ public class CHeadNurse {
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     try {
       int id = Util.getInt(req, "id");
       conn = DB.getConnection();
@@ -694,8 +693,6 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/out/save.s?id=" + Util.getInt(req, "id"));
     //
     Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     StringBuilder arr = new StringBuilder("(");
@@ -720,8 +717,6 @@ public class CHeadNurse {
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      DB.done(rs);
-      DB.done(ps);
       DB.done(conn);
     }
     //
@@ -986,7 +981,7 @@ public class CHeadNurse {
     session.setDateEnd(dh);
     //
     List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where direction.id in " + arr + " And date(regDate) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' " + (!ins_flag.equals("0") ? " And insFlag = '" + ins_flag + "'" : "") + " Order By id Desc");
-    List<ObjList> list = new ArrayList<ObjList>();
+    List<ObjList> list = new ArrayList<>();
     //
     for(DrugOuts act : acts) {
       ObjList obj = new ObjList();
@@ -1248,8 +1243,6 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/transfer/save.s?id=" + Util.getInt(req, "id"));
     //
     Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     StringBuilder arr = new StringBuilder("(");
@@ -1276,8 +1269,6 @@ public class CHeadNurse {
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      DB.done(rs);
-      DB.done(ps);
       DB.done(conn);
     }
     //
@@ -1378,9 +1369,6 @@ public class CHeadNurse {
   protected String shockConfirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     session = SessionUtil.getUser(req);
-    Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
     try {
       HNOpers doc = dhnOper.get(Util.getInt(req, "id"));
       if(dhnDrug.getCount("From HNDrugs Where transfer = " + doc.getId()) == 0)
@@ -1391,10 +1379,6 @@ public class CHeadNurse {
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
-    } finally {
-      DB.done(rs);
-      DB.done(ps);
-      DB.done(conn);
     }
     return json.toString();
   }
@@ -1451,7 +1435,7 @@ public class CHeadNurse {
     depIds = depIds.substring(0, depIds.length() - 1);
     List<Patients> patients = dPatient.getList("From Patients t Where t.state != 'ARCH' And " + where + " dept.id in (" + depIds + ") And  date(t.dateBegin) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By Id Desc");
     //
-    List<Patients> rows = new ArrayList<Patients>();
+    List<Patients> rows = new ArrayList<>();
     for(Patients patient: patients) {
       patient.setFizio(dhnPatient.getCount("From HNPatients Where patient.id = " + patient.getId()) > 0);
       rows.add(patient);
@@ -1488,7 +1472,7 @@ public class CHeadNurse {
     ResultSet rs = null;
     try {
       conn = DB.getConnection();
-      List<ObjList> list = new ArrayList<ObjList>();
+      List<ObjList> list = new ArrayList<>();
       if(!isConf) {
         ps = conn.prepareStatement(
           " Select d.name, m.name measure, Sum(t.rasxod) summ " +
@@ -1533,7 +1517,7 @@ public class CHeadNurse {
           "   And d.Id = c.direction_Id " +
           "   And t.patient_Id = ?"
       );
-      List<ObjList> dates = new ArrayList<ObjList>();
+      List<ObjList> dates = new ArrayList<>();
       ps.setInt(1, patient.getId());
       rs = ps.executeQuery();
       while (rs.next()) {
@@ -1731,7 +1715,7 @@ public class CHeadNurse {
       list = dNurseEat.getList("From NurseEats Where date(actDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By Id Desc");
     else
       list = dNurseEat.getList("From NurseEats Where date(actDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And crBy.id = " + session.getUserId() + " Order By Id Desc");
-    List<ObjList> objLists = new ArrayList<ObjList>();
+    List<ObjList> objLists = new ArrayList<>();
     for(NurseEats l : list) {
       ObjList obj = new ObjList();
       obj.setIb(l.getId().toString());
@@ -1810,7 +1794,7 @@ public class CHeadNurse {
     NurseEats eat = dNurseEat.get(Util.getInt(req, "id"));
     session.setCurUrl("/head_nurse/eat.s?id=" + eat.getId());
     //
-    List<EatMenuTable> list = new ArrayList<EatMenuTable>();
+    List<EatMenuTable> list = new ArrayList<>();
     int newCount = 0;
     List<EatTables> tables = dEatTable.getList("From EatTables");
     for(EatTables table: tables) {
@@ -1818,7 +1802,7 @@ public class CHeadNurse {
       tb.setId(table.getId());
       tb.setName(table.getName());
       // Patients
-      List<PatientList> pats = new ArrayList<PatientList>();
+      List<PatientList> pats = new ArrayList<>();
       List<NurseEatPatients> nurseEatPatients = dNurseEatPatient.getList("From NurseEatPatients Where nurseEat.id = " + eat.getId() + " And table.id = " + table.getId() + " Order By patient desc");
       for (NurseEatPatients patient : nurseEatPatients) {
         PatientList pat = new PatientList();
@@ -1916,7 +1900,7 @@ public class CHeadNurse {
 
   @RequestMapping(value = "eat/patient/save.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String eatPatienSave(HttpServletRequest req) throws JSONException {
+  protected String eatPatientSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
       Integer count = Util.getInt(req, "counter");
@@ -1944,8 +1928,8 @@ public class CHeadNurse {
     model.addAttribute("eat_id", Util.getInt(req, "eat_id"));
     List<PatientEats> eats = dPatientEat.getPatientEat(patient.getId());
     List<EatMenuTypes> menuTypes = dEatMenuType.getList("From EatMenuTypes Where state = 'A'");
-    if(eats == null || eats.size() == 0) {
-      eats = new ArrayList<PatientEats>();
+    if(eats == null || eats.isEmpty()) {
+      eats = new ArrayList<>();
       int count = patient.getDayCount();
       if(patient.getDateEnd() != null && patient.getDateEnd().after(patient.getDateBegin())) {
         count = Integer.parseInt("" + ((patient.getDateEnd().getTime() - patient.getDateBegin().getTime()) / (1000 * 60 * 60 * 24))) + 1;
@@ -2014,10 +1998,11 @@ public class CHeadNurse {
   @RequestMapping("eat/print.s")
   public String nurseEatPrint(HttpServletRequest req, Model model){
     NurseEats eat = dNurseEat.get(Util.getInt(req, "id"));
-    List<EatMenuTable> rows = new ArrayList<EatMenuTable>();
+    List<EatMenuTable> rows = new ArrayList<>();
     List<NurseEatPatients> patients = dNurseEatPatient.list("From NurseEatPatients Where nurseEat.id = " + eat.getId() + " Order By table.id");
     int table = 0;
-    EatMenuTable r = new EatMenuTable();
+    new EatMenuTable();
+    EatMenuTable r;
     List<PatientList> pats = new ArrayList<>();
     for(NurseEatPatients patient: patients) {
       if(table != patient.getTable().getId()) {
@@ -2095,7 +2080,7 @@ public class CHeadNurse {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out/amb/save.s?id=" + Util.getInt(req, "id"));
     //
-    List<HNDateAmbRows> rows = new ArrayList<HNDateAmbRows>();
+    List<HNDateAmbRows> rows = new ArrayList<>();
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     StringBuilder arr = new StringBuilder("(");
     for(UserDrugLines line: lines) {
@@ -2137,7 +2122,7 @@ public class CHeadNurse {
     JSONObject json = new JSONObject();
     try {
       String id = Util.nvl(req, "id", "0");
-      HNDates obj = id.equals("0") || id.equals("") ? new HNDates() : dhnDate.get(Integer.parseInt(id));
+      HNDates obj = id.equals("0") || id.isEmpty() ? new HNDates() : dhnDate.get(Integer.parseInt(id));
       obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
       obj.setPatient(dAmbPatient.get(Util.getInt(req, "patient")));
       if(obj.getId() == null) {
@@ -2312,7 +2297,7 @@ public class CHeadNurse {
           obj.setId(row.getDrug().getId());
           obj.setName(row.getDrug().getName());
           List<HNDrugs> ffs = dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr") + " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + row.getDrug().getId());
-          List<ObjList> list = new ArrayList<ObjList>();
+          List<ObjList> list = new ArrayList<>();
           for (HNDrugs ff : ffs) {
             ObjList o = new ObjList();
             o.setC1(ff.getId().toString());
@@ -2323,7 +2308,7 @@ public class CHeadNurse {
             list.add(o);
           }
           obj.setList(list);
-          if(list.size() > 0)
+          if(!list.isEmpty())
             drugs.add(obj);
         }
       }
@@ -2345,7 +2330,7 @@ public class CHeadNurse {
         for (String id : ids) {
           String hid = Util.get(req, "drug_" + id);
           String rasxod = Util.get(req, "drug_count_" + id);
-          if (hid != null && rasxod != null && !hid.equals("") && !rasxod.equals("") && Double.parseDouble(rasxod) > 0) {
+          if (hid != null && rasxod != null && !hid.isEmpty() && !rasxod.isEmpty() && Double.parseDouble(rasxod) > 0) {
             HNDateAmbRows row = new HNDateAmbRows();
             row.setHndrug(dhnDrug.get(Integer.parseInt(hid)));
             row.setDrug(row.getHndrug().getDrug());
@@ -2377,7 +2362,7 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/patients.s");
     String setFilter = Util.get(req, "set");
     String filter = session.getFilters().get("hn_patient_filter");
-    if(setFilter != null || filter == null || filter.equals("")) filter = Util.get(req, "filter", "").toUpperCase();
+    if(setFilter != null || filter == null || filter.isEmpty()) filter = Util.get(req, "filter", "").toUpperCase();
     Calendar start = Calendar.getInstance();
     start.setTime(new Date());
     start.add(Calendar.DATE, -4);
@@ -2403,7 +2388,7 @@ public class CHeadNurse {
     fl.put("hn_patient_filter", filter);
     session.setFilters(fl);
     String where = "";
-    if(!filter.equals("")) {
+    if(!filter.isEmpty()) {
       where = " (Upper(patient.surname) like '%" + filter + "%' Or Upper(patient.name) like '%" + filter + "%' Or Upper(patient.middlename) like '%" + filter + "%' Or Upper(patient.yearNum) like '%" + filter + "%') And ";
     }
     //

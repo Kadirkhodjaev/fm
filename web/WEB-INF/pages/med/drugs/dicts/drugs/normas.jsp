@@ -43,76 +43,21 @@
         <td class="text-center bold">Значение</td>
       </tr>
       <c:forEach items="${rows}" var="r">
-        <tr class="hover hand" ondblclick="view(${r.id})">
+        <tr class="hover hand" ondblclick="$('#pager').load('/drugs/dict/drug/normas/view.s?id=' + ${r.drug.id})">
           <td>${r.drug.name}</td>
           <td class="text-center">
             <c:if test="${r.normaType == 'ALL'}">Для всех</c:if>
             <c:if test="${r.normaType == 'MULTI'}">По складам</c:if>
           </td>
           <td class="text-right"><fmt:formatNumber value="${r.norma}" type="number"/></td>
+          <td class="text-center wpx-40">
+            <button class="btn btn-danger btn-icon" onclick="delNorma(${r.id})"><i class="fa fa-minus"></i></button>
+          </td>
         </tr>
       </c:forEach>
     </table>
   </div>
   <!-- /.panel-body -->
-</div>
-
-<a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Добавление нового норматива</h4>
-      </div>
-      <div class="modal-body">
-        <div class="center" style="margin-bottom:10px">
-          <h3 id="drug_name" style="margin:auto"></h3>
-        </div>
-        <form id="addEditForms" name="addEditForms">
-          <input type="hidden" name="id" id="id" value="0"/>
-          <input type="hidden" name="drug" id="drug" value=""/>
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Препарат:</td>
-              <td>
-                <input class="form-control" readonly name="drug_name" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Тип норматива:</td>
-              <td>
-                <select class="form-control" name="type" id="norma_type">
-                  <option value="ALL">Для всех</option>
-                  <option value="MULTI">По складам</option>
-                </select>
-              </td>
-            </tr>
-            <c:forEach items="${directions}" var="a">
-              <tr>
-                <td>${a.name}<input type="hidden" name="ids" value="${a.id}"/></td>
-                <td class="text-center">
-                  <input type="number" class="form-control right" name="normas" value=""/>
-                </td>
-              </tr>
-            </c:forEach>
-            <tr id="ALL_VIEW">
-              <td class="right bold">Норма *:</td>
-              <td>
-                <input type="number" id="norma" class="form-control right" name="norma" value=""/>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveNorma()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
-    </div>
-    <!-- /.modal-content -->
-  </div>
-  <!-- /.modal-dialog -->
 </div>
 
 <script>
@@ -124,31 +69,21 @@
       openMedMsg('Препарат не выбран', false);
       return;
     }
-    $('#addEditForms').find('*[name=drug_name]').val(drug);
-    $('#addEditForms').find('*[name=drug]').val(id);
-    getDOM('modal_window').click();
+    $('#pager').load('/drugs/dict/drug/normas/view.s?id=' + id);
   }
-  function saveNorma() {
-    if(getDOM('norma_type').value === 'ALL' && (getDOM('norma').value === '' || getDOM('norma').value === '0')) {
-      openMedMsg('Нельзя сохранить пустое значение для нормы', false);
-      return;
+  function delNorma(id) {
+    if(confirm('Вы действительно хотите удалить выбранную запись?')) {
+      $.ajax({
+        url: '/drugs/dict/drug/norma/del.s',
+        method: 'post',
+        data: 'id=' + id,
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          $('#pager').load('/drugs/dict/drug/normas.s');
+        }
+      });
     }
-    $.ajax({
-      url: '/drugs/dict/drug/norma.s',
-      method: 'post',
-      data: $('#addEditForms').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        getDOM('close-modal').click();
-        openMsg(res);
-        setTimeout(() => {
-          $('#pager').load('drugs/dict/drug/normas.s');
-        }, 500)
-      }
-    });
-  }
-  function view() {
-
   }
   $(function(){
     $(".chzn-select").chosen();

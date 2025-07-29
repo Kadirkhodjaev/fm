@@ -9,7 +9,7 @@ import javax.persistence.*;
 public class DrugNormaDirections extends GenId {
 
   @OneToOne @JoinColumn private DrugNormas doc;
-
+  @OneToOne @JoinColumn private Drugs drug;
   @OneToOne @JoinColumn private DrugDirections direction;
 
   @Column private Double norma;
@@ -20,6 +20,14 @@ public class DrugNormaDirections extends GenId {
 
   public void setDoc(DrugNormas doc) {
     this.doc = doc;
+  }
+
+  public Drugs getDrug() {
+    return drug;
+  }
+
+  public void setDrug(Drugs drug) {
+    this.drug = drug;
   }
 
   public DrugDirections getDirection() {

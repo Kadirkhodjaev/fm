@@ -868,14 +868,37 @@ public class CDrug {
   }
 
   @RequestMapping("/dict/drug/normas.s")
-  protected String dictsDrugNormas(HttpServletRequest request, Model model) {
-    Session session = SessionUtil.getUser(request);
+  protected String dictsDrugNormas(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/drugs/dicts.s");
     session.setCurSubUrl("/drugs/dict/drug/normas.s");
-    model.addAttribute("drugs", dDrug.list("From Drugs Where Not Exists (Select 1 From DrugNormas c Where c.drug.id = id) And state = 'A' Order By Name"));
+    model.addAttribute("drugs", dDrug.list("From Drugs t Where Not Exists (Select 1 From DrugNormas c Where c.drug.id = t.id) And state = 'A' Order By Name"));
     model.addAttribute("rows", dDrugNorma.list("From DrugNormas Order By Id Desc"));
     model.addAttribute("directions", dDrugDirection.list("From DrugDirections Order By Name"));
     return "/med/drugs/dicts/drugs/normas";
+  }
+
+  @RequestMapping("/dict/drug/normas/view.s")
+  protected String dictsDrugView(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/drugs/dicts.s");
+    session.setCurSubUrl("/drugs/dict/drug/normas/view.s?id=" + Util.getInt(req, "id"));
+    Drugs drug = dDrug.get(Util.getInt(req, "id"));
+    model.addAttribute("drug", drug);
+    model.addAttribute("norma", dDrugNorma.obj("From DrugNormas Where drug.id = " + drug.getId()));
+    List<DrugNormaDirections> dirs = dDrugNormaDirection.list("From DrugNormaDirections Where drug.id = " + drug.getId());
+    if(dirs.isEmpty()) {
+      List<DrugDirections> directs = dDrugDirection.list("From DrugDirections Order By Name");
+      for(DrugDirections d : directs) {
+        DrugNormaDirections a = new DrugNormaDirections();
+        a.setDrug(drug);
+        a.setDirection(d);
+        a.setNorma(0D);
+        dirs.add(a);
+      }
+    }
+    model.addAttribute("directions", dirs);
+    return "/med/drugs/dicts/drugs/norma_view";
   }
 
   @RequestMapping(value = "/dict/drug/norma.s", method = RequestMethod.POST)
@@ -889,14 +912,16 @@ public class CDrug {
       norma.setNormaType(Util.get(req, "type"));
       norma.setNorma(Util.getDouble(req, "norma", 0D));
       dDrugNorma.saveAndReturn(norma);
+      dDrugNormaDirection.delSql("From DrugNormaDirections Where doc.id = " + norma.getId());
       if(norma.getNormaType().equals("MULTI")) {
-        if(id > 0)
-          dDrugNormaDirection.delSql("From DrugNormaDirections Where doc.id = " + norma.getId());
+        norma.setNorma(0D);
+        dDrugNorma.save(norma);
         String[] ids = req.getParameterValues("ids");
-        String[] normas = req.getParameterValues("ids");
+        String[] normas = req.getParameterValues("normas");
         for(int i = 0; i < ids.length; i++) {
           DrugNormaDirections dn = new DrugNormaDirections();
           dn.setDoc(norma);
+          dn.setDrug(norma.getDrug());
           dn.setNorma(Double.parseDouble(normas[i]));
           dn.setDirection(dDrugDirection.get(Integer.parseInt(ids[i])));
           dDrugNormaDirection.save(dn);

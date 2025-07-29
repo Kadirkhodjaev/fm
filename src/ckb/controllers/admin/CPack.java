@@ -98,7 +98,7 @@ public class CPack {
       pac.setPrice(dSalePackRow.getTotal(pac.getId()));
       pac.setStart(Util.getDate(req, "start"));
       pac.setEnd(Util.getDate(req, "end"));
-      pac.setState(Util.get(req, "state", "A"));
+      pac.setState(Util.isNull(req, "state") ? "P" : "A");
       if(pac.getName() == null || pac.getName().isEmpty()) {
         json.put("msg", "Не все поля заполнены корректно");
         json.put("success", false);

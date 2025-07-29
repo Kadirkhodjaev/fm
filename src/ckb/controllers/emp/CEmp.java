@@ -181,7 +181,7 @@ public class CEmp {
       pat.setMiddlename(c.getMiddlename());
       pat.setBirthyear(c.getBirthyear());
       pat.setCounteryId(c.getCountry().getId());
-      pat.setRegionId(c.getRegion().getId());
+      pat.setRegionId(c.getRegion() == null ? null : c.getRegion().getId());
       pat.setPassportInfo(c.getDocSeria() + " " + c.getDocNum() + " " + c.getDocInfo());
       pat.setSex(c.getSex());
       pat.setAddress(c.getAddress());
