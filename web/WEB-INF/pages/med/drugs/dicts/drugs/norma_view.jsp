@@ -8,7 +8,7 @@
     <button class="btn btn-success btn-icon float-right" onclick="saveNorma()"><b class="fa fa-save"></b> Списанные</button>
   </div>
   <div class="panel-body">
-    <form id="addEditForms" name="addEditForms">
+    <form id="addEditForms"  name="addEditForms">
       <input type="hidden" name="id" id="id" value="${norma.id}"/>
       <input type="hidden" name="drug" id="drug" value="${drug.id}"/>
       <table class="table table-bordered">
