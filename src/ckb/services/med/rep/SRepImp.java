@@ -218,8 +218,10 @@ public class SRepImp implements SRep {
 		} else if(id == 67) { // Иглотерапия
 			rep67(req, m);
 		} else if(id == 68) { // Подология
-			rep68(req, m);
-		}
+      rep68(req, m);
+    } else if(id == 69) { // Пакеты услуг
+      rep69(req, m);
+    }
 	}
 	// Амбулаторные услуги - По категориям
 	private void rep1(HttpServletRequest req, Model m) {
@@ -5621,5 +5623,59 @@ public class SRepImp implements SRep {
 		// Параметры отчета
 		m.addAttribute("params", params);
 	}
+
+  // Пакеты услуг
+  private void rep69(HttpServletRequest req, Model m){
+    Connection conn = DB.getConnection();
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    String params = "";
+    List<ObjList> rows = new ArrayList<>();
+    //
+    Date startDate = Util.getDate(req, "period_start");
+    Date endDate = Util.getDate(req, "period_end");
+    try {
+      ps = conn.prepareStatement(
+        "Select t.ym,  " +
+          "       t.pack_name, " +
+          "       t.fio, " +
+          "       Sum(t.counter) counter, " +
+          "       Sum(t.Summ) summ " +
+          "  From ( " +
+          "    Select t.pack, " +
+          "           (Select f.name From sale_packs f Where f.Id = t.pack) pack_name, " +
+          "           t.crBy, " +
+          "           t.patient, " +
+          "           date_format(t.crOn, '%m%Y') ym, " +
+          "           (Select c.fio From Users c Where c.id = t.crBy) fio, " +
+          "           1 Counter, " +
+          "           Sum(t.price) summ " +
+          "      From amb_patient_services t " +
+          "     Where t.pack is not null " +
+          "     Group By t.pack, date_format(t.crOn, '%m%y'), t.crBy, t.patient) t " +
+          " Group By t.pack, t.crBy, t.ym "
+      );
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        ObjList service = new ObjList();
+        service.setC1(rs.getString("ym"));
+        service.setC2(rs.getString("pack_name"));
+        service.setC3(rs.getString("fio"));
+        service.setC4(rs.getString("counter"));
+        service.setC5(rs.getString("summ"));
+        //
+        rows.add(service);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn);
+      DB.done(ps);
+      DB.done(rs);
+    }
+    m.addAttribute("rows", rows);
+    // Параметры отчета
+    m.addAttribute("params", params);
+  }
 
 }

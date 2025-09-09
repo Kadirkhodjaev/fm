@@ -146,11 +146,6 @@
   </div>
 </c:if>
 <script>
-  var ops = [];
-  <c:forEach items="${counters}" var="row" varStatus="loop">
-    ops.push({id: ${row.id}, drug:${row.drug.id}, name: '${row.drugCount} ${row.measure.name}'});
-  </c:forEach>
-
   function savePatient() {
     if($('#patient_id').val() == '') {
       alert('Пациент не выбран');
@@ -339,11 +334,7 @@
   function setPatientDrug(dom) {
     $('#drug_count').attr('disabled', dom.value === '');
     //
-    var list = ops.filter(obj => parseInt(obj.drug) === parseInt(dom.value));
     $('#drug_counter').attr('disabled', dom.value === '').html('');
-    list.forEach(elem => {
-      $('#drug_counter').append($('<option value="' + elem.id + '">' + elem.name + '</option>'));
-    });
   }
 
   function confirmPatient() {

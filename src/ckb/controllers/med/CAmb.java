@@ -9,7 +9,6 @@ import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
 import ckb.dao.med.drug.dict.drugs.DDrug;
-import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.kdos.DSalePack;
 import ckb.dao.med.kdos.DSalePackRow;
 import ckb.dao.med.patient.DPatient;
@@ -74,7 +73,6 @@ public class CAmb {
   @Autowired private DAmbServiceField dAmbServiceFields;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DDrug dDrug;
-  @Autowired private DDrugCount dDrugCount;
   @Autowired private DDict dDict;
   @Autowired private DAmbDrug dAmbDrug;
   @Autowired private DAmbDrugDate dAmbDrugDate;
@@ -962,7 +960,6 @@ public class CAmb {
     //
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
     model.addAttribute("pat", pat);
-    model.addAttribute("counters", dDrugCount.getList("From DrugCount"));
     model.addAttribute("drugs", dDrug.getList("From Drugs t Where t.id in (Select c.drug.id From DrugActDrugs c Where c.counter - rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0) Order By name"));
     //
     PatientDrug drug = new PatientDrug();

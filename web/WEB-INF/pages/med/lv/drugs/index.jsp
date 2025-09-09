@@ -362,12 +362,9 @@
 
 <script>
   var idx = 1, selected = 0;
-  var drugs = [], measures = [];
+  var drugs = [];
   <c:forEach items="${drugs}" var="d">
   drugs.push({id: ${d.id}, name: `${d.name}`, measure: `${d.measure.name}`});
-  </c:forEach>
-  <c:forEach items="${counters}" var="d">
-  measures.push({drug: ${d.drug.id}, id: ${d.measure.id}, name: `${d.measure.name}`});
   </c:forEach>
   $(".chzn-select").chosen();
   <c:forEach begin="0" end="${fn:length(rows)}" var="x">

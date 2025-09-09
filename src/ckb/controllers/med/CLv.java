@@ -9,7 +9,6 @@ import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.drugs.DDrug;
-import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.eat.dict.menuTypes.DEatMenuType;
 import ckb.dao.med.eat.dict.table.DEatTable;
 import ckb.dao.med.head_nurse.drug.DHNDrug;
@@ -105,7 +104,6 @@ public class CLv {
   @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugRow dPatientDrugRow;
   @Autowired private DPatientDrugDate dPatientDrugDate;
-  @Autowired private DDrugCount dDrugCount;
   @Autowired private DEatTable dEatTable;
   @Autowired private DEatMenuType dEatMenuType;
   @Autowired private DDict dDict;
@@ -1066,8 +1064,6 @@ public class CLv {
     PreparedStatement ps = null;
     ResultSet rs = null;
     model.addAttribute("goals", dLvDrugGoal.getList("From LvDrugGoals Order By name"));
-    //
-    model.addAttribute("counters", dDrugCount.getList("From DrugCount"));
 
     List<Integer> drugs = session.getDrugs();
     List<Drugs> dds = new ArrayList<>();

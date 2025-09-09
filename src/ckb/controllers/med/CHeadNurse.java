@@ -14,7 +14,6 @@ import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
-import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.drug.dict.drugs.measure.DDrugDrugMeasure;
 import ckb.dao.med.drug.out.DDrugOut;
 import ckb.dao.med.drug.out.DDrugOutRow;
@@ -87,7 +86,6 @@ public class CHeadNurse {
   @Autowired private DHNPatient dhnPatient;
   @Autowired private DHNPatientDrug dhnPatientDrug;
   @Autowired private DHNDateAmbRow dhnDateAmbRow;
-  @Autowired private DDrugCount dDrugCount;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DPatient dPatient;
   @Autowired private DDrugOut dDrugOut;
@@ -733,6 +731,8 @@ public class CHeadNurse {
       HNDates obj = id.equals("0") || id.equals("") ? new HNDates() : dhnDate.get(Integer.parseInt(id));
       obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
       obj.setReceiver(dhnDirection.get(Util.getInt(req, "receiver")));
+      if(dhnDate.getCount("From HNDates Where direction.id = " + obj.getDirection().getId() + " And receiver != null And state != 'CON' And id != " + id) > 1)
+        return Util.err(json, "По выбранному складу имеется не подтвержденные документы. Макс кол-во документов 2шт");
       obj.setTypeCode("OUT");
       if(obj.getId() == null) {
         obj.setCrBy(dUser.get(session.getUserId()));
@@ -2407,7 +2407,6 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/patient/info.s?id=" + id);
     //
     m.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
-    m.addAttribute("counters", dDrugCount.getAll());
     m.addAttribute("rows", dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + id));
     m.addAttribute("obj", dhnPatient.get(Integer.parseInt(id)));
     //
@@ -2498,7 +2497,6 @@ public class CHeadNurse {
       drug.setParent(dhnPatient.get(Util.getInt(req, "parent")));
       drug.setDrug(dDrug.get(Util.getInt(req, "drug")));
 
-      drug.setCounter(dDrugCount.get(Util.getInt(req, "counter")));
       drug.setDrugPrice(DB.getSum(conn, "Select Max(t.price) price From (Select Max(t.price) price From drug_act_drugs t Where t.drug_Id = " + drug.getDrug().getId() + ") t"));
       drug.setPrice(drug.getDrug().getPrice() == null ? drug.getDrugPrice() : drug.getDrug().getPrice());
       drug.setServiceCount(Double.parseDouble(Util.get(req, "drug_count")));

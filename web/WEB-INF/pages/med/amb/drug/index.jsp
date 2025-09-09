@@ -204,9 +204,6 @@
   <c:forEach items="${drugs}" var="d">
     drugs.push({id: ${d.id}, name: `${d.name}`});
   </c:forEach>
-  <c:forEach items="${counters}" var="d">
-    measures.push({drug: ${d.drug.id}, id: ${d.measure.id}, name: `${d.measure.name}`});
-  </c:forEach>
   <c:forEach begin="0" end="${fn:length(rows)}" var="x">
     setSourceCode(${x});
   </c:forEach>
@@ -290,11 +287,6 @@
     $(".chzn-select").chosen();
   }
   function setMeasure(dom, idx) {
-    var elems = measures.filter(obj => obj.drug == dom.value);
-    $('#line_' + idx).find('.measure_select').empty();
-    elems.forEach(obj => {
-      $('#line_' + idx).find('.measure_select').append($('<option value="' + obj.id + '">' + obj.name + '</option>'));
-    });
   }
   function save() {
     var elems = $('input,select').filter('[required]:visible');

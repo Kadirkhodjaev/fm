@@ -11,7 +11,6 @@ import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.category.DDrugDrugCategory;
-import ckb.dao.med.drug.dict.drugs.counter.DDrugCount;
 import ckb.dao.med.drug.dict.drugs.norma.DDrugNorma;
 import ckb.dao.med.drug.dict.drugs.norma.DDrugNormaDirection;
 import ckb.dao.med.drug.dict.manufacturer.DDrugManufacturer;
@@ -22,7 +21,10 @@ import ckb.dao.med.drug.out.DDrugOutRow;
 import ckb.dao.med.head_nurse.direction.DHNDirection;
 import ckb.dao.med.head_nurse.direction.DHNDirectionLink;
 import ckb.domains.admin.UserDrugLines;
-import ckb.domains.med.drug.*;
+import ckb.domains.med.drug.DrugActDrugs;
+import ckb.domains.med.drug.DrugActs;
+import ckb.domains.med.drug.DrugOutRows;
+import ckb.domains.med.drug.DrugOuts;
 import ckb.domains.med.drug.dict.*;
 import ckb.domains.med.head_nurse.HNDirectionLinks;
 import ckb.domains.med.head_nurse.HNDirections;
@@ -67,7 +69,6 @@ public class CDrug {
   @Autowired private DDrugActDrug dDrugActDrug;
   @Autowired private DDrugOut dDrugOut;
   @Autowired private DDrugOutRow dDrugOutRow;
-  @Autowired private DDrugCount dDrugCount;
   @Autowired private DDept dDept;
   @Autowired private DDrugDirectionDep dDrugDirectionDep;
   @Autowired private DDrugManufacturer dDrugManufacturer;
@@ -517,8 +518,6 @@ public class CDrug {
       if(Util.get(req, "code").equals("drug")) {
         List<DrugDrugCategories> list = dDrugDrugCategory.getList("From DrugDrugCategories Where drug.id = " + Util.getInt(req, "id"));
         for(DrugDrugCategories d: list) dDrugDrugCategory.delete(d.getId());
-        List<DrugCount> lst = dDrugCount.getList("From DrugCount Where drug.id = " + Util.getInt(req, "id"));
-        for(DrugCount d: lst) dDrugCount.delete(d.getId());
         dDrug.delete(Util.getInt(req, "id"));
       }
       if(Util.get(req, "code").equals("direction")) dDrugDirection.delete(Util.getInt(req, "id"));
@@ -874,7 +873,7 @@ public class CDrug {
     session.setCurSubUrl("/drugs/dict/drug/normas.s");
     model.addAttribute("drugs", dDrug.list("From Drugs t Where Not Exists (Select 1 From DrugNormas c Where c.drug.id = t.id) And state = 'A' Order By Name"));
     model.addAttribute("rows", dDrugNorma.list("From DrugNormas Order By Id Desc"));
-    model.addAttribute("directions", dDrugDirection.list("From DrugDirections Order By Name"));
+    model.addAttribute("directions", dDrugDirection.list("From DrugDirections Where id in (25, 28, 29) Order By Name"));
     return "/med/drugs/dicts/drugs/normas";
   }
 
@@ -888,7 +887,7 @@ public class CDrug {
     model.addAttribute("norma", dDrugNorma.obj("From DrugNormas Where drug.id = " + drug.getId()));
     List<DrugNormaDirections> dirs = dDrugNormaDirection.list("From DrugNormaDirections Where drug.id = " + drug.getId());
     if(dirs.isEmpty()) {
-      List<DrugDirections> directs = dDrugDirection.list("From DrugDirections Order By Name");
+      List<DrugDirections> directs = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29) Order By Name");
       for(DrugDirections d : directs) {
         DrugNormaDirections a = new DrugNormaDirections();
         a.setDrug(drug);

@@ -61,6 +61,6 @@
   function setCashStat(){
     var start = document.getElementById("period_start");
     var end = document.getElementById("period_end");
-    setPage('/mn/services.s?period_start=' + start.value + '&period_end=' + end.value);
+    setPage('/mn/users.s?period_start=' + start.value + '&period_end=' + end.value);
   }
 </script>

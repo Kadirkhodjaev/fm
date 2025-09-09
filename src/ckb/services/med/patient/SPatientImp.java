@@ -1154,10 +1154,10 @@ public class SPatientImp implements SPatient {
             "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
             "                     And c.patientDrug_id = t.id " +
             "                     And date(c.date) = CURRENT_DATE()) " +
-            "      And date(t.crOn) = '" + Util.dateDB(date) + "'" + //
+            "      And date(t.crOn) = '" + Util.dateDB(date) + "'" +
             "      And g.id = t.patient_id " +
             "      And g.state != 'ARCH' " +
-            "      And g.dept_id = " + dep + // CURRENT_DATE()
+            "      And g.dept_id = " + dep +
             "    Order By t.patient_id, t.Id desc ");
         rs = ps.executeQuery();
         List<PatientDrug> drugs = new ArrayList<>();
@@ -1195,10 +1195,8 @@ public class SPatientImp implements SPatient {
           drug.setCrOn(pd.getCrOn());
           drugs.add(drug);
         }
-        if(!drugs.isEmpty()) {
-          nd.setDrugs(drugs);
-          nds.add(nd);
-        }
+        nd.setDrugs(drugs);
+        nds.add(nd);
       }
     } catch (Exception e) {
       e.printStackTrace();

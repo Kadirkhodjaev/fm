@@ -459,22 +459,21 @@ public class CMn {
         obj.setFio(user.getFio());
         obj.setPrice(0D);
         ps = cn.prepareStatement(
-          "Select t.id, c.`name`, Count(*) counter, Sum(t.price) price " +
-            "  From Lv_Plans t, Kdos c " +
-            " Where date(t.Result_Date) Between ? And ? " +
+          "Select t.kdo_id, (Select c.`name` From Kdos c Where c.id = t.kdo_id) name, Count(*) counter, Sum(t.price) price " +
+            "  From Lv_Plans t  " +
+            " Where t.Result_Date Between ? And ? " +
             "   And t.done_flag = 'Y' " +
-            "   And c.id = t.Kdo_Id " +
             "   And t.conf_user = ? " +
-            " Group By c.name");
-        ps.setString(1, Util.dateDB(startDate));
-        ps.setString(2, Util.dateDB(endDate));
+            " Group By t.kdo_id");
+        ps.setString(1, Util.dateDBBegin(startDate));
+        ps.setString(2, Util.dateDBEnd(endDate));
         ps.setInt(3, user.getId());
         ps.execute();
         rs = ps.getResultSet();
         List<ObjList> stats = new ArrayList<>();
         while (rs.next()) {
           ObjList row = new ObjList();
-          row.setC1(rs.getString("id"));
+          row.setC1(rs.getString("kdo_id"));
           row.setC2(rs.getString("name"));
           row.setC3(rs.getString("counter"));
           row.setC4(rs.getString("price"));
@@ -484,14 +483,14 @@ public class CMn {
         ps = cn.prepareStatement(
           "Select c.Id, c.name, Count(*) Counter, Sum(t.price) price " +
             "  From Amb_Patient_Services t, Amb_Services c " +
-            " Where date(t.confDate) Between ? And ? " +
+            " Where t.confDate Between ? And ? " +
             "   And t.state = 'DONE' " +
             "   And c.id = t.service_Id " +
             "   And c.id = t.service_Id " +
             "   And t.worker_Id = ? " +
             " Group By c.Id, c.name");
-        ps.setString(1, Util.dateDB(startDate));
-        ps.setString(2, Util.dateDB(endDate));
+        ps.setString(1, Util.dateDBBegin(startDate));
+        ps.setString(2, Util.dateDBEnd(endDate));
         ps.setInt(3, user.getId());
         ps.execute();
         rs = ps.getResultSet();
