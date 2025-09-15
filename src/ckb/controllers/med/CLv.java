@@ -49,6 +49,7 @@ import ckb.services.med.patient.SPatient;
 import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
@@ -115,6 +116,7 @@ public class CLv {
   @Autowired private DPatientShock dPatientShock;
   @Autowired private DLvFizioDate dLvFizioDate;
   @Autowired private DAmbPatient dAmbPatient;
+  @Autowired private BeanUsers beanUsers;
   //endregion
 
   @RequestMapping("/index.s")
@@ -234,8 +236,8 @@ public class CLv {
       if(!docCode.equals("osm") && Util.isNull(req, "mkb_id")) {
         return Util.err(json, "МКБ 10 не выбрана");
       }
-      int id = Util.getInt(req, "id", 0);
-      LvDocs doc = id == 0 ? new LvDocs() : dLvDoc.get(session.getCurPat(), docCode);
+      LvDocs doc = dLvDoc.get(session.getCurPat(), docCode);
+      if(doc == null) doc = new LvDocs();
       doc.setPatient(p);
       doc.setDocCode(docCode);
       doc.setDocDate(new Date());
@@ -275,6 +277,7 @@ public class CLv {
         p.setDateEnd(Req.getDate(req, "Date_End"));
         dPatient.save(p);
       }
+      json.put("id", doc.getId());
       return Util.success(json);
     } catch (Exception e) {
       return Util.err(json, e.getMessage());
@@ -379,7 +382,7 @@ public class CLv {
     }
     Patients patient = dPatient.get(session.getCurPat());
     model.addAttribute("patient", patient);
-    model.addAttribute("lvs", sUser.getConsuls());
+    model.addAttribute("lvs", beanUsers.getConsuls());
     model.addAttribute("consuls", dLvConsul.getByPat(session.getCurPat()));
     model.addAttribute("shortClinicName", dParam.byCode("SHORT_CLICNIC_NAME"));
     //
@@ -403,7 +406,7 @@ public class CLv {
     } else {
       con.setState("REQ");
       con.setLvId(Req.getInt(request, "lvId"));
-      con.setLvName(sUser.getLv(con.getLvId()).getFio());
+      con.setLvName(dUser.get(con.getLvId()).getFio());
       con.setComment(Util.get(request, "comment"));
     }
     if(!"".equals(con.getLvName())) {
@@ -498,7 +501,7 @@ public class CLv {
     List<ObjList> epics = sPatient.getEpicGrid(epic.getPatientId());
     model.addAttribute("epics", epics);
     model.addAttribute("patient", patient);
-    model.addAttribute("lvs", sUser.getLvs());
+    model.addAttribute("lvs", beanUsers.getLvs());
     model.addAttribute("deps", dDept.getAll());
     model.addAttribute("sysDate", Util.getCurDate());
     model.addAttribute("rooms", dRooms.getAll());

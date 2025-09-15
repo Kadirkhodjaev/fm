@@ -30,11 +30,9 @@
       data: $('#doc_form').serialize(),
       dataType: 'json',
       success: function (res) {
-        if(res.success) {
-          alert('Данные успешно сохранены');
-        } else {
-          alert(res.msg);
-        }
+        openMsg(res)
+        if(res.success)
+          setPage('/lv/doc.s?doc_code=osm');
       }
     });
   }

@@ -345,3 +345,33 @@ table.p-3>tbody>tr>td {
 .mb-30 {
   margin-bottom: 30px !important;
 }
+
+.table-grid {
+  width: 100%;
+  max-width: 100%;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-spacing: 0;
+  border-collapse: collapse;
+  cursor: pointer;
+  font-size:12px;
+  tr th {
+    background: #f8f8f8;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    padding: 2px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  tr td{
+    border: 1px solid #ddd;
+    padding: 2px;
+    vertical-align: middle;
+  }
+  tr:hover {
+    background: #e8e8e8;
+  }
+  tr.activeRow {background: #D0D3D4}
+  tr.selected {background: #eee}
+}

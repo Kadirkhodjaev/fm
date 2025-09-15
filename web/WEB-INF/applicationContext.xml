@@ -103,6 +103,7 @@
   <bean id="dAmbFormFieldOption" class="ckb.dao.med.amb.form.DAmbFormFieldOptionImp" parent="daoImpl"/>
   <!-- AMB -->
   <bean id="dAmpPatients" class="ckb.dao.med.amb.DAmbPatientImp" parent="daoImpl"/>
+  <bean id="dAmpBooking" class="ckb.dao.med.amb.DAmbBookingImp" parent="daoImpl"/>
   <bean id="dAmbPatientServices" class="ckb.dao.med.amb.DAmbPatientServiceImp" parent="daoImpl"/>
   <bean id="dAmbPatientTreatment" class="ckb.dao.med.amb.DAmbPatientTreatmentImp" parent="daoImpl"/>
   <bean id="dAmbPatientTreatmentDate" class="ckb.dao.med.amb.DAmbPatientTreatmentDateImp" parent="daoImpl"/>
@@ -191,6 +192,8 @@
   <bean id="dCashDiscount" class="ckb.dao.med.cashbox.discount.DCashDiscountImp" parent="daoImpl"/>
 
   <bean id="dClient" class="ckb.dao.med.client.DClientImp" parent="daoImpl"/>
+
+  <bean id="beanUsers" class="ckb.utils.BeanUsers" scope="application" init-method="initialize"/>
 
   <!-- EMPS -->
   <bean id="dEmp" class="ckb.dao.emp.DEmpImp" parent="daoImpl"/>

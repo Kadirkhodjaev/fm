@@ -20,6 +20,7 @@ import ckb.models.Room;
 import ckb.services.admin.form.SForm;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -54,6 +55,7 @@ public class CBooking {
   @Autowired private DDict dDict;
   @Autowired private DPatient dPatient;
   @Autowired private DPatientWatchers dPatientWatcher;
+  @Autowired private BeanUsers beanUsers;
 
   @RequestMapping("index.s")
   protected String serviceList(HttpServletRequest req, Model m) {
@@ -77,7 +79,7 @@ public class CBooking {
     }
     m.addAttribute("list", list);
     m.addAttribute("rooms", dRoom.getActives());
-    m.addAttribute("lvs", dUser.getLvs());
+    m.addAttribute("lvs", beanUsers.getLvs());
     m.addAttribute("depts", dDept.getAll());
     m.addAttribute("countries", dCountry.getCounteries());
     m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
@@ -309,7 +311,7 @@ public class CBooking {
       model.addAttribute("emptyDate", emptyDate);
       //
       model.addAttribute("rooms", dRoom.getActives());
-      model.addAttribute("lvs", dUser.getLvs());
+      model.addAttribute("lvs", beanUsers.getLvs());
       model.addAttribute("depts", dDept.getAll());
       model.addAttribute("countries", dCountry.getCounteries());
       sForm.setSelectOptionModel(model, 1, "sex");

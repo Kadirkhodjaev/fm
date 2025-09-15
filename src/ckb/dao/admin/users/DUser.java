@@ -13,19 +13,7 @@ public interface DUser extends Dao<Users> {
 
   List<Reports> getReports(Integer id);
 
-  List<Users> getLvs();
-
   List<KdoTypes> getKdoTypes(Integer id);
 
-  List<Users> getConsuls();
-
   List<Integer> getKdoTypesIds(Integer id);
-
-  Users getZavOtdel(Integer id);
-
-  Users getGlb(Integer id);
-
-  Users getBoss(Integer id);
-
-  Users getGlavbuh(int id);
 }

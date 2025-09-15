@@ -39,6 +39,7 @@ import ckb.models.AmbService;
 import ckb.models.ObjList;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -94,6 +95,7 @@ public class CCashbox {
   @Autowired private DParam dParam;
   @Autowired private DKdos dKdo;
   @Autowired private DAmbService dAmbService;
+  @Autowired private BeanUsers beanUsers;
 
   @RequestMapping(value = "/setServicePayState.s", method = RequestMethod.POST)
   @ResponseBody
@@ -578,7 +580,7 @@ public class CCashbox {
     }
     model.addAttribute("pays", pays);
     model.addAttribute("discountSum", discountSum);
-    model.addAttribute("lvs", dUser.getLvs());
+    model.addAttribute("lvs", beanUsers.getLvs());
     model.addAttribute("country", pat.getCounteryId() != null ? dCountry.get(pat.getCounteryId()).getName() : "");
     model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
     model.addAttribute("discounts", dCashDiscount.stat(pat.getId()));

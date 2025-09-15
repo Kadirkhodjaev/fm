@@ -36,22 +36,12 @@ public class  DUserImp extends DaoImp<Users> implements DUser {
   }
 
   @Override
-  public List<Users> getLvs() {
-    return getList("From Users Where (dept.id > 0 And lv = 1) Or id = 1 Order By fio");
-  }
-
-  @Override
   public List<KdoTypes> getKdoTypes(Integer id) {
     try {
       return entityManager.createQuery("Select t.kdoTypes from Users t Where t.id = " + id).getResultList();
     } catch (Exception ex) {
       return new ArrayList<>();
     }
-  }
-
-  @Override
-  public List<Users> getConsuls() {
-    return getList("From Users Where Consul = 1 And active = 1 Order By fio");
   }
 
   @Override
@@ -66,41 +56,4 @@ public class  DUserImp extends DaoImp<Users> implements DUser {
       return new ArrayList<>();
     }
   }
-
-  @Override
-  public Users getZavOtdel(Integer id) {
-    try {
-      return (Users) entityManager.createQuery("From Users Where zavlv = true And dept.id = " + id).getSingleResult();
-    } catch (Exception ex) {
-      return new Users();
-    }
-  }
-
-  @Override
-  public Users getGlb(Integer id) {
-    try {
-      return (Users) entityManager.createQuery("From Users Where glb = true And id != " + id).getSingleResult();
-    } catch (Exception ex) {
-      return new Users();
-    }
-  }
-
-  @Override
-  public Users getBoss(Integer id) {
-    try {
-      return (Users) entityManager.createQuery("From Users Where boss = true And id != " + id).getSingleResult();
-    } catch (Exception ex) {
-      return new Users();
-    }
-  }
-
-  @Override
-  public Users getGlavbuh(int id) {
-    try {
-      return (Users) entityManager.createQuery("From Users Where glavbuh = true And id != " + id).getSingleResult();
-    } catch (Exception ex) {
-      return new Users();
-    }
-  }
-
 }

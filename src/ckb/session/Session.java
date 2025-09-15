@@ -1,5 +1,8 @@
 package ckb.session;
 
+import ckb.utils.Util;
+
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -249,5 +252,29 @@ public class Session {
   public void setFilters(String name, String value) {
     if(filters == null) filters = new HashMap<>();
     filters.put(name, value);
+  }
+
+  public String getStartDate(String sCode, String reqName, HttpServletRequest req) {
+    String db = getDateBegin().get(sCode);
+    if(db == null) db = "01" + Util.getCurDate().substring(2);
+    //
+    String startDate = Util.get(req, reqName, db);
+    //
+    HashMap<String, String> dh = getDateBegin();
+    dh.put(sCode, startDate);
+    setDateBegin(dh);
+    return startDate;
+  }
+
+  public String getEndDate(String sCode, String reqName, HttpServletRequest req) {
+    String db = getDateBegin().get(sCode);
+    if(db == null) db = Util.getCurDate();
+    //
+    String date = Util.get(req, reqName, db);
+    //
+    HashMap<String, String> dh = getDateBegin();
+    dh.put(sCode, date);
+    setDateEnd(dh);
+    return date;
   }
 }

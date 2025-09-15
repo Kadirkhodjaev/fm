@@ -15,6 +15,7 @@ import ckb.models.Menu;
 import ckb.services.admin.user.SUser;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
@@ -56,6 +57,7 @@ public class  CApp {
   @Autowired private DDept dDept;
   @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DUserDrugLine dUserDrugLine;
+  @Autowired private BeanUsers beanUsers;
 
   @RequestMapping({"/main.s", "/"})
   protected String main(HttpServletRequest req, Model model) {
@@ -116,9 +118,8 @@ public class  CApp {
     if(roleId == 5) { // Лечащий врач
       session.setCurUrl(session.getCurUrl().equals("") ? "/patients/list.s" : session.getCurUrl());
       m.add(new Menu("Статистика", "/view/stat.s", "fa fa-list-alt fa-fw", session.getCurUrl().equals("/view/stat.s")));
-      Long conCount = dLvConsul.getCount("From LvConsuls c Where c.text = null And c.lvId = " + session.getUserId());
       m.add(new Menu("Пациенты", "/patients/list.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/patients/list.s")));
-      m.add(new Menu("Консультация(" + conCount + ")", "/patients/consul.s", "fa fa-group fa-fw", session.getCurUrl().equals("/patients/consul.s")));
+      m.add(new Menu("Консультация", "/patients/consul.s", "fa fa-group fa-fw", session.getCurUrl().equals("/patients/consul.s")));
       m.add(new Menu("Архив", "/patients/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/archive/list.s")));
     }
     if(roleId == 6) { // Заместитель главного врача
@@ -182,6 +183,7 @@ public class  CApp {
     if(roleId == 15) { // Амбулаторная регистрация
       m.add(new Menu("Регистрация", "/amb/reg.s", "fa fa-edit fa-fw", session.getCurUrl().contains("/amb/reg.s")));
       m.add(new Menu("Текущие", "/amb/home.s", "fa fa-group fa-fw", session.getCurUrl().equals("/amb/home.s")));
+      m.add(new Menu("Бронирование", "/amb/bookings.s", "fa fa-group fa-fw", session.getCurUrl().equals("/amb/bookings.s")));
       m.add(new Menu("Клиенты", "/clients/list.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Архив", "/amb/archive.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/amb/archive.s")));
       m.add(new Menu("Прейскурант", "/amb/prices.s", "fa fa-list-alt fa-fw", session.getCurUrl().equals("/amb/prices.s")));
@@ -280,7 +282,7 @@ public class  CApp {
       m.add(new Menu("Сотрудники", "/emp/index.s", "fa fa-align-justify fa-fw", session));
     }
     model.addAttribute("menuList", m);
-    model.addAttribute("lvs", dUser.getLvs());
+    model.addAttribute("lvs", beanUsers.getLvs());
     model.addAttribute("groups", dAmbGroups.getAll());
     model.addAttribute("depts", dDept.getAll());
     model.addAttribute("repList", dUser.getReports(session.getUserId()));
@@ -290,6 +292,9 @@ public class  CApp {
     model.addAttribute("isEnterFilter", dParam.byCode("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);
     model.addAttribute("clinicName", dParam.byCode("CLINIC_NAME"));
+
+    List<Users> users = beanUsers.getUsers();
+    model.addAttribute("users", users);
     return "index";
   }
 

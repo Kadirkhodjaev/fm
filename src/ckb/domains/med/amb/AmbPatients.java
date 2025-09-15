@@ -12,48 +12,21 @@ import java.util.Date;
 @Table(name = "Amb_Patients")
 public class AmbPatients extends GenId {
 
-  // Фамилия
-  @Column(nullable = false, length = 128)
-  private String surname;
-  // Имя
-  @Column(nullable = false, length = 128)
-  private String name;
-  // Отчество
-  @Column(length = 128)
-  private String middlename;
-  // Год рождения
-  @Column
-  private Integer birthyear;
-  // Телефон
-  @Column(length = 512)
-  private String tel;
-  // Адрес
-  @Column(length = 512)
-  private String address;
+  @Column(nullable = false, length = 128) private String surname;
+  @Column(nullable = false, length = 128) private String name;
+  @Column(length = 128) private String middlename;
+  @Column private Integer birthyear;
+  @Column(length = 512) private String tel;
+  @Column(length = 512) private String address;
 
-  // Дата выписки
-  @Column(name = "Reg_Date")
-  private Date regDate;
-  // Дата рождения
-  @Column
-  private Date birthday;
-  // Состояние
-  @Column(name = "state")
-  private String state;
+  @Column(name = "Reg_Date") private Date regDate;
+  @Column private Date birthday;
+  @Column(name = "state") private String state;
+  @Column(length = 128) private String passportInfo;
+  @Column private Integer counteryId;
+  @Column private Integer regionId;
+  @OneToOne @JoinColumn(name="sex") private SelOpts sex;
 
-  // Адрес
-  @Column(length = 128)
-  private String passportInfo;
-  // Страна
-  @Column
-  private Integer counteryId;
-  // Область
-  @Column
-  private Integer regionId;
-  // Пол
-  @OneToOne
-  @JoinColumn(name="sex")
-  private SelOpts sex;
   // Физиотерпия
   @Column private String fizio = "N";
   @Column private String treatment = "N";

@@ -29,7 +29,6 @@ import ckb.dao.med.nurse.eat.DNurseEats;
 import ckb.dao.med.patient.*;
 import ckb.domains.admin.Depts;
 import ckb.domains.admin.UserDrugLines;
-import ckb.domains.admin.Users;
 import ckb.domains.med.amb.AmbDrugDates;
 import ckb.domains.med.amb.AmbDrugRows;
 import ckb.domains.med.amb.AmbPatients;
@@ -45,7 +44,10 @@ import ckb.domains.med.eat.dict.EatTables;
 import ckb.domains.med.head_nurse.*;
 import ckb.domains.med.nurse.eat.NurseEatPatients;
 import ckb.domains.med.nurse.eat.NurseEats;
-import ckb.domains.med.patient.*;
+import ckb.domains.med.patient.PatientDrugRows;
+import ckb.domains.med.patient.PatientDrugs;
+import ckb.domains.med.patient.PatientEats;
+import ckb.domains.med.patient.Patients;
 import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.models.PatientList;
@@ -469,7 +471,6 @@ public class CHeadNurse {
       String dept = Util.get(req, "dept", "0");
       conn = DB.getConnection();
       session = SessionUtil.getUser(req);
-      Users user = dUser.get(session.getUserId());
       List<DrugDirectionDeps> deps = dDrugDirectionDep.getList("From DrugDirectionDeps Where direction.id = " + date.getDirection().getId());
       String depIds = "0,";
       if(deps != null && deps.size() > 0) {
@@ -581,7 +582,7 @@ public class CHeadNurse {
     try {
       conn = DB.getConnection();
       ps = conn.prepareStatement(
-        "Select d.name, m.name measure, Sum(t.rasxod) summ From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.doc_id = ? Group By d.Name Order By d.name, m.name"
+        "Select d.name, m.name measure, Sum(c.drugCount - c.rasxod) saldo, Sum(t.rasxod) summ From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.doc_id = ? Group By d.Name Order By d.name, m.name"
       );
       ps.setInt(1, Util.getInt(req, "id"));
       rs = ps.executeQuery();
@@ -591,6 +592,7 @@ public class CHeadNurse {
         obj.setC1(rs.getString("name"));
         obj.setC2(rs.getDouble("summ") + "");
         obj.setC3(rs.getString("measure"));
+        obj.setC4(rs.getString("saldo"));
         list.add(obj);
       }
       m.addAttribute("rows", list);

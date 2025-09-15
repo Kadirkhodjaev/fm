@@ -5,10 +5,8 @@ import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
-import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.client.DClient;
 import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.docs.DLvDoc;
@@ -25,6 +23,7 @@ import ckb.services.admin.user.SUser;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -54,18 +53,16 @@ public class CReg {
   @Autowired SUser sUser;
   @Autowired DDept dDept;
   @Autowired DPatientLink dPatientLink;
-  @Autowired DCountry dCountery;
+  @Autowired BeanUsers beanUsers;
+  @Autowired DCountry dCountry;
   @Autowired DRegion dRegion;
-  @Autowired DOpt dOpt;
   @Autowired DUser dUser;
   @Autowired DRooms dRooms;
   @Autowired DKdos dKdos;
   @Autowired DLvPlan dLvPlan;
   @Autowired DPatientPlan dPatientPlan;
   @Autowired DPatientWatchers dPatientWatchers;
-  @Autowired DPatientPays dPatientPays;
   @Autowired DDict dDict;
-  @Autowired DClient dClient;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DLvDoc dLvDoc;
 
@@ -92,7 +89,7 @@ public class CReg {
     sPatient.createModel(req, p);
     m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
     m.addAttribute("deps", dDept.getAll());
-    m.addAttribute("lvs", sUser.getLvs());
+    m.addAttribute("lvs", beanUsers.getLvs());
     //
     List<Rooms> list = dRooms.getActives();
     List<Rooms> rooms = new ArrayList<>();
@@ -103,9 +100,9 @@ public class CReg {
     }
     m.addAttribute("rooms", rooms);
     //
-    m.addAttribute("countries", dCountery.getCounteries());
+    m.addAttribute("countries", dCountry.getCounteries());
     m.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
-    m.addAttribute("countryName", p.getCounteryId() != null ? dCountery.get(p.getCounteryId()).getName() : "");
+    m.addAttribute("countryName", p.getCounteryId() != null ? dCountry.get(p.getCounteryId()).getName() : "");
     m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
     m.addAttribute("reg", Util.nvl(Util.get(req, "reg")).equals("Y") ? session.getCurPat() : "");
     m.addAttribute("booking", Util.get(req, "booking", ""));
@@ -245,13 +242,13 @@ public class CReg {
     model.addAttribute("pat", pat);
     if(pat.getLv_id() != null)
       model.addAttribute("lv", dUser.get(pat.getLv_id()));
-    model.addAttribute("lvs", dUser.getLvs());
+    model.addAttribute("lvs", beanUsers.getLvs());
     model.addAttribute("zavs", dUser.getList("From Users Where zavlv = 1"));
-    model.addAttribute("country", pat.getCounteryId() != null ? dCountery.get(pat.getCounteryId()).getName() : "");
+    model.addAttribute("country", pat.getCounteryId() != null ? dCountry.get(pat.getCounteryId()).getName() : "");
     model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
     model.addAttribute("lvpartners", dLvPartner.getList("From LvPartners Where state = 'A' Order By code"));
     sForm.setSelectOptionModel(model, 1, "sex");
-    model.addAttribute("countries", dCountery.getCounteries());
+    model.addAttribute("countries", dCountry.getCounteries());
     model.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
     return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
   }
@@ -320,7 +317,7 @@ public class CReg {
     Patients pat = dPatient.get(Req.getInt(req, "id"));
     session.setCurUrl("/reg/doctor/index.s?id=" + pat.getId());
     model.addAttribute("fio", pat.getSurname() + " " + pat.getName());
-    model.addAttribute("lvs", sUser.getLvs());
+    model.addAttribute("lvs", beanUsers.getLvs());
     model.addAttribute("deps", dDept.getAll());
     sPatient.createDocModel(pat, patient);
     model.addAttribute("date_Begin", Util.dateToString(pat.getDateBegin()));
@@ -366,7 +363,7 @@ public class CReg {
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("pat", pat);
     if(pat.getLv_id() != null)
-      model.addAttribute("lv", sUser.getLv(pat.getLv_id()).getFio());
+      model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
     model.addAttribute("page", Util.get(req, "page"));
     return "med/registration/doctor/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
   }

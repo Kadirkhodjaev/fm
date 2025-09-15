@@ -1,7 +1,6 @@
 package ckb.services.admin.user;
 
 import ckb.domains.admin.Roles;
-import ckb.domains.admin.Users;
 import ckb.session.Session;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,10 +17,4 @@ public interface SUser {
   Session login(HttpServletRequest request);
 
   List<Roles> getUserRoles(int userId);
-
-  List<Users> getLvs();
-
-  Users getLv(Integer lvId);
-
-  List<Users> getConsuls();
 }

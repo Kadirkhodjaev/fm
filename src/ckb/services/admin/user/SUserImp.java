@@ -75,19 +75,4 @@ public class SUserImp implements SUser {
     return list;
   }
 
-  @Override
-  public List<Users> getLvs() {
-    return dUser.getLvs();
-  }
-
-  @Override
-  public Users getLv(Integer lvId) {
-    return dUser.get(lvId);
-  }
-
-  @Override
-  public List<Users> getConsuls() {
-    return dUser.getConsuls();
-  }
-
 }

@@ -31,6 +31,7 @@ import ckb.models.ObjList;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -78,6 +79,7 @@ public class CAct {
   @Autowired private DLvEpic dLvEpic;
   @Autowired private DDept dDept;
   @Autowired private DCashDiscount dCashDiscount;
+  @Autowired private BeanUsers beanUsers;
 
   int lgotaDays = 10;
   Date startDate = Util.stringToDate("31.03.2024");
@@ -530,9 +532,9 @@ public class CAct {
       String sum_in_word = Util.inwords(hnPatient.getTotalSum());
       m.addAttribute("sum_in_word", sum_in_word.substring(0, 1).toUpperCase() + sum_in_word.substring(1));
       m.addAttribute("clinic_name", dParam.byCode("CLINIC_NAME"));
-      m.addAttribute("boss", dUser.getBoss(0));
-      m.addAttribute("glv", dUser.getGlb(0));
-      m.addAttribute("glavbuh", dUser.getGlavbuh(0));
+      m.addAttribute("boss", beanUsers.getBoss());
+      m.addAttribute("glv", beanUsers.getGlb());
+      m.addAttribute("glavbuh", beanUsers.getGlavbuh());
       m.addAttribute("clinic_name", dParam.byCode("CLINIC_NAME"));
       m.addAttribute("head_nurse", hnPatient.getPatient().getDept().getNurse().getFio());
 

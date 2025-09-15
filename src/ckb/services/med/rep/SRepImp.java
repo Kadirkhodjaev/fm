@@ -40,6 +40,7 @@ import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.models.reports.Rep1;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +80,7 @@ public class SRepImp implements SRep {
 	@Autowired private DDrugOutRow dDrugOutRow;
 	@Autowired private DDrugOut dDrugOut;
 	@Autowired private DKdoChoosen dKdoChoosen;
+  @Autowired private BeanUsers beanUsers;
 
 	@Override
 	public void gRep(HttpServletRequest req, Model m) {
@@ -379,7 +381,7 @@ public class SRepImp implements SRep {
 		} else {
 			try {
 				conn = DB.getConnection();
-				List<Users> users = dUser.getLvs();
+				List<Users> users = beanUsers.getLvs();
 				for (Users user : users) {
 					Rep1 r = new Rep1();
 					r.setGroupName(user.getFio());
@@ -5162,7 +5164,7 @@ public class SRepImp implements SRep {
 		try {
 			DrugOuts out = dDrugOut.get(Util.getInt(req, "id"));
 			m.addAttribute("reg_date", Util.dateToString(out.getRegDate()));
-			m.addAttribute("glv", dUser.getGlb(0));
+			m.addAttribute("glv", beanUsers.getGlb());
 			m.addAttribute("reg_num", out.getRegNum());
 			m.addAttribute("rows", dDrugOutRow.getList("From DrugOutRows Where doc.id = " + out.getId()));
 		} catch (Exception e) {

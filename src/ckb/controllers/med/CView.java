@@ -34,6 +34,7 @@ import ckb.models.ObjList;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
@@ -82,10 +83,11 @@ public class CView {
   @Autowired private DPatientDrugDate dPatientDrugDate;
   @Autowired private DDept dDep;
   @Autowired private DLvFizioDate dLvFizioDate;
-  @Autowired private DCountry dCountery;
+  @Autowired private DCountry dCountry;
   @Autowired private DRegion dRegion;
   @Autowired private DF13 df13;
   @Autowired private DHNPatient dhnPatient;
+  @Autowired private BeanUsers beanUsers;
   //endregion
 
   @RequestMapping("/index.s")
@@ -189,7 +191,7 @@ public class CView {
     }
     //
     model.addAttribute("form", f);
-    model.addAttribute("zavOtdel", dUser.getZavOtdel(dPatient.get(session.getCurPat()).getDept().getId()));
+    model.addAttribute("zavOtdel", beanUsers.getZavLvs(dPatient.get(session.getCurPat()).getDept().getId()));
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/obos";
   }
 
@@ -302,7 +304,7 @@ public class CView {
       model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
       model.addAttribute("dateBegin", Util.dateToString(f.getPatient().getDateBegin()));
       model.addAttribute("dateEnd", Util.dateToString(f.getPatient().getDateEnd()));
-      model.addAttribute("zavOtdel", dUser.getZavOtdel(f.getPatient().getDept().getId()));
+      model.addAttribute("zavOtdel", beanUsers.getZavLvs(f.getPatient().getDept().getId()));
     }
     model.addAttribute("zamGlb", dParam.byCode("GLB_NEXT"));
     if(Util.get(request, "diagnoz") != null)
@@ -605,7 +607,7 @@ public class CView {
     model.addAttribute("list", sPatient.getPatientDrugs(session.getCurPat()));
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("lvFio", dUser.get(pat.getLv_id()).getFio());
-    model.addAttribute("zavOtdel", dUser.getZavOtdel(pat.getDept().getId()).getFio());
+    model.addAttribute("zavOtdel", beanUsers.getZavLvs(pat.getDept().getId()).getFio());
     model.addAttribute("pat", pat);
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/drugObos";
   }
@@ -1149,7 +1151,7 @@ public class CView {
     model.addAttribute("obos", dLvDoc.get(session.getCurPat(), "obos"));
     model.addAttribute("vyp", dLvDoc.get(session.getCurPat(), "vypiska"));
     model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
-    model.addAttribute("zavOtdel", dUser.getZavOtdel(pat.getLv_dept_id()).getFio());
+    model.addAttribute("zavOtdel", beanUsers.getZavLvs(pat.getLv_dept_id()).getFio());
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") +"/extra";
   }
 
@@ -1183,7 +1185,7 @@ public class CView {
   protected String stat_card(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     Patients pat = dPatient.get(session.getCurPat());
-    model.addAttribute("country", dCountery.get(pat.getCounteryId()));
+    model.addAttribute("country", dCountry.get(pat.getCounteryId()));
     if(pat.getRegionId() != null)
       model.addAttribute("region", dRegion.get(pat.getRegionId()));
     model.addAttribute("lvfio", dUser.get(pat.getLv_id()).getFio());

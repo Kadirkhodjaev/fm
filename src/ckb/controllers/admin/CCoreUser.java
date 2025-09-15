@@ -20,6 +20,7 @@ import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanUsers;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -51,6 +52,7 @@ public class CCoreUser {
   @Autowired private DDrugDirection dDrugDirection;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DUserIp dUserIp;
+  @Autowired private BeanUsers beanUsers;
 
   @RequestMapping({"/list.s", "/"})
   protected String userList(HttpServletRequest request, Model model) {
@@ -127,7 +129,7 @@ public class CCoreUser {
       //
       u.setGlb(Util.getCheckbox(req, "glb"));
       if(u.isGlb()) {
-        Users uglb = dUser.getGlb(id == null ? 0 : u.getId());
+        Users uglb = beanUsers.getGlb();
         if(uglb.getId() != null) {
           uglb.setGlb(false);
           dUser.save(uglb);
@@ -136,7 +138,7 @@ public class CCoreUser {
       //
       u.setBoss(Util.getCheckbox(req, "boss"));
       if(u.isBoss()) {
-        Users uboss = dUser.getBoss(u.getId() == null ? 0 : u.getId());
+        Users uboss = beanUsers.getBoss();
         if(uboss.getId() != null) {
           uboss.setBoss(false);
           dUser.save(uboss);
@@ -145,7 +147,7 @@ public class CCoreUser {
       //
       u.setGlavbuh(Util.getCheckbox(req, "glavbuh"));
       if(u.isGlavbuh()) {
-        Users uboss = dUser.getGlavbuh(u.getId() == null ? 0 : u.getId());
+        Users uboss = beanUsers.getGlavbuh();
         if(uboss.getId() != null) {
           uboss.setGlavbuh(false);
           dUser.save(uboss);
@@ -175,6 +177,7 @@ public class CCoreUser {
           line.setDirection(dDrugDirection.get(Integer.parseInt(storage)));
           dUserDrugLine.save(line);
         }
+      beanUsers.initialize();
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
