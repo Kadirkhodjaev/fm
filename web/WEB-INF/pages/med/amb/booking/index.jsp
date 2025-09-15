@@ -44,7 +44,8 @@
           <tr ondblclick="setPage('/amb/booking.s?id=${a.id}')">
             <td class="center" style="width:50px">${loop.index + 1}</td>
             <td>${a.fio}</td>
-            <td><fmt:formatDate pattern = "dd.MM.yyyy" value = "${a.birthday}"/></td>
+            <td class="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${a.birthday}"/></td>
+            <td class="center">${a.tel}</td>
             <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${a.regDate}"/></td>
             <td class="center">
               <c:if test="${obj.state == 'ENT'}">

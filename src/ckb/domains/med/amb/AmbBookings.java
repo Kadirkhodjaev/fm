@@ -17,16 +17,16 @@ public class AmbBookings extends GenId {
   @Column(nullable = false, length = 128) private String surname;
   @Column(nullable = false, length = 128) private String name;
   @Column(length = 128) private String middlename;
+  @Column private Date birthday;
   @Column(length = 512) private String tel;
   @Column(length = 512) private String address;
-  @Column(name = "Reg_Date") private Date regDate;
-  @Column private Date birthday;
-
   @Column(length = 128) private String passportInfo;
-  @Column(name = "state") private String state;
   @OneToOne @JoinColumn private Counteries country;
   @OneToOne @JoinColumn private Regions region;
   @OneToOne @JoinColumn(name="sex") private SelOpts sex;
+
+  @Column(name = "state") private String state;
+  @Column(name = "Reg_Date") private Date regDate;
 
   @Column private Integer crBy;
   @Column private Date crOn;

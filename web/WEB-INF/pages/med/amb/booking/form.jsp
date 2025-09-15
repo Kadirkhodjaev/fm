@@ -10,7 +10,7 @@
 <script>
   //region CLIENT_BLOCK
   $('input[name=client_name]').keyup( () => {
-    <c:if test="${booking.id != null}">return;</c:if>
+    <c:if test="${booking.id != 0}">return;</c:if>
     let div = $('#client_filter'), elem = $('input[name=client_name]'), v = elem.val().toUpperCase();
     div.width(elem.width() + 12);
 
@@ -164,6 +164,18 @@
   //endregion
   $(".date-format").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
   $("#reg_time").mask("99:99",{placeholder:"HH:mm"});
+  function saveBooking() {
+    $.ajax({
+      url: '/amb/booking.s',
+      method: 'post',
+      data: $('#booking_form').serialize(),
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+        if(res.success) setPage('/amb/booking.s?id=' + res.id);
+      }
+    });
+  }
 </script>
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
 <div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
@@ -279,78 +291,81 @@
   <div class="panel-heading">
     <span title="${booking.id}" onclick="setPage('/amb/booking.s?id=${booking.id}')">Реквизиты брона</span>
     <ul class="pagination" style="float:right; margin-top:-5px">
-      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="doSave()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
+      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="saveBooking()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
       <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPage('/amb/bookings.s'); return false"><i title="Назад" class="fa fa-backward"></i> Назад</a></li>
     </ul>
   </div>
   <div class="panel-body">
-    <table class="w-70 margin-auto formTable">
-      <tr>
-        <td class="right">Клиент <req>*</req>:</td>
-        <td colspan="3">
-          <table class="w-100">
-            <tr>
-              <td>
-                <input type="hidden" name="client_id" value="${booking.client.id}">
-                <input type="text" class="form-control uppercase" name="client_name" placeholder="Ф.И.О." value="<c:if test="${booking.id != null}">${booking.fio}</c:if>" <c:if test="${booking.id != null}">readonly</c:if>/>
-                <div id="client_filter" style="display: none; position: absolute; background:white">
-                  <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
-                </div>
-              </td>
-              <td class="center" style="<c:if test="${booking.id == null || (booking.id > 0 && booking.state == 'ARCH' && booking.client == null)}">width:40px</c:if>" id="client_buttons">
-                <c:if test="${booking.id == null}">
-                  <button type="button" class="btn btn-success btn-icon" onclick="addClient()">
-                    <b class="fa fa-plus"></b>
-                  </button>
-                  <button type="button" class="btn btn-info btn-icon display-none" onclick="clientView()">
-                    <b class="fa fa-user"></b>
-                  </button>
-                  <button type="button" class="btn btn-danger btn-icon display-none">
-                    <b class="fa fa-remove"></b>
-                  </button>
-                </c:if>
-                <c:if test="${booking.id > 0 && booking.state == 'ARCH' && booking.client == null}">
-                  <button type="button" class="btn btn-success btn-icon" id="add_arch_client" onclick="addArchClient(${booking.id})">
-                    <b class="fa fa-save"></b>
-                  </button>
-                </c:if>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-      <tr>
-        <td class="right" nowrap>Дата рождения:</td>
-        <td><input type="text" name="birthday" class="form-control center" readonly value="<fmt:formatDate pattern="dd.MM.yyyy" value="${booking.birthday}"/>" placeholder="dd.mm.yyyy"/></td>
-        <td class="right" nowrap>Пол:</td>
-        <td><input type="text" name="sex_id" class="form-control center" readonly value="${booking.sex.name}"/></td>
-      </tr>
-      <tr>
-        <td class="right" nowrap>Телефон:</td>
-        <td><input name="tel" type="text" class="form-control" maxlength="400"/></td>
-        <td class="right" nowrap>Паспортные данные:</td>
-        <td><input type="text" name="passport" class="form-control center" readonly value="${booking.passportInfo}"/></td>
-      </tr>
-      <tr>
-        <td class="right" nowrap>Резиденство:</td>
-        <td><input type="text" name="country" class="form-control center" readonly value="${booking.country.name}"/></td>
-        <td class="right" nowrap>Область:</td>
-        <td><input type="text" name="region" class="form-control center" readonly value="${booking.region.name}"/></td>
-      </tr>
-      <tr>
-        <td class="right" nowrap>Адрес:</td>
-        <td colspan="3"><input name="address" type="text" class="form-control" maxlength="400"/></td>
-      </tr>
-      <tr>
-        <td class="right">Дата брона:</td>
-        <td>
-          <input name="reg_date" id="reg_date" type="text" class="form-control datepicker" value="<fmt:formatDate pattern="dd.MM.yyyy" value="${booking.regDate}"/>"/>
-        </td>
-        <td class="right">Время брона:</td>
-        <td>
-          <input name="reg_time" id="reg_time" placeholder="HH:mm" type="text" class="form-control center" value="<fmt:formatDate pattern="HH:mm" value="${booking.regDate}"/>"/>
-        </td>
-      </tr>
-    </table>
+    <form id="booking_form">
+      <input type="hidden" name="id" value="${booking.id}"/>
+      <table class="w-70 margin-auto formTable">
+        <tr>
+          <td class="right">Клиент <req>*</req>:</td>
+          <td colspan="3">
+            <table class="w-100">
+              <tr>
+                <td>
+                  <input type="hidden" name="client_id" value="${booking.client.id}">
+                  <input type="text" class="form-control uppercase" name="client_name" placeholder="Ф.И.О." value="<c:if test="${booking.id != 0}">${booking.fio}</c:if>" <c:if test="${booking.id != 0}">readonly</c:if>/>
+                  <div id="client_filter" style="display: none; position: absolute; background:white">
+                    <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
+                  </div>
+                </td>
+                <td class="center" style="<c:if test="${booking.id == 0 || (booking.id > 0 && booking.state == 'ARCH' && booking.client == null)}">width:40px</c:if>" id="client_buttons">
+                  <c:if test="${booking.id == 0}">
+                    <button type="button" class="btn btn-success btn-icon" onclick="addClient()">
+                      <b class="fa fa-plus"></b>
+                    </button>
+                    <button type="button" class="btn btn-info btn-icon display-none" onclick="clientView()">
+                      <b class="fa fa-user"></b>
+                    </button>
+                    <button type="button" class="btn btn-danger btn-icon display-none">
+                      <b class="fa fa-remove"></b>
+                    </button>
+                  </c:if>
+                  <c:if test="${booking.id > 0 && booking.state == 'ARCH' && booking.client == null}">
+                    <button type="button" class="btn btn-success btn-icon" id="add_arch_client" onclick="addArchClient(${booking.id})">
+                      <b class="fa fa-save"></b>
+                    </button>
+                  </c:if>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td class="right" nowrap>Дата рождения:</td>
+          <td><input type="text" name="birthday" class="form-control center" readonly value="<fmt:formatDate pattern="dd.MM.yyyy" value="${booking.birthday}"/>" placeholder="dd.mm.yyyy"/></td>
+          <td class="right" nowrap>Пол:</td>
+          <td><input type="text" name="sex_id" class="form-control center" readonly value="${booking.sex.name}"/></td>
+        </tr>
+        <tr>
+          <td class="right" nowrap>Телефон:</td>
+          <td><input name="tel" type="text" class="form-control" maxlength="400"/></td>
+          <td class="right" nowrap>Паспортные данные:</td>
+          <td><input type="text" name="passport" class="form-control center" readonly value="${booking.passportInfo}"/></td>
+        </tr>
+        <tr>
+          <td class="right" nowrap>Резиденство:</td>
+          <td><input type="text" name="country" class="form-control center" readonly value="${booking.country.name}"/></td>
+          <td class="right" nowrap>Область:</td>
+          <td><input type="text" name="region" class="form-control center" readonly value="${booking.region.name}"/></td>
+        </tr>
+        <tr>
+          <td class="right" nowrap>Адрес:</td>
+          <td colspan="3"><input name="address" type="text" class="form-control" maxlength="400"/></td>
+        </tr>
+        <tr>
+          <td class="right">Дата брона:</td>
+          <td>
+            <input name="reg_date" id="reg_date" type="text" class="form-control datepicker" value="<fmt:formatDate pattern="dd.MM.yyyy" value="${booking.regDate}"/>"/>
+          </td>
+          <td class="right">Время брона:</td>
+          <td>
+            <input name="reg_time" id="reg_time" placeholder="HH:mm" type="text" class="form-control center" value="<fmt:formatDate pattern="HH:mm" value="${booking.regDate}"/>"/>
+          </td>
+        </tr>
+      </table>
+    </form>
   </div>
 </div>
