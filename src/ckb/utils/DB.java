@@ -30,6 +30,12 @@ public class DB {
     }
   }
 
+  public static void done(Connection conn, PreparedStatement ps, ResultSet rs) {
+    done(rs);
+    done(ps);
+    done(conn);
+  }
+
 
   public static Connection getConnection() {
     Connection conn = null;

@@ -1,9 +1,7 @@
 package ckb.services.med.rep;
 
-import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DLvPartner;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.reports.DReport;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbGroup;
@@ -40,6 +38,7 @@ import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.models.reports.Rep1;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
@@ -56,11 +55,7 @@ public class SRepImp implements SRep {
 
 	Date startDate = Util.stringToDate("31.03.2024");
 
-	@Autowired private DAmbGroup dAmbGroup;
 	@Autowired private DReport dReport;
-	@Autowired private DUser dUser;
-	@Autowired private DCountry dCountry;
-	@Autowired private DParam dParam;
 	//
 	@Autowired private DPatientWatchers dPatientWatchers;
 	@Autowired private DLvFizio dLvFizio;
@@ -72,7 +67,6 @@ public class SRepImp implements SRep {
 	@Autowired private DLvCoul dLvCoul;
 	@Autowired private DLvGarmon dLvGarmon;
 	@Autowired private DLvTorch dLvTorch;
-	@Autowired private DDept dDept;
 	@Autowired private DHNPatient dhnPatient;
 	@Autowired private DLvPartner dLvPartner;
 	@Autowired private DDrugManufacturer dDrugManufacturer;
@@ -80,7 +74,12 @@ public class SRepImp implements SRep {
 	@Autowired private DDrugOutRow dDrugOutRow;
 	@Autowired private DDrugOut dDrugOut;
 	@Autowired private DKdoChoosen dKdoChoosen;
+	@Autowired private DUser dUser;
+	@Autowired private DAmbGroup dAmbGroup;
+	@Autowired private DDept dDept;
+
   @Autowired private BeanUsers beanUsers;
+  @Autowired private BeanSession beanSession;
 
 	@Override
 	public void gRep(HttpServletRequest req, Model m) {
@@ -238,7 +237,7 @@ public class SRepImp implements SRep {
 		params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
 		try {
 			conn = DB.getConnection();
-			List<AmbGroups> groups = dAmbGroup.getAll();
+			List<AmbGroups> groups = beanSession.getAmbGroups();
 			int counter = 0;
 
 			for (AmbGroups group : groups) {
@@ -497,7 +496,7 @@ public class SRepImp implements SRep {
       AmbGroups group = dAmbGroup.get(groupId);
       groups.add(group);
     } else
-      groups = dAmbGroup.getAll();
+      groups = beanSession.getAmbGroups();
     for (AmbGroups group : groups) {
       List<ObjList> patients = new ArrayList<>();
       Rep1 r = new Rep1();
@@ -573,7 +572,7 @@ public class SRepImp implements SRep {
 						"	  And s.service = c.id " +
 						"		And c.consul = 'Y'");
 			} else {
-				doctors = dUser.getAll();
+				doctors = beanUsers.getUsers();
 			}
 		}
     try {
@@ -762,7 +761,7 @@ public class SRepImp implements SRep {
     Date startDate = Util.getDate(req, "period_start");
     Date endDate = Util.getDate(req, "period_end");
     params += "Параметры: Период: " + Util.dateToString(startDate) + " - " + Util.dateToString(endDate);
-    List<Counteries> countries = dCountry.getCounteries();
+    List<Counteries> countries = beanSession.getCounteries();
     for (Counteries country : countries) {
       List<ObjList> patients = new ArrayList<>();
       Rep1 r = new Rep1();
@@ -3820,7 +3819,7 @@ public class SRepImp implements SRep {
 		Patients pat = dPatient.get(id);
 
 		Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-		Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+		Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
 		Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
 		Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
 		//
@@ -3863,7 +3862,7 @@ public class SRepImp implements SRep {
 			conn = DB.getConnection();
 			Integer deptId = !req.getParameter("dept").isEmpty() ? Util.getInt(req, "dept") : null;
 			//
-			List<Depts> depts = dDept.getAll();
+			List<Depts> depts = beanSession.getDepts();
 			if(deptId != null) {
 				Depts dd = dDept.get(deptId);
 				depts = new ArrayList<>();
@@ -4471,7 +4470,7 @@ public class SRepImp implements SRep {
 		Date date = Util.getDate(req, "period");
 		String params = ("Параметры: За дату: " + Util.dateToString(date));
 		try {
-			List<Depts> depts = dDept.getList("From Depts Order By Length(name)");
+			List<Depts> depts = beanSession.getDepts();
 			List<EatMenuTypes> menuTypes = dEatMenuType.getAll();
 			LinkedHashMap<String, Integer> mm = new LinkedHashMap<>();
 			LinkedHashMap<String, String> keys = new LinkedHashMap<>();
@@ -4608,7 +4607,7 @@ public class SRepImp implements SRep {
 		Date date = Util.getDate(req, "period");
 		String params = ("Параметры: За дату: " + Util.dateToString(date));
 		try {
-			List<AmbGroups> types = dAmbGroup.getAll();
+			List<AmbGroups> types = beanSession.getAmbGroups();
 			ps = conn.prepareStatement(
 				"Select t.Id, " +
 					" 			  Date_Format(Max(t.crOn), '%d.%m.%Y') confDate " +
@@ -4684,7 +4683,7 @@ public class SRepImp implements SRep {
 		Date date = Util.getDate(req, "period");
 		String params = ("Параметры: За дату: " + Util.dateToString(date));
 		try {
-			List<AmbGroups> types = dAmbGroup.getAll();
+			List<AmbGroups> types = beanSession.getAmbGroups();
 			ps = conn.prepareStatement(
 				"Select t.Id, " +
 					" 			  Date_Format(Max(t.crOn), '%d.%m.%Y') confDate " +

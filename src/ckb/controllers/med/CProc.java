@@ -2,14 +2,12 @@ package ckb.controllers.med;
 
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.dicts.rooms.DRooms;
-import ckb.dao.med.patient.DPatient;
-import ckb.dao.med.patient.DPatientDrug;
-import ckb.dao.med.patient.DPatientDrugDate;
-import ckb.dao.med.patient.DPatientDrugExp;
+import ckb.dao.med.patient.*;
 import ckb.domains.admin.Users;
 import ckb.domains.med.dicts.Rooms;
 import ckb.domains.med.patient.PatientDrugDates;
 import ckb.domains.med.patient.PatientDrugExps;
+import ckb.domains.med.patient.PatientTabExps;
 import ckb.domains.med.patient.Patients;
 import ckb.models.Obj;
 import ckb.models.ObjList;
@@ -40,6 +38,7 @@ public class CProc {
   @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugDate dPatientDrugDate;
   @Autowired private DPatientDrugExp dPatientDrugExp;
+  @Autowired private DPatientTabExp dPatientTabExp;
 
   @RequestMapping("palatas.s")
   protected String palatas(HttpServletRequest req, Model m) {
@@ -55,6 +54,7 @@ public class CProc {
     session.setFilters(filters);
     List<Rooms> rs = dRoom.getList("From Rooms Where dept.id = " + user.getDept().getId());
     List<Obj> rooms = new ArrayList<>();
+    String dbDate = Util.dateDB("19.09.2025");
     for(Rooms r: rs) {
       Obj room = new Obj();
       room.setId(r.getId());
@@ -63,9 +63,9 @@ public class CProc {
       List<Patients> patients = dPatient.getList("From Patients Where state = 'LV' And room.id = " + r.getId());
       for(Patients pat: patients) {
         ObjList l = new ObjList();
-        if(dPatientDrug.getCount("From PatientDrugDates Where patientDrug.drugType.id = 16 And checked=1 And date='" + Util.dateDB(new Date()) + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1" : time.equals("2") ? "patientDrug.noonTime = 1" : "patientDrug.eveningTime = 1")) > 0) {
+        if(dPatientDrug.getCount("From PatientDrugDates Where checked=1 And date='" + dbDate + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1" : time.equals("2") ? "patientDrug.noonTime = 1" : "patientDrug.eveningTime = 1")) > 0) {
           l.setC1(pat.getSex() == null ? "fa-asterisk" : pat.getSex().getId() == 12 ? "fa-male" : "fa-female");
-          l.setC2(dPatientDrug.getCount("From PatientDrugDates Where patientDrug.drugType.id = 16 And checked=1 And date='" + Util.dateDB(new Date()) + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1 And morningTimeDone !=1 " : time.equals("2") ? "patientDrug.noonTime = 1 And noonTimeDone!=1" : "patientDrug.eveningTime = 1 And eveningTimeDone!=1")) > 0 ? "text-danger" : "text-success");
+          l.setC2(dPatientDrug.getCount("From PatientDrugDates Where checked=1 And date='" + dbDate + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1 And morningTimeDone !=1 " : time.equals("2") ? "patientDrug.noonTime = 1 And noonTimeDone!=1" : "patientDrug.eveningTime = 1 And eveningTimeDone!=1")) > 0 ? "text-danger" : "text-success");
           list.add(l);
         }
       }
@@ -99,7 +99,7 @@ public class CProc {
     List<Patients> patients = dPatient.getList("From Patients Where state = 'LV' And room.id = " + roomId);
     List<Patients> pats = new ArrayList<>();
     for(Patients pat: patients) {
-      if(dPatientDrug.getCount("From PatientDrugDates Where patientDrug.drugType.id = 16 And checked=1 And date='" + Util.dateDB(new Date()) + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1" : time.equals("2") ? "patientDrug.noonTime = 1" : "patientDrug.eveningTime = 1")) > 0) {
+      if(dPatientDrug.getCount("From PatientDrugDates Where checked=1 And date='" + Util.dateDB(new Date()) + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1" : time.equals("2") ? "patientDrug.noonTime = 1" : "patientDrug.eveningTime = 1")) > 0) {
         pats.add(pat);
       }
     }
@@ -138,6 +138,15 @@ public class CProc {
       if(time.equals("3")) rasxod.put(exp.getCode(), exp.getEveningExp() == null ? 0D : exp.getEveningExp());
     }
     m.addAttribute("exps", rasxod);
+
+    LinkedHashMap<Integer, Double> tab_rasxod = new LinkedHashMap<>();
+    List<PatientTabExps> tab_exps = dPatientTabExp.getList("From PatientTabExps Where patient.id = " + patId);
+    for(PatientTabExps exp: tab_exps) {
+      if(time.equals("1")) tab_rasxod.put(exp.getDrug().getId(), exp.getMorningExp() == null ? 0D : exp.getMorningExp());
+      if(time.equals("2")) tab_rasxod.put(exp.getDrug().getId(), exp.getNoonExp() == null ? 0D : exp.getNoonExp());
+      if(time.equals("3")) tab_rasxod.put(exp.getDrug().getId(), exp.getEveningExp() == null ? 0D : exp.getEveningExp());
+    }
+    m.addAttribute("tab_exps", tab_rasxod);
     return "proc/drugs";
   }
 
@@ -183,18 +192,34 @@ public class CProc {
       String code = Util.get(req, "code");
       Date dt = Util.getDate(req, "oper_day");
       Double val = Util.getDouble(req, "val");
-      PatientDrugExps obj = dPatientDrugExp.obj("From PatientDrugExps Where patient.id = " + patient + " And code='" + code + "' And operDay = '" + Util.dateDB(Util.dateToString(dt)) + "'");
-      if(obj == null) {
-        obj = new PatientDrugExps();
-        obj.setPatient(dPatient.get(patient));
-        obj.setCode(code);
-        obj.setOperDay(dt);
+      if(code.contains("tab_")) {
+        Integer did = Integer.valueOf(code.replace("tab_", ""));
+        PatientTabExps obj = dPatientTabExp.obj("From PatientTabExps Where patient.id = " + patient + " And drug.id = " + did + " And operDay = '" + Util.dateDB(Util.dateToString(dt)) + "'");
+        if(obj == null) {
+          obj = new PatientTabExps();
+          obj.setPatient(dPatient.get(patient));
+          obj.setDrug(dPatientDrug.get(did));
+          obj.setOperDay(dt);
+        }
+        if(time.equals("1")) obj.setMorningExp(val);
+        if(time.equals("2")) obj.setNoonExp(val);
+        if(time.equals("3")) obj.setEveningExp(val);
+        //
+        dPatientTabExp.save(obj);
+      } else {
+        PatientDrugExps obj = dPatientDrugExp.obj("From PatientDrugExps Where patient.id = " + patient + " And code='" + code + "' And operDay = '" + Util.dateDB(Util.dateToString(dt)) + "'");
+        if(obj == null) {
+          obj = new PatientDrugExps();
+          obj.setPatient(dPatient.get(patient));
+          obj.setCode(code);
+          obj.setOperDay(dt);
+        }
+        if(time.equals("1")) obj.setMorningExp(val);
+        if(time.equals("2")) obj.setNoonExp(val);
+        if(time.equals("3")) obj.setEveningExp(val);
+        //
+        dPatientDrugExp.save(obj);
       }
-      if(time.equals("1")) obj.setMorningExp(val);
-      if(time.equals("2")) obj.setNoonExp(val);
-      if(time.equals("3")) obj.setEveningExp(val);
-      //
-      dPatientDrugExp.save(obj);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);

@@ -1,7 +1,5 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.depts.DDept;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.med.drug.act.DDrugAct;
 import ckb.dao.med.drug.actdrug.DDrugActDrug;
@@ -32,6 +30,7 @@ import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.DB;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONArray;
@@ -69,15 +68,14 @@ public class CDrug {
   @Autowired private DDrugActDrug dDrugActDrug;
   @Autowired private DDrugOut dDrugOut;
   @Autowired private DDrugOutRow dDrugOutRow;
-  @Autowired private DDept dDept;
   @Autowired private DDrugDirectionDep dDrugDirectionDep;
   @Autowired private DDrugManufacturer dDrugManufacturer;
   @Autowired private DHNDirection dhnDirection;
   @Autowired private DHNDirectionLink dhnDirectionLink;
   @Autowired private DUserDrugLine dUserDrugLine;
-  @Autowired private DParam dParam;
   @Autowired private DDrugNorma dDrugNorma;
   @Autowired private DDrugNormaDirection dDrugNormaDirection;
+  @Autowired private BeanSession beanSession;
   //endregion
 
   //region INCOMES
@@ -119,7 +117,7 @@ public class CDrug {
   protected String addEditAct(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/drugs/act/addEdit.s?id=" + Util.get(req, "id"));
-    Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+    Double ndsProc = beanSession.getNds();
     //
     DrugActs act = Util.getInt(req, "id") > 0 ? dDrugAct.get(Util.getInt(req, "id")) : new DrugActs();
     if(Util.getInt(req, "id") == 0)
@@ -193,7 +191,7 @@ public class CDrug {
     Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
-      Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+      Double ndsProc = beanSession.getNds();
       Date endDate = Util.stringToDate(Util.get(req, "end_date"));
       boolean isErr = false;
       if(Util.isNotDouble(req, "price")) {
@@ -332,7 +330,7 @@ public class CDrug {
         //
         rows.add(obj);
       }
-      Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+      Double ndsProc = beanSession.getNds();
       model.addAttribute("ndsProc", ndsProc);
       model.addAttribute("rows", rows);
     } catch (Exception e) {
@@ -577,7 +575,7 @@ public class CDrug {
           for(String dep: deps) {
             DrugDirectionDeps ct = new DrugDirectionDeps();
             ct.setDirection(obj);
-            ct.setDept(dDept.get(Integer.parseInt(dep)));
+            ct.setDept(beanSession.getDept(Integer.parseInt(dep)));
             dDrugDirectionDep.save(ct);
           }
       }
@@ -808,7 +806,7 @@ public class CDrug {
     session.setCurSubUrl("/drugs/dict/directions.s");
     //
     model.addAttribute("list", dDrugDirection.getAll());
-    model.addAttribute("deps", dDept.getAll());
+    model.addAttribute("deps", beanSession.getDepts());
     Util.makeMsg(request, model);
     return "/med/drugs/dicts/directions/index";
   }

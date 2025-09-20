@@ -2,7 +2,6 @@ package ckb.controllers.med;
 
 
 import ckb.dao.admin.country.DCountry;
-import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.region.DRegion;
@@ -11,7 +10,10 @@ import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.docs.DLvDoc;
 import ckb.dao.med.lv.plan.DLvPlan;
-import ckb.dao.med.patient.*;
+import ckb.dao.med.patient.DPatient;
+import ckb.dao.med.patient.DPatientLink;
+import ckb.dao.med.patient.DPatientPlan;
+import ckb.dao.med.patient.DPatientWatchers;
 import ckb.domains.admin.Kdos;
 import ckb.domains.med.dicts.Rooms;
 import ckb.domains.med.lv.LvPlans;
@@ -19,10 +21,10 @@ import ckb.domains.med.patient.PatientPlans;
 import ckb.domains.med.patient.PatientWatchers;
 import ckb.domains.med.patient.Patients;
 import ckb.services.admin.form.SForm;
-import ckb.services.admin.user.SUser;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.Req;
 import ckb.utils.Util;
@@ -50,14 +52,9 @@ public class CReg {
   @Autowired SForm sForm;
   @Autowired SPatient sPatient;
   @Autowired DPatient dPatient;
-  @Autowired SUser sUser;
-  @Autowired DDept dDept;
   @Autowired DPatientLink dPatientLink;
   @Autowired BeanUsers beanUsers;
-  @Autowired DCountry dCountry;
-  @Autowired DRegion dRegion;
-  @Autowired DUser dUser;
-  @Autowired DRooms dRooms;
+  @Autowired BeanSession beanSession;
   @Autowired DKdos dKdos;
   @Autowired DLvPlan dLvPlan;
   @Autowired DPatientPlan dPatientPlan;
@@ -65,6 +62,10 @@ public class CReg {
   @Autowired DDict dDict;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DLvDoc dLvDoc;
+  @Autowired private DRooms dRooms;
+  @Autowired private DCountry dCountry;
+  @Autowired private DRegion dRegion;
+  @Autowired private DUser dUser;
 
   @RequestMapping("nurse/index.s")
   protected String view(@ModelAttribute("patient") Patients p, HttpServletRequest req, Model m) {
@@ -88,7 +89,7 @@ public class CReg {
     m.addAttribute("curDate", Util.getCurDate());
     sPatient.createModel(req, p);
     m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
-    m.addAttribute("deps", dDept.getAll());
+    m.addAttribute("deps", beanSession.getDepts());
     m.addAttribute("lvs", beanUsers.getLvs());
     //
     List<Rooms> list = dRooms.getActives();
@@ -100,8 +101,8 @@ public class CReg {
     }
     m.addAttribute("rooms", rooms);
     //
-    m.addAttribute("countries", dCountry.getCounteries());
-    m.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+    m.addAttribute("countries", beanSession.getCounteries());
+    m.addAttribute("regions", beanSession.getRegions());
     m.addAttribute("countryName", p.getCounteryId() != null ? dCountry.get(p.getCounteryId()).getName() : "");
     m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
     m.addAttribute("reg", Util.nvl(Util.get(req, "reg")).equals("Y") ? session.getCurPat() : "");
@@ -243,13 +244,13 @@ public class CReg {
     if(pat.getLv_id() != null)
       model.addAttribute("lv", dUser.get(pat.getLv_id()));
     model.addAttribute("lvs", beanUsers.getLvs());
-    model.addAttribute("zavs", dUser.getList("From Users Where zavlv = 1"));
+    model.addAttribute("zavs", beanUsers.getZavLvs());
     model.addAttribute("country", pat.getCounteryId() != null ? dCountry.get(pat.getCounteryId()).getName() : "");
     model.addAttribute("region", pat.getRegionId() != null ? dRegion.get(pat.getRegionId()).getName() : "");
     model.addAttribute("lvpartners", dLvPartner.getList("From LvPartners Where state = 'A' Order By code"));
     sForm.setSelectOptionModel(model, 1, "sex");
-    model.addAttribute("countries", dCountry.getCounteries());
-    model.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+    model.addAttribute("countries", beanSession.getCounteries());
+    model.addAttribute("regions", beanSession.getRegions());
     return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
   }
 
@@ -318,7 +319,7 @@ public class CReg {
     session.setCurUrl("/reg/doctor/index.s?id=" + pat.getId());
     model.addAttribute("fio", pat.getSurname() + " " + pat.getName());
     model.addAttribute("lvs", beanUsers.getLvs());
-    model.addAttribute("deps", dDept.getAll());
+    model.addAttribute("deps", beanSession.getDepts());
     sPatient.createDocModel(pat, patient);
     model.addAttribute("date_Begin", Util.dateToString(pat.getDateBegin()));
     model.addAttribute("Date_End", Util.dateToString(pat.getDateEnd()));

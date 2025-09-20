@@ -1,5 +1,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
@@ -176,6 +177,43 @@
       }
     });
   }
+  function regBooking() {
+    if(confirm('Вы действительно хотите зарегистрировать брон'))
+      $.ajax({
+        url: '/amb/booking/reg.s',
+        method: 'post',
+        data: 'id=${booking.id}',
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success) setPage('/amb/reg.s?id=' + res.id);
+        }
+      });
+  }
+  function setServiceUser(ser, user) {
+    $.ajax({
+      url: '/amb/booking/service/user.s',
+      method: 'post',
+      data: 'ser=' + ser + '&user=' + user,
+      dataType: 'json',
+      success: function (res) {
+        openMsg(res);
+      }
+    });
+  }
+  function delService(id) {
+    if(confirm('Вы действительно хотите удалить выбрунную запись?'))
+      $.ajax({
+        url: '/amb/booking/service/del.s',
+        method: 'post',
+        data: 'id=' + id,
+        dataType: 'json',
+        success: function (res) {
+          openMsg(res);
+          if(res.success) setPage('/amb/booking.s?id=${booking.id}');
+        }
+      });
+  }
 </script>
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
 <div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
@@ -291,7 +329,12 @@
   <div class="panel-heading">
     <span title="${booking.id}" onclick="setPage('/amb/booking.s?id=${booking.id}')">Реквизиты брона</span>
     <ul class="pagination" style="float:right; margin-top:-5px">
-      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="saveBooking()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
+      <c:if test="${booking.state == 'ENT' || booking.id == 0}">
+        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="saveBooking()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
+      </c:if>
+      <c:if test="${booking.state == 'ENT' && fn:length(services) > 0}">
+        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="regBooking()"><i title="Сохранить" class="fa fa-user"></i> Регистрация</a></li>
+      </c:if>
       <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPage('/amb/bookings.s'); return false"><i title="Назад" class="fa fa-backward"></i> Назад</a></li>
     </ul>
   </div>
@@ -341,7 +384,7 @@
         </tr>
         <tr>
           <td class="right" nowrap>Телефон:</td>
-          <td><input name="tel" type="text" class="form-control" maxlength="400"/></td>
+          <td><input name="tel" type="text" class="form-control" maxlength="400" value="${booking.tel}"/></td>
           <td class="right" nowrap>Паспортные данные:</td>
           <td><input type="text" name="passport" class="form-control center" readonly value="${booking.passportInfo}"/></td>
         </tr>
@@ -353,7 +396,11 @@
         </tr>
         <tr>
           <td class="right" nowrap>Адрес:</td>
-          <td colspan="3"><input name="address" type="text" class="form-control" maxlength="400"/></td>
+          <td colspan="3"><input name="address" type="text" class="form-control" maxlength="400" value="${booking.address}"/></td>
+        </tr>
+        <tr>
+          <td class="right" nowrap>Комментария:</td>
+          <td colspan="3"><input name="text" type="text" class="form-control" maxlength="400" value="${booking.text}"/></td>
         </tr>
         <tr>
           <td class="right">Дата брона:</td>
@@ -369,3 +416,69 @@
     </form>
   </div>
 </div>
+
+<c:if test="${booking.id > 0}">
+  <div class="panel panel-info">
+    <div class="panel-heading">
+      Услуги
+      <div style="float:right">
+        <c:if test="${booking.state == 'ENT'}">
+          <button class="btn btn-sm btn-success" type="button" onclick="setPage('/amb/booking/services.s?id=${booking.id}')" style="margin-top: -5px"><i class="fa fa-plus"></i> Услуги</button>
+        </c:if>
+      </div>
+    </div>
+    <div>
+      <table class="table table-bordered">
+        <tr>
+          <td class="center bold">№</td>
+          <td class="center bold">Наименование</td>
+          <td class="center bold">Сумма</td>
+          <td class="center bold">С НДС</td>
+          <td class="center bold">Врач</td>
+          <c:if test="${booking.state == 'ENT'}">
+            <td class="center bold" style="width: 30px">Уд.</td>
+          </c:if>
+        </tr>
+        <c:forEach items="${services}" var="ser" varStatus="loop">
+          <tr id="ser${ser.id}">
+            <td class="center">${loop.index + 1}</td>
+            <td>${ser.service.name}</td>
+            <td class="right" style="padding-right:7px">${ser.price}</td>
+            <td class="right" style="padding-right:7px">${ser.nds}</td>
+            <td class="center">
+              <c:if test="${booking.state == 'ENT'}">
+                <select name="user" class="form-control" onchange="setServiceUser(${ser.id}, this.value)">
+                  <option></option>
+                  <c:forEach items="${ser.users}" var="u">
+                    <option <c:if test="${ser.worker.id == u.id}">selected</c:if> value="${u.id}">${u.fio}</option>
+                  </c:forEach>
+                </select>
+              </c:if>
+              <c:if test="${booking.state != 'ENT' && ser.worker != null}">
+                ${ser.worker.fio}
+              </c:if>
+            </td>
+            <c:if test="${booking.state == 'ENT'}">
+              <td class="center">
+                <button class="btn btn-danger btn-icon" title="Удалить" onclick="delService(${ser.id})"><span class="fa fa-minus"></span></button>
+              </td>
+            </c:if>
+          </tr>
+        </c:forEach>
+        <c:if test="${serviceTotal > 0}">
+          <tr style="font-weight: bold">
+            <td class="center">&nbsp;</td>
+            <td>ИТОГО к оплате</td>
+            <td class="right" style="padding-right:7px">
+              <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${serviceTotal}" type = "number"/>
+            </td>
+            <td class="right" style="padding-right:7px">
+              <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${ndsTotal}" type = "number"/>
+            </td>
+            <td class="center" colspan="2">&nbsp;</td>
+          </tr>
+        </c:if>
+      </table>
+    </div>
+  </div>
+</c:if>

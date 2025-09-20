@@ -1,7 +1,9 @@
 package ckb.domains.med.drug;
 
 import ckb.domains.GenId;
-import ckb.domains.med.drug.dict.*;
+import ckb.domains.med.drug.dict.DrugManufacturers;
+import ckb.domains.med.drug.dict.DrugMeasures;
+import ckb.domains.med.drug.dict.Drugs;
 
 import javax.persistence.*;
 import java.util.Date;

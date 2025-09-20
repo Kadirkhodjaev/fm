@@ -154,6 +154,10 @@ public class AmbServices extends GenId {
     return pat.isResident() ? getPrice() : getFor_price();
   }
 
+  public Double getStatusPrice(AmbBookings pat) {
+    return pat.isResident() ? getPrice() : getFor_price();
+  }
+
   public Date getSaleStart() {
     return saleStart;
   }

@@ -4,7 +4,6 @@ import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
@@ -13,10 +12,7 @@ import ckb.dao.med.kdos.DSalePack;
 import ckb.dao.med.kdos.DSalePackRow;
 import ckb.dao.med.patient.DPatient;
 import ckb.dao.med.template.DTemplate;
-import ckb.domains.admin.Forms;
-import ckb.domains.admin.SalePackRows;
-import ckb.domains.admin.SalePacks;
-import ckb.domains.admin.Users;
+import ckb.domains.admin.*;
 import ckb.domains.med.amb.*;
 import ckb.models.*;
 import ckb.models.drugs.PatientDrug;
@@ -28,9 +24,7 @@ import ckb.services.med.amb.SAmb;
 import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
-import ckb.utils.DB;
-import ckb.utils.Req;
-import ckb.utils.Util;
+import ckb.utils.*;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,15 +51,12 @@ public class CAmb {
   //region AUTOWIRED
   private Session session = null;
   @Autowired private SAmb sAmb;
-  @Autowired private DCountry dCountry;
-  @Autowired private DRegion dRegion;
   @Autowired private SForm sForm;
   @Autowired private DForm dForm;
   @Autowired private DAmbPatient dAmbPatients;
   @Autowired private DAmbPatientService dAmbPatientServices;
   @Autowired private DAmbService dAmbServices;
   @Autowired private DAmbResult dAmbResults;
-  @Autowired private DUser dUser;
   @Autowired private DAmbServiceUser dAmbServiceUsers;
   @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DAmbPatientLinks dAmbPatientLinks;
@@ -77,12 +68,16 @@ public class CAmb {
   @Autowired private DAmbDrug dAmbDrug;
   @Autowired private DAmbDrugDate dAmbDrugDate;
   @Autowired private DAmbDrugRow dAmbDrugRow;
-  @Autowired private DParam dParam;
   @Autowired private DPatient dPatient;
   @Autowired private SRkdo sRkdo;
   @Autowired private DAmbServiceUser dAmbServiceUser;
   @Autowired private DSalePack dSalePack;
   @Autowired private DSalePackRow dSalePackRow;
+  @Autowired private DUser dUser;
+  @Autowired private DCountry dCountry;
+  @Autowired private DRegion dRegion;
+  @Autowired private BeanSession beanSession;
+  @Autowired private BeanUsers beanUsers;
   //endregion
 
   //region PATIENTS
@@ -290,8 +285,8 @@ public class CAmb {
     sAmb.createModel(req, p);
     sForm.setSelectOptionModel(m, 1, "sex");
     List<AmbService> ss = new ArrayList<>();
-    m.addAttribute("counteries", dCountry.getCounteries());
-    m.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+    m.addAttribute("counteries", beanSession.getCounteries());
+    m.addAttribute("regions", beanSession.getRegions());
     if(session.getCurPat() > 0 && Util.isNull(req, "reg")) {
       List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
       for(AmbPatientServices s: services) {
@@ -315,13 +310,13 @@ public class CAmb {
         }
         if(!"DONE".equals(s.getState()) && !"DEL".equals(s.getState()) && !"AUTO_DEL".equals(s.getState()))
           isDone = false;
+        List<Users> users = new ArrayList<>();
         if("ENT".equals(s.getState()) || ("PAID".equals(s.getState()) && p.getEmp() != null && Util.nvl(s.getResult(), 0) == 0 && s.getCrBy() == session.getUserId()) || ("PAID".equals(s.getState()) && session.getRoleId() == 15 && (s.getResult() == null || s.getResult() == 0))) {
-          List<Users> users = new ArrayList<>();
           List<AmbServiceUsers> serviceUsers = dAmbServiceUser.getList("From AmbServiceUsers t Where t.service = " + s.getService().getId());
-          for(AmbServiceUsers serviceUser: serviceUsers) users.add(dUser.get(serviceUser.getUser()));
-          d.setUsers(users);
+          for(AmbServiceUsers serviceUser: serviceUsers) users.add(beanUsers.get(serviceUser.getUser()));
         } else
-          d.setUsers(dUser.getList("From Users t Where id = " + s.getWorker().getId()));
+          users.add(beanUsers.get(s.getWorker().getId()));
+        d.setUsers(users);
         //
         String sum = new DecimalFormat("###,###,###,###,###,###.##").format(s.getPrice());
         if(!sum.contains(",")) sum = sum + ",00";
@@ -339,8 +334,8 @@ public class CAmb {
       m.addAttribute("ndsTotal", nds + summ);
       m.addAttribute("histories", sAmb.getHistoryServices(session.getCurPat()));
     }
-    m.addAttribute("countries", dCountry.getAll());
-    m.addAttribute("regions", dRegion.getAll());
+    m.addAttribute("countries", beanSession.getCounteries());
+    m.addAttribute("regions", beanSession.getRegions());
     m.addAttribute("packs", dSalePack.getCount("From SalePacks Where state = 'A' And ambStat = 'AMB' "));
     m.addAttribute("countryName", p.getCounteryId() != null ? dCountry.get(p.getCounteryId()).getName() : "");
     m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
@@ -371,7 +366,7 @@ public class CAmb {
         for(int i=0;i<ids.length;i++) {
           AmbPatientServices ser = dAmbPatientServices.get(Integer.parseInt(ids[i]));
           if(ser.getResult() == 0)
-            ser.setWorker(dUser.get(Integer.parseInt(users[i])));
+            ser.setWorker(beanUsers.get(Integer.parseInt(users[i])));
           dAmbPatientServices.save(ser);
         }
       }
@@ -508,7 +503,7 @@ public class CAmb {
             ser.setPrice(s.getStatusPrice(pat));
           ser.setState("ENT");
         }
-        ser.setNdsProc(Double.parseDouble(dParam.byCode("NDS_PROC")));
+        ser.setNdsProc(beanSession.getNds());
         ser.setNds(ser.getPrice() * (ser.getNdsProc() == 0 ? 100 : ser.getNdsProc()) / 100);
         ser.setResult(0);
         ser.setAmb_repeat("N");
@@ -1319,7 +1314,7 @@ public class CAmb {
         m.addAttribute("objs777", objs777);
         m.addAttribute("objs", objs);
         m.addAttribute("services", services);
-        m.addAttribute("clinic_address", dParam.byCode("CLINIC_ADDRESS"));
+        m.addAttribute("clinic_address", beanSession.getParam("CLINIC_ADDRESS"));
         m.addAttribute("path", Util.get(req, "path"));
         return "med/amb/qrcode/pages";
       } catch (Exception e) {
@@ -1384,7 +1379,7 @@ public class CAmb {
     JSONObject json = new JSONObject();
     Session session = SessionUtil.getUser(req);
     Connection conn = null;
-    Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+    Double ndsProc = beanSession.getNds();
     try {
       conn = DB.getConnection();
       AmbPatients pat = dAmbPatients.get(session.getCurPat());
@@ -1402,7 +1397,7 @@ public class CAmb {
           ser.setNds(ser.getPrice() * ndsProc / 100);
           ser.setPack(pack.getId());
           ser.setState(ser.getPrice() > 0 ? "ENT" : "PAID");
-          ser.setNdsProc(Double.parseDouble(dParam.byCode("NDS_PROC")));
+          ser.setNdsProc(beanSession.getNds());
           ser.setNds(ser.getPrice() * (ser.getNdsProc() == 0 ? 100 : ser.getNdsProc()) / 100);
           ser.setResult(0);
           ser.setAmb_repeat("N");

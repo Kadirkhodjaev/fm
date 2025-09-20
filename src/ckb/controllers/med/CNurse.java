@@ -20,6 +20,7 @@ import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.DB;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -52,11 +53,12 @@ public class CNurse {
   @Autowired private DLvGarmon dLvGarmon;
   @Autowired private DLvCoul dLvCoul;
   @Autowired private DLvTorch dLvTorch;
-  @Autowired private DDept dDep;
-  @Autowired private DUser dUser;
   @Autowired private DLvFizio dLvFizio;
   @Autowired private DLvFizioDate dLvFizioDate;
   @Autowired private DKdos dKdo;
+  @Autowired private DUser dUser;
+  @Autowired private DDept dDep;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping("/work.s")
   protected String acts(HttpServletRequest req, Model model) {
@@ -69,7 +71,7 @@ public class CNurse {
     ResultSet rs = null, rc = null;
     boolean is1 = false, is3 = false, is4 = false, is6 = false, is10 = false, is11 = false, is12 = false, is13 = false, is14 = false, is15 = false, is16 = false, is17 = false, is22 = false;
     try {
-      List<Depts> depts = dDep.getAll();
+      List<Depts> depts = beanSession.getDepts();
       Users user = dUser.get(session.getUserId());
       if(session.getUserId() == 1 || user.isGlb()) {
         dep = dep == null ? depts.get(0).getId() + "" : dep;

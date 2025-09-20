@@ -1,20 +1,22 @@
 package ckb.services.admin.user;
 
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserIp;
 import ckb.dao.admin.users.DUserLog;
-import ckb.domains.admin.Params;
 import ckb.domains.admin.Roles;
 import ckb.domains.admin.UserLogs;
 import ckb.domains.admin.Users;
 import ckb.session.Session;
+import ckb.utils.BeanSession;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,7 +28,7 @@ import java.util.*;
 public class SUserImp implements SUser {
 
   @Autowired DUser dUser;
-  @Autowired DParam dParam;
+  @Autowired BeanSession beanSession;
   @Autowired DUserLog dUserLog;
   @Autowired DUserIp dUserIp;
 
@@ -51,11 +53,7 @@ public class SUserImp implements SUser {
     session.setUserName(user.getFio());
     session.setDeptId(user.getDept() != null ? user.getDept().getId() : 0);
     session.setKdoTypesIds(dUser.getKdoTypesIds(user.getId()));
-    List<Params> params = dParam.getAll();
-    Map<String, String> list = new HashMap<String, String>();
-    for(Params param : params) {
-      list.put(param.getCode(), param.getVal());
-    }
+    Map<String, String> list = beanSession.getParams();
     session.setParams(list);
     UserLogs log = new UserLogs();
     log.setUser(user);

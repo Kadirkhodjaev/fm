@@ -1,8 +1,8 @@
 package ckb.services.med.patient;
 
 import ckb.domains.admin.Kdos;
-import ckb.domains.med.patient.Patients;
 import ckb.domains.med.lv.LvEpics;
+import ckb.domains.med.patient.Patients;
 import ckb.models.Grid;
 import ckb.models.ObjList;
 import ckb.models.PatientList;

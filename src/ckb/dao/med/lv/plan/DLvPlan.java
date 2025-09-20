@@ -4,7 +4,6 @@ import ckb.dao.Dao;
 import ckb.domains.med.lv.LvPlans;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.

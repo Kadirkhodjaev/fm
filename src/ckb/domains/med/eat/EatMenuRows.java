@@ -5,7 +5,10 @@ import ckb.domains.med.eat.dict.EatMenuTypes;
 import ckb.domains.med.eat.dict.EatTables;
 import ckb.domains.med.eat.dict.Eats;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "Eat_Menu_Rows")

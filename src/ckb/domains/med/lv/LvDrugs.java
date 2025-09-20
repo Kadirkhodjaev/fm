@@ -1,10 +1,12 @@
 package ckb.domains.med.lv;
 
 import ckb.domains.GenId;
-import ckb.domains.admin.SelOpts;
 import ckb.utils.Util;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import java.util.Date;
 
 @Entity

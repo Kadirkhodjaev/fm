@@ -1,9 +1,7 @@
 package ckb.controllers.med;
 
 
-import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.dicts.rooms.DRooms;
@@ -44,15 +42,11 @@ import ckb.models.ObjList;
 import ckb.models.drugs.PatientDrug;
 import ckb.models.drugs.PatientDrugDate;
 import ckb.models.drugs.PatientDrugRow;
-import ckb.services.admin.user.SUser;
 import ckb.services.med.patient.SPatient;
 import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
-import ckb.utils.BeanUsers;
-import ckb.utils.DB;
-import ckb.utils.Req;
-import ckb.utils.Util;
+import ckb.utils.*;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -83,13 +77,9 @@ public class CLv {
   @Autowired private DKdos dKdos;
   @Autowired private SRkdo sRkdo;
   @Autowired private DLvPlan dLvPlan;
-  @Autowired private SUser sUser;
-  @Autowired private DUser dUser;
-  @Autowired private DDept dDept;
   @Autowired private DLvConsul dLvConsul;
   @Autowired private DLvBio dLvBio;
   @Autowired private DPatientEat dPatientEat;
-  @Autowired private DParam dParam;
   @Autowired private DPatientPlan dPatientPlan;
   @Autowired private DLvDrug dLvDrug;
   @Autowired private DLvGarmon dLvGarmon;
@@ -100,7 +90,6 @@ public class CLv {
   @Autowired private DLvDoc dLvDoc;
   @Autowired private DDrugTemplate dDrugTemplate;
   @Autowired private DDrug dDrug;
-  @Autowired private DRooms dRooms;
   @Autowired private DKdoChoosen dKdoChoosen;
   @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugRow dPatientDrugRow;
@@ -116,7 +105,10 @@ public class CLv {
   @Autowired private DPatientShock dPatientShock;
   @Autowired private DLvFizioDate dLvFizioDate;
   @Autowired private DAmbPatient dAmbPatient;
+  @Autowired private DUser dUser;
+  @Autowired private DRooms dRooms;
   @Autowired private BeanUsers beanUsers;
+  @Autowired private BeanSession beanSession;
   //endregion
 
   @RequestMapping("/index.s")
@@ -384,7 +376,7 @@ public class CLv {
     model.addAttribute("patient", patient);
     model.addAttribute("lvs", beanUsers.getConsuls());
     model.addAttribute("consuls", dLvConsul.getByPat(session.getCurPat()));
-    model.addAttribute("shortClinicName", dParam.byCode("SHORT_CLICNIC_NAME"));
+    model.addAttribute("shortClinicName", beanSession.getParam("SHORT_CLICNIC_NAME"));
     //
     Util.getMsg(request, model);
     return "/med/lv/consul";
@@ -502,9 +494,9 @@ public class CLv {
     model.addAttribute("epics", epics);
     model.addAttribute("patient", patient);
     model.addAttribute("lvs", beanUsers.getLvs());
-    model.addAttribute("deps", dDept.getAll());
+    model.addAttribute("deps", beanSession.getDepts());
     model.addAttribute("sysDate", Util.getCurDate());
-    model.addAttribute("rooms", dRooms.getAll());
+    model.addAttribute("rooms", beanSession.getRooms());
     model.addAttribute("startDate", patient.getStartEpicDate() == null ? Util.dateToString(patient.getDateBegin()) : Util.dateToString(patient.getStartEpicDate()));
     Util.getMsg(request, model);
     return "/med/lv/epic";

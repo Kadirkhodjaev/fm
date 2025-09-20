@@ -1,7 +1,5 @@
 package ckb.controllers.emp;
 
-import ckb.dao.admin.country.DCountry;
-import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.emp.DEmp;
 import ckb.dao.emp.DEmpDoctor;
@@ -14,6 +12,8 @@ import ckb.domains.med.amb.AmbPatients;
 import ckb.services.admin.form.SForm;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
+import ckb.utils.BeanUsers;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -33,12 +33,13 @@ public class CEmp {
 
   @Autowired private DEmp dEmp;
   @Autowired private DEmpDoctor dEmpDoctor;
-  @Autowired private DUser dUser;
   @Autowired private DClient dClient;
-  @Autowired private DCountry dCountry;
-  @Autowired private DRegion dRegion;
   @Autowired private SForm sForm;
   @Autowired private DAmbPatient dAmbPatient;
+  @Autowired private BeanSession beanSession;
+  @Autowired private BeanUsers beanUsers;
+  @Autowired private DUser dUser;
+
 
   @RequestMapping("/index.s")
   protected String changePass(HttpServletRequest req, Model model){
@@ -58,10 +59,10 @@ public class CEmp {
     //
     model.addAttribute("emp", emp);
     sForm.setSelectOptionModel(model, 1, "sex");
-    model.addAttribute("countries", dCountry.getCounteries());
+    model.addAttribute("countries", beanSession.getCounteries());
     model.addAttribute("lvs", dUser.list("From Users Where active = 1 And glavbuh = 0 And glb = 0 And boss = 0 And mainNurse = 0 And statExp = 0 And procUser = 0 And needleDoc = 0 Order By fio"));
     model.addAttribute("emp_lvs", dEmpDoctor.list("From EmpDoctors Where emp.id = " + id));
-    model.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+    model.addAttribute("regions", beanSession.getRegions());
     return "/emp/addEdit";
   }
 
@@ -115,7 +116,7 @@ public class CEmp {
       Integer id = Util.getNullInt(req, "id");
       EmpDoctors d = new EmpDoctors();
       d.setEmp(dEmp.get(id));
-      d.setDoctor(dUser.get(Util.getInt(req, "doctor")));
+      d.setDoctor(beanUsers.get(Util.getInt(req, "doctor")));
       if(dEmpDoctor.getCount("From EmpDoctors Where emp.id = " + id + " And doctor.id = " + d.getDoctor().getId()) > 0)
         return Util.err(json, "Выбранный врач уже в списке");
       d.setCrBy(session.getUserId());

@@ -13,6 +13,7 @@ import ckb.services.admin.form.SForm;
 import ckb.services.med.client.SClient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -35,12 +36,13 @@ public class CClient {
 
   @Autowired private DClient dClient;
   @Autowired private DOpt dOpt;
-  @Autowired private DCountry dCountry;
-  @Autowired private DRegion dRegion;
   @Autowired private DUser dUser;
   @Autowired private SClient sClient;
   @Autowired private SForm sForm;
+  @Autowired private DCountry dCountry;
+  @Autowired private DRegion dRegion;
   @Autowired private DAmbPatient dAmbPatient;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping("list.s")
   protected String mains(HttpServletRequest req, Model model) {
@@ -125,8 +127,8 @@ public class CClient {
     session = SessionUtil.getUser(req);
     session.setCurUrl("/client/edit.s?id=" + Util.get(req, "id"));
     model.addAttribute("client", dClient.get(Util.getInt(req, "id")));
-    model.addAttribute("counteries", dCountry.getCounteries());
-    model.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+    model.addAttribute("counteries", beanSession.getCounteries());
+    model.addAttribute("regions", beanSession.getRegions());
     sForm.setSelectOptionModel(model, 1, "sex");
     model.addAttribute("cur_ambs", dAmbPatient.currentsByClient(Util.getInt(req, "id")));
     model.addAttribute("arch_ambs", dAmbPatient.archiveByClient(Util.getInt(req, "id")));

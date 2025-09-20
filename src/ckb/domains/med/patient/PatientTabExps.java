@@ -6,12 +6,11 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "Patient_Drug_Exps")
-public class PatientDrugExps extends GenId {
-
+@Table(name = "Patient_Tab_Exps")
+public class PatientTabExps extends GenId {
   @OneToOne @JoinColumn private Patients patient;
   @Column private Date operDay;
-  @Column private String code;
+  @OneToOne @JoinColumn private PatientDrugs drug;
   @Column private Double morningExp;
   @Column private Double noonExp;
   @Column private Double eveningExp;
@@ -32,12 +31,12 @@ public class PatientDrugExps extends GenId {
     this.operDay = operDay;
   }
 
-  public String getCode() {
-    return code;
+  public PatientDrugs getDrug() {
+    return drug;
   }
 
-  public void setCode(String code) {
-    this.code = code;
+  public void setDrug(PatientDrugs drug) {
+    this.drug = drug;
   }
 
   public Double getMorningExp() {

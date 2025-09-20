@@ -3,7 +3,6 @@ package ckb.services.med.patient;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.opts.DOpt;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.bookings.DRoomBookings;
 import ckb.dao.med.client.DClient;
@@ -36,6 +35,7 @@ import ckb.models.drugs.PatientDrugNurseDate;
 import ckb.models.drugs.PatientDrugRow;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
@@ -63,8 +63,6 @@ public class SPatientImp implements SPatient {
   @Autowired DLvDairy dLvDairy;
   @Autowired DLvPlan dLvPlan;
   @Autowired DKdos dKdos;
-  @Autowired DUser dUser;
-  @Autowired DDept dDept;
   @Autowired DLvEpic dLvEpic;
   @Autowired DLvConsul dLvConsul;
   @Autowired DOpt dOpt;
@@ -73,16 +71,18 @@ public class SPatientImp implements SPatient {
   @Autowired DLvGarmon dLvGarmon;
   @Autowired DLvTorch dLvTorch;
   @Autowired DLvFizio dLvFizio;
-  @Autowired DRooms dRoom;
   @Autowired private DRoomBookings dRoomBooking;
   @Autowired private DPatientPlan dPatientPlan;
   @Autowired private DKdoChoosen dKdoChoosen;
   @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugRow dPatientDrugRow;
   @Autowired private DPatientDrugDate dPatientDrugDate;
-  @Autowired private DParam dParam;
   @Autowired private DClient dClient;
+  @Autowired private DUser dUser;
+  @Autowired private DRooms dRoom;
+  @Autowired private DDept dDept;
   @Autowired private DLvPartner dLvPartner;
+  @Autowired private BeanSession beanSession;
 
   @Override
   public Patients save(HttpServletRequest req) throws Exception {
@@ -126,7 +126,7 @@ public class SPatientImp implements SPatient {
     pat.setDayCount(Util.getInt(req, "dayCount"));
     pat.setBloodGroup(Util.isNull(req, "bloodGroup.id") ? null : dOpt.get(Util.getInt(req, "bloodGroup.id")));
     pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
-    pat.setDept(Util.isNull(req, "dept.id") ? null : dDept.get(Util.getInt(req, "dept.id")));
+    pat.setDept(Util.isNull(req, "dept.id") ? null : beanSession.getDept(Util.getInt(req, "dept.id")));
     if(pat.getBirthday() != null) {
       pat.setBirthyear(1900 + pat.getBirthday().getYear());
     }
@@ -391,7 +391,7 @@ public class SPatientImp implements SPatient {
 
         if(rs.getString("palata") == null) {
           if(rs.getString("Dept_Id") != null) {
-            pat.setOtdPal(dDept.get(rs.getInt("Dept_Id")).getName());
+            pat.setOtdPal(beanSession.getDept(rs.getInt("Dept_Id")).getName());
           }
           if(rs.getString("Room_Id") != null) {
             Rooms room = dRoom.get(rs.getInt("room_id"));
@@ -399,7 +399,7 @@ public class SPatientImp implements SPatient {
             pat.setOtdPal(pat.getOtdPal() + ("".equals(pat.getOtdPal()) ? "" : " / ") + palata);
           }
         } else {
-          pat.setOtdPal(rs.getInt("Dept_Id") != 0 ? dDept.get(rs.getInt("Dept_Id")).getName() + " / " + rs.getString("palata") : "");
+          pat.setOtdPal(rs.getInt("Dept_Id") != 0 ? beanSession.getDept(rs.getInt("Dept_Id")).getName() + " / " + rs.getString("palata") : "");
         }
         pat.setCat(rs.getInt("cat_id") != 0 ? dOpt.get(rs.getInt("cat_id")).getName() : "");
         pat.setMetka(rs.getInt("metka_id") != 0 ? dOpt.get(rs.getInt("metka_id")).getName() : "");
@@ -831,7 +831,7 @@ public class SPatientImp implements SPatient {
     Patients pat = dPatient.get(epic.getPatientId());
     if(!pat.getRoom().getId().equals(epic.getRoom().getId()) || !pat.getLv_id().equals(epic.getLvId()) || !pat.getDept().getId().equals(epic.getDeptId())) {
       //
-      Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+      Double ndsProc = beanSession.getNds();
       LvEpics e = new LvEpics();
       e.setDateBegin(epic.getDateBegin());
       e.setDateEnd(epic.getDateEnd());
@@ -846,7 +846,7 @@ public class SPatientImp implements SPatient {
       //
       pat.setLv_id(epic.getLvId());
       pat.setLv_dept_id(dUser.get(epic.getLvId()).getDept().getId());
-      pat.setDept(dDept.get(epic.getDeptId()));
+      pat.setDept(beanSession.getDept(epic.getDeptId()));
       pat.setRoom(epic.getRoom());
       pat.setStartEpicDate(epic.getDateEnd());
       //

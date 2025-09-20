@@ -1,7 +1,6 @@
 package ckb.controllers.mo;
 
 import ckb.dao.admin.country.DCountry;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.DAmbPatient;
@@ -17,6 +16,7 @@ import ckb.models.AmbService;
 import ckb.services.mo.amb.SMoAmb;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -43,7 +43,7 @@ public class CAmbCash {
   @Autowired private DCashDiscount dCashDiscount;
   @Autowired private DAmbPatientPay dAmbPatientPay;
   @Autowired private DUser dUser;
-  @Autowired private DParam dParam;
+  @Autowired private BeanSession beanSession;
   @Autowired private SMoAmb sMoAmb;
 
   @RequestMapping("patient.s")
@@ -249,12 +249,12 @@ public class CAmbCash {
     model.addAttribute("rows", rows);
     model.addAttribute("sum", sum);
     model.addAttribute("sale", dCashDiscount.ambDiscountSum(pat.getId()));
-    model.addAttribute("address", dParam.byCode("CHECK_ADDRESS"));
-    model.addAttribute("inn", dParam.byCode("ORG_INN"));
-    model.addAttribute("org_name", dParam.byCode("CHECK_ORG_NAME"));
-    model.addAttribute("deviz", dParam.byCode("DEVIZ"));
-    model.addAttribute("qrcode", dParam.byCode("QRCODE"));
-    model.addAttribute("qrcodeurl", dParam.byCode("QRCODEURL"));
+    model.addAttribute("address", beanSession.getParam("CHECK_ADDRESS"));
+    model.addAttribute("inn", beanSession.getParam("ORG_INN"));
+    model.addAttribute("org_name", beanSession.getParam("CHECK_ORG_NAME"));
+    model.addAttribute("deviz", beanSession.getParam("DEVIZ"));
+    model.addAttribute("qrcode", beanSession.getParam("QRCODE"));
+    model.addAttribute("qrcodeurl", beanSession.getParam("QRCODEURL"));
     model.addAttribute("casher", session.getUserName());
     return "mo/amb/cash/check";
   }

@@ -1,8 +1,6 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.country.DCountry;
-import ckb.dao.admin.depts.DDept;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
@@ -34,10 +32,7 @@ import ckb.models.ObjList;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
-import ckb.utils.BeanUsers;
-import ckb.utils.DB;
-import ckb.utils.Req;
-import ckb.utils.Util;
+import ckb.utils.*;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -67,8 +62,6 @@ public class CView {
   @Autowired private DLvPlan  dLvPlan;
   @Autowired private DLvConsul dLvConsul;
   @Autowired private SPatient sPatient;
-  @Autowired private DParam dParam;
-  @Autowired private DUser dUser;
   @Autowired private DLvDrug dLvDrug;
   @Autowired private DKdos dKdos;
   @Autowired private DKdoTypes dKdoType;
@@ -81,13 +74,14 @@ public class CView {
   @Autowired private DPatientPays dPatientPays;
   @Autowired private DPatientEat dPatientEat;
   @Autowired private DPatientDrugDate dPatientDrugDate;
-  @Autowired private DDept dDep;
   @Autowired private DLvFizioDate dLvFizioDate;
-  @Autowired private DCountry dCountry;
-  @Autowired private DRegion dRegion;
   @Autowired private DF13 df13;
   @Autowired private DHNPatient dhnPatient;
+  @Autowired private DUser dUser;
+  @Autowired private DCountry dCountry;
+  @Autowired private DRegion dRegion;
   @Autowired private BeanUsers beanUsers;
+  @Autowired private BeanSession beanSession;
   //endregion
 
   @RequestMapping("/index.s")
@@ -306,7 +300,7 @@ public class CView {
       model.addAttribute("dateEnd", Util.dateToString(f.getPatient().getDateEnd()));
       model.addAttribute("zavOtdel", beanUsers.getZavLvs(f.getPatient().getDept().getId()));
     }
-    model.addAttribute("zamGlb", dParam.byCode("GLB_NEXT"));
+    model.addAttribute("zamGlb", beanSession.getParam("GLB_NEXT"));
     if(Util.get(request, "diagnoz") != null)
       return "/med/lv/view/diagnoz";
     return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/vypiska";
@@ -684,7 +678,7 @@ public class CView {
       }
       if (type == 1 || type == 2) {
         //
-        model.addAttribute("deptName", dep == null ? dUser.get(session.getUserId()).getDept().getName() : dDep.get(Integer.parseInt(dep)).getName());
+        model.addAttribute("deptName", dep == null ? dUser.get(session.getUserId()).getDept().getName() : beanSession.getDept(Integer.parseInt(dep)).getName());
         conn = DB.getConnection();
         List<Integer> kdoIds = new ArrayList<>();
         ps = conn.prepareStatement(
@@ -1084,7 +1078,7 @@ public class CView {
         //
 
         //
-        model.addAttribute("deptName", dDep.get(dep == null ? session.getDeptId() : Integer.parseInt(dep)).getName());
+        model.addAttribute("deptName", beanSession.getDept(dep == null ? session.getDeptId() : Integer.parseInt(dep)).getName());
         model.addAttribute("date", dt);
         model.addAttribute("types", types);
         model.addAttribute("rows", rows);
@@ -1108,7 +1102,7 @@ public class CView {
     //
     Patients pat = dPatient.get(session.getCurPat());
     Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-    Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+    Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
     Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
     Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
     ObjList obj = new ObjList();

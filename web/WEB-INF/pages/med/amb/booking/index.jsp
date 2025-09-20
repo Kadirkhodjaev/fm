@@ -35,20 +35,24 @@
         <tr>
           <th>№</th>
           <th>ФИО</th>
+          <th>Услуга</th>
           <th>Дата рождения</th>
           <th>Телефон</th>
-          <th>Дата и время брона</th>
+          <th class="wpx-200">Дата и время брона</th>
+          <th class="wpx-200">Дата и время создания</th>
           <th class="wpx-40">#</th>
         </tr>
         <c:forEach items="${rows}" var="a" varStatus="loop">
           <tr ondblclick="setPage('/amb/booking.s?id=${a.id}')">
             <td class="center" style="width:50px">${loop.index + 1}</td>
             <td>${a.fio}</td>
+            <td>${services[a.id]}</td>
             <td class="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${a.birthday}"/></td>
             <td class="center">${a.tel}</td>
             <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${a.regDate}"/></td>
+            <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${a.crOn}"/></td>
             <td class="center">
-              <c:if test="${obj.state == 'ENT'}">
+              <c:if test="${a.state == 'ENT'}">
                 <button class="btn btn-danger btn-icon" title="Удалить" onclick="delDate(${a.id})"><i class="fa fa-minus"></i></button>
               </c:if>
             </td>

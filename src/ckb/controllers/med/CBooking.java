@@ -1,7 +1,6 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.country.DCountry;
-import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.users.DUser;
@@ -20,6 +19,7 @@ import ckb.models.Room;
 import ckb.services.admin.form.SForm;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
@@ -46,16 +46,16 @@ import java.util.List;
 public class CBooking {
 
   @Autowired private DRoomBookings dRoomBooking;
-  @Autowired private DRooms dRoom;
   @Autowired private DUser dUser;
-  @Autowired private DDept dDept;
   @Autowired private SForm sForm;
+  @Autowired private DRooms dRoom;
   @Autowired private DCountry dCountry;
   @Autowired private DOpt dOpt;
   @Autowired private DDict dDict;
   @Autowired private DPatient dPatient;
   @Autowired private DPatientWatchers dPatientWatcher;
   @Autowired private BeanUsers beanUsers;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping("index.s")
   protected String serviceList(HttpServletRequest req, Model m) {
@@ -78,9 +78,9 @@ public class CBooking {
       list = dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' Order By Id Desc");
     }
     m.addAttribute("list", list);
-    m.addAttribute("rooms", dRoom.getActives());
+    m.addAttribute("rooms", beanSession.getRooms());
     m.addAttribute("lvs", beanUsers.getLvs());
-    m.addAttribute("depts", dDept.getAll());
+    m.addAttribute("depts", beanSession.getDepts());
     m.addAttribute("countries", dCountry.getCounteries());
     m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
     sForm.setSelectOptionModel(m, 1, "sex");
@@ -166,7 +166,7 @@ public class CBooking {
       if(Util.isNotNull(req, "lv"))
         book.setLv(dUser.get(Util.getInt(req, "lv")));
       book.setDateBegin(Util.stringToDate(Util.get(req, "date_begin")));
-      book.setDept(dDept.get(Util.getInt(req, "dept")));
+      book.setDept(beanSession.getDept(Util.getInt(req, "dept")));
       book.setRoom(dRoom.get(Util.getInt(req, "room")));
       book.setBron(Util.isNotNull(req, "bron") && !Util.get(req, "bron").equals("0") && Util.getInt(req, "bron") > 0 ? dDict.get(Util.getInt(req, "bron")) : null);
       if(id == 0) {
@@ -298,7 +298,7 @@ public class CBooking {
       }
       Long emptyKoyko = 0L;
       //
-      List<Rooms> rooms = dRoom.getAll();
+      List<Rooms> rooms = beanSession.getRooms();
       for(Rooms room: rooms) {
         Long roomPatientCount = dPatient.getCount("From Patients Where state != 'ARCH' And state != 'ZGV' And room.id = " + room.getId());
         if(roomPatientCount < room.getKoykoLimit() && room.getState().equals("A"))
@@ -312,7 +312,7 @@ public class CBooking {
       //
       model.addAttribute("rooms", dRoom.getActives());
       model.addAttribute("lvs", beanUsers.getLvs());
-      model.addAttribute("depts", dDept.getAll());
+      model.addAttribute("depts", beanSession.getDepts());
       model.addAttribute("countries", dCountry.getCounteries());
       sForm.setSelectOptionModel(model, 1, "sex");
       //
@@ -331,7 +331,7 @@ public class CBooking {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/booking/palata.s");
     //region Услуги
-    List<Rooms> list = dRoom.getAll();
+    List<Rooms> list = beanSession.getRooms();
     List<Room> rooms = new ArrayList<>();
     for(Rooms room: list) {
       Room rr = new Room();

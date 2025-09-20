@@ -162,7 +162,15 @@
             </c:forEach>
           </b> (${drug.note})
         </td>
-        <td style="border:1px solid #ababab; vertical-align:middle; text-align:center">+</td>
+        <td style="border:1px solid #ababab; vertical-align:middle; text-align:center">
+          <table style="width:100px; margin:auto">
+            <tr>
+              <td><button style="width:35px" onclick="setIterator('tab_${drug.id}', -1)">-</button></td>
+              <td><input style="width:30px" type="text" class="center" readonly value="${tab_exps.get(drug.id) == null ? 0 : tab_exps.get(drug.id)}" id="tab_${drug.id}"/></td>
+              <td><button style="width:35px" onclick="setIterator('tab_${drug.id}', 1)">+</button></td>
+            </tr>
+          </table>
+        </td>
       </tr>
     </c:forEach>
   </table>

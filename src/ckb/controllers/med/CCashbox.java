@@ -1,12 +1,11 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.country.DCountry;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
+import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.amb.DAmbPatientPay;
 import ckb.dao.med.amb.DAmbPatientService;
-import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.amb.DAmbService;
 import ckb.dao.med.cashbox.discount.DCashDiscount;
 import ckb.dao.med.head_nurse.date.DHNDate;
@@ -39,6 +38,7 @@ import ckb.models.AmbService;
 import ckb.models.ObjList;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
@@ -68,17 +68,17 @@ public class CCashbox {
   private Session session = null;
   Date startDate = Util.stringToDate("31.03.2024");
 
-  @Autowired private DCountry dCountry;
-  @Autowired private DRegion dRegion;
   @Autowired private DAmbPatient dAmbPatients;
   @Autowired private DAmbPatientService dAmbPatientServices;
-  @Autowired private DUser dUser;
   @Autowired private DAmbPatientPay dAmbPatientPay;
   // Stat buyicha
   @Autowired private DPatient dPatient;
   @Autowired private DPatientWatchers dPatientWatchers;
   @Autowired private DPatientPays dPatientPays;
   @Autowired private DLvPlan dLvPlan;
+  @Autowired private DUser dUser;
+  @Autowired private DCountry dCountry;
+  @Autowired private DRegion dRegion;
   @Autowired private DCashDiscount dCashDiscount;
   @Autowired private DLvFizio dLvFizio;
   @Autowired private DLvFizioDate dLvFizioDate;
@@ -92,10 +92,10 @@ public class CCashbox {
   @Autowired private DLvEpic dLvEpic;
   @Autowired private DHNDateAmbRow dhnDateAmbRow;
   @Autowired private DHNDate dhnDate;
-  @Autowired private DParam dParam;
   @Autowired private DKdos dKdo;
   @Autowired private DAmbService dAmbService;
   @Autowired private BeanUsers beanUsers;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping(value = "/setServicePayState.s", method = RequestMethod.POST)
   @ResponseBody
@@ -222,12 +222,12 @@ public class CCashbox {
     model.addAttribute("rows", rows);
     model.addAttribute("sum", sum);
     model.addAttribute("sale", dCashDiscount.ambDiscountSum(pat.getId()));
-    model.addAttribute("address", dParam.byCode("CHECK_ADDRESS"));
-    model.addAttribute("inn", dParam.byCode("ORG_INN"));
-    model.addAttribute("org_name", dParam.byCode("CHECK_ORG_NAME"));
-    model.addAttribute("deviz", dParam.byCode("DEVIZ"));
-    model.addAttribute("qrcode", dParam.byCode("QRCODE"));
-    model.addAttribute("qrcodeurl", dParam.byCode("QRCODEURL"));
+    model.addAttribute("address", beanSession.getParam("CHECK_ADDRESS"));
+    model.addAttribute("inn", beanSession.getParam("ORG_INN"));
+    model.addAttribute("org_name", beanSession.getParam("CHECK_ORG_NAME"));
+    model.addAttribute("deviz", beanSession.getParam("DEVIZ"));
+    model.addAttribute("qrcode", beanSession.getParam("QRCODE"));
+    model.addAttribute("qrcodeurl", beanSession.getParam("QRCODEURL"));
     model.addAttribute("casher", session.getUserName());
     return "med/cashbox/check";
   }
@@ -500,7 +500,7 @@ public class CCashbox {
     if(pat.getLv_id() != null)
       model.addAttribute("lv", dUser.get(pat.getLv_id()));
     //
-    Double ndsProc = Double.parseDouble(dParam.byCode("NDS_PROC"));
+    Double ndsProc = beanSession.getNds();
     Double discountSum = dCashDiscount.patientStatDiscountSum(pat.getId());
     Double total = 0D;
     //
@@ -638,7 +638,7 @@ public class CCashbox {
       }
       Patients pat = dPatient.get(Util.getInt(req, "id"));
       Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      Double ndsProc = d.after(startDate) ? Double.parseDouble(beanSession.getParam("NDS_PROC")) : 0;
       //
       Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
       Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;

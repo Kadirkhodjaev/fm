@@ -1,9 +1,10 @@
 package ckb.domains.med.kdo;
 
 import ckb.domains.GenId;
-import ckb.domains.med.lv.LvPlans;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "F10")

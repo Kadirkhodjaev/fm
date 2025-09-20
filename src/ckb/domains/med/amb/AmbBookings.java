@@ -25,6 +25,7 @@ public class AmbBookings extends GenId {
   @OneToOne @JoinColumn private Regions region;
   @OneToOne @JoinColumn(name="sex") private SelOpts sex;
 
+  @Column(length = 512) private String text;
   @Column(name = "state") private String state;
   @Column(name = "Reg_Date") private Date regDate;
 
@@ -153,5 +154,17 @@ public class AmbBookings extends GenId {
 
   public String getFio() {
     return surname + " " + name + " " + middlename;
+  }
+
+  public boolean isResident() {
+    return this.getCountry() == null || this.getCountry().getId() == 199;
+  }
+
+  public String getText() {
+    return text;
+  }
+
+  public void setText(String text) {
+    this.text = text;
   }
 }

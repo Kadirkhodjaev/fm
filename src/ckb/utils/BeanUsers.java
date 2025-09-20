@@ -32,6 +32,7 @@ public class BeanUsers {
         Users a = new Users();
         a.setId(rs.getInt("id"));
         a.setFio(rs.getString("fio"));
+        a.setProfil(rs.getString("profil"));
         if(rs.getInt("dept_id") > 0 && rs.getInt("lv") > 0 && rs.getInt("id") != 1) {
           lvs.add(a);
         }
@@ -92,5 +93,20 @@ public class BeanUsers {
 
   public Users getGlavbuh() {
     return glavbuh;
+  }
+
+  public List<Users> getZavLvs() {
+    List<Users> rows =  new ArrayList<>();
+    for(Integer key: zavlvs.keySet()) {
+      rows.add(zavlvs.get(key));
+    }
+    return rows;
+  }
+
+  public Users get(Integer id) {
+    for(Users u: users) {
+      if(u.getId().equals(id)) return u;
+    }
+    return null;
   }
 }

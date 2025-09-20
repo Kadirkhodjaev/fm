@@ -1,13 +1,10 @@
 package ckb.domains.admin;
 
 import ckb.domains.GenId;
-import ckb.utils.Util;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.Date;
 
 @Entity
 @Table

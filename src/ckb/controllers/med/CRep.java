@@ -1,13 +1,8 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.depts.DDept;
-import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.reports.DRepParam;
 import ckb.dao.admin.reports.DReport;
 import ckb.dao.admin.users.DUser;
-import ckb.dao.med.amb.DAmbGroup;
-import ckb.dao.med.amb.DAmbPatientService;
-import ckb.dao.med.amb.DAmbPatient;
 import ckb.domains.med.report.RepParams;
 import ckb.models.ObjList;
 import ckb.services.med.rep.SRep;
@@ -36,14 +31,6 @@ public class CRep {
   @Autowired DUser dUser;
   @Autowired DRepParam dRepParam;
   @Autowired DReport dReport;
-  @Autowired DDept dDept;
-  @Autowired DOpt dOpt;
-  @Autowired
-  DAmbPatient dAmbPatients;
-  @Autowired
-  DAmbPatientService dAmbPatientServices;
-  @Autowired
-  DAmbGroup dAmbGroups;
   @Autowired SRep sRep;
 
   @RequestMapping("home.s")

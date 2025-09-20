@@ -3,12 +3,12 @@ package ckb.controllers.admin;
 import ckb.dao.admin.forms.DForm;
 import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
-import ckb.dao.admin.params.DParam;
 import ckb.domains.admin.FormFields;
 import ckb.domains.admin.Forms;
 import ckb.domains.admin.SelOpts;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -31,14 +31,14 @@ public class CCoreForm {
   @Autowired private DOpt dOpt;
   @Autowired private DForm dForm;
   @Autowired private DFormField dFormField;
-  @Autowired private DParam dParam;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping("/list.s")
   protected String formList(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/core/form/list.s");
     model.addAttribute("forms", dForm.getAll());
-    model.addAttribute("debug", dParam.byCode("IS_DEBUG").equals("Y"));
+    model.addAttribute("debug", beanSession.getParam("IS_DEBUG").equals("Y"));
     return "/core/forms/index";
   }
 

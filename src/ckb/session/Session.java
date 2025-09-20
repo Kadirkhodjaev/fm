@@ -267,12 +267,12 @@ public class Session {
   }
 
   public String getEndDate(String sCode, String reqName, HttpServletRequest req) {
-    String db = getDateBegin().get(sCode);
+    String db = getDateEnd().get(sCode);
     if(db == null) db = Util.getCurDate();
     //
     String date = Util.get(req, reqName, db);
     //
-    HashMap<String, String> dh = getDateBegin();
+    HashMap<String, String> dh = getDateEnd();
     dh.put(sCode, date);
     setDateEnd(dh);
     return date;

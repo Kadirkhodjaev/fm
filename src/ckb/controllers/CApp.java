@@ -1,11 +1,8 @@
 package ckb.controllers;
 
-import ckb.dao.admin.depts.DDept;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.roles.DRole;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserDrugLine;
-import ckb.dao.med.amb.DAmbGroup;
 import ckb.dao.med.lv.consul.DLvConsul;
 import ckb.domains.admin.Roles;
 import ckb.domains.admin.UserDrugLines;
@@ -15,10 +12,7 @@ import ckb.models.Menu;
 import ckb.services.admin.user.SUser;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
-import ckb.utils.BeanUsers;
-import ckb.utils.DB;
-import ckb.utils.Req;
-import ckb.utils.Util;
+import ckb.utils.*;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,6 +29,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -53,11 +49,9 @@ public class  CApp {
   @Autowired private DUser dUser;
   @Autowired private DRole dRole;
   @Autowired private DLvConsul dLvConsul;
-  @Autowired private DParam dParam;
-  @Autowired private DDept dDept;
-  @Autowired private DAmbGroup dAmbGroups;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private BeanUsers beanUsers;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping({"/main.s", "/"})
   protected String main(HttpServletRequest req, Model model) {
@@ -283,15 +277,15 @@ public class  CApp {
     }
     model.addAttribute("menuList", m);
     model.addAttribute("lvs", beanUsers.getLvs());
-    model.addAttribute("groups", dAmbGroups.getAll());
-    model.addAttribute("depts", dDept.getAll());
+    model.addAttribute("groups", beanSession.getAmbGroups());
+    model.addAttribute("depts", beanSession.getDepts());
     model.addAttribute("repList", dUser.getReports(session.getUserId()));
     model.addAttribute("openPage", roleId == 0 ? "/roles.s" : session.getCurUrl().equals("") ? dRole.get(roleId).getUrl() : session.getCurUrl());
     model.addAttribute("showMenu", (m.size() > 0 && session.getCurPat() == 0) || session.getRoleId() == 7 || session.getRoleId() == 3 || session.getRoleId() == 4 || session.getRoleId() == 15 || session.getRoleId() == 14 || session.getRoleId() == 13 || session.getRoleId() == 22 || session.getRoleId() == 23 || session.getRoleId() == 24 || session.getRoleId() == 26);
     model.addAttribute("showSearch", roleId != 0 && roleId != 1 && roleId != 10 && roleId != 22 && roleId != 23 && roleId != 24 && roleId != 26);
-    model.addAttribute("isEnterFilter", dParam.byCode("FILTER_WITH_ENTER").equals("Y"));
+    model.addAttribute("isEnterFilter", beanSession.getParam("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);
-    model.addAttribute("clinicName", dParam.byCode("CLINIC_NAME"));
+    model.addAttribute("clinicName", beanSession.getParam("CLINIC_NAME"));
 
     List<Users> users = beanUsers.getUsers();
     model.addAttribute("users", users);
@@ -302,7 +296,7 @@ public class  CApp {
   protected String login(@ModelAttribute("loginForm") Login auth, Model model){
     model.addAttribute("login", Util.getUI("login"));
     model.addAttribute("password", Util.getUI("password"));
-    model.addAttribute("debug", dParam.byCode("IS_DEBUG").equals("Y"));
+    model.addAttribute("debug", beanSession.getParam("IS_DEBUG").equals("Y"));
     return "login";
   }
 
@@ -532,86 +526,61 @@ public class  CApp {
       while (rs.next()) likes.add(rs.getString("name").replaceAll(" ", ""));
 
       File file = new File("C:\\mysql_logs\\mysql-slow.log");
-      BufferedReader br = new BufferedReader(new FileReader(file));
-      String st, st1 = "", st2 = "", time = "", queryTime, lockTime, rowSent, rowsExamined;
-      List<String[]> rows = new ArrayList<>();
+      BufferedReader br = new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8));
+      String st, time = "", queryTime = "", qt = "", lockTime, rowSent, rowsExamined;
       List<String> rws = new ArrayList<>();
       int i = 0;
-      while ((st = br.readLine()) != null) {
-        if(!exceptions.contains(st.replaceAll(" ", ""))) {
-          boolean isOK = true;
-          for(String like: likes) {
-            if(st.toLowerCase().replaceAll(" ", "").contains(like.toLowerCase()))
-              isOK = false;
-          }
-          if(isOK) {
-            i++;
-            //if(i > 1000) break;
-            rws.add(st);
-          }
-        }
-      }
-      boolean isQuery = false;
-      String v = "";
-      for(int g=0;g<rws.size();g++) {
-        st = rws.get(g);
-        if(st.contains("# Time")) {
-          time = st.substring(8);
-          continue;
-        }
-        if(st.contains("# Query")) {
-          isQuery = true;
-          v = "";
-        }
-        if(g + 1 < rws.size() && isQuery && st.contains("# Query")) {
-          if ((rws.get(g + 1).contains("# Query_time") || rws.get(g + 1).contains("# Time"))) {
-            isQuery = false;
-            continue;
-          }
-        }
-        if(g + 1 < rws.size() && !st.contains("# Query")) {
-          if (!rws.get(g + 1).contains("# Query_time") && !rws.get(g + 1).contains("# Time")) {
-            v += st + "\n";
-            continue;
-          }
-        }
-        if(!v.isEmpty()) st = v + st;
-        st2 = st1.isEmpty() ? "" : st;
-        st1 = st.contains("# Query_time") ? st : st1;
-        if(!st.isEmpty() && !st2.isEmpty()) {
-          i++;
-          st1 = st1.substring(14);
-          queryTime = st1.substring(0, st1.indexOf(" "));
-          st1 = st1.substring(st1.indexOf("Lock_time:") + 11);
-          lockTime = st1.substring(0, st1.indexOf(" "));
-          st1 = st1.substring(st1.indexOf("Rows_sent:") + 11);
-          rowSent = st1.substring(0, st1.indexOf(" "));
-          st1 = st1.substring(st1.indexOf("Rows_examined:") + 15);
-          rowsExamined = st1.substring(0);
-          String[] row = new String[6];
-          row[0] = st2;
-          row[1] = time;
-          row[2] = queryTime;
-          row[3] = lockTime;
-          row[4] = rowSent;
-          row[5] = rowsExamined;
-          rows.add(row);
-          st1 = "";
-        }
-      }
+      String line = "";
       ps = conn.prepareStatement("Delete t From log_slows t");
       ps.executeUpdate();
-      for(String[] row: rows) {
-        ps = conn.prepareStatement("Insert into log_slows Values(?, ?, ?, ?, ?, ?)");
-        ps.setString(1, row[0]);
-        ps.setString(2, row[1]);
-        ps.setInt(3, Integer.parseInt(row[2]));
-        ps.setInt(4, Integer.parseInt(row[3]));
-        ps.setInt(5, Integer.parseInt(row[4]));
-        ps.setInt(6, Integer.parseInt(row[5]));
-        ps.executeUpdate();
+      while (line != null) {
+        line = br.readLine();
+        if(line == null) break;
+        if(!exceptions.contains(line.trim().replaceAll(" ", ""))) {
+          boolean isOK = true;
+          for(String like: likes) {
+            if(line.toLowerCase().replaceAll(" ", "").contains(like.toLowerCase()))
+              isOK = false;
+          }
+          if(!isOK) {
+            if(!line.contains("SET timestamp="))
+              queryTime = "";
+            continue;
+          }
+          if(line.contains("# Time")) {
+            time = line.replaceAll("# Time: ", "");
+            continue;
+          }
+          if(line.contains("# Query_time")) {
+            queryTime = line;
+            continue;
+          }
+          if(queryTime.isEmpty()) continue;
+          st = queryTime;
+          st = st.substring(14);
+          qt = st.substring(0, st.indexOf(" "));
+          st = st.substring(st.indexOf("Lock_time:") + 11);
+          lockTime = st.substring(0, st.indexOf(" "));
+          st = st.substring(st.indexOf("Rows_sent:") + 11);
+          rowSent = st.substring(0, st.indexOf(" "));
+          st = st.substring(st.indexOf("Rows_examined:") + 15);
+          rowsExamined = st.substring(0);
+          ps = conn.prepareStatement("Insert into log_slows(query, date_time, query_time, lock_time, row_sent, row_examined) Values(?, ?, ?, ?, ?, ?)");
+          ps.setString(1, line);
+          ps.setString(2, time);
+          ps.setInt(3, Integer.parseInt(qt));
+          ps.setInt(4, Integer.parseInt(lockTime));
+          ps.setInt(5, Integer.parseInt(rowSent));
+          ps.setInt(6, Integer.parseInt(rowsExamined));
+          ps.executeUpdate();
+          //rws.add(i + ". " + time + " _ " + queryTime );
+          i++;
+          /*if(i > 10000) break;*/
+        } else {
+          queryTime = "";
+        }
       }
-      //model.addAttribute("rows", rows);
+      model.addAttribute("rows", rws);
     } catch (Exception e) {
       e.printStackTrace();
     } finally {

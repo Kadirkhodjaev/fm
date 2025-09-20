@@ -1,7 +1,5 @@
 package ckb.controllers.med;
 
-import ckb.dao.admin.depts.DDept;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.cashbox.discount.DCashDiscount;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
@@ -31,6 +29,7 @@ import ckb.models.ObjList;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
@@ -68,7 +67,6 @@ public class CAct {
   @Autowired private DPatient dPatient;
   @Autowired private DUser dUser;
   @Autowired private DPatientWatchers dPatientWatcher;
-  @Autowired private DParam dParam;
   @Autowired private DLvBio dLvBio;
   @Autowired private DKdoChoosen dKdoChoosen;
   @Autowired private DLvCoul dLvCoul;
@@ -77,9 +75,9 @@ public class CAct {
   @Autowired private DLvPlan dLvPlan;
   @Autowired private DPatientPlan dPatientPlan;
   @Autowired private DLvEpic dLvEpic;
-  @Autowired private DDept dDept;
   @Autowired private DCashDiscount dCashDiscount;
   @Autowired private BeanUsers beanUsers;
+  @Autowired private BeanSession beanSession;
 
   int lgotaDays = 10;
   Date startDate = Util.stringToDate("31.03.2024");
@@ -256,7 +254,7 @@ public class CAct {
     //
     HNPatients hnPatient = dhnPatient.get(Util.getInt(req, "id"));
     Date d = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
-    Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+    Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
     //
     if(hnPatient.getEatPrice() == null) hnPatient.setEatPrice(0D);
     if(hnPatient.getKoykoPrice() == null) {
@@ -351,7 +349,7 @@ public class CAct {
         }
         ObjList obj = new ObjList();
         obj.setIb(epic.getId().toString());
-        obj.setC1(dDept.get(epic.getDeptId()).getName());
+        obj.setC1(beanSession.getDept(epic.getDeptId()).getName());
         obj.setC2(epic.getRoom().getFloor().getName() + " " + epic.getRoom().getName() + " " + epic.getRoom().getRoomType().getName());
         obj.setC3(Util.dateToString(epic.getDateBegin()));
         obj.setC4(Util.dateToString(epic.getDateEnd()));
@@ -426,7 +424,7 @@ public class CAct {
     //
     HNPatients hnPatient = dhnPatient.get(Util.getInt(req, "id"));
     Date d = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
-    Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+    Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
     m.addAttribute("obj", hnPatient);
     m.addAttribute("lvFio", dUser.get(hnPatient.getPatient().getLv_id()).getFio());
     m.addAttribute("drugs", dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + Util.getInt(req, "id")));
@@ -497,7 +495,7 @@ public class CAct {
         }
         ObjList obj = new ObjList();
         obj.setIb(epic.getId().toString());
-        obj.setC1(dDept.get(epic.getDeptId()).getName());
+        obj.setC1(beanSession.getDept(epic.getDeptId()).getName());
         obj.setC2(epic.getRoom().getFloor().getName() + " " + epic.getRoom().getName() + " " + epic.getRoom().getRoomType().getName());
         obj.setC3(Util.dateToString(epic.getDateBegin()));
         obj.setC4(Util.dateToString(epic.getDateEnd()));
@@ -531,11 +529,10 @@ public class CAct {
       m.addAttribute("discount_sum", discountSum);
       String sum_in_word = Util.inwords(hnPatient.getTotalSum());
       m.addAttribute("sum_in_word", sum_in_word.substring(0, 1).toUpperCase() + sum_in_word.substring(1));
-      m.addAttribute("clinic_name", dParam.byCode("CLINIC_NAME"));
+      m.addAttribute("clinic_name", beanSession.getParam("CLINIC_NAME"));
       m.addAttribute("boss", beanUsers.getBoss());
       m.addAttribute("glv", beanUsers.getGlb());
       m.addAttribute("glavbuh", beanUsers.getGlavbuh());
-      m.addAttribute("clinic_name", dParam.byCode("CLINIC_NAME"));
       m.addAttribute("head_nurse", hnPatient.getPatient().getDept().getNurse().getFio());
 
       //
@@ -742,7 +739,7 @@ public class CAct {
     ResultSet rs = null;
     try {
       Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
       ps = conn.prepareStatement(
         "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 Kdo_Count, t.conf_user " +
           "  From lv_plans t, Kdos c " +
@@ -788,7 +785,7 @@ public class CAct {
     ResultSet rs = null;
     try {
       Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
       ps = conn.prepareStatement(
         "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, t.conf_user, sum(t.counter) needlecount " +
           "  From lv_plans t, Kdos c " +
@@ -857,7 +854,7 @@ public class CAct {
     ResultSet rs = null;
     try {
       Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
       ps = conn.prepareStatement(
         "Select c.profil, Count(*) counter, ifnull(c.consul_price, 0) price, ifnull(c.for_consul_price, 0) for_price, ifnull(c.real_consul_price, 0) real_price, ifnull(c.for_real_consul_price, 0) for_real_price, t.lvid" +
           "  From lv_consuls t, Users c " +
@@ -901,7 +898,7 @@ public class CAct {
     try {
       HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
       Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-      Double ndsProc = d.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
       HNPatientKdos kdo = new HNPatientKdos();
       if(Util.get(req, "type").equals("lab")) kdo.setServiceType(0);
       if(Util.get(req, "type").equals("kdo")) kdo.setServiceType(1);

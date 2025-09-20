@@ -1,7 +1,6 @@
 package ckb.controllers.med;
 
 import ckb.dao.admin.depts.DDept;
-import ckb.dao.admin.params.DParam;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserDrugLine;
 import ckb.dao.med.amb.DAmbDrug;
@@ -57,6 +56,7 @@ import ckb.services.med.drug.SDrug;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
@@ -98,7 +98,6 @@ public class CHeadNurse {
   @Autowired private DPatientDrug dPatientDrug;
   @Autowired private DPatientDrugDate dPatientDrugDate;
   @Autowired private DPatientDrugRow dPatientDrugRow;
-  @Autowired private DUser dUser;
   @Autowired private SPatient sPatient;
   @Autowired private DHNDate dhnDate;
   @Autowired private DHNDrug dhnDrug;
@@ -121,10 +120,11 @@ public class CHeadNurse {
   @Autowired private DEatTable dEatTable;
   @Autowired private DPatientEat dPatientEat;
 
-  @Autowired private DDept dDept;
+  @Autowired private DUser dUser;
   @Autowired private DRooms dRoom;
+  @Autowired private DDept dDept;
   @Autowired private SDrug sDrug;
-  @Autowired private DParam dParam;
+  @Autowired private BeanSession beanSession;
   //endregion
 
   //region OUT_PATIENT
@@ -225,7 +225,7 @@ public class CHeadNurse {
       }
       model.addAttribute("patients", patients);
       model.addAttribute("obj", obj);
-      model.addAttribute("depts", dDept.getAll());
+      model.addAttribute("depts", beanSession.getDepts());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -492,7 +492,7 @@ public class CHeadNurse {
         o.setLv(rs.getInt("lv_id") != 0 ? dUser.get(rs.getInt("lv_id")).getFio() : "");
         if(rs.getString("palata") == null) {
           if(rs.getString("Dept_Id") != null) {
-            o.setOtdPal(dDept.get(rs.getInt("Dept_Id")).getName());
+            o.setOtdPal(beanSession.getDept(rs.getInt("Dept_Id")).getName());
           }
           if(rs.getString("Room_Id") != null) {
             Rooms room = dRoom.get(rs.getInt("room_id"));
@@ -500,7 +500,7 @@ public class CHeadNurse {
             o.setOtdPal(o.getOtdPal() + ("".equals(o.getOtdPal()) ? "" : " / ") + palata);
           }
         } else {
-          o.setOtdPal(rs.getInt("Dept_Id") != 0 ? dDept.get(rs.getInt("Dept_Id")).getName() + " / " + rs.getString("palata") : "");
+          o.setOtdPal(rs.getInt("Dept_Id") != 0 ? beanSession.getDept(rs.getInt("Dept_Id")).getName() + " / " + rs.getString("palata") : "");
         }
         pats.add(o);
       }
@@ -1557,7 +1557,7 @@ public class CHeadNurse {
       dhnPatient.saveAndReturn(hnPatient);
       Date startDate = Util.stringToDate("31.03.2024");
       Date chd = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
-      Double ndsProc = chd.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      Double ndsProc = chd.after(startDate) ? beanSession.getNds() : 0;
       //
       Connection conn = null;
       PreparedStatement ps = null;
@@ -1612,7 +1612,7 @@ public class CHeadNurse {
       HNPatients hnPatient = dhnPatient.get(Util.getInt(req, "id"));
       Date startDate = Util.stringToDate("31.03.2024");
       Date chd = hnPatient.getDateEnd() == null ? new Date() : hnPatient.getDateEnd();
-      Double ndsProc = chd.after(startDate) ? Double.parseDouble(dParam.byCode("NDS_PROC")) : 0;
+      Double ndsProc = chd.after(startDate) ? beanSession.getNds() : 0;
       //
       dhnPatientDrug.deletePatient(hnPatient.getId());
       //
