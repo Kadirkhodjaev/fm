@@ -5,7 +5,7 @@
   <div class="panel-heading">
     Реквизиты норматива: <b>${drug.name}</b>
     <button class="btn btn-info btn-icon float-right" style="margin-left:10px" onclick="$('#pager').load('/drugs/dict/drug/normas.s')"><b class="fa fa-backward"></b> Назад</button>
-    <button class="btn btn-success btn-icon float-right" onclick="saveNorma()"><b class="fa fa-save"></b> Списанные</button>
+    <button class="btn btn-success btn-icon float-right" onclick="saveNorma()"><b class="fa fa-save"></b> Сохранить</button>
   </div>
   <div class="panel-body">
     <form id="addEditForms"  name="addEditForms">

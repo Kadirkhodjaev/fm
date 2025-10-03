@@ -23,7 +23,7 @@
           <input name="period_end" id="period_end" type="text" class="form-control datepicker" value="${period_end}"/>
         </td>
         <td style="vertical-align: middle">
-          <button onclick="setCashStat()" class="btn btn-success btn-sm">Поиск</button>
+          <button onclick="setCashStat()" class="btn btn-success btn-icon"><span class="fa fa-search"></span> Поиск</button>
         </td>
         <td style="width:150px; padding-right:5px">
           <select class="form-control" required id="ins_flag" onchange="setCashStat()">
@@ -41,7 +41,7 @@
           </select>
         </td>
         <td align="right" style="vertical-align: middle;width:100px">
-          <button  class="btn btn-sm btn-success" onclick="setPage('/head_nurse/incomes/save.s?id=0')" style="float:right;"><i class="fa fa-plus"></i> Добавить</button>
+          <button  class="btn btn-icon btn-success" onclick="setPage('/head_nurse/incomes/save.s?id=0')"><i class="fa fa-plus"></i> Добавить</button>
         </td>
       </tr>
     </table>
@@ -79,7 +79,12 @@
                 <img src="/res/imgs/yellow.gif">
               </c:if>
             </td>
-            <td align="center">${obj.c6}</td>
+            <td align="center">
+              <c:if test="${obj.c11 == 'Y'}">
+                <span style="color:red">Авто заявка</span> -
+              </c:if>
+              ${obj.c6}
+            </td>
             <td align="center">${obj.c1}</td>
             <td align="center">${obj.c2}</td>
             <td align="right"><fmt:formatNumber value="${obj.c3}" type = "number"/></td>

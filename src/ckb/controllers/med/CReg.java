@@ -83,7 +83,15 @@ public class CReg {
     sForm.setSelectOptionModel(m, 1, "lgotaType");
     sForm.setSelectOptionModel(m, 1, "bloodGroup");
     sForm.setSelectOptionModel(m, 1, "pay_type");
-    m.addAttribute("lvpartners", dLvPartner.getList("From LvPartners " + (session.getCurPat() > 0 ? "" : " Where state = 'A' ") + " Order By code"));
+    if(session.getCurPat() > 0) {
+      if(p.getLvpartner() != null) {
+        m.addAttribute("lvpartners", dLvPartner.getList("From LvPartners Where id = " + p.getLvpartner().getId()));
+      } else {
+        m.addAttribute("lvpartners", beanSession.getLvPartners());
+      }
+    } else {
+      m.addAttribute("lvpartners", beanSession.getLvPartners());
+    }
     m.addAttribute("watcherPrice", session.getParam("WATCHER_PRICE"));
     m.addAttribute("watchers", dPatientWatchers.byPatient(p.getId()));
     m.addAttribute("curDate", Util.getCurDate());

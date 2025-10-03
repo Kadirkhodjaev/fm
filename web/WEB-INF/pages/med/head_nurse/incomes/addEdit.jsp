@@ -16,12 +16,12 @@
 <div class="panel panel-info" style="width: 80%; margin: auto">
   <div class="panel-heading">
     Реквизиты акта
-    <button  class="btn btn-sm" onclick="setPage('/head_nurse/incomes.s')" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-backward"></i> Назад</button>
-    <c:if test="${obj.id > 0 && obj.state == 'ENT'}">
-      <button  class="btn btn-sm btn-info" onclick="confirmIncome()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-check"></i> Подтвердить</button>
+    <button  class="btn btn-icon float-right" onclick="setPage('/head_nurse/incomes.s')"><i class="fa fa-backward"></i> Назад</button>
+    <c:if test="${(obj.id > 0 && obj.state == 'ENT') && fn:length(rows) > 0}">
+      <button  class="btn btn-icon btn-info float-right mr-5" onclick="confirmIncome()"><i class="fa fa-check"></i> Подтвердить</button>
     </c:if>
-    <c:if test="${obj.id == 0 || obj.state == 'ENT'}">
-      <button  class="btn btn-sm btn-success" onclick="saveAct()" style="float:right;margin-top:-5px"><i class="fa fa-save"></i> Сохранить</button>
+    <c:if test="${(obj.id == 0 || obj.state == 'ENT') && fn:length(rows) == 0}">
+      <button  class="btn btn-icon btn-success float-right mr-5" onclick="saveAct()"><i class="fa fa-save"></i> Сохранить</button>
     </c:if>
   </div>
   <div class="panel-body">
@@ -64,6 +64,7 @@
   <div class="panel panel-info" style="width: 80%; margin: auto">
     <div class="panel-heading">
       Новая запись
+      <button  class="btn btn-icon btn-success float-right" onclick="saveActRow()"><i class="fa fa-save"></i> Сохранить</button>
     </div>
     <div class="panel-body">
       <form id="addEditFormRow" style="padding:5px">
@@ -90,9 +91,6 @@
           </tr>
         </table>
       </form>
-      <div style="text-align:center; padding-top:10px; margin-top:10px; border-top:1px solid #ababab">
-        <button  class="btn btn-sm btn-success" onclick="saveActRow()"><i class="fa fa-save"></i> Сохранить</button>
-      </div>
     </div>
   <!-- /.panel-body -->
   </div>

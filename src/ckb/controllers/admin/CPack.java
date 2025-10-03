@@ -11,6 +11,7 @@ import ckb.domains.med.amb.AmbServices;
 import ckb.models.Obj;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -34,6 +35,7 @@ public class CPack {
   @Autowired private DSalePackRow dSalePackRow;
   @Autowired private DKdos dKdo;
   @Autowired private DAmbService dAmbService;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping("/index.s")
   protected String packages(HttpServletRequest req, Model model) {
@@ -139,6 +141,7 @@ public class CPack {
         dSalePackRow.saveAndReturn(row);
       }
       pac.setPrice(dSalePackRow.getTotal(pac.getId()));
+      beanSession.initialize();
       dSalePack.save(pac);
       json.put("success", true);
     } catch (Exception e) {
@@ -158,6 +161,7 @@ public class CPack {
       pac.setPrice(dSalePackRow.getTotal(pac.getId()) - kdo.getPrice());
       dSalePack.save(pac);
       dSalePackRow.delete(kdo.getId());
+      beanSession.initialize();
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -178,6 +182,7 @@ public class CPack {
       dSalePackRow.save(row);
       SalePacks pac = row.getDoc();
       pac.setPrice(dSalePackRow.getTotal(pac.getId()));
+      beanSession.initialize();
       dSalePack.save(pac);
       json.put("success", true);
     } catch (Exception e) {

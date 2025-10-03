@@ -54,7 +54,7 @@ public class CProc {
     session.setFilters(filters);
     List<Rooms> rs = dRoom.getList("From Rooms Where dept.id = " + user.getDept().getId());
     List<Obj> rooms = new ArrayList<>();
-    String dbDate = Util.dateDB("19.09.2025");
+    String dbDate = Util.dateDB(new Date());
     for(Rooms r: rs) {
       Obj room = new Obj();
       room.setId(r.getId());
@@ -138,7 +138,6 @@ public class CProc {
       if(time.equals("3")) rasxod.put(exp.getCode(), exp.getEveningExp() == null ? 0D : exp.getEveningExp());
     }
     m.addAttribute("exps", rasxod);
-
     LinkedHashMap<Integer, Double> tab_rasxod = new LinkedHashMap<>();
     List<PatientTabExps> tab_exps = dPatientTabExp.getList("From PatientTabExps Where patient.id = " + patId);
     for(PatientTabExps exp: tab_exps) {

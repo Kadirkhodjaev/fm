@@ -81,7 +81,7 @@ public class CBooking {
     m.addAttribute("rooms", beanSession.getRooms());
     m.addAttribute("lvs", beanUsers.getLvs());
     m.addAttribute("depts", beanSession.getDepts());
-    m.addAttribute("countries", dCountry.getCounteries());
+    m.addAttribute("countries", beanSession.getCounteries());
     m.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
     sForm.setSelectOptionModel(m, 1, "sex");
     //endregion

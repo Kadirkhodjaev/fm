@@ -281,7 +281,7 @@ public class CPatient {
       if(!grid.getOrderType().equals(""))
         sql += " Order By " + grid.getOrderCol() + " " + grid.getOrderType();
       else
-        sql += " Order By t.id Desc";
+        sql += " Order By t.id Desc ";
       m.addAttribute("htmlClass", grid.getOrderType().equals("") ? "sorting" : "sorting_" + grid.getOrderType());
       m.addAttribute("newFieldId", grid.getOrderColId());
       if(Req.get(r, "action").equals("page")) {

@@ -336,10 +336,13 @@ public class CAmb {
     }
     m.addAttribute("countries", beanSession.getCounteries());
     m.addAttribute("regions", beanSession.getRegions());
-    m.addAttribute("packs", dSalePack.getCount("From SalePacks Where state = 'A' And ambStat = 'AMB' "));
+    m.addAttribute("packs", beanSession.getSalePacks().size());
     m.addAttribute("countryName", p.getCounteryId() != null ? dCountry.get(p.getCounteryId()).getName() : "");
     m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
-    m.addAttribute("lvpartners", dLvPartner.getList("From LvPartners " + (session.getCurPat() > 0 ? "" : " Where state = 'A' ") + " Order By code"));
+    if(session.getCurPat() > 0)
+      m.addAttribute("lvpartners", dLvPartner.list("From LvPartners Where id = " + (p.getLvpartner() == null ? 0 : p.getLvpartner().getId())));
+    else
+      m.addAttribute("lvpartners", beanSession.getLvPartners());
     m.addAttribute("fizio_user", dUser.get(session.getUserId()).isAmbFizio());
     m.addAttribute("regId", Util.get(req, "reg"));
     m.addAttribute("done", isDone && session.getRoleId() == 15 && session.getCurPat() > 0 && !ss.isEmpty() && !p.getState().equals("ARCH"));

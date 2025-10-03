@@ -14,6 +14,8 @@ import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.measure.DDrugDrugMeasure;
+import ckb.dao.med.drug.dict.drugs.norma.DDrugNorma;
+import ckb.dao.med.drug.dict.drugs.norma.DDrugNormaDirection;
 import ckb.dao.med.drug.out.DDrugOut;
 import ckb.dao.med.drug.out.DDrugOutRow;
 import ckb.dao.med.eat.dict.menuTypes.DEatMenuType;
@@ -124,6 +126,8 @@ public class CHeadNurse {
   @Autowired private DRooms dRoom;
   @Autowired private DDept dDept;
   @Autowired private SDrug sDrug;
+  @Autowired private DDrugNorma dDrugNorma;
+  @Autowired private DDrugNormaDirection dDrugNormaDirection;
   @Autowired private BeanSession beanSession;
   //endregion
 
@@ -1005,8 +1009,50 @@ public class CHeadNurse {
       obj.setC8(Util.dateTimeToString(act.getSendOn()));
       obj.setC9(Util.dateTimeToString(act.getConfirmOn()));
       obj.setC10(act.getInsFlag());
+      obj.setC11(act.getAutoFlag());
       list.add(obj);
     }
+    //
+    /*if(dDrugOut.getCount("From DrugOuts Where direction.id = " + 25 + " And state != 'CON'") == 0) {
+      List<DrugNormas> normas = dDrugNorma.list("From DrugNormas");
+      DrugOuts out = null;
+      for (DrugNormas norma:  normas) {
+        double saldo = sDrug.saldo(25, norma.getDrug().getId()), n = 0;
+        if(norma.getNormaType().equals("ALL"))
+          n = norma.getNorma();
+        else {
+          DrugNormaDirections nd = dDrugNormaDirection.obj("From DrugNormaDirections Where direction.id = " + 25 + " And doc.id = " + norma.getId());
+          if(nd != null)
+            n = nd.getNorma();
+        }
+        if(n - saldo > 0 && (n - saldo) / n <= 0.75) {
+          double drugSaldo = sDrug.drug_saldo(norma.getDrug().getId());
+          if (drugSaldo > 0) {
+            if (out == null) {
+              out = new DrugOuts();
+              out.setAutoFlag("Y");
+              out.setState("SND");
+              out.setDirection(dDrugDirection.get(25));
+              out.setRegDate(new Date());
+              out.setCrOn(new Date());
+              out.setRegNum("AUTO");
+              out.setSendOn(new Date());
+              out.setInfo("Автоматическая заявка");
+              out.setInsFlag("N");
+              dDrugOut.saveAndReturn(out);
+            }
+            DrugOutRows row = new DrugOutRows();
+            row.setDoc(out);
+            row.setClaimCount(n - saldo);
+            row.setDrug(norma.getDrug());
+            row.setMeasure(row.getDrug().getMeasure());
+            row.setCrBy(0);
+            row.setCrOn(new Date());
+            dDrugOutRow.save(row);
+          }
+        }
+      }
+    }*/
     //
     List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     m.addAttribute("directions", directions);
@@ -1036,7 +1082,8 @@ public class CHeadNurse {
     List<Integer> drugs = session.getDrugs();
     List<Drugs> dds = new ArrayList<>();
     if(drugs == null || drugs.isEmpty()) {
-      List<Drugs> ssd = dDrug.getList("From Drugs t Where Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name");
+      int g = obj.getDirection().getId();
+      List<Drugs> ssd = dDrug.getList("From Drugs t Where " + (g == 25 || g == 28 || g == 29 ? "Not Exists (Select 1 From DrugNormas g Where g.drug.id = t.id) And " : "") + " Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name");
       drugs = new ArrayList<>();
       for(Drugs d: ssd)
         drugs.add(d.getId());
@@ -1065,6 +1112,13 @@ public class CHeadNurse {
       obj.setCrOn(obj.getId() == null ? new Date() : obj.getCrOn());
       obj.setInfo(Util.get(req, "info"));
       obj.setInsFlag("N");
+      obj.setAutoFlag("N");
+      int g = obj.getDirection().getId();
+      List<Drugs> ssd = dDrug.getList("From Drugs t Where " + (g == 25 || g == 28 || g == 29 ? "Not Exists (Select 1 From DrugNormas g Where g.drug.id = t.id) And " : "") + " Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name");
+      List<Integer> drugs = new ArrayList<>();
+      for(Drugs d: ssd)
+        drugs.add(d.getId());
+      session.setDrugs(drugs);
       if(dDrugOut.getCount("From DrugOuts Where direction.id = " + obj.getDirection().getId() + " And insFlag = 'N' And id != " + obj.getId()) > 0)
         return Util.err(json, "Есть не принятые документы по данному Складу");
       dDrugOut.saveAndReturn(obj);

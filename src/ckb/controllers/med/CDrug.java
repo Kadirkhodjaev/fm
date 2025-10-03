@@ -28,6 +28,7 @@ import ckb.domains.med.head_nurse.HNDirectionLinks;
 import ckb.domains.med.head_nurse.HNDirections;
 import ckb.models.Obj;
 import ckb.models.ObjList;
+import ckb.services.med.drug.SDrug;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.BeanSession;
@@ -75,6 +76,7 @@ public class CDrug {
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DDrugNorma dDrugNorma;
   @Autowired private DDrugNormaDirection dDrugNormaDirection;
+  @Autowired private SDrug sDrug;
   @Autowired private BeanSession beanSession;
   //endregion
 
@@ -981,6 +983,7 @@ public class CDrug {
       obj.setC7(Util.dateTimeToString(act.getCrOn()));
       obj.setC8(Util.dateTimeToString(act.getSendOn()));
       obj.setC9(Util.dateTimeToString(act.getConfirmOn()));
+      obj.setC10(act.getAutoFlag());
       list.add(obj);
     }
     //
@@ -1021,6 +1024,10 @@ public class CDrug {
           variuos.add(o);
         }
       b.setList(variuos);
+      if(Util.nvl(r.getDoc().getAutoFlag(), "N").equals("Y")) {
+        DrugNormas norma = dDrugNorma.obj("From DrugNormas Where drug.id = " + r.getDrug().getId());
+        b.setFio(norma.getId().toString());
+      }
       list.add(b);
     }
     model.addAttribute("rows", list);
@@ -1030,6 +1037,77 @@ public class CDrug {
     model.addAttribute("drugs", dDrug.getList("From Drugs t Where exists (Select 1 From DrugActDrugs c Where c.done = 'N' And act.state != 'E' And c.counter - c.rasxod > 0 And c.drug.id = t.id) Order By t.name"));
     Util.makeMsg(req, model);
     return "/med/drugs/out/addEdit";
+  }
+
+  @RequestMapping("/out/drug/norma.s")
+  protected String out_drug_norma(HttpServletRequest req, Model model) {
+    DrugNormas norma = dDrugNorma.get(Util.getInt(req, "id"));
+    model.addAttribute("drug", norma.getDrug());
+    model.addAttribute("norma", dDrugNorma.obj("From DrugNormas Where id = " + norma.getId()));
+    List<DrugNormaDirections> dirs = dDrugNormaDirection.list("From DrugNormaDirections Where drug.id = " + norma.getDrug().getId());
+    if(dirs.isEmpty()) {
+      List<DrugDirections> directs = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29) Order By Name");
+      for(DrugDirections d : directs) {
+        DrugNormaDirections a = new DrugNormaDirections();
+        a.setDrug(norma.getDrug());
+        a.setDirection(d);
+        a.setNorma(0D);
+        dirs.add(a);
+      }
+    }
+    model.addAttribute("directions", dirs);
+    model.addAttribute("outRow", dDrugOutRow.get(Util.getInt(req, "out_row")));
+    return "/med/drugs/dicts/drugs/norma_modal";
+  }
+
+  @RequestMapping(value = "/out/row/norma.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String save_out_row_norma(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      DrugNormas norma = dDrugNorma.get(Util.getInt(req, "id"));
+      norma.setDrug(dDrug.get(Util.getInt(req, "drug")));
+      norma.setNormaType(Util.get(req, "type"));
+      norma.setNorma(Util.getDouble(req, "norma", 0D));
+      double n = norma.getNorma();
+      DrugOutRows outRow = dDrugOutRow.get(Util.getInt(req, "out_row"));
+      dDrugNorma.saveAndReturn(norma);
+      dDrugNormaDirection.delSql("From DrugNormaDirections Where doc.id = " + norma.getId());
+      if(norma.getNormaType().equals("MULTI")) {
+        norma.setNorma(0D);
+        dDrugNorma.save(norma);
+        String[] ids = req.getParameterValues("ids");
+        String[] normas = req.getParameterValues("normas");
+        for(int i = 0; i < ids.length; i++) {
+          DrugNormaDirections dn = new DrugNormaDirections();
+          dn.setDoc(norma);
+          dn.setDrug(norma.getDrug());
+          dn.setNorma(Double.parseDouble(normas[i]));
+          dn.setDirection(dDrugDirection.get(Integer.parseInt(ids[i])));
+          if(Objects.equals(outRow.getDoc().getDirection().getId(), dn.getDirection().getId())) {
+            n = dn.getNorma();
+          }
+          dDrugNormaDirection.save(dn);
+        }
+      }
+      double saldo = sDrug.saldo(outRow.getDoc().getDirection().getId(), outRow.getDrug().getId()), drug_saldo = sDrug.drug_saldo(outRow.getDrug().getId());
+      if(drug_saldo > 0 && n > 0 && n - saldo > 0 && (n - saldo) / n <= 0.75) {
+        outRow.setClaimCount(n - saldo);
+        dDrugOutRow.save(outRow);
+      } else {
+        int doc = outRow.getDoc().getId();
+        dDrugOutRow.delete(outRow.getId());
+        if(dDrugOutRow.getCount("From DrugOutRows Where doc.id = " + doc) == 0) {
+          dDrugOut.delete(doc);
+          json.put("empty_flag", "Y");
+        }
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
   }
 
   @RequestMapping(value = "/out/row/clear.s", method = RequestMethod.POST)

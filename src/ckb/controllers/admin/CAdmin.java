@@ -13,6 +13,7 @@ import ckb.domains.admin.Users;
 import ckb.domains.med.dicts.Rooms;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -37,6 +38,7 @@ public class CAdmin {
   @Autowired private DUserLog dUserLog;
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DRooms dRoom;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping("/changePass.s")
   protected String changePass(HttpServletRequest request, Model model){
@@ -144,6 +146,7 @@ public class CAdmin {
       rp.setNurse(dUser.get(Util.getInt(req, "user")));
       rp.setState(Util.get(req, "state", "P"));
       dDept.save(rp);
+      beanSession.initialize();
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -196,6 +199,7 @@ public class CAdmin {
       rp.setState(Util.get(req, "state", "P"));
       rp.setReport(Util.get(req, "report", "N"));
       dLvPartner.save(rp);
+      beanSession.initialize();
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -249,6 +253,7 @@ public class CAdmin {
       if(t.equals("bron_price")) room.setBron_price(v);
       if(t.equals("for_bron_price")) room.setFor_bron_price(v);
       dRoom.save(room);
+      beanSession.initialize();
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);

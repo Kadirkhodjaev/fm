@@ -38,12 +38,14 @@
   <div class="panel-body">
     <table class="table table-bordered" style="width:100%; margin:auto">
       <tr>
+        <td class="text-center bold">#</td>
         <td class="text-center bold">Наименование</td>
         <td class="text-center bold">Тип</td>
         <td class="text-center bold">Значение</td>
       </tr>
       <c:forEach items="${rows}" var="r">
         <tr class="hover hand" ondblclick="$('#pager').load('/drugs/dict/drug/normas/view.s?id=' + ${r.drug.id})">
+          <td class="center">${r.id}</td>
           <td>${r.drug.name}</td>
           <td class="text-center">
             <c:if test="${r.normaType == 'ALL'}">Для всех</c:if>

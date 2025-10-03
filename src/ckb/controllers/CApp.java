@@ -155,6 +155,7 @@ public class  CApp {
       m.add(new Menu("Статистика", "/head_nurse/stat.s", "fa fa-home fa-fw", session.getCurUrl().equals("/head_nurse/stat.s")));
       m.add(new Menu("Услуги", "/nurses/work.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/nurses/work.s")));
       m.add(new Menu("Пациенты", "/patients/list.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/patients/list.s")));
+      m.add(new Menu("Палаты", "/proc/palatas.s", "fa fa-users fa-fw", session.getCurUrl().equals("/proc/palatas.s")));
     }
     if(roleId == 12) { // Питание
       session.setCurUrl(session.getCurUrl().equals("") ? "/eats/menu.s" : session.getCurUrl());

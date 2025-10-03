@@ -20,6 +20,7 @@ public class DrugOuts extends GenId {
   @Column private Date sendOn;
   @Column private Date confirmOn;
   @Column private String insFlag;
+  @Column private String autoFlag;
 
   public String getRegNum() {
     return regNum;
@@ -91,5 +92,13 @@ public class DrugOuts extends GenId {
 
   public void setInsFlag(String insFlag) {
     this.insFlag = insFlag;
+  }
+
+  public String getAutoFlag() {
+    return autoFlag;
+  }
+
+  public void setAutoFlag(String autoFlag) {
+    this.autoFlag = autoFlag;
   }
 }

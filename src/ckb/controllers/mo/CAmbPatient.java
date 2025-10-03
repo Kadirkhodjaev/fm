@@ -20,6 +20,7 @@ import ckb.services.admin.form.SForm;
 import ckb.services.mo.amb.SMoAmb;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.BeanSession;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -50,6 +51,7 @@ public class CAmbPatient {
   @Autowired private DAmbResult dAmbResult;
   @Autowired private SForm sForm;
   @Autowired private DAmbServiceUser dAmbServiceUser;
+  @Autowired private BeanSession beanSession;
 
   @RequestMapping("patients.s")
   protected String patients(HttpServletRequest req, Model model) {
@@ -136,9 +138,13 @@ public class CAmbPatient {
       model.addAttribute("patient", patient);
       model.addAttribute("isReg", session.isReg());
       model.addAttribute("lvpartners", dLvPartner.getList("From LvPartners " + (session.getCurPat() > 0 ? "" : " Where state = 'A' ") + " Order By code"));
+      if(session.getCurPat() > 0)
+        model.addAttribute("lvpartners", dLvPartner.list("From LvPartners Where id = " + (patient.getLvpartner() == null ? 0 : patient.getLvpartner().getId())));
+      else
+        model.addAttribute("lvpartners", beanSession.getLvPartners());
       // Клиент блок
-      model.addAttribute("counteries", dCountry.getCounteries());
-      model.addAttribute("regions", dRegion.getList("From Regions Order By ord, name"));
+      model.addAttribute("counteries", beanSession.getCounteries());
+      model.addAttribute("regions", beanSession.getRegions());
       sForm.setSelectOptionModel(model, 1, "sex");
     } catch (Exception e) {
       e.printStackTrace();
