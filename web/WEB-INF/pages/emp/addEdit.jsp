@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
 <div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog wpx-1000">
@@ -224,9 +225,44 @@
       </form>
     </div>
   </div>
+  <c:if test="${fn:length(rows) > 0}">
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <table class="w-100">
+          <tr>
+            <td>Записи по сотруднику</td>
+          </tr>
+        </table>
+      </div>
+      <div class="panel-body">
+        <table class="table-grid">
+          <tr>
+            <th>#</th>
+            <th>Наименование</th>
+            <th>Время записи</th>
+            <th>Время подтверждение</th>
+          </tr>
+          <c:forEach items="${rows}" var="a">
+            <tr ondblclick="showService(${a.patient}, ${a.id})">
+              <td class="center wpx-40">
+                <c:if test="${a.state != 'DONE'}"><img src='/res/imgs/red.gif'/></c:if>
+                <c:if test="${a.state == 'DONE'}"><img src='/res/imgs/green.gif'/></c:if>
+              </td>
+              <td>${a.service.name}</td>
+              <td class="text-center"><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${a.crOn}"/></td>
+              <td class="text-center"><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${a.confDate}"/></td>
+            </tr>
+          </c:forEach>
+        </table>
+      </div>
+    </div>
+  </c:if>
 </c:if>
 <script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
 <script>
+  function showService(patient, id) {
+    window.open('/amb/print.s?patient=' + patient + '&ids=' + id);
+  }
   function delEmp() {
     if(confirm('Вы действительно хотите удалить данного сотрудника?'))
       $.ajax({

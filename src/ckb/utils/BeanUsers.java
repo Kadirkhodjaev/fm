@@ -28,6 +28,10 @@ public class BeanUsers {
       conn = DB.getConnection();
       ps = conn.prepareStatement("Select * From Users Order By fio");
       rs = ps.executeQuery();
+      users = new ArrayList<>();
+      lvs = new ArrayList<>();
+      consuls = new ArrayList<>();
+      zavlvs = new HashMap<>();
       while (rs.next()) {
         Users a = new Users();
         a.setId(rs.getInt("id"));

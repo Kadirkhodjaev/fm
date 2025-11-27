@@ -147,6 +147,7 @@ public class  CApp {
       //m.add(new Menu("Сальдо", "/drugs/saldo.s", "fa fa-group fa-fw", session.getCurUrl().equals("/drugs/saldo.s")));
       m.add(new Menu("Приход", "/drugs/acts.s", "fa fa-archive fa-fw", session.getCurUrl().equals("/drugs/acts.s")));
       m.add(new Menu("Расход", "/drugs/out.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/drugs/out.s")));
+      m.add(new Menu("Заявки", "/drugs/out/drug/claim.s", "fa fa-align-justify fa-fw", session));
       //m.add(new Menu("Архив заявок", "/drugs/claims/archive.s", "fa fa-archive fa-edit", session.getCurUrl().equals("/drugs/claims/archive.s")));
       m.add(new Menu("Справочники", "/drugs/dicts.s", "fa fa-align-justify fa-fw", session.getCurUrl().equals("/drugs/dicts.s")));
     }
@@ -173,6 +174,7 @@ public class  CApp {
     if(roleId == 14) {  // Амбулаторные услуги
       m.add(new Menu("Текущие", "/amb/home.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Сотрудники", "/emp/doctor/emps.s", "fa fa-group fa-fw", session));
+      m.add(new Menu("Бронирование", "/amb/booking/lvs.s", "fa fa-group fa-fw", session));
       m.add(new Menu("Архив", "/amb/archive.s", "fa fa-archive fa-fw", session));
     }
     if(roleId == 15) { // Амбулаторная регистрация

@@ -19,8 +19,8 @@
         </thead>
         <c:forEach items="${f.drugs}" var="d" varStatus="lp">
           <tr id="patient-drug-${d.id}">
-            <td style="vertical-align: middle">
-              ${d.patient.surname} ${d.patient.name} ${d.patient.middlename} (ИБ №${d.patient.yearNum})
+            <td style="vertical-align: middle" nowrap >
+              ${d.patient.fio} (ИБ №${d.patient.yearNum})
             </td>
             <td style="vertical-align: middle">
               <c:forEach items="${d.rows}" var="row" varStatus="loop">

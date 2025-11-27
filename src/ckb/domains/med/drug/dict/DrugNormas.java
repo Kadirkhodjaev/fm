@@ -12,6 +12,7 @@ public class DrugNormas extends GenId {
   @Column private String normaType;
 
   @Column private Double norma;
+  @Column private Double tab;
 
   public Drugs getDrug() {
     return drug;
@@ -35,5 +36,13 @@ public class DrugNormas extends GenId {
 
   public void setNorma(Double norma) {
     this.norma = norma;
+  }
+
+  public Double getTab() {
+    return tab;
+  }
+
+  public void setTab(Double tab) {
+    this.tab = tab;
   }
 }

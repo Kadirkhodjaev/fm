@@ -7,11 +7,13 @@ import ckb.domains.admin.Users;
 import ckb.domains.med.amb.*;
 import ckb.models.AmbGroup;
 import ckb.models.AmbService;
+import ckb.models.Obj;
 import ckb.services.admin.form.SForm;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
+import ckb.utils.DB;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -23,6 +25,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -53,20 +58,60 @@ public class CAmbBooking {
     //
     String startDate = session.getStartDate("amb_booking", "period_start", req);
     String endDate = session.getEndDate("amb_booking", "period_end", req);
-    //
-    List<AmbBookings> rows = dAmbBooking.list("From AmbBookings Where date(crOn) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' Order By regDate Desc");
-    HashMap<Integer, String> services = new HashMap<>();
-    for(AmbBookings row : rows){
-      List<AmbBookingServices> r = dAmbBookingService.list("From AmbBookingServices Where booking.id = " + row.getId());
-      if(!r.isEmpty()) services.put(row.getId(), r.get(0).getService().getName());
+    ///
+    Connection conn = null;
+    PreparedStatement ps =  null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement("Select date(Reg_Date) From Amb_Bookings Where date(crOn) Between ? And ? And date(reg_date) >= CURRENT_DATE() Group By date(Reg_Date) Order By date(Reg_Date)");
+      ps.setString(1, Util.dateDB(startDate));
+      ps.setString(2, Util.dateDB(endDate));
+      rs = ps.executeQuery();
+      List<Obj> objs = new ArrayList<>();
+      HashMap<Integer, String> services = new HashMap<>();
+      while (rs.next()) {
+        Obj obj = new Obj();
+        obj.setName(Util.dateToString(rs.getDate(1)));
+        List<AmbBookings> rows = dAmbBooking.list("From AmbBookings Where date(regDate) = '" + Util.dateDB(rs.getDate(1)) + "' Order By regDate");
+        for(AmbBookings row : rows){
+          List<AmbBookingServices> r = dAmbBookingService.list("From AmbBookingServices Where booking.id = " + row.getId());
+          if(!r.isEmpty()) services.put(row.getId(), r.get(0).getService().getName());
+        }
+        obj.setBookings(rows);
+        objs.add(obj);
+      }
+      //
+      m.addAttribute("rows", objs);
+      m.addAttribute("services", services);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn, ps, rs);
     }
-    m.addAttribute("rows", rows);
-    m.addAttribute("services", services);
     //
     m.addAttribute("period_start", startDate);
     m.addAttribute("period_end", endDate);
     //
     return "med/amb/booking/index";
+  }
+
+  @RequestMapping("booking/lvs.s")
+  protected String booking_lvs(HttpServletRequest req, Model m) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/amb/booking/lvs.s");
+    ///
+    HashMap<Integer, String> services = new HashMap<>();
+    List<AmbBookings> rows = dAmbBooking.list("From AmbBookings t Where exists (Select 1 From AmbBookingServices c Where c.booking.id = t.id And c.worker.id = " +  session.getUserId() + ") And date(t.regDate) >= '" + Util.dateDB(Util.getCurDate()) + "' Order By t.regDate");
+    for(AmbBookings row : rows){
+      List<AmbBookingServices> r = dAmbBookingService.list("From AmbBookingServices Where booking.id = " + row.getId());
+      if(!r.isEmpty()) services.put(row.getId(), r.get(0).getService().getName());
+    }
+    //
+    m.addAttribute("rows", rows);
+    m.addAttribute("services", services);
+    //
+    return "med/amb/booking/lvs";
   }
 
   @RequestMapping("booking.s")

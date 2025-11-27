@@ -32,6 +32,7 @@ public class Kdos extends GenId {
   @Column private Double bonusProc;
   @Column private String priced;
   @Column private String necKdo = "N";
+  @Column private String out_service = "N";
   @Column private String norma;
   @Column private String ei;
   @Column private Double real_price;
@@ -219,5 +220,13 @@ public class Kdos extends GenId {
 
   public void setSaleProc(Double saleProc) {
     this.saleProc = saleProc;
+  }
+
+  public String getOut_service() {
+    return out_service;
+  }
+
+  public void setOut_service(String out_service) {
+    this.out_service = out_service;
   }
 }

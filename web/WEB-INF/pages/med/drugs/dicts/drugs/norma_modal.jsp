@@ -28,6 +28,12 @@
               </select>
             </td>
           </tr>
+          <tr class="ALL_TR">
+            <td class="right bold">Кол-во в плас. *:</td>
+            <td>
+              <input type="number" id="tab" class="form-control right" name="tab" value="${norma.tab}"/>
+            </td>
+          </tr>
           <c:forEach items="${directions}" var="a">
             <tr class="DIRECTION_TR">
               <td class="<c:if test="${a.norma > 0}">bold</c:if>">${a.direction.name}<input type="hidden" name="ids"

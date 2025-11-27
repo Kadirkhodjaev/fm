@@ -36,22 +36,32 @@
     Записы
   </div>
   <div class="panel-body">
-    <table class="table table-bordered" style="width:100%; margin:auto">
+    <table class="table-grid">
       <tr>
         <td class="text-center bold">#</td>
+        <td class="text-center bold">#D</td>
         <td class="text-center bold">Наименование</td>
         <td class="text-center bold">Тип</td>
         <td class="text-center bold">Значение</td>
+        <td class="text-center bold">Таб. в плас.</td>
       </tr>
       <c:forEach items="${rows}" var="r">
         <tr class="hover hand" ondblclick="$('#pager').load('/drugs/dict/drug/normas/view.s?id=' + ${r.drug.id})">
           <td class="center">${r.id}</td>
+          <td class="center">${r.drug.id}</td>
           <td>${r.drug.name}</td>
           <td class="text-center">
             <c:if test="${r.normaType == 'ALL'}">Для всех</c:if>
             <c:if test="${r.normaType == 'MULTI'}">По складам</c:if>
           </td>
-          <td class="text-right"><fmt:formatNumber value="${r.norma}" type="number"/></td>
+          <td class="text-right">
+            <c:if test="${r.normaType == 'ALL'}">
+              <input type="number" value="${r.norma}" class="form-control text-right" onchange="setNormaValue(${r.id}, this.value, 'norma')"/>
+            </c:if>
+          </td>
+          <td class="text-right">
+            <input type="number" value="${r.tab}" class="form-control text-right" onchange="setNormaValue(${r.id}, this.value, 'tab')"/>
+          </td>
           <td class="text-center wpx-40">
             <button class="btn btn-danger btn-icon" onclick="delNorma(${r.id})"><i class="fa fa-minus"></i></button>
           </td>
@@ -63,7 +73,19 @@
 </div>
 
 <script>
-  function addNorma() {
+function setNormaValue(id, val, type) {
+  $.ajax({
+    url: '/drugs/dict/drug/norma/set.s',
+    method: 'post',
+    data: 'id=' + id + '&type=' + type + '&val=' + val,
+    dataType: 'json',
+    success: function (res) {
+      openMsg(res);
+    }
+  });
+}
+
+function addNorma() {
     let dom = getDOM('drug_id');
     let drug = dom.options[dom.selectedIndex].text;
     let id = dom.options[dom.selectedIndex].value;

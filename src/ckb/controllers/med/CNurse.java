@@ -118,6 +118,7 @@ public class CNurse {
           i++;
           Kdos kdo = dKdo.get(rc.getInt("kdo_id"));
           String name = kdo.getName();
+          int type = rc.getInt("kdo_type_id");
           if (rc.getInt("kdo_id") == 13) { // Биохимия
             String st = "";
             LvBios bio = dLvBio.getByPlan(rc.getInt("id"));
@@ -233,47 +234,47 @@ public class CNurse {
             name += ":" + rc.getString("comment");
           }
           name ="<img src=\"/res/imgs/" + (rc.getInt("result_id") > 0 ? "yellow" : "red") + ".gif\"> <b><i>" + Util.dateToString(rc.getDate("actDate")) + "</i></b> - " + name;
-          if (rc.getInt("kdo_type_id") == 1 || rc.getInt("kdo_type_id") == 2) {
+          if (type == 1 || type == 2 || type == 23 || type == 20 || type == 18) {
             is1 = true;
             row.setC11((row.getC11() == null ? "" : row.getC11() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 3) {
+          if (type == 3) {
             is3 = true;
             row.setC13((row.getC13() == null ? "" : row.getC13() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 4) {
+          if (type == 4) {
             is4 = true;
             row.setC14((row.getC14() == null ? "" : row.getC14() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 6) {
+          if (type == 6) {
             is6 = true;
             row.setC16((row.getC16() == null ? "" : row.getC16() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 10) {
+          if (type == 10) {
             is10 = true;
             row.setC20((row.getC20() == null ? "" : row.getC20() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 11) {
+          if (type == 11) {
             is11 = true;
             row.setC21((row.getC21() == null ? "" : row.getC21() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 12) {
+          if (type == 12) {
             is12 = true;
             row.setC22((row.getC22() == null ? "" : row.getC22() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 13) {
+          if (type == 13) {
             is13 = true;
             row.setC23((row.getC23() == null ? "" : row.getC23() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 14) {
+          if (type == 14) {
             is14 = true;
             row.setC24((row.getC24() == null ? "" : row.getC24() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 17) {
+          if (type == 17) {
             is17 = true;
             row.setC27((row.getC27() == null ? "" : row.getC27() + "<br/>") + name);
           }
-          if (rc.getInt("kdo_type_id") == 22) {
+          if (type == 22) {
             is22 = true;
             row.setC25((row.getC25() == null ? "" : row.getC25() + "<br/>") + name);
           }
@@ -293,7 +294,7 @@ public class CNurse {
           i++;
           is15 = true;
           String name ="<b><i>" + rc.getString("actDate") + "</i></b> - " + rc.getString("lvname");
-          row.setC25((row.getC25() == null ? "" : row.getC25() + "<br/>") + name);
+          row.setC18((row.getC18() == null ? "" : row.getC18() + "<br/>") + name);
         }
         if(d.isFizio()) {
           if(dLvFizio.getCount("From LvFizios Where patientId = " + d.getId()) == 0) {

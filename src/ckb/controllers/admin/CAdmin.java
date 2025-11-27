@@ -14,6 +14,7 @@ import ckb.domains.med.dicts.Rooms;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.BeanSession;
+import ckb.utils.BeanUsers;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -39,6 +40,7 @@ public class CAdmin {
   @Autowired private DLvPartner dLvPartner;
   @Autowired private DRooms dRoom;
   @Autowired private BeanSession beanSession;
+  @Autowired private BeanUsers beanUser;
 
   @RequestMapping("/changePass.s")
   protected String changePass(HttpServletRequest request, Model model){
@@ -70,6 +72,8 @@ public class CAdmin {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/admin/price.s");
     model.addAttribute("prices", dParam.getList("From Params Where showFlag = 'Y'"));
+    beanSession.initialize();
+    beanUser.initialize();
     return "/admin/prices";
   }
 

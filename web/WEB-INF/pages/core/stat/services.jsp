@@ -245,6 +245,12 @@
                 <input type="checkbox" checked name="necKdo" value="Y"/>
               </td>
             </tr>
+            <tr>
+              <td class="right bold">Внешняя услуга?:</td>
+              <td class="left">
+                <input type="checkbox" checked name="out_service" value="Y"/>
+              </td>
+            </tr>
             <tr id="uzi-free">
               <td class="right bold">1 услуга бесплатная?:</td>
               <td class="left">
@@ -326,6 +332,7 @@
           $('*[name=fizei]').val(res.fizei);
           $('#kdo_users').html(res.users);
           $('*[name=necKdo]').prop('checked', res.necKdo == 'Y');
+          $('*[name=out_service]').prop('checked', res.out_service == 'Y');
           $('*[name=state]').prop('checked', res.state == 'A');
           if(res.kdoType === 4) {
             $('#uzi-free').show();

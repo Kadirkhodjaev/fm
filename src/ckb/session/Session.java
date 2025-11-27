@@ -277,4 +277,18 @@ public class Session {
     setDateEnd(dh);
     return date;
   }
+
+  public String getSessionFilter(String sCode, String reqName, HttpServletRequest req, String defVal) {
+    String db = filters.get(sCode);
+    String val = Util.get(req, reqName, db);
+    if(val == null) val = defVal;
+    HashMap<String, String> dh = filters;
+    dh.put(sCode, val);
+    filters = dh;
+    return val;
+  }
+
+  public String getSessionFilter(String sCode, String reqName, HttpServletRequest req) {
+    return getSessionFilter(sCode, reqName, req, null);
+  }
 }

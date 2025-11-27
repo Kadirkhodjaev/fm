@@ -910,6 +910,7 @@ public class CDrug {
       norma.setDrug(dDrug.get(Util.getInt(req, "drug")));
       norma.setNormaType(Util.get(req, "type"));
       norma.setNorma(Util.getDouble(req, "norma", 0D));
+      norma.setTab(Util.getDouble(req, "tab", 0D));
       dDrugNorma.saveAndReturn(norma);
       dDrugNormaDirection.delSql("From DrugNormaDirections Where doc.id = " + norma.getId());
       if(norma.getNormaType().equals("MULTI")) {
@@ -926,6 +927,26 @@ public class CDrug {
           dDrugNormaDirection.save(dn);
         }
       }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/dict/drug/norma/set.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String setDrugNorma(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      int id = Util.getInt(req, "id", 0);
+      DrugNormas norma = dDrugNorma.get(id);
+      if(Util.get(req, "type").equals("norma"))
+        norma.setNorma(Util.getDouble(req, "val", 0D));
+      else
+        norma.setTab(Util.getDouble(req, "val", 0D));
+      dDrugNorma.save(norma);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1021,12 +1042,20 @@ public class CDrug {
           o.setC2((a.getCounter() - a.getRasxod()) + "");
           o.setC3(a.getCountPrice().toString());
           o.setC4(a.getBlockCount().toString());
+          o.setC5(Util.dateToString(a.getAct().getRegDate()));
+          o.setC6(Util.dateToString(a.getEndDate()));
           variuos.add(o);
         }
       b.setList(variuos);
       if(Util.nvl(r.getDoc().getAutoFlag(), "N").equals("Y")) {
-        DrugNormas norma = dDrugNorma.obj("From DrugNormas Where drug.id = " + r.getDrug().getId());
-        b.setFio(norma.getId().toString());
+        try {
+          DrugNormas norma = dDrugNorma.obj("From DrugNormas Where drug.id = " + r.getDrug().getId());
+          if(norma != null) {
+            b.setFio(norma.getId().toString());
+          }
+        } catch (Exception e) {
+          System.out.println(r.getDrug().getId() + " - " + r.getDrug().getName());
+        }
       }
       list.add(b);
     }
@@ -1056,7 +1085,9 @@ public class CDrug {
       }
     }
     model.addAttribute("directions", dirs);
-    model.addAttribute("outRow", dDrugOutRow.get(Util.getInt(req, "out_row")));
+    DrugOutRows outRow = dDrugOutRow.get(Util.getInt(req, "out_row"));
+
+    model.addAttribute("outRow", outRow);
     return "/med/drugs/dicts/drugs/norma_modal";
   }
 
@@ -1198,7 +1229,16 @@ public class CDrug {
   protected String OutRowDel(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      dDrugOutRow.delete(Util.getInt(req, "id"));
+      boolean delOut = false;
+      DrugOutRows a = dDrugOutRow.get(Util.getInt(req, "id"));
+      Integer doc = a.getDoc().getId();
+      if(Util.nvl(a.getDoc().getAutoFlag(), "N").equals("Y"))
+        if(dDrugOutRow.getCount("From DrugOutRows Where doc.id = " + doc) == 1)
+          delOut = true;
+      dDrugOutRow.delete(a.getId());
+      if(delOut)
+        dDrugOut.delete(doc);
+      json.put("del_out", delOut);
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1230,6 +1270,148 @@ public class CDrug {
       json.put("msg", e.getMessage());
     }
     return json.toString();
+  }
+
+  @RequestMapping(value = "/out/gen_auto_out.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String gen_auto_out(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29)");
+      for(DrugDirections dd : directions) {
+        if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And insFlag = 'Y'") == 0) {
+          List<DrugNormas> normas = dDrugNorma.list("From DrugNormas");
+          DrugOuts out = null;
+          for (DrugNormas norma:  normas) {
+            double saldo = sDrug.saldo(dd.getId(), norma.getDrug().getId()), n = 0;
+            if(norma.getNormaType().equals("ALL"))
+              n = norma.getNorma();
+            else {
+              DrugNormaDirections nd = dDrugNormaDirection.obj("From DrugNormaDirections Where direction.id = " + dd.getId() + " And doc.id = " + norma.getId());
+              if(nd != null)
+                n = nd.getNorma();
+            }
+            double f = n - saldo;
+            if(n - saldo > 0 && (saldo / n <= 0.75 || saldo == 0)) {
+              if(Util.nvl(norma.getTab(), 0) > 0) {
+                if (f > norma.getTab()) {
+                  double d = Math.floor(f / norma.getTab());
+                  f = norma.getTab() * d;
+                } else {
+                  continue;
+                }
+              }
+              double drugSaldo = sDrug.drug_saldo(norma.getDrug().getId());
+              if (drugSaldo > 0) {
+                if (out == null) {
+                  out = new DrugOuts();
+                  out.setAutoFlag("Y");
+                  out.setState("SND");
+                  out.setDirection(dd);
+                  out.setRegDate(new Date());
+                  out.setCrOn(new Date());
+                  out.setRegNum("AUTO");
+                  out.setSendOn(new Date());
+                  out.setInfo("Автоматическая заявка");
+                  out.setInsFlag("N");
+                  dDrugOut.saveAndReturn(out);
+                }
+                DrugOutRows row = new DrugOutRows();
+                row.setDoc(out);
+                row.setClaimCount(f);
+                row.setDrug(norma.getDrug());
+                row.setMeasure(row.getDrug().getMeasure());
+                row.setCrBy(0);
+                row.setCrOn(new Date());
+                dDrugOutRow.save(row);
+              }
+            }
+          }
+        }
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping("/out/drug/claim.s")
+  protected String out_drug_claim(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/drugs/out/drug/claim.s");
+    String deep_ana = session.getSessionFilter("drug_out_claim_type", "deep_ana", req, "0");
+    int deep_size = Integer.parseInt(session.getSessionFilter("drug_out_claim_size", "deep_size", req, "2"));
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    List<ObjList> rows = new ArrayList<>();
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select a.name, t.rasxod, t.drug_id " +
+          "  From (  " +
+          "    Select t.drug_id, Round(Sum(t.rasxod) / 10) rasxod  " +
+          "      From (  " +
+          "        Select g.drug_Id, Sum(t.rasxod) rasxod  " +
+          "          From hn_date_rows t, hn_dates c, hn_drugs g  " +
+          "         Where t.doc_Id = c.Id  " +
+          "           And g.id = t.drug_Id  " +
+          "           And date(t.crOn) between date_sub(now(), interval 10 day) And now()  " +
+          "           And c.direction_Id in (25, 28, 29)  " +
+          "           And g.drug_Id in (Select d.drug_Id From drug_s_normas d)  " +
+          "         group by g.drug_Id  " +
+          "        Union All  " +
+          "        Select g.drug_Id, Sum(t.rasxod) rasxod  " +
+          "          From hn_date_patient_rows t, hn_dates c, hn_drugs g  " +
+          "         Where t.doc_Id = c.Id  " +
+          "           And g.id = t.drug_Id  " +
+          "           And date(t.crOn) between date_sub(now(), interval 10 day) And now()  " +
+          "           And c.direction_Id in (25, 28, 29)  " +
+          "           And g.drug_Id in (Select d.drug_Id From drug_s_normas d)  " +
+          "         group by g.drug_Id  " +
+          "      ) t  " +
+          "      Group By t.drug_Id) t, drug_s_names a  " +
+          "   Where rasxod > 0  " +
+          "     And a.id = t.drug_Id  " +
+          "   Order By a.name"
+      );
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        int drug = rs.getInt("drug_id");
+        DrugNormas n = dDrugNorma.obj("From DrugNormas Where drug.id = " + drug);
+        double norma = 0;
+        if(n.getNormaType().equals("ALL")) {
+          norma = n.getNorma() * 3;
+        } else {
+          List<DrugNormaDirections> nds = dDrugNormaDirection.list("From DrugNormaDirections Where doc.id = " + n.getId());
+          for(DrugNormaDirections nd: nds) {
+            norma += nd.getNorma();
+          }
+        }
+        double saldo = DB.getSum(conn, "Select Sum(drugCount - rasxod) From Hn_Drugs Where drug_id = " + drug + " And drugCount - rasxod > 0 And direction_id in (25, 28, 29)");
+        double drugSaldo = DB.getSum(conn, "Select Sum(counter - rasxod) From Drug_Act_Drugs Where drug_id = " + drug + " And counter - rasxod > 0");
+        double diff = drugSaldo - (norma - saldo) - rs.getDouble("rasxod") * deep_size;
+        ObjList row = new ObjList();
+        row.setC1(rs.getString("name"));
+        row.setC2("" + rs.getDouble("rasxod"));
+        row.setC3(norma + "");
+        row.setC4(saldo + "");
+        row.setC5(drugSaldo + "");
+        row.setC6(diff + "");
+        if(deep_ana.equals("0") || (deep_ana.equals("1") && diff < 0) || (deep_ana.equals("2") && diff > 0))
+          rows.add(row);
+      }
+      model.addAttribute("rows", rows);
+      model.addAttribute("deep_ana", deep_ana);
+      model.addAttribute("deep_size", deep_size);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn, ps, rs);
+    }
+    return "/med/drugs/claim";
   }
   //endregion
 }

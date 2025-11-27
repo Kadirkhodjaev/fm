@@ -129,6 +129,7 @@ public class CCoreAmb {
       ser.setConsul(Util.isNull(req, "consul") ? "N" : "Y");
       ser.setDiagnoz(Util.isNull(req, "diagnoz") ? "N" : "Y");
       ser.setTreatment(Util.isNull(req, "treatment") ? "N" : "Y");
+      ser.setOut_service(Util.isNull(req, "out_service") ? "N" : "Y");
       ser.setPrice(Double.parseDouble(Util.get(req, "price")));
       ser.setOrd(Util.getInt(req, "ord", 0));
       ser.setFor_price(Double.parseDouble(Util.get(req, "for_price")));

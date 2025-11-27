@@ -1013,47 +1013,6 @@ public class CHeadNurse {
       list.add(obj);
     }
     //
-    /*if(dDrugOut.getCount("From DrugOuts Where direction.id = " + 25 + " And state != 'CON'") == 0) {
-      List<DrugNormas> normas = dDrugNorma.list("From DrugNormas");
-      DrugOuts out = null;
-      for (DrugNormas norma:  normas) {
-        double saldo = sDrug.saldo(25, norma.getDrug().getId()), n = 0;
-        if(norma.getNormaType().equals("ALL"))
-          n = norma.getNorma();
-        else {
-          DrugNormaDirections nd = dDrugNormaDirection.obj("From DrugNormaDirections Where direction.id = " + 25 + " And doc.id = " + norma.getId());
-          if(nd != null)
-            n = nd.getNorma();
-        }
-        if(n - saldo > 0 && (n - saldo) / n <= 0.75) {
-          double drugSaldo = sDrug.drug_saldo(norma.getDrug().getId());
-          if (drugSaldo > 0) {
-            if (out == null) {
-              out = new DrugOuts();
-              out.setAutoFlag("Y");
-              out.setState("SND");
-              out.setDirection(dDrugDirection.get(25));
-              out.setRegDate(new Date());
-              out.setCrOn(new Date());
-              out.setRegNum("AUTO");
-              out.setSendOn(new Date());
-              out.setInfo("Автоматическая заявка");
-              out.setInsFlag("N");
-              dDrugOut.saveAndReturn(out);
-            }
-            DrugOutRows row = new DrugOutRows();
-            row.setDoc(out);
-            row.setClaimCount(n - saldo);
-            row.setDrug(norma.getDrug());
-            row.setMeasure(row.getDrug().getMeasure());
-            row.setCrBy(0);
-            row.setCrOn(new Date());
-            dDrugOutRow.save(row);
-          }
-        }
-      }
-    }*/
-    //
     List<UserDrugLines> directions = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
     m.addAttribute("directions", directions);
     m.addAttribute("filter_direction", dr);
@@ -1075,24 +1034,27 @@ public class CHeadNurse {
     model.addAttribute("rows", dDrugOutRow.getList("From DrugOutRows t Where t.doc.id = " + obj.getId()));
     if(obj.getId() == 0) {
       obj.setRegDate(new Date());
+    } else {
+      List<Integer> drugs = session.getDrugs();
+      List<Drugs> dds = new ArrayList<>();
+      if(drugs == null || drugs.isEmpty()) {
+        int g = 0;
+        if(obj.getId() > 0)
+          g = obj.getDirection().getId();
+        List<Drugs> ssd = dDrug.getList("From Drugs t Where " + (g == 25 || g == 28 || g == 29 ? "Not Exists (Select 1 From DrugNormas g Where g.drug.id = t.id) And " : "") + " Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name");
+        drugs = new ArrayList<>();
+        for(Drugs d: ssd)
+          drugs.add(d.getId());
+        session.setDrugs(drugs);
+      }
+      for (Integer d : drugs) {
+        dds.add(dDrug.get(d));
+      }
+      model.addAttribute("drugs", dds);
     }
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + " And (direction.shock != 'Y' Or direction.shock = null)");
     model.addAttribute("directions", lines);
     model.addAttribute("measures", dDrugDrugMeasure.getList("From DrugDrugMeasures Order By measure.name"));
-    List<Integer> drugs = session.getDrugs();
-    List<Drugs> dds = new ArrayList<>();
-    if(drugs == null || drugs.isEmpty()) {
-      int g = obj.getDirection().getId();
-      List<Drugs> ssd = dDrug.getList("From Drugs t Where " + (g == 25 || g == 28 || g == 29 ? "Not Exists (Select 1 From DrugNormas g Where g.drug.id = t.id) And " : "") + " Exists (Select 1 From DrugActDrugs c Where c.done = 'N' And c.counter - c.rasxod > 0 And c.act.state != 'E' And c.drug.id = t.id) Order By name");
-      drugs = new ArrayList<>();
-      for(Drugs d: ssd)
-        drugs.add(d.getId());
-      session.setDrugs(drugs);
-    }
-    for (Integer d : drugs) {
-      dds.add(dDrug.get(d));
-    }
-    model.addAttribute("drugs", dds);
     model.addAttribute("obj", obj);
     Util.makeMsg(req, model);
     return "/med/head_nurse/incomes/addEdit";

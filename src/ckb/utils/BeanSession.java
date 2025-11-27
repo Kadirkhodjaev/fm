@@ -47,6 +47,7 @@ public class BeanSession {
     salePacks = dSalePack.list("From SalePacks Where state = 'A' And ambStat = 'AMB'");
     lvPartners = dLvPartner.list("From LvPartners Where state = 'A' Order By code");
     List<Params> ps = dParam.getAll();
+    params = new HashMap<>();
     for(Params p : ps) {
       params.put(p.getCode(), p.getVal());
     }

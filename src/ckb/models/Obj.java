@@ -1,5 +1,7 @@
 package ckb.models;
 
+import ckb.domains.med.amb.AmbBookings;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +37,7 @@ public class Obj {
 
   private boolean active;
   private List<ObjList> list = new ArrayList<ObjList>();
+  private List<AmbBookings> bookings = new ArrayList<AmbBookings>();
 
   public Double getClaimCount() {
     return claimCount;
@@ -130,5 +133,13 @@ public class Obj {
 
   public void setRows(LinkedHashMap<Integer, String> rows) {
     this.rows = rows;
+  }
+
+  public List<AmbBookings> getBookings() {
+    return bookings;
+  }
+
+  public void setBookings(List<AmbBookings> bookings) {
+    this.bookings = bookings;
   }
 }

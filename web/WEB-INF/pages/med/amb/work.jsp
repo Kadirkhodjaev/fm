@@ -112,6 +112,9 @@
         <c:if test="${service.result > 0 && service.service.consul == 'Y'}">
           <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="openDrug()"><i title="Лист назначение" class="fa fa-list"></i> Лист назначение</a></li>
         </c:if>
+        <c:if test="${service.result > 0 && service.service.consul == 'Y'}">
+          <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="openResults()"><i title="Результаты" class="fa fa-list"></i> Результаты</a></li>
+        </c:if>
         <c:if test="${service.result > 0}">
           <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPrintPage()"><i title="Печать" class="fa fa-print"></i> Печать</a></li>
         </c:if>
@@ -343,7 +346,14 @@
 </body>
 <script>
   function openDrug() {
+    $('#myModalLabel').html('Лист назначение')
     $('#amb_drug').load('/amb/drug.s', () => {
+      $('#modal_window').click();
+    });
+  }
+  function openResults() {
+    $('#myModalLabel').html('Результаты обследования')
+    $('#amb_drug').load('/amb/results.s?id=${patient.id}', () => {
       $('#modal_window').click();
     });
   }

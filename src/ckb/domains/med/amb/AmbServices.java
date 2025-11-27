@@ -17,6 +17,7 @@ public class AmbServices extends GenId {
   @Column private String consul = "N";
   @Column private String diagnoz = "Y";
   @Column private String treatment = "N";
+  @Column private String out_service = "N";
   @Column private String newForm;
   //
   @Column private Integer form_id;
@@ -180,5 +181,13 @@ public class AmbServices extends GenId {
 
   public void setSaleProc(Double saleProc) {
     this.saleProc = saleProc;
+  }
+
+  public String getOut_service() {
+    return out_service;
+  }
+
+  public void setOut_service(String out_service) {
+    this.out_service = out_service;
   }
 }

@@ -85,6 +85,10 @@
           <td><input type="checkbox" value="Y" name="treatment" <c:if test="${ser.treatment == 'Y'}">checked</c:if>></td>
         </tr>
         <tr>
+          <td class="bold">Внешняя услуга?:</td>
+          <td><input type="checkbox" value="Y" name="out_service" <c:if test="${ser.out_service == 'Y'}">checked</c:if>></td>
+        </tr>
+        <tr>
           <td class="bold">Форма:</td>
           <td>
             <select name="form_id" class="form-control" onchange="setAmbForm(this.value)">

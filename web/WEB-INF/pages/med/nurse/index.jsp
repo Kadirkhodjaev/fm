@@ -40,9 +40,9 @@
                   <c:if test="${is10 && key.id == 10}"><td class="center bold" nowrap>${key.name}</td></c:if>
                   <c:if test="${is11 && key.id == 11}"><td class="center bold" nowrap>${key.name}</td></c:if>
                   <c:if test="${is12 && key.id == 12}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is17 && key.id == 17}"><td class="center bold" nowrap>${key.name}</td></c:if>
                   <c:if test="${is13 && key.id == 13}"><td class="center bold" nowrap>${key.name}</td></c:if>
                   <c:if test="${is14 && key.id == 14}"><td class="center bold" nowrap>${key.name}</td></c:if>
+                  <c:if test="${is17 && key.id == 17}"><td class="center bold" nowrap>${key.name}</td></c:if>
                   <c:if test="${is22 && key.id == 22}"><td class="center bold" nowrap>${key.name}</td></c:if>
                 </c:forEach>
                 <c:if test="${is15}">
@@ -69,9 +69,9 @@
                   <c:if test="${is13}"><td nowrap>${rw.c23}</td></c:if>
                   <c:if test="${is14}"><td nowrap>${rw.c24}</td></c:if>
                   <c:if test="${is17}"><td nowrap>${rw.c27}</td></c:if>
-                  <c:if test="${is15}"><td nowrap>${rw.c25}</td></c:if>
-                  <c:if test="${is16}"><td nowrap>${rw.c26}</td></c:if>
                   <c:if test="${is22}"><td nowrap>${rw.c25}</td></c:if>
+                  <c:if test="${is15}"><td nowrap>${rw.c18}</td></c:if>
+                  <c:if test="${is16}"><td nowrap>${rw.c26}</td></c:if>
                 </tr>
               </c:forEach>
             </table>

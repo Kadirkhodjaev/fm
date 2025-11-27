@@ -4,10 +4,12 @@ import ckb.dao.admin.users.DUser;
 import ckb.dao.emp.DEmp;
 import ckb.dao.emp.DEmpDoctor;
 import ckb.dao.med.amb.DAmbPatient;
+import ckb.dao.med.amb.DAmbPatientService;
 import ckb.dao.med.client.DClient;
 import ckb.domains.admin.Clients;
 import ckb.domains.emp.EmpDoctors;
 import ckb.domains.emp.Emps;
+import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbPatients;
 import ckb.services.admin.form.SForm;
 import ckb.session.Session;
@@ -25,7 +27,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Controller
 @RequestMapping("/emp")
@@ -36,6 +40,7 @@ public class CEmp {
   @Autowired private DClient dClient;
   @Autowired private SForm sForm;
   @Autowired private DAmbPatient dAmbPatient;
+  @Autowired private DAmbPatientService dAmbPatientService;
   @Autowired private BeanSession beanSession;
   @Autowired private BeanUsers beanUsers;
   @Autowired private DUser dUser;
@@ -45,7 +50,7 @@ public class CEmp {
   protected String changePass(HttpServletRequest req, Model model){
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("emp/index.s");
-    model.addAttribute("rows", dEmp.list("From Emps Order By id desc"));
+    model.addAttribute("rows", dEmp.list("From Emps Order By client.surname"));
     return "/emp/index";
   }
 
@@ -63,6 +68,13 @@ public class CEmp {
     model.addAttribute("lvs", dUser.list("From Users Where active = 1 And glavbuh = 0 And glb = 0 And boss = 0 And mainNurse = 0 And statExp = 0 And procUser = 0 And needleDoc = 0 Order By fio"));
     model.addAttribute("emp_lvs", dEmpDoctor.list("From EmpDoctors Where emp.id = " + id));
     model.addAttribute("regions", beanSession.getRegions());
+    List<AmbPatients> patients = dAmbPatient.list("From AmbPatients Where emp = " + id);
+    List<AmbPatientServices> rows = new ArrayList<>();
+    for(AmbPatients patient : patients){
+      rows.addAll(dAmbPatientService.list("From AmbPatientServices Where patient = " + patient.getId()));
+    }
+    model.addAttribute("patients", patients);
+    model.addAttribute("rows", rows);
     return "/emp/addEdit";
   }
 

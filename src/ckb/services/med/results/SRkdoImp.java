@@ -73,7 +73,7 @@ public class SRkdoImp implements SRkdo {
     for(LvPlans plan : plans) {
       if(plan.getDone().equals("Y") && plan.getResultId() > 0 && plan.getKdo().getFormId() != 889) {
         /**/
-        if(plan.getKdo().getId() == 154) {
+        if(plan.getKdo().getId() == 154 && false) {
           String res = df999.get(plan.getResultId()).getC2();
           if (res != null && !res.isEmpty())
             list.add("<p style='display: inline'><b>" + plan.getKdo().getShortName() + "</b>:" + res + "; " + "</p><br/>");

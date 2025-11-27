@@ -119,13 +119,17 @@
         <tr>
           <td class="center bold">Показатель</td>
           <td class="center bold">Результат</td>
-          <td class="center bold">Норма</td>
+          <c:if test="${form.normaFlag == null || form.normaFlag == 'Y'}">
+            <td class="center bold">Норма</td>
+          </c:if>
         </tr>
         <c:forEach items="${fields}" var="field">
           <tr>
             <td style="padding:5px;text-align:right">${field.name}</td>
             <td style="padding:5px">${field.html}</td>
-            <td class="center" style="padding:5px">${field.norma} ${field.ei}</td>
+            <c:if test="${form.normaFlag == null || form.normaFlag == 'Y'}">
+              <td class="center" style="padding:5px">${field.norma} ${field.ei}</td>
+            </c:if>
           </tr>
         </c:forEach>
       </table>

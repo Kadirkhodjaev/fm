@@ -1153,12 +1153,13 @@ public class SPatientImp implements SPatient {
             "                   Where c.checked = 1 " +
             "                     And (c.eveningTimeDone = 0 Or c.morningTimeDone = 0 Or c.noonTimeDone = 0) " +
             "                     And c.patientDrug_id = t.id " +
-            "                     And date(c.date) = CURRENT_DATE()) " +
-            "      And date(t.crOn) = '" + Util.dateDB(date) + "'" +
+            "                     And date(c.date) = ?) " +
+            "      And date(t.crOn) = CURRENT_DATE() " +
             "      And g.id = t.patient_id " +
             "      And g.state != 'ARCH' " +
             "      And g.dept_id = " + dep +
             "    Order By t.patient_id, t.Id desc ");
+        ps.setString(1, Util.dateDB(date));
         rs = ps.executeQuery();
         List<PatientDrug> drugs = new ArrayList<>();
         while(rs.next()) {

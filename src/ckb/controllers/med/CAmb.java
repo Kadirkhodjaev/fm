@@ -4,6 +4,7 @@ import ckb.dao.admin.country.DCountry;
 import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
+import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
@@ -78,6 +79,7 @@ public class CAmb {
   @Autowired private DRegion dRegion;
   @Autowired private BeanSession beanSession;
   @Autowired private BeanUsers beanUsers;
+  @Autowired private DFormField dFormField;
   //endregion
 
   //region PATIENTS
@@ -340,7 +342,7 @@ public class CAmb {
     m.addAttribute("countryName", p.getCounteryId() != null ? dCountry.get(p.getCounteryId()).getName() : "");
     m.addAttribute("regionName", p.getRegionId() != null ? dRegion.get(p.getRegionId()).getName() : "");
     if(session.getCurPat() > 0)
-      m.addAttribute("lvpartners", dLvPartner.list("From LvPartners Where id = " + (p.getLvpartner() == null ? 0 : p.getLvpartner().getId())));
+      m.addAttribute("lvpartners", p.getLvpartner() == null ? beanSession.getLvPartners() : dLvPartner.list("From LvPartners Where id = " + p.getLvpartner().getId()));
     else
       m.addAttribute("lvpartners", beanSession.getLvPartners());
     m.addAttribute("fizio_user", dUser.get(session.getUserId()).isAmbFizio());
@@ -645,10 +647,11 @@ public class CAmb {
     session.setCurPat(service.getPatient());
     m.addAttribute("curUser", session.getUserId());
     if(service.getService().getForm_id() != null && service.getService().getForm_id() > 0) {
-      m.addAttribute("data", sAmb.getFormJson(service.getResult()));
-      m.addAttribute("fields", sForm.createFields(service.getService().getForm_id(), service.getService().getId()));
       Forms form = dForm.get(service.getService().getForm_id());
-      return "med/amb/forms/" + (form.getJsp() != null  ? service.getService().getForm_id() : "standart");
+      m.addAttribute("data", sAmb.getFormJson(service.getResult()));
+      m.addAttribute("form", form);
+      m.addAttribute("fields", sForm.createFields(service.getService().getForm_id(), service.getService().getId()));
+      return "med/amb/forms/" + (form.getJsp() != null && !form.getJsp().isEmpty()  ? service.getService().getForm_id() : "standart");
     } else {
       sAmb.setFields(m, service.getService().getId());
       return "med/amb/work";
@@ -750,6 +753,114 @@ public class CAmb {
     return json.toString();
   }
 
+  @RequestMapping("/results.s")
+  protected String ambResults(HttpServletRequest req, Model model) {
+    AmbPatients pat = dAmbPatients.get(Util.getInt(req, "id"));
+    List<String> list = new ArrayList<>();
+    List<AmbPatientServices> rows = dAmbPatientServices.list("From AmbPatientServices t Where t.patient = " + pat.getId() + " And t.state = 'DONE' And service.form_id in (777, 888)");
+    for(AmbPatientServices r : rows) {
+      if(r.getConfDate() != null && r.getResult() != null && r.getResult() > 0) {
+        AmbResults res = dAmbResults.get(r.getResult());
+        list.add("<b>" + r.getService().getName() + "</b>:" + res.getC1() + (r.getService().getForm_id() == 777 ? " " + r.getService().getEi() : "") + "; ");
+      }
+    }
+    rows = dAmbPatientServices.list("From AmbPatientServices t Where t.patient = " + pat.getId() + " And t.state = 'DONE' And service.form_id not in (777, 888)");
+    for(AmbPatientServices r : rows) {
+      if(r.getConfDate() != null && r.getResult() != null && r.getResult() > 0) {
+        //
+        AmbResults res = dAmbResults.get(r.getResult());
+        //
+        if(r.getService().getForm_id() == 999) {
+          list.add("<b>" + r.getService().getName()  + "</b>:" + res.getC1() + ";<br/>");
+        } else {
+          List<FormFields> fields = dFormField.getFiledsByForm(r.getService().getForm_id());
+          list.add("<b>" + r.getService().getName() + "</b>:" + getDFResult(res, fields) + "<br/>");
+        }
+      }
+    }
+    model.addAttribute("list", list);
+    model.addAttribute("pat", pat);
+    //
+    return "med/amb/results";
+  }
+
+  private String makeCell(List<FormFields> cols, Integer pos, String val){
+    try {
+      if (Util.nvl(cols.get(pos - 1).getResFlag(), "N").equals("Y") && !"".equals(val)) {
+        return "<i>" + cols.get(pos - 1).getField() + "</i>: " + val + (Util.nvl(cols.get(pos - 1).getEI()).isEmpty() ? "" : " " + Util.nvl(cols.get(pos - 1).getEI())) + (cols.size() == pos ? "; " : ", ");
+      } else
+        return "";
+    } catch (Exception e) {
+      return "";
+    }
+  }
+
+  private String getDFResult(AmbResults f, List<FormFields>  c) {
+    //
+    String sb = makeCell(c, 1, f.getC1()) +
+      makeCell(c, 2, f.getC2()) +
+      makeCell(c, 3, f.getC3()) +
+      makeCell(c, 4, f.getC4()) +
+      makeCell(c, 5, f.getC5()) +
+      makeCell(c, 6, f.getC6()) +
+      makeCell(c, 7, f.getC7()) +
+      makeCell(c, 8, f.getC8()) +
+      makeCell(c, 9, f.getC9()) +
+      makeCell(c, 10, f.getC10()) +
+      makeCell(c, 11, f.getC11()) +
+      makeCell(c, 12, f.getC12()) +
+      makeCell(c, 13, f.getC13()) +
+      makeCell(c, 14, f.getC14()) +
+      makeCell(c, 15, f.getC15()) +
+      makeCell(c, 16, f.getC16()) +
+      makeCell(c, 17, f.getC17()) +
+      makeCell(c, 18, f.getC18()) +
+      makeCell(c, 19, f.getC19()) +
+      makeCell(c, 20, f.getC20()) +
+      makeCell(c, 21, f.getC21()) +
+      makeCell(c, 22, f.getC22()) +
+      makeCell(c, 23, f.getC23()) +
+      makeCell(c, 24, f.getC24()) +
+      makeCell(c, 25, f.getC25()) +
+      makeCell(c, 26, f.getC26()) +
+      makeCell(c, 27, f.getC27()) +
+      makeCell(c, 28, f.getC28()) +
+      makeCell(c, 29, f.getC29()) +
+      makeCell(c, 30, f.getC30()) +
+      makeCell(c, 31, f.getC31()) +
+      makeCell(c, 32, f.getC32()) +
+      makeCell(c, 33, f.getC33()) +
+      makeCell(c, 34, f.getC34()) +
+      makeCell(c, 35, f.getC35()) +
+      makeCell(c, 36, f.getC36()) +
+      makeCell(c, 37, f.getC37()) +
+      makeCell(c, 38, f.getC38()) +
+      makeCell(c, 39, f.getC39()) +
+      makeCell(c, 40, f.getC40()) +
+      makeCell(c, 41, f.getC41()) +
+      makeCell(c, 42, f.getC42()) +
+      makeCell(c, 43, f.getC43()) +
+      makeCell(c, 44, f.getC44()) +
+      makeCell(c, 45, f.getC45()) +
+      makeCell(c, 46, f.getC46()) +
+      makeCell(c, 47, f.getC47()) +
+      makeCell(c, 48, f.getC48()) +
+      makeCell(c, 49, f.getC49()) +
+      makeCell(c, 50, f.getC50()) +
+      makeCell(c, 51, f.getC51()) +
+      makeCell(c, 52, f.getC52()) +
+      makeCell(c, 53, f.getC53()) +
+      makeCell(c, 54, f.getC54()) +
+      makeCell(c, 55, f.getC55()) +
+      makeCell(c, 56, f.getC56()) +
+      makeCell(c, 57, f.getC57()) +
+      makeCell(c, 58, f.getC58()) +
+      makeCell(c, 59, f.getC59()) +
+      makeCell(c, 60, f.getC60());
+    //
+    return sb;
+  }
+
   @RequestMapping(value = "/confirmService.s", method = RequestMethod.POST)
   @ResponseBody
   protected String confirmService(HttpServletRequest req) throws JSONException {
@@ -775,7 +886,9 @@ public class CAmb {
 
   @RequestMapping("/print.s")
   protected String print(HttpServletRequest req, Model m) {
-    AmbPatients pat = dAmbPatients.get(session.getCurPat());
+    Session session = SessionUtil.getUser(req);
+    int patient = Util.getInt(req, "patient", session.getCurPat());
+    AmbPatients pat = dAmbPatients.get(patient);
     m.addAttribute("ids", req.getParameter("ids"));
     m.addAttribute("patFio", pat.getSurname() + " " + pat.getName() + " " + pat.getMiddlename());
     SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
@@ -870,6 +983,7 @@ public class CAmb {
       ser.setFields(sAmb.getResultFields(service));
       m.addAttribute("ser", ser);
       Forms form = dForm.get(service.getService().getForm_id());
+      m.addAttribute("form", form);
       return "med/amb/print/" + (form.getJsp() != null ? service.getService().getForm_id() : "standart");
     } else {
       List<AmbServiceFields> fields = dAmbServiceFields.byService(service.getService().getId());
