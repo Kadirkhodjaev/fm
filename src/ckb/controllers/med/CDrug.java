@@ -201,23 +201,23 @@ public class CDrug {
         json.put("msg", "Поля цена имеет не правильный формат");
       }
       if(Util.isNotDouble(req, "block_count")) {
-        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поле кол-во имеет не правильный формат");
+        json.put("msg", (isErr ? json.get("msg") + " " : "") + "Поле кол-во имеет не правильный формат");
         isErr = true;
       }
       if(Util.isNotDouble(req, "one_price")) {
-        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поле Цена за единицу имеет не правильный формат");
+        json.put("msg", (isErr ? json.get("msg") + " " : "") + "Поле Цена за единицу имеет не правильный формат");
         isErr = true;
       }
       if(Util.isNull(req, "counter") || Util.isNotDouble(req, "counter")) {
-        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Поле Кол-во единиц имеет не правильный формат");
+        json.put("msg", (isErr ? json.get("msg") + " " : "") + "Поле Кол-во единиц имеет не правильный формат");
         isErr = true;
       }
       if(endDate.before(new Date()) || endDate.equals(new Date())) {
-        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Срок годность не может быть меньше текущей даты");
+        json.put("msg", (isErr ? json.get("msg") + " " : "") + "Срок годность не может быть меньше текущей даты");
         isErr = true;
       }
       if(Util.isNull(req, "man")) {
-        json.put("msg", (isErr ? json.get("msg") + "\n" : "") + "Производитель не может быть пустым");
+        json.put("msg", (isErr ? json.get("msg") + " " : "") + "Производитель не может быть пустым");
         isErr = true;
       }
       if(isErr) {
@@ -872,7 +872,7 @@ public class CDrug {
     session.setCurUrl("/drugs/dicts.s");
     session.setCurSubUrl("/drugs/dict/drug/normas.s");
     model.addAttribute("drugs", dDrug.list("From Drugs t Where Not Exists (Select 1 From DrugNormas c Where c.drug.id = t.id) And state = 'A' Order By Name"));
-    model.addAttribute("rows", dDrugNorma.list("From DrugNormas Order By Id Desc"));
+    model.addAttribute("rows", dDrugNorma.list("From DrugNormas Order By drug.name"));
     model.addAttribute("directions", dDrugDirection.list("From DrugDirections Where id in (25, 28, 29) Order By Name"));
     return "/med/drugs/dicts/drugs/normas";
   }
@@ -1068,29 +1068,6 @@ public class CDrug {
     return "/med/drugs/out/addEdit";
   }
 
-  @RequestMapping("/out/drug/norma.s")
-  protected String out_drug_norma(HttpServletRequest req, Model model) {
-    DrugNormas norma = dDrugNorma.get(Util.getInt(req, "id"));
-    model.addAttribute("drug", norma.getDrug());
-    model.addAttribute("norma", dDrugNorma.obj("From DrugNormas Where id = " + norma.getId()));
-    List<DrugNormaDirections> dirs = dDrugNormaDirection.list("From DrugNormaDirections Where drug.id = " + norma.getDrug().getId());
-    if(dirs.isEmpty()) {
-      List<DrugDirections> directs = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29) Order By Name");
-      for(DrugDirections d : directs) {
-        DrugNormaDirections a = new DrugNormaDirections();
-        a.setDrug(norma.getDrug());
-        a.setDirection(d);
-        a.setNorma(0D);
-        dirs.add(a);
-      }
-    }
-    model.addAttribute("directions", dirs);
-    DrugOutRows outRow = dDrugOutRow.get(Util.getInt(req, "out_row"));
-
-    model.addAttribute("outRow", outRow);
-    return "/med/drugs/dicts/drugs/norma_modal";
-  }
-
   @RequestMapping(value = "/out/row/norma.s", method = RequestMethod.POST)
   @ResponseBody
   protected String save_out_row_norma(HttpServletRequest req) throws JSONException {
@@ -1132,6 +1109,53 @@ public class CDrug {
           dDrugOut.delete(doc);
           json.put("empty_flag", "Y");
         }
+      }
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping("/out/drug/norma.s")
+  protected String out_drug_norma(HttpServletRequest req, Model model) {
+    DrugNormas norma = dDrugNorma.get(Util.getInt(req, "id"));
+    model.addAttribute("drug", norma.getDrug());
+    model.addAttribute("norma", dDrugNorma.obj("From DrugNormas Where id = " + norma.getId()));
+    List<DrugNormaDirections> dirs = dDrugNormaDirection.list("From DrugNormaDirections Where drug.id = " + norma.getDrug().getId());
+    if(dirs.isEmpty()) {
+      List<DrugDirections> directs = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29) Order By Name");
+      for(DrugDirections d : directs) {
+        DrugNormaDirections a = new DrugNormaDirections();
+        a.setDrug(norma.getDrug());
+        a.setDirection(d);
+        a.setNorma(0D);
+        dirs.add(a);
+      }
+    }
+    model.addAttribute("directions", dirs);
+    DrugOutRows outRow = dDrugOutRow.get(Util.getInt(req, "out_row"));
+
+    model.addAttribute("outRow", outRow);
+    return "/med/drugs/dicts/drugs/norma_modal";
+  }
+
+  @RequestMapping(value = "/out/del.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String del_out_doc(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      DrugOuts out = dDrugOut.get(Util.getInt(req, "id"));
+      if(out.getState().equals("SND")) {
+        if(dDrugOutRow.getCount("From DrugOutRows Where doc.id = " + out.getId() + " And drugCount is not null") == 0) {
+          dDrugOutRow.delSql("From DrugOutRows Where doc.id = " + out.getId());
+          dDrugOut.delete(out.getId());
+        } else {
+          return Util.err(json, "Есть подтвержденные записи. Удалиты связку медикаментов");
+        }
+      } else {
+        return Util.err(json, "Нельзя удалить документ! Состояние документа не 'Отплавлен' ");
       }
       json.put("success", true);
     } catch (Exception e) {
@@ -1278,7 +1302,10 @@ public class CDrug {
     JSONObject json = new JSONObject();
     try {
       List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29)");
+      double pog = Double.parseDouble(beanSession.getParam("DRUG_AUTO_OUT_PROC"));
       for(DrugDirections dd : directions) {
+        if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And autoFlag = 'Y'") > 0)
+          continue;
         if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And insFlag = 'Y'") == 0) {
           List<DrugNormas> normas = dDrugNorma.list("From DrugNormas");
           DrugOuts out = null;
@@ -1292,7 +1319,7 @@ public class CDrug {
                 n = nd.getNorma();
             }
             double f = n - saldo;
-            if(n - saldo > 0 && (saldo / n <= 0.75 || saldo == 0)) {
+            if(n - saldo > 0 && (saldo / n <= (pog / 100) || saldo == 0)) {
               if(Util.nvl(norma.getTab(), 0) > 0) {
                 if (f > norma.getTab()) {
                   double d = Math.floor(f / norma.getTab());
@@ -1350,36 +1377,33 @@ public class CDrug {
     try {
       conn = DB.getConnection();
       ps = conn.prepareStatement(
-        "Select a.name, t.rasxod, t.drug_id " +
-          "  From (  " +
-          "    Select t.drug_id, Round(Sum(t.rasxod) / 10) rasxod  " +
-          "      From (  " +
-          "        Select g.drug_Id, Sum(t.rasxod) rasxod  " +
-          "          From hn_date_rows t, hn_dates c, hn_drugs g  " +
-          "         Where t.doc_Id = c.Id  " +
-          "           And g.id = t.drug_Id  " +
-          "           And date(t.crOn) between date_sub(now(), interval 10 day) And now()  " +
-          "           And c.direction_Id in (25, 28, 29)  " +
-          "           And g.drug_Id in (Select d.drug_Id From drug_s_normas d)  " +
-          "         group by g.drug_Id  " +
-          "        Union All  " +
-          "        Select g.drug_Id, Sum(t.rasxod) rasxod  " +
-          "          From hn_date_patient_rows t, hn_dates c, hn_drugs g  " +
-          "         Where t.doc_Id = c.Id  " +
-          "           And g.id = t.drug_Id  " +
-          "           And date(t.crOn) between date_sub(now(), interval 10 day) And now()  " +
-          "           And c.direction_Id in (25, 28, 29)  " +
-          "           And g.drug_Id in (Select d.drug_Id From drug_s_normas d)  " +
-          "         group by g.drug_Id  " +
-          "      ) t  " +
-          "      Group By t.drug_Id) t, drug_s_names a  " +
-          "   Where rasxod > 0  " +
-          "     And a.id = t.drug_Id  " +
-          "   Order By a.name"
+        "Select t.id, " +
+          "       t.name, " +
+          "       (t.rasxod + t.patient_rasxod) / 10 rasxod " +
+          "  From ( " +
+          "    Select q.id, " +
+          "           q.name, " +
+          "           (Select ifnull(Sum(t.rasxod), 0) rasxod   " +
+          "              From hn_date_rows t, hn_dates c, hn_drugs g   " +
+          "             Where t.doc_Id = c.Id   " +
+          "               And g.id = t.drug_Id   " +
+          "               And date(t.crOn) between date_sub(now(), interval 10 day) And now()   " +
+          "               And c.direction_Id in (25, 28, 29)   " +
+          "               And g.drug_Id = q.id) rasxod, " +
+          "         (Select ifnull(Sum(t.rasxod), 0) rasxod   " +
+          "            From hn_date_patient_rows t, hn_dates c, hn_drugs g   " +
+          "           Where t.doc_Id = c.Id   " +
+          "             And g.id = t.drug_Id   " +
+          "             And date(t.crOn) between date_sub(now(), interval 10 day) And now()   " +
+          "             And c.direction_Id in (25, 28, 29)   " +
+          "             And g.drug_Id = q.id) patient_rasxod " +
+          "    From Drug_s_Names q " +
+          "    Where q.id in (Select d.drug_Id From drug_s_normas d) " +
+          ") t Order By name "
       );
       rs = ps.executeQuery();
       while (rs.next()) {
-        int drug = rs.getInt("drug_id");
+        int drug = rs.getInt("id");
         DrugNormas n = dDrugNorma.obj("From DrugNormas Where drug.id = " + drug);
         double norma = 0;
         if(n.getNormaType().equals("ALL")) {

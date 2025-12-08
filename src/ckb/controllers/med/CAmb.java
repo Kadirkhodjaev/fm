@@ -307,7 +307,7 @@ public class CAmb {
         }
         if("Y".equals(s.getService().getConsul()) && session.getRoleId() == 15 && "DONE".equals(s.getState())) {
           long diff = new Date().getTime() - p.getRegDate().getTime();
-          if(diff / (1000*60*60*24) <= 5 && !"D".equals(s.getAmb_repeat()) && !"Y".equals(s.getAmb_repeat()))
+          if(diff / (1000*60*60*24) <= 10 && !"D".equals(s.getAmb_repeat()) && !"Y".equals(s.getAmb_repeat()))
             d.setRepeat(true);
         }
         if(!"DONE".equals(s.getState()) && !"DEL".equals(s.getState()) && !"AUTO_DEL".equals(s.getState()))
@@ -1043,12 +1043,14 @@ public class CAmb {
       AmbPatientServices ser = dAmbPatientServices.get(Req.getInt(req, "id"));
       ser.setAmb_repeat("D");
       dAmbPatientServices.save(ser);
+      long diff = new Date().getTime() - ser.getCrOn().getTime();
+      int ff = diff / (1000*60*60*24) <= 5 ? 100 : 50;
       //
       ser.setId(null);
       ser.setState("ENT");
       ser.setAmb_repeat("Y");
       ser.setCrOn(new Date());
-      ser.setPrice(ser.getPrice() / 2);
+      ser.setPrice(ser.getPrice() - (ser.getPrice() * ff) / 100);
       ser.setCrBy(session.getUserId());
       dAmbPatientServices.save(ser);
       //

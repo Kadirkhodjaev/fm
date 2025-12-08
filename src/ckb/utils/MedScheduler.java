@@ -26,7 +26,7 @@ public class MedScheduler implements Job {
     DAmbPatient dAmbPatient = ach.getContext().getBean(DAmbPatient.class);
     DAmbPatientService dAmbPatientServices = ach.getContext().getBean(DAmbPatientService.class);
     Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.DATE, -5);
+    calendar.add(Calendar.DATE, -11);
     try {
       Integer counter = 0;
       String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS").format(calendar.getTime());
