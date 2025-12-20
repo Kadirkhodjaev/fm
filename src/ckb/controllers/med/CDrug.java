@@ -1301,13 +1301,13 @@ public class CDrug {
   protected String gen_auto_out(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29)");
+      List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25)");
       double pog = Double.parseDouble(beanSession.getParam("DRUG_AUTO_OUT_PROC"));
       for(DrugDirections dd : directions) {
         if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And autoFlag = 'Y'") > 0)
           continue;
         if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And insFlag = 'Y'") == 0) {
-          List<DrugNormas> normas = dDrugNorma.list("From DrugNormas");
+          List<DrugNormas> normas = dDrugNorma.list("From DrugNormas Where drug.id = 745");
           DrugOuts out = null;
           for (DrugNormas norma:  normas) {
             double saldo = sDrug.saldo(dd.getId(), norma.getDrug().getId()), n = 0;
@@ -1321,11 +1321,11 @@ public class CDrug {
             double f = n - saldo;
             if(n - saldo > 0 && (saldo / n <= (pog / 100) || saldo == 0)) {
               if(Util.nvl(norma.getTab(), 0) > 0) {
-                if (f > norma.getTab()) {
+                if (f >= norma.getTab()) {
                   double d = Math.floor(f / norma.getTab());
                   f = norma.getTab() * d;
                 } else {
-                  continue;
+                  f = norma.getTab();
                 }
               }
               double drugSaldo = sDrug.drug_saldo(norma.getDrug().getId());

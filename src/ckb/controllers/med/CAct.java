@@ -534,7 +534,6 @@ public class CAct {
       m.addAttribute("glv", beanUsers.getGlb());
       m.addAttribute("glavbuh", beanUsers.getGlavbuh());
       m.addAttribute("head_nurse", hnPatient.getPatient().getDept().getNurse().getFio());
-
       //
     } catch (Exception e) {
       e.printStackTrace();
@@ -742,11 +741,12 @@ public class CAct {
       Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
       ps = conn.prepareStatement(
         "Select t.id, t.Kdo_Id, c.`Name` Kdo_Name, 1 Kdo_Count, t.conf_user " +
-          "  From lv_plans t, Kdos c " +
+          "  From lv_plans t, Kdos c, kdo_types d " +
           " Where t.patientId = ? " +
           "    And t.Kdo_Id = c.Id " +
           "    And t.result_id > 0 " +
-          "    And t.Kdo_Type_Id in (1, 2, 3, 19, 20) "
+          "    And d.id = c.kdo_type " +
+          "    And d.labFlag = 'Y' "
       );
       ps.setInt(1, pat.getPatient().getId());
       rs = ps.executeQuery();
@@ -788,11 +788,12 @@ public class CAct {
       Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
       ps = conn.prepareStatement(
         "Select t.Kdo_Id, Max(c.`Name`) Kdo_Name, Count(*) Kdo_Count, t.conf_user, sum(t.counter) needlecount " +
-          "  From lv_plans t, Kdos c " +
+          "  From lv_plans t, Kdos c, Kdo_Types d " +
           " Where t.patientId = ? " +
           "    And t.Kdo_Id = c.Id " +
           "    And t.result_id > 0 " +
-          "    And t.Kdo_Type_Id not in (1, 2, 3, 8, 19, 20) " +
+          "    And d.id = c.kdo_type" +
+          "    And d.labFlag != 'Y' " +
           "  Group By t.Kdo_Id, t.conf_user "
       );
       ps.setInt(1, pat.getPatient().getId());

@@ -49,6 +49,10 @@
           <td class="bold">Активный?:</td>
           <td><input type="checkbox" value="A" name="active" <c:if test="${ser.state == 'A'}">checked</c:if>></td>
         </tr>
+        <tr>
+          <td class="bold">Лаборатория?:</td>
+          <td><input type="checkbox" value="Y" name="lab_flag" <c:if test="${ser.labFlag == 'Y'}">checked</c:if>></td>
+        </tr>
       </table>
     </form>
   </div>

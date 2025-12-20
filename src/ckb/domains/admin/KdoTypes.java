@@ -15,6 +15,7 @@ public class KdoTypes extends GenId {
 
   @Column private String state = "A";
   @Column private String groupState = "N";
+  @Column private String labFlag = "N";
 
   public String getGroupState() {
     return groupState;
@@ -38,5 +39,13 @@ public class KdoTypes extends GenId {
 
   public void setState(String state) {
     this.state = state;
+  }
+
+  public String getLabFlag() {
+    return labFlag;
+  }
+
+  public void setLabFlag(String labFlag) {
+    this.labFlag = labFlag;
   }
 }

@@ -61,6 +61,7 @@ public class CCoreStat {
       ser.setName(Util.get(req, "name"));
       ser.setGroupState(Util.isNull(req, "group") ? "N" : Util.get(req, "group"));
       ser.setState(Util.isNull(req, "active") ? "P" : Util.get(req, "active"));
+      ser.setLabFlag(Util.isNull(req, "lab_flag") ? "N" : Util.get(req, "lab_flag"));
       dKdoType.save(ser);
       json.put("success", true);
     } catch (Exception e) {
