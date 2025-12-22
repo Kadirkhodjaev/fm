@@ -32,6 +32,7 @@ public class Obj {
   private Double inCount;
   private Double outCount;
   private Double price;
+  private Double perc;
   private Integer extraId;
   private LinkedHashMap<Integer, String> rows = new LinkedHashMap<Integer, String>();
 
@@ -141,5 +142,13 @@ public class Obj {
 
   public void setBookings(List<AmbBookings> bookings) {
     this.bookings = bookings;
+  }
+
+  public Double getPerc() {
+    return perc;
+  }
+
+  public void setPerc(Double perc) {
+    this.perc = perc;
   }
 }

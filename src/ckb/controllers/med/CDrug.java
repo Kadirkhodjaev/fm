@@ -1033,6 +1033,7 @@ public class CDrug {
       b.setClaimCount(r.getClaimCount());
       b.setDrugCount(r.getDrugCount());
       b.setPrice(r.getPrice());
+      b.setPerc(r.getPerc());
       List<DrugActDrugs> act = dDrugActDrug.getList("From DrugActDrugs Where act.state != 'E' And counter - rasxod > 0 And drug.id = " + r.getDrug().getId());
       List<ObjList> variuos = new ArrayList<>();
       if(!act.isEmpty())
@@ -1301,13 +1302,13 @@ public class CDrug {
   protected String gen_auto_out(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25)");
+      List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29)");
       double pog = Double.parseDouble(beanSession.getParam("DRUG_AUTO_OUT_PROC"));
       for(DrugDirections dd : directions) {
         if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And autoFlag = 'Y'") > 0)
           continue;
         if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And insFlag = 'Y'") == 0) {
-          List<DrugNormas> normas = dDrugNorma.list("From DrugNormas Where drug.id = 745");
+          List<DrugNormas> normas = dDrugNorma.list("From DrugNormas");
           DrugOuts out = null;
           for (DrugNormas norma:  normas) {
             double saldo = sDrug.saldo(dd.getId(), norma.getDrug().getId()), n = 0;
@@ -1348,6 +1349,7 @@ public class CDrug {
                 row.setClaimCount(f);
                 row.setDrug(norma.getDrug());
                 row.setMeasure(row.getDrug().getMeasure());
+                row.setPerc((double) Math.round(saldo * 100 / n) / 100);
                 row.setCrBy(0);
                 row.setCrOn(new Date());
                 dDrugOutRow.save(row);

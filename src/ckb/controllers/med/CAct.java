@@ -746,7 +746,7 @@ public class CAct {
           "    And t.Kdo_Id = c.Id " +
           "    And t.result_id > 0 " +
           "    And d.id = c.kdo_type " +
-          "    And d.labFlag = 'Y' "
+          "    And ifnull(d.labFlag, 'N') = 'Y' "
       );
       ps.setInt(1, pat.getPatient().getId());
       rs = ps.executeQuery();
@@ -793,7 +793,7 @@ public class CAct {
           "    And t.Kdo_Id = c.Id " +
           "    And t.result_id > 0 " +
           "    And d.id = c.kdo_type" +
-          "    And d.labFlag != 'Y' " +
+          "    And ifnull(d.labFlag, 'N') != 'Y' " +
           "  Group By t.Kdo_Id, t.conf_user "
       );
       ps.setInt(1, pat.getPatient().getId());

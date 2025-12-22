@@ -20,6 +20,7 @@ public class DrugOutRows extends GenId {
   @OneToOne @JoinColumn private DrugActDrugs income;
   @Column private Double drugCount;
   @Column private Double price;
+  @Column private Double perc;
   @Column private Integer hndrug;
 
   @Column private Integer crBy;
@@ -104,5 +105,13 @@ public class DrugOutRows extends GenId {
 
   public void setHndrug(Integer hndrug) {
     this.hndrug = hndrug;
+  }
+
+  public Double getPerc() {
+    return perc;
+  }
+
+  public void setPerc(Double perc) {
+    this.perc = perc;
   }
 }
