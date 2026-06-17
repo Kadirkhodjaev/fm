@@ -84,26 +84,26 @@
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c11norma}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c11ei}</td>
 </tr>
-<tr>
+<%--<tr>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">BCK</td>
+  <td align=left style="padding:5px; border:1px solid #e8e8e8">${c12name}</td>
+  <td style="border:1px solid #e8e8e8; padding:5px">${c12html}</td>
+  <td align=center style="padding:5px; border:1px solid #e8e8e8">${c12norma}</td>
+  <td align=center style="padding:5px; border:1px solid #e8e8e8">${c12ei}</td>
+</tr>--%>
+<tr>
+  <td align=center style="padding:5px; border:1px solid #e8e8e8">WBC</td>
   <td align=left style="padding:5px; border:1px solid #e8e8e8">${c12name}</td>
   <td style="border:1px solid #e8e8e8; padding:5px">${c12html}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c12norma}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c12ei}</td>
 </tr>
 <tr>
-  <td align=center style="padding:5px; border:1px solid #e8e8e8">WBC</td>
+  <td align=center style="padding:5px; border:1px solid #e8e8e8">Lymph%</td>
   <td align=left style="padding:5px; border:1px solid #e8e8e8">${c13name}</td>
   <td style="border:1px solid #e8e8e8; padding:5px">${c13html}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c13norma}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c13ei}</td>
-</tr>
-<tr>
-  <td align=center style="padding:5px; border:1px solid #e8e8e8">Lymph%</td>
-  <td align=left style="padding:5px; border:1px solid #e8e8e8">${c14name}</td>
-  <td style="border:1px solid #e8e8e8; padding:5px">${c14html}</td>
-  <td align=center style="padding:5px; border:1px solid #e8e8e8">${c14norma}</td>
-  <td align=center style="padding:5px; border:1px solid #e8e8e8">${c14ei}</td>
 </tr>
 <tr>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">Mid%</td>
@@ -169,14 +169,14 @@
   <td align=center style="padding:5px; border:1px solid #e8e8e8">42 – 77</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">%</td>
 </tr>--%>
-<tr>
+<%--<tr>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">ЭОЗ</td>
   <td align=left style="padding:5px; border:1px solid #e8e8e8">${c24name}</td>
   <td style="border:1px solid #e8e8e8; padding:5px">${c24html}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c24norma}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">${c24ei}</td>
 </tr>
-<%--<tr>
+<tr>
   <td align=left style="padding:5px; border:1px solid #e8e8e8">${c25name}</td>
   <td style="border:1px solid #e8e8e8; padding:5px">${c25html}</td>
   <td align=center style="padding:5px; border:1px solid #e8e8e8">0 - 1</td>

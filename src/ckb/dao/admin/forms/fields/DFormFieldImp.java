@@ -23,7 +23,16 @@ public class DFormFieldImp extends DaoImp<FormFields> implements DFormField {
     try {
       return getList("From FormFields t Where t.form.id = " + formId + " Order By ord Desc");
     } catch (Exception e) {
-      return new ArrayList<FormFields>();
+      return new ArrayList<>();
+    }
+  }
+
+  @Override
+  public List<FormFields> getDescFiledsByForm(int formId) {
+    try {
+      return getList("From FormFields t Where t.form.id = " + formId + " Order By ord");
+    } catch (Exception e) {
+      return new ArrayList<>();
     }
   }
 
@@ -32,7 +41,7 @@ public class DFormFieldImp extends DaoImp<FormFields> implements DFormField {
     try {
       return getList("From FormFields t Where t.form.id = " + formId + " Order By ord, 1*substr(fieldCode, 1)");
     } catch (Exception e) {
-      return new ArrayList<FormFields>();
+      return new ArrayList<>();
     }
   }
 

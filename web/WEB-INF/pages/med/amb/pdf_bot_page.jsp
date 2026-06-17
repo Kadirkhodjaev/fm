@@ -17,13 +17,13 @@
         ул. Зебинисо, 8А<br/>
         Наш сайт: www.forux.uz<br/>
         email: forux@mail.ru<br/>
-        Тел/Факс: (71) 289-24-66
+        Тел/Факс: (55) 500-28-88
       </td>
     </tr>
     <tr>
       <td style="text-align:left;font-weight:bold">
         <div style="padding-left:10px;">Свидетельство №1878</div>
-        <div style="padding-left:20px;">Лицензия №01727</div>
+        <div style="padding-left:20px;">Лицензия №</div>
       </td>
     </tr>
   </table>

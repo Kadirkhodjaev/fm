@@ -4,7 +4,7 @@
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <html>
 <style>
-    * {font-size: 12px}
+  * {font-size: 12px}
 </style>
 <body>
 <div>
@@ -27,7 +27,7 @@
     <tr>
       <td style="text-align:left;font-weight:bold">
         <div style="padding-left:90px">Свидетельство №1878</div>
-        <div style="padding-left:100px">Лицензия №27544351</div>
+        <div style="padding-left:100px">Лицензия №4323593</div>
       </td>
     </tr>
   </table>
@@ -166,7 +166,7 @@
         </c:forEach>
       </table>
     </c:if>
-    <c:if test="${item.form == 1002 || item.form == 1003 || item.form == 1006 || item.form == 1007 || item.form == 1008}">
+    <c:if test="${item.form == 1002 || item.form == 1003 || item.form == 1006 || item.form == 1007 || item.form == 1008 || item.form == 1016 || item.form == 1017 || item.form == 1018 || item.form == 1019 || item.form == 1020 || item.form == 1021 || item.form == 1023 || item.form == 1024}">
       <div style="font-weight: bold; text-align: center; padding:20px">${item.serviceName}</div>
       <table style="width:100%; border-collapse: collapse">
         <tr>

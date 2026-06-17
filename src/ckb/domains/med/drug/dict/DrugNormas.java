@@ -13,6 +13,8 @@ public class DrugNormas extends GenId {
 
   @Column private Double norma;
   @Column private Double tab;
+  @Column private Double proc;
+  @Column private Double maxval;
 
   public Drugs getDrug() {
     return drug;
@@ -42,7 +44,24 @@ public class DrugNormas extends GenId {
     return tab;
   }
 
+  public Double getMaxval() {
+    return maxval;
+  }
+
+  public void setMaxval(Double maxval) {
+    this.maxval = maxval;
+  }
+
   public void setTab(Double tab) {
     this.tab = tab;
   }
+
+  public Double getProc() {
+    return proc;
+  }
+
+  public void setProc(Double proc) {
+    this.proc = proc;
+  }
+
 }

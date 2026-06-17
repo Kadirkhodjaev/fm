@@ -44,6 +44,8 @@
         <td class="text-center bold">Тип</td>
         <td class="text-center bold">Значение</td>
         <td class="text-center bold">Таб. в плас.</td>
+        <td class="text-center bold">Мин кол-во</td>
+        <td class="text-center bold">Макс кол-во</td>
       </tr>
       <c:forEach items="${rows}" var="r">
         <tr class="hover hand" ondblclick="$('#pager').load('/drugs/dict/drug/normas/view.s?id=' + ${r.drug.id})">
@@ -61,6 +63,12 @@
           </td>
           <td class="text-right">
             <input type="number" value="${r.tab}" class="form-control text-right" onchange="setNormaValue(${r.id}, this.value, 'tab')"/>
+          </td>
+          <td class="text-right">
+            <input type="number" value="${r.proc}" class="form-control text-right" onchange="setNormaValue(${r.id}, this.value, 'proc')"/>
+          </td>
+          <td class="text-right">
+            <input type="number" value="${r.maxval}" class="form-control text-right" onchange="setNormaValue(${r.id}, this.value, 'max')"/>
           </td>
           <td class="text-center wpx-40">
             <button class="btn btn-danger btn-icon" onclick="delNorma(${r.id})"><i class="fa fa-minus"></i></button>

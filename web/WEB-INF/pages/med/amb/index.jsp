@@ -87,22 +87,22 @@
 
   function setNav(page){
     if(page == 'prev'){
-      <c:if test="${sessionScope.patientGrid.page > 1}">
+      <c:if test="${sessionScope.AmbPatientGrid.page > 1}">
       setPage('/patients/index.s?action=' + page);
       </c:if>
     }
     if(page == 'begin'){
-      <c:if test="${sessionScope.patientGrid.page > 1}">
+      <c:if test="${sessionScope.AmbPatientGrid.page > 1}">
       setPage('/patients/index.s?action=' + page);
       </c:if>
     }
     if(page == 'next'){
-      <c:if test="${sessionScope.patientGrid.page != sessionScope.patientGrid.maxPage}">
+      <c:if test="${sessionScope.AmbPatientGrid.page != sessionScope.AmbPatientGrid.maxPage}">
       setPage('/patients/index.s?action=' + page);
       </c:if>
     }
     if(page == 'end'){
-      <c:if test="${sessionScope.patientGrid.page != sessionScope.patientGrid.maxPage}">
+      <c:if test="${sessionScope.AmbPatientGrid.page != sessionScope.AmbPatientGrid.maxPage}">
       setPage('/patients/index.s?action=' + page);
       </c:if>
     }
@@ -162,19 +162,19 @@
       </select>
     </c:if>
     <ul class="pagination">
-      <li class="paginate_button disabled" tabindex="0"><a href="#">${sessionScope.patientGrid.startPos}..${sessionScope.patientGrid.endPos} из ${sessionScope.patientGrid.rowCount}</a></li>
-      <c:if test="${sessionScope.patientGrid.maxPage > 1}">
-        <li class="paginate_button previous <c:if test="${sessionScope.patientGrid.page == 1}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_previous"><a onclick="setNav('begin')" href="#"><i class="fa fa-fast-backward"></i>&nbsp;</a></li>
-        <li class="paginate_button previous <c:if test="${sessionScope.patientGrid.page == 1}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_previous"><a onclick="setNav('prev')" href="#"><i class="fa fa-backward"></i>&nbsp;</a></li>
+      <li class="paginate_button disabled" tabindex="0"><a href="#">${sessionScope.AmbPatientGrid.startPos}..${sessionScope.AmbPatientGrid.endPos} из ${sessionScope.AmbPatientGrid.rowCount}</a></li>
+      <c:if test="${sessionScope.AmbPatientGrid.maxPage > 1}">
+        <li class="paginate_button previous <c:if test="${sessionScope.AmbPatientGrid.page == 1}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_previous"><a onclick="setNav('begin')" href="#"><i class="fa fa-fast-backward"></i>&nbsp;</a></li>
+        <li class="paginate_button previous <c:if test="${sessionScope.AmbPatientGrid.page == 1}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_previous"><a onclick="setNav('prev')" href="#"><i class="fa fa-backward"></i>&nbsp;</a></li>
         <li class="paginate_button" aria-controls="dataTables-example" tabindex="0">
           <select class="pageNum" style='float:left' onchange="setPageNum(this.value)">
-            <c:forEach begin="1" end="${sessionScope.patientGrid.maxPage}" var="elem">
-              <option <c:if test="${sessionScope.patientGrid.page == elem}">selected</c:if> value="${elem}">${elem}</option>
+            <c:forEach begin="1" end="${sessionScope.AmbPatientGrid.maxPage}" var="elem">
+              <option <c:if test="${sessionScope.AmbPatientGrid.page == elem}">selected</c:if> value="${elem}">${elem}</option>
             </c:forEach>
           </select>
         </li>
-        <li class="paginate_button next <c:if test="${sessionScope.patientGrid.page == sessionScope.patientGrid.maxPage}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_next"><a onclick="setNav('next')" href="#"><i class="fa fa-forward"></i>&nbsp;</a></li>
-        <li class="paginate_button next <c:if test="${sessionScope.patientGrid.page == sessionScope.patientGrid.maxPage}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_next"><a onclick="setNav('end')" href="#"><i class="fa fa-fast-forward"></i>&nbsp;</a></li>
+        <li class="paginate_button next <c:if test="${sessionScope.AmbPatientGrid.page == sessionScope.AmbPatientGrid.maxPage}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_next"><a onclick="setNav('next')" href="#"><i class="fa fa-forward"></i>&nbsp;</a></li>
+        <li class="paginate_button next <c:if test="${sessionScope.AmbPatientGrid.page == sessionScope.AmbPatientGrid.maxPage}">disabled</c:if>" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_next"><a onclick="setNav('end')" href="#"><i class="fa fa-fast-forward"></i>&nbsp;</a></li>
       </c:if>
     </ul>
   </div>

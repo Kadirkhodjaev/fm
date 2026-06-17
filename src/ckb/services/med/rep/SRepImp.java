@@ -1313,7 +1313,7 @@ public class SRepImp implements SRep {
   private void rep13(HttpServletRequest req, Model m){
     Connection conn = DB.getConnection();
     PreparedStatement ps = null;
-    ResultSet rs = null;
+    ResultSet rs = null, rc = null;
     String params = "";
     List<ObjList> rows = new ArrayList<>();
     //
@@ -1329,8 +1329,10 @@ public class SRepImp implements SRep {
           "        (Select con.Name From counteries con WHERE con.id = p.counteryId) Country, " +
           "        (Select reg.Name From Regions reg WHERE reg.id = p.regionId) Region, " +
           "        p.Address, " +
-          "        p.tel " +
-          "   From Amb_Patients p " +
+          "        p.tel," +
+					"				 p.id, " +
+					"				 (Select Sum(ifnull(d.cash, 0) + ifnull(d.card, 0) + ifnull(d.online, 0) + ifnull(d.transfer, 0)) From Amb_Patient_Pays d Where d.patient = p.id) paid" +
+					"   From Amb_Patients p " +
           "  Where date (p.crOn) Between ? and ? " +
           "  Order By p.crOn "
       );
@@ -1351,6 +1353,19 @@ public class SRepImp implements SRep {
           service.setC4(service.getC4() + rs.getString("address"));
         if(rs.getString("tel") != null)
           service.setC10(rs.getString("tel"));
+				service.setC5(rs.getString("paid"));
+				ps = conn.prepareStatement("Select f.*, a.name, t.fio, a.consul From Amb_Patient_Services f, Amb_Services a, Users t Where t.id = f.worker_id And a.id = f.service_id And f.patient = ? And f.state = 'DONE'");
+				ps.setInt(1, rs.getInt("id"));
+				rc = ps.executeQuery();
+				service.setC6("");
+				service.setC7("");
+				while (rc.next()) {
+					service.setC6(service.getC6() + "<br/>" + rc.getString("name"));
+					if(Util.nvl(rc.getString("consul"), "N").equals("Y")) {
+						service.setC7(service.getC7() + "<br/>" + rc.getString("fio"));
+					}
+					service.setC8(rc.getString("diagnoz"));
+				}
         //
         rows.add(service);
       }
@@ -1360,6 +1375,7 @@ public class SRepImp implements SRep {
       DB.done(conn);
       DB.done(ps);
       DB.done(rs);
+      DB.done(rc);
     }
     m.addAttribute("rows", rows);
     // Параметры отчета
@@ -5165,7 +5181,7 @@ public class SRepImp implements SRep {
 			m.addAttribute("reg_date", Util.dateToString(out.getRegDate()));
 			m.addAttribute("glv", beanUsers.getGlb());
 			m.addAttribute("reg_num", out.getRegNum());
-			m.addAttribute("rows", dDrugOutRow.getList("From DrugOutRows Where doc.id = " + out.getId()));
+			m.addAttribute("rows", dDrugOutRow.getList("From DrugOutRows Where doc.id = " + out.getId() + " Order By drug.name"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -36,19 +36,30 @@ public class SFormImp implements SForm {
 
   @Override
   public void createFields(Model model, int formId, Kdos kdo) {
-    List<FormFields> fields = dFormField.getFiledsByForm(formId);
+    List<FormFields> fields = dFormField.getDescFiledsByForm(formId);
+    List<FormField> list = new ArrayList<>();
     for(FormFields f : fields){
+      FormField li = new FormField();
       model.addAttribute(f.getFieldCode()+"name", f.getField());
       model.addAttribute(f.getFieldCode()+"html", getFieldHtml(f));
+      li.setHtml(getFieldHtml(f));
+      li.setName(f.getField());
       if(formId != 777) {
         String norma = Util.nvl(f.getNormaFrom()) + " " + Util.nvl(f.getNormaTo()), ei = Util.nvl(f.getEI());
         model.addAttribute(f.getFieldCode() + "norma", Util.nvl(norma.length() > 0 ? norma : kdo.getNorma()));
         model.addAttribute(f.getFieldCode() + "ei", Util.nvl(ei.length() > 0 ? ei : kdo.getEi()));
+        li.setNorma(Util.nvl(norma.length() > 0 ? norma : kdo.getNorma()));
+        li.setEi(Util.nvl(ei.length() > 0 ? ei : kdo.getEi()));
       } else {
         model.addAttribute(f.getFieldCode() + "norma", Util.nvl(kdo.getNorma()));
         model.addAttribute(f.getFieldCode() + "ei", Util.nvl(kdo.getEi()));
+        li.setNorma(Util.nvl(kdo.getNorma()));
+        li.setEi(Util.nvl(kdo.getEi()));
       }
+      li.setFieldCode(f.getFieldCode());
+      list.add(li);
     }
+    model.addAttribute("fields", list);
   }
 
   @Override

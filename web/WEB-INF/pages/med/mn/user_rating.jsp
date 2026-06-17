@@ -27,6 +27,7 @@
 <div class="panel panel-info" style="width: 100%; margin: auto">
   <div class="panel-heading">
     Рейтинг по специалистам
+    <div class="float-right bold" style="color:red">АМБ: <fmt:formatNumber value = "${total_a}" type = "number"/> Стат: <fmt:formatNumber value = "${total_s}" type = "number"/> ИТОГО: <fmt:formatNumber value = "${total_s + total_a}" type = "number"/></div>
   </div>
   <div class="panel-body">
     <table class="table table-bordered miniGrid">
@@ -40,9 +41,9 @@
           <th style="width:130px">Сумма</th>
         </tr>
         <c:forEach items="${rw.list}" var="ll">
-          <tr>
+          <tr class="<c:if test="${ll.c1 == '-1'}">bold</c:if>">
             <td>${ll.c2}</td>
-            <td class="center">${ll.c3}</td>
+            <td class="center"><fmt:formatNumber value = "${ll.c3}" type = "number"/></td>
             <td class="right"><fmt:formatNumber value = "${ll.c4}" type = "number"/></td>
           </tr>
         </c:forEach>

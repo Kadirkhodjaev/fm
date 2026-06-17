@@ -319,7 +319,7 @@ public class SAmpImp implements SAmb {
   @Override
   public List<FormField> getResultFields(AmbPatientServices service) {
     Integer formId = service.getService().getForm_id();
-    List<FormField> list = new ArrayList<FormField>();
+    List<FormField> list = new ArrayList<>();
     List<FormFields> fields = dFormField.getFileds(formId);
     AmbResults result = dAmbResults.get(service.getResult());
     for(FormFields f : fields) {

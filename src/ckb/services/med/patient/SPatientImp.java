@@ -336,6 +336,8 @@ public class SPatientImp implements SPatient {
           pat.setShowCheckbox(true);
         // Цвет иконки
         pat.setIconUrl("red");
+        if(rs.getInt("id") == 23727)
+          System.out.println("");
         // Приемное - медсестра
         if(session.getRoleId() == 3 && !rs.getString("state").equals("PRN"))
           pat.setIconUrl("green");
@@ -346,7 +348,7 @@ public class SPatientImp implements SPatient {
           pat.setIconUrl("green");
         if(session.getRoleId() == 5 && rs.getString("state").equals("ZGV"))
           pat.setIconUrl("red");
-        if(session.getRoleId() == 5 && rs.getString("state").equals("LV") && rs.getDate("Date_End") != null && rs.getString("paid") != null && rs.getString("paid").equals("CLOSED"))
+        if((session.getRoleId() == 5 || session.getRoleId() == 6) && rs.getString("state").equals("LV") && rs.getDate("Date_End") != null && rs.getString("paid") != null && rs.getString("paid").equals("CLOSED"))
           pat.setShowCheckbox(true);
         if(session.getRoleId() == 6 && rs.getString("state").equals("ZGV")) {
           pat.setIconUrl("green");

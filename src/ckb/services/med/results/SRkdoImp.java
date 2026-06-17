@@ -228,7 +228,7 @@ public class SRkdoImp implements SRkdo {
         }
       res.setColName(colName);
       res.setVals(vals);
-    } else if (form != null && (form == 1000 || form == 1001 || form == 1002 || form == 1003 || form == 1005 || form == 1006 || form == 1007 || form == 1008 || form == 1009)) {
+    } else {
       List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
       List<FormRow> fs = new ArrayList<>();
       if(fieds != null && !fieds.isEmpty())
@@ -242,28 +242,23 @@ public class SRkdoImp implements SRkdo {
           fs.add(f);
         }
       res.setRows(fs);
-    } else if (form != null && (form == 81 || form == 82 || form == 83 || form == 1004)) {
-      List<FormFields> fieds = dFormField.getFileds(ser.getService().getForm_id());
-      List<FormRow> fs = new ArrayList<>();
-      if(fieds != null && !fieds.isEmpty())
-        for(FormFields field: fieds) {
-          FormRow f = new FormRow();
-          f.setName(field.getField());
-          f.setFieldType(field.getFieldType());
-          f.setValue(r.get(field.getFieldCode()));
-          fs.add(f);
-        }
-      res.setRows(fs);
     }
     return res;
   }
 
   private String makeCell(List<FormFields> cols, Integer pos, String val){
     try {
-      if (Util.nvl(cols.get(pos - 1).getResFlag(), "N").equals("Y") && !"".equals(val)) {
+      for(FormFields f : cols) {
+        if(f.getFieldCode().substring(1).equals(pos.toString())) {
+          if(Util.nvl(f.getResFlag(), "N").equals("Y") && !"".equals(val))
+            return "<i>" + f.getField() + "</i>: " + val + (Util.nvl(f.getEI()).isEmpty() ? "" : " " + Util.nvl(f.getEI())) + (cols.size() == pos ? "; " : ", ");
+        }
+      }
+      return "";
+      /*if (Util.nvl(cols.get(pos - 1).getResFlag(), "N").equals("Y") && !"".equals(val)) {
         return "<i>" + cols.get(pos - 1).getField() + "</i>: " + val + (Util.nvl(cols.get(pos - 1).getEI()).isEmpty() ? "" : " " + Util.nvl(cols.get(pos - 1).getEI())) + (cols.size() == pos ? "; " : ", ");
       } else
-        return "";
+        return "";*/
     } catch (Exception e) {
       return "";
     }
@@ -363,7 +358,7 @@ public class SRkdoImp implements SRkdo {
   private String getDF10(Integer formId, Integer resId) {
     F10 f = df10.get(resId);
     StringBuilder sb = new StringBuilder();
-    List<FormFields> c = dFormField.getFileds(formId);
+    List<FormFields> c = dFormField.getDescFiledsByForm(formId);
     //
     sb.append(makeCell(c, 1 , f.getC1 ()));
     sb.append(makeCell(c, 2 , f.getC2 ()));
@@ -496,7 +491,6 @@ public class SRkdoImp implements SRkdo {
     //
     return sb.toString();
   }
-
   private String getDF120(Integer formId, Integer resId) {
     F120 f = df120.get(resId);
     StringBuilder sb = new StringBuilder();
@@ -532,7 +526,6 @@ public class SRkdoImp implements SRkdo {
     //
     return sb.toString();
   }
-
   private String getDF121(Integer formId, Integer resId) {
     F121 f = df121.get(resId);
     StringBuilder sb = new StringBuilder();
@@ -545,7 +538,6 @@ public class SRkdoImp implements SRkdo {
     //
     return sb.toString();
   }
-
   private String getDF152(Integer formId, Integer resId) {
     F152 f = df152.get(resId);
     StringBuilder sb = new StringBuilder();
@@ -557,7 +549,6 @@ public class SRkdoImp implements SRkdo {
     //
     return sb.toString();
   }
-
   private String getDF174(Integer formId, Integer resId) {
     F174 f = df174.get(resId);
     StringBuilder sb = new StringBuilder();

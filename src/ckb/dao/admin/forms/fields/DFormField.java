@@ -16,6 +16,8 @@ public interface DFormField extends Dao<FormFields> {
 
   List<FormFields> getFiledsByForm(int formId);
 
+  List<FormFields> getDescFiledsByForm(int formId);
+
   List<FormFields> getFileds(int formId);
 
   String getNextFieldCode(Integer formId);

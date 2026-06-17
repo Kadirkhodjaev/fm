@@ -2,8 +2,10 @@ package ckb.utils;
 
 import ckb.dao.med.amb.DAmbPatient;
 import ckb.dao.med.amb.DAmbPatientService;
+import ckb.dao.med.patient.DPatient;
 import ckb.domains.med.amb.AmbPatientServices;
 import ckb.domains.med.amb.AmbPatients;
+import ckb.domains.med.patient.Patients;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
@@ -24,6 +26,7 @@ public class MedScheduler implements Job {
   public void execute(final JobExecutionContext ctx) {
     ApplicationContextHolder ach = new ApplicationContextHolder();
     DAmbPatient dAmbPatient = ach.getContext().getBean(DAmbPatient.class);
+    DPatient dPatient = ach.getContext().getBean(DPatient.class);
     DAmbPatientService dAmbPatientServices = ach.getContext().getBean(DAmbPatientService.class);
     Calendar calendar = Calendar.getInstance();
     calendar.add(Calendar.DATE, -11);
@@ -43,8 +46,12 @@ public class MedScheduler implements Job {
         patient.setState("ARCH");
         dAmbPatient.save(patient);
       }
-      System.out.println("Archived patient count: " + counter);
-
+      calendar.add(Calendar.DATE, -4);
+      List<Patients> pats = dPatient.list("From Patients Where state = 'ZGV' And dateEnd <= '" + Util.dateDB(calendar.getTime()) + "'");
+      for(Patients pat: pats) {
+        pat.setState("ARCH");
+        dPatient.save(pat);
+      }
       String[] commands = {"cmd", "/c", "mysqldump -uroot -proot fm > D:\\dump\\" + Util.getCurDate().replace(".", "") + ".sql"};
       Process pb = Runtime.getRuntime().exec(commands);
       pb.waitFor();

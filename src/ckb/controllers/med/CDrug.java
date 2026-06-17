@@ -911,6 +911,10 @@ public class CDrug {
       norma.setNormaType(Util.get(req, "type"));
       norma.setNorma(Util.getDouble(req, "norma", 0D));
       norma.setTab(Util.getDouble(req, "tab", 0D));
+      if(id == 0) {
+        norma.setProc(norma.getNorma());
+        norma.setMaxval(norma.getNorma());
+      }
       dDrugNorma.saveAndReturn(norma);
       dDrugNormaDirection.delSql("From DrugNormaDirections Where doc.id = " + norma.getId());
       if(norma.getNormaType().equals("MULTI")) {
@@ -944,8 +948,12 @@ public class CDrug {
       DrugNormas norma = dDrugNorma.get(id);
       if(Util.get(req, "type").equals("norma"))
         norma.setNorma(Util.getDouble(req, "val", 0D));
-      else
+      if(Util.get(req, "type").equals("tab"))
         norma.setTab(Util.getDouble(req, "val", 0D));
+      if(Util.get(req, "type").equals("proc"))
+        norma.setProc(Util.getDouble(req, "val", 0D));
+      if(Util.get(req, "type").equals("max"))
+        norma.setMaxval(Util.getDouble(req, "val", 0D));
       dDrugNorma.save(norma);
       json.put("success", true);
     } catch (Exception e) {
@@ -1024,7 +1032,7 @@ public class CDrug {
     //
     DrugOuts obj = Util.getInt(req, "id") > 0 ? dDrugOut.get(Util.getInt(req, "id")) : new DrugOuts();
     if(Util.getInt(req, "id") == 0) obj.setId(0);
-    List<DrugOutRows> rr = dDrugOutRow.getList("From DrugOutRows t Where t.doc.id = " + obj.getId());
+    List<DrugOutRows> rr = dDrugOutRow.getList("From DrugOutRows t Where t.doc.id = " + obj.getId() + " Order By drug.name");
     List<Obj> list = new ArrayList<>();
     for(DrugOutRows r: rr) {
       Obj b = new Obj();
@@ -1033,7 +1041,8 @@ public class CDrug {
       b.setClaimCount(r.getClaimCount());
       b.setDrugCount(r.getDrugCount());
       b.setPrice(r.getPrice());
-      b.setPerc(r.getPerc());
+      if(r.getPerc() != null)
+        b.setPerc(Math.ceil(r.getPerc() * 10000) / 100);
       List<DrugActDrugs> act = dDrugActDrug.getList("From DrugActDrugs Where act.state != 'E' And counter - rasxod > 0 And drug.id = " + r.getDrug().getId());
       List<ObjList> variuos = new ArrayList<>();
       if(!act.isEmpty())
@@ -1303,7 +1312,7 @@ public class CDrug {
     JSONObject json = new JSONObject();
     try {
       List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29)");
-      double pog = Double.parseDouble(beanSession.getParam("DRUG_AUTO_OUT_PROC"));
+      double pog = 0;// Double.parseDouble(beanSession.getParam("DRUG_AUTO_OUT_PROC"));
       for(DrugDirections dd : directions) {
         if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And autoFlag = 'Y'") > 0)
           continue;
@@ -1319,12 +1328,18 @@ public class CDrug {
               if(nd != null)
                 n = nd.getNorma();
             }
+            pog = norma.getProc();
             double f = n - saldo;
-            if(n - saldo > 0 && (saldo / n <= (pog / 100) || saldo == 0)) {
+            if(n - saldo > 0 && (saldo <= pog || saldo == 0)) {
               if(Util.nvl(norma.getTab(), 0) > 0) {
                 if (f >= norma.getTab()) {
                   double d = Math.floor(f / norma.getTab());
-                  f = norma.getTab() * d;
+                  double g = Math.ceil(f / norma.getTab());
+                  if(norma.getTab() * g <= norma.getMaxval()) {
+                    f = norma.getTab() * g;
+                  } else {
+                    f = norma.getTab() * d;
+                  }
                 } else {
                   f = norma.getTab();
                 }

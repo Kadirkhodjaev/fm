@@ -454,6 +454,7 @@ public class CMn {
       cn = DB.getConnection();
       List<Obj> kdoTypes = new ArrayList<>();
       List<Users> users = dUser.getList("From Users");
+      double total_s = 0, total_a = 0;
       for(Users user: users) {
         Obj obj = new Obj();
         obj.setFio(user.getFio());
@@ -471,6 +472,7 @@ public class CMn {
         ps.execute();
         rs = ps.getResultSet();
         List<ObjList> stats = new ArrayList<>();
+        double amb_c = 0, amb_s = 0;
         while (rs.next()) {
           ObjList row = new ObjList();
           row.setC1(rs.getString("kdo_id"));
@@ -479,6 +481,8 @@ public class CMn {
           row.setC4(rs.getString("price"));
           stats.add(row);
           obj.setPrice(obj.getPrice() + rs.getDouble("price"));
+          amb_c += rs.getDouble("counter");
+          amb_s += rs.getDouble("price");
         }
         ps = cn.prepareStatement(
           "Select c.Id, c.name, Count(*) Counter, Sum(t.price) price " +
@@ -494,7 +498,18 @@ public class CMn {
         ps.setInt(3, user.getId());
         ps.execute();
         rs = ps.getResultSet();
+        double stat_c = 0, stat_s = 0;
+        boolean added = false;
         while (rs.next()) {
+          if(amb_c > 0 && !added) {
+            ObjList row = new ObjList();
+            row.setC1("-1");
+            row.setC2("ИТОГО по стационару");
+            row.setC3(amb_c + "");
+            row.setC4(amb_s + "");
+            stats.add(row);
+            added = true;
+          }
           ObjList row = new ObjList();
           row.setC1(rs.getString("id"));
           row.setC2("Амбулатория: "+ rs.getString("name"));
@@ -502,12 +517,26 @@ public class CMn {
           row.setC4(rs.getString("price"));
           stats.add(row);
           obj.setPrice(obj.getPrice() + rs.getDouble("price"));
+          stat_c += rs.getDouble("counter");
+          stat_s += rs.getDouble("price");
         }
+        if(stat_c > 0 && amb_c > 0) {
+          ObjList row = new ObjList();
+          row.setC1("-1");
+          row.setC2("ИТОГО по амб.");
+          row.setC3(stat_c + "");
+          row.setC4(stat_s + "");
+          stats.add(row);
+        }
+        total_s += stat_s;
+        total_a += amb_s;
         if(!stats.isEmpty()) {
           obj.setList(stats);
           kdoTypes.add(obj);
         }
       }
+      m.addAttribute("total_s", total_s);
+      m.addAttribute("total_a", total_a);
       m.addAttribute("rows", kdoTypes);
       m.addAttribute("period_start", startDate);
       m.addAttribute("period_end", endDate);

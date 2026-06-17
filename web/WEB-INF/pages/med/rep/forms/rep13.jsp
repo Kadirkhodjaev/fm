@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
@@ -17,13 +18,15 @@
 <table border="1" width="100%">
   <tr>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">№</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Cана</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Ф.И.Ш.</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Тугилган йили</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Манзили</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Телефон раками</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Шифокор</td>
-    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Ташхис</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Дата</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Ф.И.О.</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Дата рождения</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Адрес</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Номер телефона</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Касса</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Услуги</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Врач</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Диагноз</td>
   </tr>
   <c:forEach items="${rows}" var="service" varStatus="loop">
     <tr>
@@ -33,8 +36,10 @@
       <td align="center" style="padding:5px;">${service.c3}</td>
       <td style="padding:5px;">${service.c4}</td>
       <td style="padding:5px;">${service.c10}</td>
-      <td align="center" style="padding:5px;">${service.c5}</td>
+      <td style="padding:5px;text-align: right"><fmt:formatNumber groupingUsed="true" value = "${service.c5}" type = "number"/></td>
       <td style="padding:5px;">${service.c6}</td>
+      <td style="padding:5px;">${service.c7}</td>
+      <td style="padding:5px;">${service.c8}</td>
     </tr>
   </c:forEach>
 </table>

@@ -101,6 +101,9 @@ public class CAmb {
   @RequestMapping("/home.s")
   protected String mains(HttpServletRequest r, Model model) {
     try {
+      /*for(int i=61;i<=140;i++) {
+        System.out.println("makeCell(c, " + i + ", f.getC" + i + "()) +");
+      }*/
       session = SessionUtil.getUser(r);
       session.setCurUrl("/amb/home.s");
       session.setArchive(false);
@@ -174,7 +177,7 @@ public class CAmb {
         grid.setEndPos(grid.getStartPos() + grid.getPageSize() < grid.getRowCount() ? grid.getStartPos() + grid.getPageSize() - 1 : Integer.parseInt("" + grid.getRowCount()));
       if (grid.getEndPos() == 0)
         grid.setStartPos(0);
-      SessionUtil.addSession(r, "patientGrid", grid);
+      SessionUtil.addSession(r, "AmbPatientGrid", grid);
       model.addAttribute("list", sAmb.getGridList(grid, session));
       model.addAttribute("roleId", session.getRoleId());
       model.addAttribute("curUrl", session.getCurUrl());
@@ -260,7 +263,7 @@ public class CAmb {
         grid.setEndPos(grid.getStartPos() + grid.getPageSize() < grid.getRowCount() ? grid.getStartPos() + grid.getPageSize() - 1 : Integer.valueOf("" + grid.getRowCount()));
       if (grid.getEndPos() == 0)
         grid.setStartPos(0);
-      SessionUtil.addSession(r, "patientGrid", grid);
+      SessionUtil.addSession(r, "AmbPatientGrid", grid);
       model.addAttribute("list", sAmb.getGridList(grid, session));
       model.addAttribute("roleId", session.getRoleId());
       model.addAttribute("curUrl", session.getCurUrl());
@@ -773,7 +776,7 @@ public class CAmb {
         if(r.getService().getForm_id() == 999) {
           list.add("<b>" + r.getService().getName()  + "</b>:" + res.getC1() + ";<br/>");
         } else {
-          List<FormFields> fields = dFormField.getFiledsByForm(r.getService().getForm_id());
+          List<FormFields> fields = dFormField.getDescFiledsByForm(r.getService().getForm_id());
           list.add("<b>" + r.getService().getName() + "</b>:" + getDFResult(res, fields) + "<br/>");
         }
       }
@@ -786,10 +789,17 @@ public class CAmb {
 
   private String makeCell(List<FormFields> cols, Integer pos, String val){
     try {
-      if (Util.nvl(cols.get(pos - 1).getResFlag(), "N").equals("Y") && !"".equals(val)) {
+      for(FormFields f : cols) {
+        if(f.getFieldCode().substring(1).equals(pos.toString())) {
+          if(Util.nvl(f.getResFlag(), "N").equals("Y") && !"".equals(val))
+            return "<i>" + f.getField() + "</i>: " + val + (Util.nvl(f.getEI()).isEmpty() ? "" : " " + Util.nvl(f.getEI())) + (cols.size() == pos ? "; " : ", ");
+        }
+      }
+      return "";
+      /*if (Util.nvl(cols.get(pos - 1).getResFlag(), "N").equals("Y") && !"".equals(val)) {
         return "<i>" + cols.get(pos - 1).getField() + "</i>: " + val + (Util.nvl(cols.get(pos - 1).getEI()).isEmpty() ? "" : " " + Util.nvl(cols.get(pos - 1).getEI())) + (cols.size() == pos ? "; " : ", ");
       } else
-        return "";
+        return "";*/
     } catch (Exception e) {
       return "";
     }
@@ -984,7 +994,7 @@ public class CAmb {
       m.addAttribute("ser", ser);
       Forms form = dForm.get(service.getService().getForm_id());
       m.addAttribute("form", form);
-      return "med/amb/print/" + (form.getJsp() != null ? service.getService().getForm_id() : "standart");
+      return "med/amb/print/" + (!Util.nvl(form.getJsp()).isEmpty() ? service.getService().getForm_id() : "standart");
     } else {
       List<AmbServiceFields> fields = dAmbServiceFields.byService(service.getService().getId());
       for(int i=0;i<fields.size();i++) {
@@ -1043,14 +1053,19 @@ public class CAmb {
       AmbPatientServices ser = dAmbPatientServices.get(Req.getInt(req, "id"));
       ser.setAmb_repeat("D");
       dAmbPatientServices.save(ser);
+      Double ndsProc = beanSession.getNds();
       long diff = new Date().getTime() - ser.getCrOn().getTime();
-      int ff = diff / (1000*60*60*24) <= 5 ? 100 : 50;
+      double days = (double) diff / (1000*60*60*24);
+      int ff = days <= 5 ? 100 : days <= 10 ? 50 : 0;
       //
       ser.setId(null);
       ser.setState("ENT");
       ser.setAmb_repeat("Y");
       ser.setCrOn(new Date());
+      ser.setPay(null);
       ser.setPrice(ser.getPrice() - (ser.getPrice() * ff) / 100);
+      ser.setNds(ser.getPrice() * ndsProc / 100);
+      ser.setNdsProc(ndsProc);
       ser.setCrBy(session.getUserId());
       dAmbPatientServices.save(ser);
       //

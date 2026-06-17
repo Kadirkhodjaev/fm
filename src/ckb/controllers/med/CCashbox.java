@@ -636,23 +636,28 @@ public class CCashbox {
           dPatientWatchers.save(watcher);
         }
       }
-      Patients pat = dPatient.get(Util.getInt(req, "id"));
+      Patients pat = dPatient.get(pay.getPatient_id());
       Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-      Double ndsProc = d.after(startDate) ? Double.parseDouble(beanSession.getParam("NDS_PROC")) : 0;
+      double ndsProc = d.after(startDate) ? Double.parseDouble(beanSession.getParam("NDS_PROC")) : 0;
       //
-      Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
+      double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
       Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
-      Double paid = 0D;
-      List<PatientPays> pays = dPatientPays.getList("From PatientPays t Where t.patient_id = " + pat.getId());
-      for(PatientPays py: pays)
-        paid += py.getCard() + py.getTransfer() + py.getCash() + py.getOnline();
-      for(PatientWatchers watcher: watchers) {
+      Double paid = dPatientPays.paid(pat.getId());
+      Double discount = dCashDiscount.patientStatDiscountSum(pat.getId());
+      paid += discount;
+      for(PatientWatchers watcher: watchers)
         total += watcher.getTotal();
-      }
       if(paid.equals(total))
         pat.setPaid("Y");
       if(!paid.equals(total))
         pat.setPaid("C");
+      try {
+        HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where state = 'D' And patient.id = " + pat.getId());
+        if (hnPatient.getPaySum() == pay.getCard() + pay.getCash()  + pay.getTransfer() + Util.nvl(pay.getOnline(), 0)) {
+          hnPatient.setPaySum(0D);
+          dhnPatient.save(hnPatient);
+        }
+      } catch (Exception ignored) {}
       dPatient.save(pat);
       data.put("success", true);
     } catch (Exception e) {

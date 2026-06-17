@@ -139,5 +139,4 @@ public class CKdo {
     if(!"".equals(form.getJsp()) && form.getJsp() != null) jsp = form.getJsp();
     return "/med/kdo/" + (isPrint && !session.isArchive() ? "forms/fm/" : "print/fm/") + jsp;
   }
-
 }

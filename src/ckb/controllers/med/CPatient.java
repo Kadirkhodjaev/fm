@@ -426,7 +426,7 @@ public class CPatient {
             }
           }
         }
-        if (session.getRoleId() == 5 && p.getState().equals("LV")) {
+        if ((session.getRoleId() == 5 || session.getRoleId() == 6) && p.getState().equals("LV")) {
           p.setState("ZGV");
           dPatient.save(p);
         }

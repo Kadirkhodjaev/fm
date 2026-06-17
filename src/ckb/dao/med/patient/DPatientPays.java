@@ -9,4 +9,5 @@ public interface DPatientPays extends Dao<PatientPays> {
 
   List<PatientPays> byPatient(Integer id);
 
+  double paid(Integer id);
 }

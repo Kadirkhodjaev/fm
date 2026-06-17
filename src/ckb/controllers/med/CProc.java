@@ -185,6 +185,7 @@ public class CProc {
   @ResponseBody
   protected String setExp(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
+    Session session =  SessionUtil.getUser(req);
     try {
       Integer patient = Util.getInt(req, "patient");
       String time = Util.get(req, "time");
