@@ -44,8 +44,11 @@
   function printCheck(id) {
     window.open('/amb/print.s?check=' + id);
   }
+  function setDrugPrint() {
+    window.open('/amb/print.s?drugcheck=Y');
+  }
 </script>
-<div class="panel panel-info" style="width: 800px !important; margin: auto">
+<div class="panel panel-info" style="width: 1000px !important; margin: auto">
   <div class="panel-heading bold">
     Реквизиты пациента <span style="color:red">ID: ${patient.id}</span>
     <c:if test="${serviceTotalSum == 0}">
@@ -84,9 +87,9 @@
       </tr>
     </table>
   </div>
-  <div class="panel panel-info" style="margin-left:-1px; width: 800px !important;">
+  <div class="panel panel-info" style="margin-left:-1px; width: 100%;">
     <div class="panel-heading bold">
-      Услуги<c:if test="${fn:length(ds) > 0}"> и медикаменты</c:if>
+      Услуги и медикаменты<c:if test="${fn:length(ds) > 0}"> и медикаменты</c:if>
     </div>
     <div>
       <table class="table table-bordered">
@@ -148,30 +151,41 @@
         </c:if>
       </table>
       <table class="table table-bordered">
-        <tr>
-          <td class="center bold">№</td>
-          <td class="center bold">Наименование</td>
-          <td class="center bold">Кол-во</td>
-          <td class="center bold">Цена</td>
-          <td class="center bold">Сумма</td>
-        </tr>
+        <c:if test="${fn:length(drugs) > 0}">
+          <tr>
+            <td class="center bold">№</td>
+            <td class="center bold">Наименование</td>
+            <td class="center bold">Кол-во</td>
+            <td class="center bold">Цена</td>
+            <td class="center bold">Сумма</td>
+            <td class="center bold">С НДС</td>
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td colspan="4" class="center bold">Медикаменты</td>
+            <td class="text-center">
+              <button class="btn btn-info btn-icon" type="button" onclick="setDrugPrint()"><i class="fa fa-print"></i></button>
+            </td>
+          </tr>
+        </c:if>
         <c:forEach items="${drugs}" var="drug" varStatus="loop">
           <tr>
             <td class="center">${loop.index + 1}</td>
             <td>
-                ${drug.drug.name}
+                ${drug.drug.drug.name}
             </td>
             <td class="right" style="padding-right:7px">${drug.rasxod}</td>
-            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.hndrug.outRow.price}" type = "number"/></td>
-            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.rasxod * drug.hndrug.outRow.price}" type = "number"/></td>
+            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.drug.price}" type = "number"/></td>
+            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.rasxod * drug.drug.price}" type = "number"/></td>
+            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.rasxod * (drug.drug.price + drug.drug.nds)}" type = "number"/></td>
           </tr>
         </c:forEach>
-        <c:if test="${drugSums > 0}">
+        <c:if test="${drugSum > 0}">
           <tr style="font-weight: bold">
             <td class="center">&nbsp;</td>
-            <td colspan="3">ИТОГО</td>
+            <td colspan="4">ИТОГО</td>
             <td class="right" style="padding-right:7px">
-              <fmt:formatNumber value = "${drugSums}" type = "number"/>
+              <fmt:formatNumber value = "${drugSum}" type = "number"/>
             </td>
           </tr>
         </c:if>
@@ -185,6 +199,7 @@
             <td class="center bold">Карта</td>
             <td class="center bold">Онлайн</td>
             <td class="center bold">Перечисление</td>
+            <td class="center bold">Пользователь</td>
             <td width="80px" class="center bold">Чек</td>
             <td width="80px" class="center bold">Удалить</td>
           </tr>
@@ -195,12 +210,13 @@
                 <c:if test="${pay.payType != 'ret'}">Оплата</c:if>
               </td>
               <td align="center">
-                <fmt:formatDate pattern = "dd.MM.yyyy" value = "${pay.crOn}" />
+                <fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${pay.crOn}" />
               </td>
               <td align="center"><fmt:formatNumber value="${pay.cash}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.card}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.online}" type = "number"/></td>
               <td align="center"><fmt:formatNumber value="${pay.transfer}" type = "number"/></td>
+              <td>${users[pay.crBy]}</td>
               <td class="center">
                 <button type="button" class="btn btn-info" style="height:20px;padding:0 10px" onclick="printCheck(${pay.id})"><b class="fa fa-print"></b></button>
               </td>
@@ -293,7 +309,7 @@
               </td>
             </tr>
             <tr>
-              <td class="center">я
+              <td class="center">
                 &nbsp;
               </td>
               <td class="center bold">ИТОГО</td>

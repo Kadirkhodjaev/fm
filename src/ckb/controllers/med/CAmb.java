@@ -905,6 +905,7 @@ public class CAmb {
     m.addAttribute("isFizio", !Req.isNull(req, "fizio"));
     m.addAttribute("check", Util.isNotNull(req, "check"));
     m.addAttribute("check_id", Util.get(req, "check"));
+    m.addAttribute("drugcheck", Util.get(req, "drugcheck"));
     //
     return "med/amb/print";
   }

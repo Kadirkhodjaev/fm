@@ -15,6 +15,8 @@ import java.util.List;
 
 public interface SAmb {
 
+  Double getDrugSum(Integer id);
+
   List<PatientList> getGridList(Grid grid, Session session);
 
   void makeAddEditUrlByRole(Model model, int roleId, boolean isArchive);

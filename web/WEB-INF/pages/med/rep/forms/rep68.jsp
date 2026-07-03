@@ -24,6 +24,7 @@
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Хизмат тури</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Сана</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Даволовчи шифокор</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Телефон</td>
   </tr>
   <c:forEach items="${rows}" var="service" varStatus="loop">
     <tr>
@@ -35,6 +36,7 @@
       <td style="padding:5px;">${service.c5}</td>
       <td align="center" style="padding:5px;">${service.c7}</td>
       <td style="padding:5px;">${service.c8}</td>
+      <td style="padding:5px;">${service.c9}</td>
     </tr>
   </c:forEach>
 </table>

@@ -13,6 +13,7 @@ public class HNDirections extends GenId {
 
   @Column private String name;
   @Column private String state;
+  @Column private String ambflag;
 
   @Column private Integer crBy;
   @Column private Date crOn;
@@ -31,6 +32,14 @@ public class HNDirections extends GenId {
 
   public void setState(String state) {
     this.state = state;
+  }
+
+  public String getAmbflag() {
+    return ambflag;
+  }
+
+  public void setAmbflag(String ambflag) {
+    this.ambflag = ambflag;
   }
 
   public Integer getCrBy() {

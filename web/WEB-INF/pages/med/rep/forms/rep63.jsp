@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
@@ -23,6 +24,7 @@
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Ф.И.Ш.</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Тугилган йили</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Муолажа тури</td>
+    <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Нархи</td>
     <td style="font-weight:bold;padding:5px;background:#e8e8e8;" align="center">Ташхис</td>
   </tr>
   <c:forEach items="${rows}" var="service" varStatus="loop">
@@ -34,6 +36,7 @@
       <td style="padding:5px;">${service.fio}</td>
       <td align="center" style="padding:5px;">${service.birthyear}</td>
       <td style="padding:5px;">${service.c2}</td>
+      <td style="padding:5px; text-align: right"><fmt:formatNumber value = "${service.c5}" type = "number"/></td>
       <td style="padding:5px;">${service.c1}</td>
     </tr>
   </c:forEach>

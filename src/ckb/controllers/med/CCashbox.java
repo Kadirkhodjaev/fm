@@ -9,7 +9,7 @@ import ckb.dao.med.amb.DAmbPatientService;
 import ckb.dao.med.amb.DAmbService;
 import ckb.dao.med.cashbox.discount.DCashDiscount;
 import ckb.dao.med.head_nurse.date.DHNDate;
-import ckb.dao.med.head_nurse.date.DHNDateAmbRow;
+import ckb.dao.med.head_nurse.date.DHNDateRow;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
 import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.bio.DLvBio;
@@ -25,9 +25,10 @@ import ckb.dao.med.patient.DPatient;
 import ckb.dao.med.patient.DPatientPays;
 import ckb.dao.med.patient.DPatientWatchers;
 import ckb.domains.admin.Kdos;
+import ckb.domains.admin.Users;
 import ckb.domains.med.amb.*;
 import ckb.domains.med.cash.CashDiscounts;
-import ckb.domains.med.head_nurse.HNDateAmbRows;
+import ckb.domains.med.head_nurse.HNDateRows;
 import ckb.domains.med.head_nurse.HNDates;
 import ckb.domains.med.head_nurse.HNPatients;
 import ckb.domains.med.lv.*;
@@ -36,6 +37,7 @@ import ckb.domains.med.patient.PatientWatchers;
 import ckb.domains.med.patient.Patients;
 import ckb.models.AmbService;
 import ckb.models.ObjList;
+import ckb.services.med.amb.SAmb;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.BeanSession;
@@ -59,6 +61,7 @@ import java.sql.ResultSet;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 @Controller
@@ -90,9 +93,10 @@ public class CCashbox {
   @Autowired private DLvCoul dLvCoul;
   @Autowired private DKdoChoosen dKdoChoosen;
   @Autowired private DLvEpic dLvEpic;
-  @Autowired private DHNDateAmbRow dhnDateAmbRow;
+  @Autowired private DHNDateRow dhnDateRow;
   @Autowired private DHNDate dhnDate;
   @Autowired private DKdos dKdo;
+  @Autowired private SAmb sAmb;
   @Autowired private DAmbService dAmbService;
   @Autowired private BeanUsers beanUsers;
   @Autowired private BeanSession beanSession;
@@ -150,19 +154,17 @@ public class CCashbox {
     if(pat.getRegionId() != null)
       m.addAttribute("region", dRegion.get(pat.getRegionId()).getName());
     //
-    List<HNDateAmbRows> ds = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.state = 'ENT' And patient.id = " + pat.getId());
-    List<HNDateAmbRows> drugs = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.state = 'CON' And patient.id = " + pat.getId());
-    Double drugSum = 0D, drugSums = 0D;
-    for(HNDateAmbRows drug: drugs) {
-      if(drug.getDoc().getPaid().equals("N")) {
-        drugSum += drug.getRasxod() * drug.getHndrug().getPrice();
-      }
-      drugSums += drug.getRasxod() * drug.getHndrug().getPrice();
-    }
+    Double drugSum, drugSums = 0D;
+    drugSum = sAmb.getDrugSum(pat.getId());
     //
+    List<AmbPatientPays> pays = dAmbPatientPay.byPatient(session.getCurPat());
+    Double paid = 0D;
+    for(AmbPatientPays pay: pays) {
+      paid += pay.getCard() + pay.getCash() + pay.getTransfer() + pay.getOnline();
+    }
     Double discountSum = dCashDiscount.patientAmbDiscountSum(pat.getId());
     Double paySum = dAmbPatientServices.patientTotalSum(session.getCurPat());
-    Double nds = dAmbPatientServices.patientNdsSum(session.getCurPat()), serviceTotalSum = Math.floor((paySum + drugSum - discountSum) * 100) / 100;
+    Double nds = dAmbPatientServices.patientNdsSum(session.getCurPat()), serviceTotalSum = Math.floor((drugSum + paySum - discountSum) * 100) / 100;
     m.addAttribute("ndsTotal", nds + serviceTotalSum);
     m.addAttribute("serviceTotalSum", serviceTotalSum);
     List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
@@ -185,22 +187,73 @@ public class CCashbox {
       d.setNds(sum);
       ss.add(d);
     }
+    List<HNDates> docs = dhnDate.list("From HNDates Where amb.id = " + pat.getId());
+    List<HNDateRows> drugs = new ArrayList<>();
+    boolean isNotConfirm = false;
+    for(HNDates doc: docs) {
+      if(doc.getState().equals("CON")) {
+        List<HNDateRows> ds = dhnDateRow.list("From HNDateRows Where doc.id = " + doc.getId());
+        drugs.addAll(ds);
+      } else {
+        isNotConfirm = true;
+      }
+    }
+    List<Users> users = dUser.list("From Users");
+    HashMap<Integer, String> hUsers = new HashMap<>();
+    for(Users user: users) {
+      hUsers.put(user.getId(), user.getFio());
+    }
+    m.addAttribute("users", hUsers);
     m.addAttribute("is_admin", dUser.get(session.getUserId()).isAmbAdmin());
     m.addAttribute("services", ss);
-    m.addAttribute("drugs", drugs);
-    m.addAttribute("ds", ds);
     m.addAttribute("discounts", dCashDiscount.amb(pat.getId()));
     m.addAttribute("discountSum", discountSum);
     m.addAttribute("drugSum", drugSum);
     m.addAttribute("drugSums", Math.floor(drugSums * 100) / 100);
-    List<AmbPatientPays> pays = dAmbPatientPay.byPatient(session.getCurPat());
-    Double paid = 0D;
-    for(AmbPatientPays pay: pays) {
-      paid += pay.getCard() + pay.getCash() + pay.getTransfer() + pay.getOnline();
-    }
+    m.addAttribute("drugs", drugs);
     m.addAttribute("paidSum", paid);
     m.addAttribute("pays", pays);
     return "med/cashbox/amb";
+  }
+
+  @RequestMapping("/amb/drugcheck.s")
+  protected String drugcheck(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    AmbPatients pat = dAmbPatients.get(session.getCurPat());
+    if(pat.getQrcode() == null || pat.getQrcode().isEmpty()) {
+      pat.setQrcode(Util.md5(pat.getId().toString()));
+      dAmbPatients.save(pat);
+    }
+    model.addAttribute("pat", pat);
+    List<AmbPatientServices> rows = dAmbPatientServices.list("From AmbPatientServices Where state In ('PAID', 'DONE') And patient = " + pat.getId());
+    double sum = 0;
+    for(AmbPatientServices row: rows) {
+      sum += (double) Math.round((row.getPrice() + row.getNds()) * 100) / 100;
+    }
+    model.addAttribute("cur_time", Util.getCurTime());
+    model.addAttribute("rows", rows);
+    model.addAttribute("sum", (double) Math.round(sum * 100) / 100);
+    model.addAttribute("sale", dCashDiscount.patientAmbDiscountSum(pat.getId()));
+    model.addAttribute("casher", session.getUserName());
+    model.addAttribute("qrcode", beanSession.getParam("QRCODE"));
+    model.addAttribute("qrcodeurl", beanSession.getParam("QRCODEURL"));
+    Double ndsProc = beanSession.getNds();
+    Double drugSum = 0D, drugCount = 0D;
+    List<HNDates> docs = dhnDate.list("From HNDates Where state = 'CON' And amb.id = " + pat.getId());
+    List<HNDateRows> drugs = new ArrayList<>();
+    for (HNDates doc : docs) {
+      List<HNDateRows> ds = dhnDateRow.list("From HNDateRows Where doc.id = " + doc.getId());
+      drugs.addAll(ds);
+      for (HNDateRows d : ds) {
+        drugSum += (d.getDrug().getPrice() + (d.getDrug().getNds() == null ? d.getDrug().getPrice() * ndsProc / 100 : d.getDrug().getNds())) * d.getRasxod();
+        drugCount += 1;
+      }
+    }
+    drugSum = (double) Math.round(drugSum * 100) / 100;
+    model.addAttribute("drug_sum", drugSum);
+    model.addAttribute("drug_count", drugCount);
+    model.addAttribute("drugs", drugs);
+    return "med/cashbox/drug_check";
   }
 
   @RequestMapping("/amb/check.s")
@@ -239,6 +292,14 @@ public class CCashbox {
     session = SessionUtil.getUser(req);
     try {
       AmbPatients patient = dAmbPatients.get(session.getCurPat());
+      List<HNDates> docs = dhnDate.list("From HNDates Where amb.id = " + patient.getId());
+      if(!docs.isEmpty()) {
+        for(HNDates doc: docs) {
+          if(!doc.getState().equals("CON")) {
+            return Util.err(json, "≈сть не подтвержденные документы в складе: " + doc.getDirection().getName());
+          }
+        }
+      }
       AmbPatientPays pay = new AmbPatientPays();
       pay.setPatient(patient.getId());
       //
@@ -271,11 +332,13 @@ public class CCashbox {
           }
         }
       }
-      List<HNDateAmbRows> drugs = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.state = 'CON' And doc.paid != 'Y' And patient.id = " + patient.getId());
-      if(!drugs.isEmpty()) {
-        HNDates date = drugs.get(0).getDoc();
-        date.setPaid("Y");
-        dhnDate.save(date);
+      if(!docs.isEmpty()) {
+        for(HNDates doc: docs) {
+          if(doc.getState().equals("CON") && !Util.nvl(doc.getPaid(), "").equals("Y")) {
+            doc.setPaid("Y");
+            dhnDate.save(doc);
+          }
+        }
       }
       json.put("success", true);
     } catch (Exception e) {

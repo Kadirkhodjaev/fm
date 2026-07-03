@@ -5115,7 +5115,8 @@ public class SRepImp implements SRep {
 					"         f.c1 diagnoz, " +
 					"         c.Name Service_Name, " +
 					"         'Стац.' service_Type," +
-					"         t.result_date " +
+					"         t.result_date," +
+					"				  t.price * 1.12 price " +
 					" From Lv_Plans t, Kdos c, Patients p, Users u, F999 f  " +
 					" Where t.Kdo_Id = c.id " +
 					"   And t.done_flag = 'Y' " +
@@ -5131,7 +5132,8 @@ public class SRepImp implements SRep {
 					"        t.diagnoz, " +
 					"				 ser.Name Service_Name, " +
 					"				 'Амб' Service_Type, " +
-					"        t.confDate " +
+					"        t.confDate," +
+					"				 t.price + ifnull(t.nds, 0) price " +
 					"   From Amb_Patient_Services t, Amb_Services ser, Amb_Patients p " +
 					"  Where ser.Id = t.Service_Id " +
 					"    And t.state = 'DONE' " +
@@ -5159,6 +5161,7 @@ public class SRepImp implements SRep {
 				service.setC3(rs.getString("service_Type"));
 				//
 				service.setC4("" + counter);
+				service.setC5(rs.getString("price"));
 				fio = rs.getString("fio");
 				//
 				rows.add(service);
@@ -5582,6 +5585,7 @@ public class SRepImp implements SRep {
 					"         Date_Format(t.Result_Date, '%d.%m.%Y') cr_on, " +
 					"         p.birthyear, " +
 					"         u.fio doc, " +
+					"         p.tel, " +
 					"         c.name ser_name, " +
 					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex_id) Sex_Name, " +
 					"         'Стац' type_name, " +
@@ -5598,6 +5602,7 @@ public class SRepImp implements SRep {
 					"  			 Date_Format(t.confDate, '%d.%m.%Y') cr_on, " +
 					"        p.BirthYear, " +
 					"        u.fio doc, " +
+					"        p.tel, " +
 					"        ser.name ser_name, " +
 					"        (Select sex.Name From Sel_Opts sex WHERE sex.id = p.sex) Sex_Name, " +
 					"        'Амб' type_name, " +
@@ -5626,6 +5631,7 @@ public class SRepImp implements SRep {
 				service.setC6(rs.getString("diagnoz"));
 				service.setC7(rs.getString("cr_on"));
 				service.setC8(rs.getString("doc"));
+				service.setC9(rs.getString("tel"));
 				//
 				rows.add(service);
 			}

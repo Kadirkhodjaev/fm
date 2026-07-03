@@ -30,8 +30,6 @@ import ckb.dao.med.nurse.eat.DNurseEats;
 import ckb.dao.med.patient.*;
 import ckb.domains.admin.Depts;
 import ckb.domains.admin.UserDrugLines;
-import ckb.domains.med.amb.AmbDrugDates;
-import ckb.domains.med.amb.AmbDrugRows;
 import ckb.domains.med.amb.AmbPatients;
 import ckb.domains.med.dicts.Rooms;
 import ckb.domains.med.drug.DrugActDrugs;
@@ -714,9 +712,11 @@ public class CHeadNurse {
       }
       model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And direction.id = " + (obj.getId() == 0 ? 0 : obj.getDirection().getId())  + " Order By t.drug.name"));
       model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
-
+      List<HNDateRows> list = dhnDateRow.getList("From HNDateRows Where doc.id = " + obj.getId());
+      if(list.isEmpty())
+        model.addAttribute("ambs", dAmbPatient.list("From AmbPatients Where state not in ('PRN', 'CASH', 'ARCH') Order By id desc"));
       model.addAttribute("receivers", dhnDirection.getList("From HNDirections t Where Exists (Select 1 From HNDirectionLinks c where c.rasxod = t.id And c.direction in " + arr + ")"));
-      model.addAttribute("rows", dhnDateRow.getList("From HNDateRows Where doc.id = " + obj.getId()));
+      model.addAttribute("rows", list);
       model.addAttribute("obj", obj);
     } catch (Exception e) {
       e.printStackTrace();
@@ -737,6 +737,7 @@ public class CHeadNurse {
       HNDates obj = id.equals("0") || id.equals("") ? new HNDates() : dhnDate.get(Integer.parseInt(id));
       obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
       obj.setReceiver(dhnDirection.get(Util.getInt(req, "receiver")));
+      obj.setAmb(Util.isNull(req, "amb") ? null : dAmbPatient.get(Util.getInt(req, "amb")));
       if(dhnDate.getCount("From HNDates Where direction.id = " + obj.getDirection().getId() + " And receiver != null And state != 'CON' And id != " + id) > 1)
         return Util.err(json, "По выбранному складу имеется не подтвержденные документы. Макс кол-во документов 2шт");
       obj.setTypeCode("OUT");
@@ -790,6 +791,14 @@ public class CHeadNurse {
         row.setCrOn(new Date());
         sDrug.hndrug_rasxod(row.getDrug().getId(), row.getRasxod());
         dhnDateRow.save(row);
+        if(row.getDoc().getAmb() != null) {
+          AmbPatients pat = row.getDoc().getAmb();
+          if(!pat.getState().equals("WORK") && !pat.getState().equals("DONE") && !pat.getState().equals("CASH")) {
+            return Util.err(json, "У данного пациента состояние не позволяет режим ввода");
+          }
+          pat.setState("CASH");
+          dAmbPatient.save(pat);
+        }
       } else {
         HNDateRows row = dhnDateRow.get(Util.getInt(req, "id"));
         sDrug.hndrug_rasxod(row.getDrug().getId(), rasxod - row.getRasxod());
@@ -852,18 +861,10 @@ public class CHeadNurse {
     try {
       HNDates doc = dhnDate.get(Util.getInt(req, "id"));
       if(doc.getReceiver() == null) {
-        if(doc.getPatient() == null) {
-          if (dhnDatePatientRow.getCount("From HNDatePatientRows Where doc.id = " + doc.getId()) == 0) {
-            json.put("success", false);
-            json.put("msg", "Нельзя подтвердить документ без записи");
-            return json.toString();
-          }
-        } else {
-          if (dhnDateAmbRow.getCount("From HNDateAmbRows Where doc.id = " + doc.getId()) == 0) {
-            json.put("success", false);
-            json.put("msg", "Нельзя подтвердить документ без записи");
-            return json.toString();
-          }
+        if (dhnDateAmbRow.getCount("From HNDateAmbRows Where doc.id = " + doc.getId()) == 0) {
+          json.put("success", false);
+          json.put("msg", "Нельзя подтвердить документ без записи");
+          return json.toString();
         }
         conn = DB.getConnection();
         ps = conn.prepareStatement("Select t.id From Hn_Date_Patients t Where t.date_id = ? And t.patient_id not in (Select c.patient_id From Hn_Date_Patient_Rows c Where c.doc_id = ?)");
@@ -2044,332 +2045,6 @@ public class CHeadNurse {
     model.addAttribute("eat", eat);
     model.addAttribute("rows", rows);
     return "med/head_nurse/eat/print";
-  }
-  //endregion
-
-
-
-
-
-
-
-
-  //region OUT_AMB_PATIENT
-  @RequestMapping("out/amb.s")
-  protected String outAmbPatient(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
-    session.setCurUrl("/head_nurse/out/amb.s");
-    //
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
-    StringBuilder arr = new StringBuilder("(");
-    for(UserDrugLines line: lines) {
-      arr.append(line.getDirection().getId()).append(",");
-    }
-    arr.append("0)");
-    //
-    Calendar end = Calendar.getInstance();
-    end.setTime(new Date());
-    end.add(Calendar.DATE, 2);
-    //
-    String db = session.getDateBegin().get("hn_amb_out");
-    if(db == null) db = "01" + Util.getCurDate().substring(2);
-    String de = session.getDateEnd().get("hn_amb_out");
-    if(de == null) de = Util.dateToString(end.getTime());
-    //
-    String startDate = Util.get(req, "period_start", db);
-    String endDate = Util.get(req, "period_end", de);
-    //
-    HashMap<String, String> dh = session.getDateBegin();
-    dh.put("hn_amb_out", startDate);
-    session.setDateBegin(dh);
-    dh = session.getDateEnd();
-    dh.put("hn_amb_out", endDate);
-    session.setDateEnd(dh);
-    //
-    m.addAttribute("rows", dhnDate.getList("From HNDates Where typeCode = 'AMB' And direction.id in " + arr + " And date(date) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc"));
-    //
-    m.addAttribute("period_start", startDate);
-    m.addAttribute("period_end", endDate);
-    return "/med/head_nurse/out/amb/index";
-  }
-
-  @RequestMapping("out/amb/save.s")
-  protected String outAmbSave(HttpServletRequest req, Model model) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/head_nurse/out/amb/save.s?id=" + Util.getInt(req, "id"));
-    //
-    List<HNDateAmbRows> rows = new ArrayList<>();
-    List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId());
-    StringBuilder arr = new StringBuilder("(");
-    for(UserDrugLines line: lines) {
-      arr.append(line.getDirection().getId()).append(",");
-    }
-    arr.append("0)");
-    double drugSum = 0, drugSums = 0;
-    try {
-      //
-      HNDates obj = Util.getInt(req, "id") > 0 ? dhnDate.get(Util.getInt(req, "id")) : new HNDates();
-      if(Util.getInt(req, "id") == 0) { obj.setId(0); obj.setDate(new Date()); }
-      if(Util.getInt(req, "id") > 0) {
-        rows = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.id = " + obj.getId());
-        model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And t.direction.id = " + obj.getDirection().getId() + " Order BY t.drug.name"));
-        model.addAttribute("drug_exist", dAmbDrug.getCount("From AmbDrugs Where patient.id = " + obj.getPatient().getId()) > 0);
-        for(HNDateAmbRows drug: rows) {
-          if(drug.getDoc().getPaid().equals("N"))
-            drugSum += drug.getRasxod() * drug.getHndrug().getPrice();
-          drugSums += drug.getRasxod() * drug.getHndrug().getPrice();
-        }
-      }
-      model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
-      model.addAttribute("rows", rows);
-      model.addAttribute("drugSum", drugSums);
-      model.addAttribute("notPaidSum", drugSum);
-      model.addAttribute("patients", dAmbPatient.getList("From AmbPatients Where state != 'ARCH' Order By surname"));
-      model.addAttribute("obj", obj);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    //
-    return "/med/head_nurse/out/amb/addEdit";
-  }
-
-  @RequestMapping(value = "out/amb/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      String id = Util.nvl(req, "id", "0");
-      HNDates obj = id.equals("0") || id.isEmpty() ? new HNDates() : dhnDate.get(Integer.parseInt(id));
-      obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
-      obj.setPatient(dAmbPatient.get(Util.getInt(req, "patient")));
-      if(obj.getId() == null) {
-        obj.setCrBy(dUser.get(session.getUserId()));
-        obj.setCrOn(new Date());
-        obj.setDate(Util.stringToDate(Util.get(req, "doc_date")));
-        obj.setState("ENT");
-        obj.setPaid("N");
-        if(obj.getDate().before(Util.stringToDate(Util.getCurDate()))) {
-          json.put("success", false);
-          json.put("msg", "Дата операции не может быть меньше текущей даты");
-          return json.toString();
-        }
-      }
-      obj.setTypeCode("AMB");
-      dhnDate.saveAndReturn(obj);
-      json.put("id", obj.getId());
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "out/amb/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbDelete(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    Connection conn = null;
-    try {
-      conn = DB.getConnection();
-      HNDates date = dhnDate.get(Util.getInt(req, "id"));
-      List<HNDateAmbRows> rows = dhnDateAmbRow.getList("From HNDateAmbRows Where doc.id = " + date.getId());
-      for(HNDateAmbRows row: rows) {
-        sDrug.hndrug_rasxod(row.getHndrug().getId(), -row.getRasxod());
-        dhnDateAmbRow.delete(row.getId());
-      }
-      AmbPatients patient = date.getPatient();
-      Double summ = DB.getSum(conn, "Select Sum(t.price) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('PAID', 'DONE', 'DEL', 'AUTO_DEL')");
-      Double count = DB.getSum(conn, "Select Count(*) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('DONE', 'DEL', 'AUTO_DEL')");
-      if (summ > 0) {
-        patient.setState("CASH");
-      } else {
-        if (count == 0) {
-          patient.setState("DONE");
-        } else {
-          patient.setState("WORK");
-        }
-      }
-      dAmbPatient.save(patient);
-      dhnDate.delete(date.getId());
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    } finally {
-      DB.done(conn);
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "out/row/amb/save.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbRowSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      HNDateAmbRows row = new HNDateAmbRows();
-      row.setHndrug(dhnDrug.get(Util.getInt(req, "id")));
-      row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
-      row.setRasxod(Double.parseDouble(Util.get(req, "rasxod")));
-      row.setDate(row.getDoc().getDate());
-      row.setPatient(row.getDoc().getPatient());
-      row.setDrug(row.getHndrug().getDrug());
-      row.setCrBy(session.getUserId());
-      row.setCrOn(new Date());
-      sDrug.hndrug_rasxod(row.getHndrug().getId(), row.getRasxod());
-      dhnDateAmbRow.save(row);
-      AmbPatients patient = row.getPatient();
-      patient.setState("CASH");
-      dAmbPatient.save(patient);
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
-  }
-
-  @RequestMapping(value = "out/amb/row/delete.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbRowDelete(HttpServletRequest req) throws JSONException {
-    JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
-    Connection conn = null;
-    try {
-      conn = DB.getConnection();
-      HNDateAmbRows row = dhnDateAmbRow.get(Util.getInt(req, "id"));
-      HNDates doc = row.getDoc();
-      sDrug.hndrug_rasxod(row.getHndrug().getId(), -row.getRasxod());
-      dhnDateAmbRow.delete(row.getId());
-      if(dhnDateAmbRow.getCount("From HNDateAmbRows Where doc.id = " + doc.getId()) == 0) {
-        AmbPatients patient = doc.getPatient();
-        Double summ = DB.getSum(conn, "Select Sum(t.price) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('PAID', 'DONE', 'DEL', 'AUTO_DEL')");
-        Double count = DB.getSum(conn, "Select Count(*) From Amb_Patient_Services t Where t.patient = " + patient.getId() + " And t.state Not In ('DONE', 'DEL', 'AUTO_DEL')");
-        if (summ > 0) {
-          patient.setState("CASH");
-        } else {
-          if (count == 0) {
-            patient.setState("DONE");
-          } else {
-            patient.setState("WORK");
-          }
-        }
-        dAmbPatient.save(patient);
-      }
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    } finally {
-      DB.done(conn);
-    }
-    return json.toString();
-  }
-
-  @RequestMapping("out/amb/drugs.s")
-  protected String outAmbDrugs(HttpServletRequest req, Model m) {
-    HNDates doc = dhnDate.get(Util.getInt(req, "doc"));
-    Date minDate = dAmbDrugDate.minDate(doc.getPatient().getId());
-    Date maxDate = dAmbDrugDate.maxDate(doc.getPatient().getId());
-    if(minDate != null) {
-      long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
-      long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
-      m.addAttribute("dates", Util.getDateList(minDate, (int) (diff)));
-    }
-    m.addAttribute("doc", doc);
-    m.addAttribute("drugs", sAmb.getDrugs(doc.getPatient().getId()));
-    return "/med/head_nurse/out/amb/drugs";
-  }
-
-  @RequestMapping("out/amb/addDrug.s")
-  protected String outAmbAddDrug(HttpServletRequest req, Model m) {
-    m.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr")+ " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + Util.getInt(req, "id")));
-    //
-    return "/med/head_nurse/out/amb/addDrug";
-  }
-
-  @RequestMapping("out/amb/addDateDrugs.s")
-  protected String outAmbAddDrugs(HttpServletRequest req, Model m) {
-    Integer patient = Util.getInt(req, "id");
-    Date minDate = dAmbDrugDate.minDate(patient);
-    Date maxDate = dAmbDrugDate.maxDate(patient);
-    //
-    long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
-    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
-    List<String> dates = Util.getListDates(minDate, (int) (diff));
-    String d = "";
-    for(String dt: dates) {
-      if(dt.contains(Util.get(req, "dt")))
-        d = dt;
-    }
-    //
-    List<AmbDrugDates> dds = dAmbDrugDate.getList("From AmbDrugDates Where checked = 1 And ambDrug.patient.id = " + Util.get(req, "id") + " And date = '" + Util.dateDB(d) + "'");
-    List<Obj> drugs = new ArrayList<>();
-    for(AmbDrugDates dd: dds) {
-      List<AmbDrugRows> rows = dAmbDrugRow.getList("From AmbDrugRows Where ambDrug.id = " + dd.getAmbDrug().getId());
-      for (AmbDrugRows row : rows) {
-        if (!row.getSource().equals("own")) {
-          Obj obj = new Obj();
-          obj.setId(row.getDrug().getId());
-          obj.setName(row.getDrug().getName());
-          List<HNDrugs> ffs = dhnDrug.getList("From HNDrugs t Where direction.id = " + Util.getInt(req, "dr") + " And t.drugCount - ifnull(t.rasxod, 0) > 0 And drug.id = " + row.getDrug().getId());
-          List<ObjList> list = new ArrayList<>();
-          for (HNDrugs ff : ffs) {
-            ObjList o = new ObjList();
-            o.setC1(ff.getId().toString());
-            o.setC2(ff.getDrug().getName() + " (Остаток: " + (ff.getDrugCount() - ff.getRasxod()) + ")");
-            o.setC3(ff.getMeasure().getName());
-            o.setC4((ff.getDrugCount() - ff.getRasxod()) + "");
-            o.setC5(row.getRasxod().toString());
-            list.add(o);
-          }
-          obj.setList(list);
-          if(!list.isEmpty())
-            drugs.add(obj);
-        }
-      }
-    }
-    m.addAttribute("drugs", drugs);
-    //
-    return "/med/head_nurse/out/amb/addDrugs";
-  }
-
-  @RequestMapping(value = "out/row/amb/saves.s", method = RequestMethod.POST)
-  @ResponseBody
-  protected String outAmbRowSaves(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
-    JSONObject json = new JSONObject();
-    try {
-      //
-      String[] ids = req.getParameterValues("ids");
-      if(ids != null) {
-        for (String id : ids) {
-          String hid = Util.get(req, "drug_" + id);
-          String rasxod = Util.get(req, "drug_count_" + id);
-          if (hid != null && rasxod != null && !hid.isEmpty() && !rasxod.isEmpty() && Double.parseDouble(rasxod) > 0) {
-            HNDateAmbRows row = new HNDateAmbRows();
-            row.setHndrug(dhnDrug.get(Integer.parseInt(hid)));
-            row.setDrug(row.getHndrug().getDrug());
-            row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
-            row.setRasxod(Double.parseDouble(rasxod));
-            row.setDate(row.getDoc().getDate());
-            row.setPatient(row.getDoc().getPatient());
-            row.setCrBy(session.getUserId());
-            row.setCrOn(new Date());
-            sDrug.hndrug_rasxod(row.getHndrug().getId(), row.getRasxod());
-            dhnDateAmbRow.save(row);
-          }
-        }
-      }
-      //
-      json.put("success", true);
-    } catch (Exception e) {
-      json.put("success", false);
-      json.put("msg", e.getMessage());
-    }
-    return json.toString();
   }
   //endregion
 

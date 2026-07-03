@@ -376,6 +376,9 @@
       }
     });
   }
+  function podCash() {
+    setPage("/cashbox/amb.s?id=${patient.id}");
+  }
 </script>
 <style>
   .blink_me {
@@ -512,6 +515,9 @@
         </c:if>
         <c:if test="${patient.fizio == 'Y' && patient.id != null && fizio_user}">
           <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="fizioterapiaPrint()"><i title="Физиотерапия печать" class="fa fa-print"></i> Физиотерапия печать</a></li>
+        </c:if>
+        <c:if test="${fn:length(services) > 0 && (patient.state == 'CASH' || patient.state == 'WORK') && (sessionScope.ENV.userId == 1 || sessionScope.ENV.userId == 99)}">
+          <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="podCash()"><i title="Касса" class="fa fa-money"></i> Касса</a></li>
         </c:if>
       </c:if>
       <c:if test="${patient.id != null && patient.state == 'PRN'}">

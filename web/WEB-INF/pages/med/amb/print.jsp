@@ -61,6 +61,7 @@
   </table>
 </div>
 <div id="print-content">
+<c:if test="${drugcheck == null}">
   <c:if test="${!check}">
     <c:if test="${!isFizio}">
       <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/amb/printPage.s?ids=${ids}"></iframe>
@@ -72,6 +73,10 @@
   <c:if test="${check}">
     <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/cashbox/amb/check.s?id=${check_id}"></iframe>
   </c:if>
+</c:if>
+<c:if test="${drugcheck != null}">
+  <iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="/cashbox/amb/drugcheck.s"></iframe>
+</c:if>
 </div>
 </body>
 </html>

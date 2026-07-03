@@ -5,9 +5,13 @@ import ckb.dao.admin.forms.fields.DFormField;
 import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.med.amb.*;
 import ckb.dao.med.client.DClient;
+import ckb.dao.med.head_nurse.date.DHNDate;
+import ckb.dao.med.head_nurse.date.DHNDateRow;
 import ckb.domains.admin.Clients;
 import ckb.domains.admin.FormFields;
 import ckb.domains.med.amb.*;
+import ckb.domains.med.head_nurse.HNDateRows;
+import ckb.domains.med.head_nurse.HNDates;
 import ckb.models.AmbService;
 import ckb.models.FormField;
 import ckb.models.Grid;
@@ -47,6 +51,23 @@ public class SAmpImp implements SAmb {
   @Autowired private DAmbDrugRow dAmbDrugRow;
   @Autowired private DAmbDrugDate dAmbDrugDate;
   @Autowired private DClient dClient;
+  @Autowired private DHNDate dhnDate;
+  @Autowired private DHNDateRow dhnDateRow;
+
+  @Override
+  public Double getDrugSum(Integer id) {
+    Double sum = 0.0;
+    List<HNDates> docs = dhnDate.list("From HNDates Where ifnull(paid, '_') != 'Y' And amb.id = " + id);
+    for(HNDates doc: docs) {
+      if(doc.getState().equals("CON")) {
+        List<HNDateRows> ds = dhnDateRow.list("From HNDateRows Where doc.id = " + doc.getId());
+        for (HNDateRows d : ds) {
+          sum += Math.round((d.getDrug().getPrice() + Util.nvl(d.getDrug().getNds(), 0D)) * d.getRasxod() * 100) / 100;
+        }
+      }
+    }
+    return sum;
+  }
 
   @Override
   public List<PatientList> getGridList(Grid grid, Session session) {

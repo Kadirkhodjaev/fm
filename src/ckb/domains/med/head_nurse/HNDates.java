@@ -23,7 +23,7 @@ public class HNDates extends GenId {
   @Column private Date crOn;
 
   @OneToOne @JoinColumn private DrugDirections direction;
-  @OneToOne @JoinColumn private AmbPatients patient;
+  @OneToOne @JoinColumn private AmbPatients amb;
 
   public String getPaid() {
     return paid;
@@ -81,12 +81,12 @@ public class HNDates extends GenId {
     this.receiver = receiver;
   }
 
-  public AmbPatients getPatient() {
-    return patient;
+  public AmbPatients getAmb() {
+    return amb;
   }
 
-  public void setPatient(AmbPatients patient) {
-    this.patient = patient;
+  public void setAmb(AmbPatients amb) {
+    this.amb = amb;
   }
 
   public String getTypeCode() {
