@@ -131,6 +131,7 @@ public class CPack {
         row.setDoc(pac);
         row.setService(kdo.getId());
         row.setPrice(kdo.getPrice());
+        row.setProc(0D);
         dSalePackRow.saveAndReturn(row);
       } else {
         AmbServices kdo = dAmbService.get(Util.getInt(req, "kdo"));
@@ -138,6 +139,7 @@ public class CPack {
         row.setDoc(pac);
         row.setService(kdo.getId());
         row.setPrice(kdo.getPrice());
+        row.setProc(0D);
         dSalePackRow.saveAndReturn(row);
       }
       pac.setPrice(dSalePackRow.getTotal(pac.getId()));
@@ -177,6 +179,9 @@ public class CPack {
     try {
       SalePackRows row = dSalePackRow.get(Util.getInt(req, "id"));
       row.setProc(Util.getDouble(req, "proc"));
+      if(row.getProc() > 100 || row.getProc() < 0) {
+        return Util.err(json, "Диапазон % скидки от 0 до 100");
+      }
       AmbServices kdo = dAmbService.get(row.getService());
       row.setPrice(kdo.getPrice() * (100 - row.getProc()) / 100);
       dSalePackRow.save(row);

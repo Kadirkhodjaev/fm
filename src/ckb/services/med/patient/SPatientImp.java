@@ -746,9 +746,9 @@ public class SPatientImp implements SPatient {
           }
         }
       }
-      if(d.getKdo().getId() == 288) {
+      if(Util.nvl(d.getKdo().getMultiUser(), "N").equals("Y")) {
         List<ObjList> us = new ArrayList<>();
-        List<Users> users = dUser.list("Select t From Users t Join t.kdoTypes c Where c.state = 'A' And c.id = 17");
+        List<Users> users = dUser.list("Select t From Users t Join t.kdoTypes c Where c.state = 'A' And c.id = " + d.getKdo().getKdoType().getId());
         for(Users u : users) {
           ObjList user = new ObjList();
           user.setId(u.getId());
@@ -763,6 +763,7 @@ public class SPatientImp implements SPatient {
       o.setC8(d.getResultId().toString());
       o.setC10(d.getUserId() + "");
       o.setC11(d.getKdo().getId().toString());
+      o.setC15(d.getKdo().getMultiUser());
       if(d.getConfUser() != null && d.getConfUser() > 0) {
         o.setC12(dUser.get(d.getConfUser()).getFio());
         o.setC13(d.getConfUser().toString());

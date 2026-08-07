@@ -144,14 +144,14 @@
             </c:if>
           </td>
           <td nowrap>
-            <c:if test="${p.c11 == '288'}">
+            <c:if test="${p.c15 == 'Y'}">
               <select class="form-control" onchange="setConfUser(${p.c1}, this.value)">
                 <c:forEach items="${p.list}" var="u">
                   <option value="${u.id}" <c:if test="${u.id == p.c13}">selected</c:if>>${u.c1}</option>
                 </c:forEach>
               </select>
             </c:if>
-            <c:if test="${p.c11 != '288'}">
+            <c:if test="${p.c15 != 'Y'}">
               ${p.c12}
             </c:if>
           </td>

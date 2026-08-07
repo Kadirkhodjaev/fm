@@ -148,6 +148,7 @@ public class CCoreStat {
       json.put("maxTime", d.getMaxTime());
       json.put("state", d.getState());
       json.put("necKdo", d.getNecKdo());
+      json.put("multiUser", d.getMultiUser());
       json.put("out_service", d.getOut_service());
       json.put("group", d.getKdoType().getId());
       json.put("kdoType", d.getKdoType().getId());
@@ -192,6 +193,7 @@ public class CCoreStat {
       d.setState(Util.isNull(req, "state") ? "P": "A");
       d.setPriced(Util.isNull(req, "priced") ? "N": "Y");
       d.setNecKdo(Util.isNull(req, "necKdo") ? "N": "Y");
+      d.setMultiUser(Util.isNull(req, "multiUser") ? "N": "Y");
       d.setOut_service(Util.isNull(req, "out_service") ? "N": "Y");
       d.setKdoType(dKdoType.get(Util.getInt(req, "group")));
       d.setCssWidth("700");

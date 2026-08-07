@@ -32,6 +32,7 @@ public class Kdos extends GenId {
   @Column private Double bonusProc;
   @Column private String priced;
   @Column private String necKdo = "N";
+  @Column private String multiUser = "N";
   @Column private String out_service = "N";
   @Column private String norma;
   @Column private String ei;
@@ -228,5 +229,13 @@ public class Kdos extends GenId {
 
   public void setOut_service(String out_service) {
     this.out_service = out_service;
+  }
+
+  public String getMultiUser() {
+    return multiUser;
+  }
+
+  public void setMultiUser(String multiUser) {
+    this.multiUser = multiUser;
   }
 }

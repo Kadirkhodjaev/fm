@@ -861,11 +861,6 @@ public class CHeadNurse {
     try {
       HNDates doc = dhnDate.get(Util.getInt(req, "id"));
       if(doc.getReceiver() == null) {
-        if (dhnDateAmbRow.getCount("From HNDateAmbRows Where doc.id = " + doc.getId()) == 0) {
-          json.put("success", false);
-          json.put("msg", "Ќельз€ подтвердить документ без записи");
-          return json.toString();
-        }
         conn = DB.getConnection();
         ps = conn.prepareStatement("Select t.id From Hn_Date_Patients t Where t.date_id = ? And t.patient_id not in (Select c.patient_id From Hn_Date_Patient_Rows c Where c.doc_id = ?)");
         ps.setInt(1, doc.getId());

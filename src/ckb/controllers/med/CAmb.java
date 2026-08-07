@@ -169,7 +169,7 @@ public class CAmb {
       grid.setSql(sql);
       grid.setRowCount(sAmb.getCount(session, sql));
       Long tail = grid.getRowCount() % grid.getPageSize();
-      grid.setMaxPage(tail == 0 ? Math.round(grid.getRowCount() / grid.getPageSize()) : Math.round(grid.getRowCount() / grid.getPageSize()) + 1);
+      grid.setMaxPage(tail == 0 ? Math.round((float) grid.getRowCount() / grid.getPageSize()) : Math.round((float) grid.getRowCount() / grid.getPageSize()) + 1);
       grid.setStartPos((grid.getPage() - 1) * grid.getPageSize() + 1);
       if (grid.getStartPos() == 1)
         grid.setEndPos(grid.getRowCount() < grid.getPageSize() ? Integer.parseInt("" + grid.getRowCount()) : grid.getPageSize());

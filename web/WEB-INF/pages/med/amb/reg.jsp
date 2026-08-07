@@ -696,7 +696,7 @@
                 <td class="center">
                   <input type="hidden" name="service" value="${ser.id}"/>
                   <select name="user" class="form-control">
-                    <c:forEach items="${ser.users}" var="u">
+                    <c:forEach items="${ser.users}" var="u" >
                       <option <c:if test="${ser.worker.id == u.id}">selected</c:if> value="${u.id}">${u.fio}</option>
                     </c:forEach>
                   </select>
