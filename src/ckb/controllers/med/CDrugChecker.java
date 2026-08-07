@@ -1,7 +1,7 @@
 package ckb.controllers.med;
 
 import ckb.dao.med.drug.actdrug.DDrugActDrug;
-import ckb.dao.med.drug.out.DDrugOutRow;
+import ckb.dao.med.drug.outs.DDrugOutRow;
 import ckb.dao.med.head_nurse.date.DHNDatePatientRow;
 import ckb.dao.med.head_nurse.date.DHNDateRow;
 import ckb.dao.med.head_nurse.drug.DHNDrug;
