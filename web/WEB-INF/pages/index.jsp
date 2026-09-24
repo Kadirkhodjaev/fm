@@ -57,23 +57,23 @@
     if((isInput && evt.keyCode == 13) || !isInput) {
       <c:if test="${fn:indexOf(session.curUrl, 'amb') == -1}">
         if ($('#filterInput').val() != '')
-          $('#mainWindow').load('/patients/index.s?filter=Y&filterInput=' + val);
+          $('#mainWindow').load('patients/index.s?filter=Y&filterInput=' + val);
         else
-          $('#mainWindow').load('/patients/index.s?filter=Y');
+          $('#mainWindow').load('patients/index.s?filter=Y');
       </c:if>
       <c:if test="${fn:indexOf(session.curUrl, 'amb') != -1}">
         if ($('#filterInput').val() != '')
-          $('#mainWindow').load('/${session.curUrl}?filter=Y&filterInput=' + val);
+          $('#mainWindow').load('${session.curUrl}?filter=Y&filterInput=' + val);
         else
-          $('#mainWindow').load('/${session.curUrl}?filter=Y');
+          $('#mainWindow').load('${session.curUrl}?filter=Y');
       </c:if>
     }
     </c:if>
     <c:if test="${!isEnterFilter}">
     if ($('#filterInput').val() != '')
-      $('#mainWindow').load('/patients/index.s?filter=Y&filterInput=' + val);
+      $('#mainWindow').load('patients/index.s?filter=Y&filterInput=' + val);
     else
-      $('#mainWindow').load('/patients/index.s?filter=Y');
+      $('#mainWindow').load('patients/index.s?filter=Y');
     </c:if>
   }
   function setChangePass(){
@@ -144,6 +144,7 @@
     $('input[name=regDateEnd]').val('');
     $('select[name=group_id]').val('');
     $('select[name=state]').val('');
+    $('#filterInput').val('');
     search();
   }
   function openReport(id) {

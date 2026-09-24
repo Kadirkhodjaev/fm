@@ -85,6 +85,10 @@
         <td class="right bold" nowrap><ui:message code="address"/>:</td>
         <td colspan="3">${patient.address}</td>
       </tr>
+      <tr>
+        <td class="right bold" nowrap>Тип скидки:</td>
+        <td colspan="3">${patient.discountType.name}</td>
+      </tr>
     </table>
   </div>
   <div class="panel panel-info" style="margin-left:-1px; width: 100%;">

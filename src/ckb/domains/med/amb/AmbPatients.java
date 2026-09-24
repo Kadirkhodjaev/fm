@@ -26,6 +26,7 @@ public class AmbPatients extends GenId {
   @Column private Integer counteryId;
   @Column private Integer regionId;
   @OneToOne @JoinColumn(name="sex") private SelOpts sex;
+  @OneToOne @JoinColumn(name="discount_type") private SelOpts discountType;
 
   // Физиотерпия
   @Column private String fizio = "N";
@@ -273,5 +274,13 @@ public class AmbPatients extends GenId {
 
   public void setEmp(Integer emp) {
     this.emp = emp;
+  }
+
+  public SelOpts getDiscountType() {
+    return discountType;
+  }
+
+  public void setDiscountType(SelOpts discountType) {
+    this.discountType = discountType;
   }
 }

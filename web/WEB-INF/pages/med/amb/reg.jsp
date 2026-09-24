@@ -634,6 +634,16 @@
           <td class="right" nowrap colspan="2">&nbsp;</td>
           <td class="right" nowrap colspan="2" style="font-size: 10px">Номер телефона пищется без символа "+" и без пробелов с кодом страны</td>
         </tr>
+        <tr>
+          <td class="right" nowrap colspan="2">Тип скидки:</td>
+          <td colspan="2">
+            <select class="form-control" name="discount_type">
+              <c:forEach items="${discount_type}" var="a">
+                <option <c:if test="${patient.discountType.id == a.id}">selected</c:if> value="${a.id}">${a.name}</option>
+              </c:forEach>
+            </select>
+          </td>
+        </tr>
       </table>
     </div>
     <c:if test="${patient.id != null}">

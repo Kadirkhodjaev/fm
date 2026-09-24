@@ -239,7 +239,7 @@
         </tr>
         <tr>
           <td nowrap class="bold" colspan="2">
-            Тахминий ташхис: Асосий <a href="/mkb/index.s" target="_blank">МКБ 10</a>
+            Тахминий ташхис: Асосий <a onclick="window.open('/mkb/index.s', '_blank')" href="#">МКБ 10</a>
             <input type="hidden" name="mkb" id="mkb" value="${doc.mkb}"/>
             <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('osm_c5', 'c5'); return false;">
               <span class="fa fa-save"></span>

@@ -155,9 +155,13 @@ public class SAmpImp implements SAmb {
   public void createModel(HttpServletRequest req, AmbPatients p) {
     if(req.getParameter("id") != null || !Util.isNull(req, "reg")) {
       AmbPatients pat;
-      if(Util.isNull(req, "reg"))
+      if(Util.isNull(req, "reg")) {
         pat = dAmpPatients.get(Req.getInt(req, "id"));
-      else
+        if(pat.getQrcode() != null) {
+          pat.setQrcode(Util.md5(pat.getId().toString()));
+          dAmbPatients.save(pat);
+        }
+      } else
         pat = dAmpPatients.get(Req.getInt(req, "reg"));
       if(Util.isNull(req, "reg")) p.setId(pat.getId());
       p.setSurname(pat.getSurname());
@@ -179,6 +183,7 @@ public class SAmpImp implements SAmb {
       p.setQrcode(pat.getQrcode());
       p.setBirthday(pat.getBirthday());
       p.setEmp(Util.nvl(pat.getEmp(), 0));
+      p.setDiscountType(pat.getDiscountType());
     } else {
       p.setSex(dOpt.get(12));
       p.setTgNumber("998");
@@ -206,6 +211,7 @@ public class SAmpImp implements SAmb {
     pat.setTel(Util.get(req, "tel"));
     pat.setTgNumber(Util.get(req, "tgNumber"));
     pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
+    pat.setDiscountType(Util.isNull(req, "discount_type") ? null : dOpt.get(Util.getInt(req, "discount_type")));
     if(Util.isNull(req, "id")) {
       pat.setState("PRN");
       pat.setRegDate(new Date());

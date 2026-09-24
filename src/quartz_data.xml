@@ -18,4 +18,17 @@
       </cron>
     </trigger>
   </schedule>
+  <schedule>
+    <job>
+      <name>ApiSchedule</name>
+      <job-class>ckb.utils.ApiSchedule</job-class>
+    </job>
+    <trigger>
+      <cron>
+        <name>ApiSchedule</name>
+        <job-name>ApiSchedule</job-name>
+        <cron-expression>0/10 * * 1/1 * ? *</cron-expression>
+      </cron>
+    </trigger>
+  </schedule>
 </job-scheduling-data>

@@ -148,7 +148,7 @@ public class CBooking {
       if(!Util.isNull(req, "id"))
         id = Util.getInt(req, "id");
       RoomBookings book = id == 0 ? new RoomBookings() : dRoomBooking.get(id);
-      if(id != 0 && session.getUserId() != 1) {
+      if(id != 0 && session.getUserId() != 1 && session.getUserId() != 94) {
         if(session.getUserId() != book.getCrBy()) {
           json.put("success", false);
           json.put("msg", "ƒанна€ запись создана другим пользовател€м");
@@ -374,7 +374,7 @@ public class CBooking {
     Session session = SessionUtil.getUser(req);
     try {
       RoomBookings book = dRoomBooking.get(Util.getInt(req, "id"));
-      if(session.getUserId() != book.getCrBy() && session.getUserId() != 1) {
+      if(session.getUserId() != book.getCrBy() && session.getUserId() != 1 && session.getUserId() != 94) {
         json.put("success", false);
         json.put("msg", "ƒанна€ запись создана другим пользовател€м");
         return json.toString();

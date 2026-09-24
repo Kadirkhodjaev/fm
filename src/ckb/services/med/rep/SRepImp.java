@@ -592,6 +592,7 @@ public class SRepImp implements SRep {
 							"  Where ser.Id = t.Service_Id " +
 							"    And p.Id = t.Patient " +
 							"		 And gr.Id = ser.Group_Id " +
+							"    And gr.id != 37 " +
 							"		 And t.crBy = " + doctor.getId() +
 							" 	 And date (t.confDate) Between ? AND ? " +
 							"  Order By t.confDate "
@@ -629,6 +630,8 @@ public class SRepImp implements SRep {
 					Rep1 r = new Rep1();
 					r.setGroupName(doctor.getFio());
 					ps = conn.prepareStatement(
+						/*AMB - 37
+						LV - 22*/
 						"Select Date_Format(t.result_date, '%d.%m.%Y') CrOn," +
 							"				  Concat(p.surname, ' ',  p.name, ' ', p.middlename) Fio , " +
 							"				  ser.Name Service_Name, " +
@@ -640,6 +643,7 @@ public class SRepImp implements SRep {
 							"   Where ser.Id = t.kdo_Id " +
 							"     And p.Id = t.PatientId " +
 							"		  And gr.Id = ser.Kdo_Type " +
+							"     And gr.id != 22 " +
 							"	    And t.done_flag = 'Y' " +
 							"		  And t.userId = " + doctor.getId() +
 							" 	  And date (t.result_date) Between ? AND ? " +

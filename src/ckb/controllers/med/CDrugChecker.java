@@ -59,20 +59,25 @@ public class CDrugChecker {
       BigDecimal r2 = BigDecimal.valueOf(dhnDatePatientRow.getHDRasxod(hndrug));
       BigDecimal r3 = BigDecimal.valueOf(dhnDrug.getTransferRasxod(hndrug));
       rasxod = Double.parseDouble(String.valueOf(r1.add(r2).add(r3)));
-      if(rasxod != hnDrug.getRasxod()) {
-        hnDrug.setPrice(rasxod);
-        hnList.add(hnDrug);
-      } else {
-        if(rasxod > 0 && hnDrug.getRasxod() > 0 && hnDrug.getDrugCount() > 0) {
-          if (hnDrug.getRasxod().equals(hnDrug.getDrugCount()) && rasxod == hnDrug.getDrugCount()) {
-            hnDrug.setHistory(1);
-            dhnDrug.save(hnDrug);
-          }
-          if (hnDrug.getDrugCount() < hnDrug.getRasxod()) {
-            hnDrug.setPrice(rasxod);
-            hnList.add(hnDrug);
+      try {
+        Double hn_rasxod = Util.nvl(hnDrug.getRasxod(), 0);
+        if (rasxod != hn_rasxod) {
+          hnDrug.setPrice(rasxod);
+          hnList.add(hnDrug);
+        } else {
+          if (rasxod > 0 && hn_rasxod > 0 && hnDrug.getDrugCount() > 0) {
+            if (hn_rasxod.equals(hnDrug.getDrugCount()) && rasxod == hnDrug.getDrugCount()) {
+              hnDrug.setHistory(1);
+              dhnDrug.save(hnDrug);
+            }
+            if (hnDrug.getDrugCount() < hn_rasxod) {
+              hnDrug.setPrice(rasxod);
+              hnList.add(hnDrug);
+            }
           }
         }
+      } catch(Exception e) {
+        e.printStackTrace();
       }
     }
     model.addAttribute("hn_rows", hnList);

@@ -5,6 +5,7 @@ import ckb.dao.admin.dicts.DDict;
 import ckb.dao.admin.dicts.DLvPartner;
 import ckb.dao.admin.forms.DForm;
 import ckb.dao.admin.forms.fields.DFormField;
+import ckb.dao.admin.forms.opts.DOpt;
 import ckb.dao.admin.region.DRegion;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.med.amb.*;
@@ -80,6 +81,7 @@ public class CAmb {
   @Autowired private BeanSession beanSession;
   @Autowired private BeanUsers beanUsers;
   @Autowired private DFormField dFormField;
+  @Autowired private DOpt dOpt;
   //endregion
 
   //region PATIENTS
@@ -289,6 +291,7 @@ public class CAmb {
     session.setCurUrl("/amb/reg.s" + (Req.isNull(req, "id") ? "" : "?id=" + Req.get(req, "id")));
     sAmb.createModel(req, p);
     sForm.setSelectOptionModel(m, 1, "sex");
+    sForm.setSelectOptionModel(m, 1, "discount_type");
     List<AmbService> ss = new ArrayList<>();
     m.addAttribute("counteries", beanSession.getCounteries());
     m.addAttribute("regions", beanSession.getRegions());
