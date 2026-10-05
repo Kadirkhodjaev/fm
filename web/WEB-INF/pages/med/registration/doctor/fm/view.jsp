@@ -6,118 +6,171 @@
     response.setHeader("Content-Disposition", "attachment; filename=report.doc;");
   }
 %>
+<%--
+  Страница также выгружается в Word (?word=Y), поэтому вёрстка на таблицах
+  и только простые CSS-свойства, которые Word понимает (без flex/grid).
+--%>
+<style>
+  .ov { width:100%; max-width:900px; margin:16px auto; border-collapse:collapse; border-spacing:0;
+    font-family:'Inter', Calibri, Arial, sans-serif; font-size:14px; color:#1F2430; background:#fff;
+    border:1px solid #E6E8EC; }
+  .ov td { padding:9px 12px; border:1px solid #EEF0F3; vertical-align:top; line-height:1.45; }
+  .ov td.l { width:22%; background:#FAFBFC; color:#6B7280; font-size:12.5px; font-weight:bold; }
+  .ov td.v { width:28%; }
+  .ov tr.sec td { padding:11px 12px; background:#F3F4F6; color:#1F2430; font-size:12px; font-weight:bold;
+    letter-spacing:.5px; text-transform:uppercase; border-top:2px solid #D7182E; }
+  .ov tr.q td { background:#FAFBFC; color:#3C4250; font-size:13px; }
+  .ov tr.q td b { color:#1F2430; }
+  .ov tr.a td { padding:10px 12px 14px; min-height:24px; }
+  .ov .sch { text-align:center; font-size:13px; font-weight:bold; color:#1F2430; text-transform:uppercase; letter-spacing:.3px; }
+  .ov .sch span { display:block; margin-top:2px; font-size:12px; font-weight:normal; color:#6B7280; text-transform:none; letter-spacing:0; }
+</style>
+
 <c:if test="${page == 1}">
-  <table class="formTable" width="800px" style="border-spacing: 0; margin: auto">
+  <table class="ov" width="800" cellspacing="0" cellpadding="0">
+    <tr class="sec"><td colspan="4">Госпитализация</td></tr>
     <tr>
-      <td style="border:1px solid #e8e8e8;" nowrap><b>Дата поступления</b>:
-      <td style="border:1px solid #e8e8e8">${pat.date_Begin}
-      <td style="border:1px solid #e8e8e8"><b>Дата выписки</b>:
-      <td style="border:1px solid #e8e8e8">${pat.date_End}
+      <td class="l">Дата поступления</td>
+      <td class="v">${pat.date_Begin}</td>
+      <td class="l">Дата выписки</td>
+      <td class="v">${pat.date_End}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Диагноз при поступлении</b>:
-      <td colspan="3" style="border:1px solid #e8e8e8">${pat.startDiagnoz}
+      <td class="l">Диагноз при поступлении</td>
+      <td colspan="3">${pat.startDiagnoz}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Сопутствующие болезни</b>:
-      <td colspan="3" style="border:1px solid #e8e8e8">${pat.sopustDBolez}
+      <td class="l">Сопутствующие болезни</td>
+      <td colspan="3">${pat.sopustDBolez}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Осложнение</b>:
-      <td colspan="3" style="border:1px solid #e8e8e8">${pat.oslojn}
+      <td class="l">Осложнение</td>
+      <td colspan="3">${pat.oslojn}</td>
+    </tr>
+
+    <tr class="sec"><td colspan="4">Эпидемиологический анамнез</td></tr>
     <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8">
-        <p style="text-align: center"><b>СХЕМА<br>Сбора эпидемиологического анамнеза</b></p>
-        <p>Имел(а) ли контакт с инфекционными больными (брюшным тифом, паратифами, др салмонеллёзами, дизентерией, прочим ОКИ,
-          вирусными гепатитами, туберкулезом, венерическими заболеваниями) по месту жительства или прописки, работы, учебы на
-          протяжении максимального срока инкубации для каждого заболевания</p>
-    <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8; padding:10px 0">${pat.no1}
-    <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8">Выезжал(а) ли пределы населенного пункта за неделю, -2 месяца до настоящего заболевания. Место пребывания и дата возвращения (вписать с какого по какое время)
-    <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8; padding:10px 0">${pat.no2}
-    <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8">Какие инфеционные заболевания перенёс(ла)?
-    <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8; padding:10px 0">${pat.no3}
-    <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8">Находился (лась) ли на стационарном лечении, получал(а) ли гемотрансфузии (кровь и ее компоненты), подвергалась ли оперативным и массивным вмешательствам за последние 6 месяцев
-    <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8; padding:10px 0">${pat.no4}
+      <td colspan="4" class="sch">Схема<span>сбора эпидемиологического анамнеза</span></td>
+    </tr>
+    <tr class="q">
+      <td colspan="4"><b>1.</b> Имел(а) ли контакт с инфекционными больными (брюшным тифом, паратифами, др. сальмонеллёзами, дизентерией,
+        прочими ОКИ, вирусными гепатитами, туберкулёзом, венерическими заболеваниями) по месту жительства или прописки, работы, учёбы
+        на протяжении максимального срока инкубации для каждого заболевания</td>
+    </tr>
+    <tr class="a"><td colspan="4">${pat.no1}</td></tr>
+    <tr class="q">
+      <td colspan="4"><b>2.</b> Выезжал(а) ли за пределы населённого пункта за 1 неделю – 2 месяца до настоящего заболевания.
+        Место пребывания и дата возвращения (с какого по какое время)</td>
+    </tr>
+    <tr class="a"><td colspan="4">${pat.no2}</td></tr>
+    <tr class="q">
+      <td colspan="4"><b>3.</b> Какие инфекционные заболевания перенёс(ла)?</td>
+    </tr>
+    <tr class="a"><td colspan="4">${pat.no3}</td></tr>
+    <tr class="q">
+      <td colspan="4"><b>4.</b> Находился(лась) ли на стационарном лечении, получал(а) ли гемотрансфузии (кровь и её компоненты),
+        подвергался(лась) ли оперативным и массивным вмешательствам за последние 6 месяцев</td>
+    </tr>
+    <tr class="a"><td colspan="4">${pat.no4}</td></tr>
   </table>
 </c:if>
+
 <c:if test="${page == 2}">
-  <table class="formTable" width="800px" style="border-spacing: 0; margin:auto">
+  <table class="ov" width="800" cellspacing="0" cellpadding="0">
+    <tr class="sec"><td colspan="4">Жалобы и анамнез</td></tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Жалобы</b>:
-      <td colspan="3" style="border:1px solid #e8e8e8">${pat.jaloby}
+      <td class="l">Жалобы</td>
+      <td colspan="3">${pat.jaloby}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Анамнез</b>:
-      <td colspan="3" style="border:1px solid #e8e8e8">${pat.anamnez}
+      <td class="l">Анамнез</td>
+      <td colspan="3">${pat.anamnez}</td>
+    </tr>
+
+    <tr class="sec"><td colspan="4">Status praesens</td></tr>
     <tr>
-      <td colspan="4" style="border:1px solid #e8e8e8"><b>Status praesens</b>
+      <td class="l">Общее состояние</td>
+      <td class="v">${pat.c1}</td>
+      <td class="l">Сознание</td>
+      <td class="v">${pat.c2}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Общее состояние</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c1}
-      <td style="border:1px solid #e8e8e8"><b>Сознание</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c2}
+      <td class="l">Положение</td>
+      <td class="v">${pat.c3}</td>
+      <td class="l">Телосложение</td>
+      <td class="v">${pat.c4}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Положение</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c3}
-      <td style="border:1px solid #e8e8e8"><b>Телосложение</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c4}
+      <td class="l">Кожные покровы</td>
+      <td colspan="3">${pat.c36}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Кожные покровы</b>:
-      <td style="border:1px solid #e8e8e8" colspan="3">${pat.c36}
+      <td class="l">Клетчатка</td>
+      <td class="v">${pat.c5}</td>
+      <td class="l">Костно-мышечная система</td>
+      <td class="v">${pat.c6}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Клечатка</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c5}
-      <td style="border:1px solid #e8e8e8"><b>Костно-мышечная сис.</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c6}
+      <td class="l">Суставы</td>
+      <td class="v">${pat.c7}</td>
+      <td class="l">Лимфатические узлы</td>
+      <td class="v">${pat.c8}</td>
+    </tr>
+
+    <tr class="sec"><td colspan="4">Органы дыхания и кровообращения</td></tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Суставы</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c7}
-      <td style="border:1px solid #e8e8e8"><b>Лимфатические узлы</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c8}
+      <td class="l">Аускультация лёгких</td>
+      <td class="v">${pat.c12}</td>
+      <td class="l">Число дыханий</td>
+      <td class="v">${pat.c10}</td>
+    </tr>
     <tr>
-    <td style="border:1px solid #e8e8e8"><b>Аускультация легких</b>:
-    <td style="border:1px solid #e8e8e8">${pat.c12}
-      <td style="border:1px solid #e8e8e8"><b>Число дыхания</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c10}
+      <td class="l">Аускультация сердца</td>
+      <td class="v">${pat.c17}</td>
+      <td class="l">На аорте</td>
+      <td class="v">${pat.c18}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Аускультация сердца</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c17}
-      <td style="border:1px solid #e8e8e8"><b>на аорте</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c18}
+      <td class="l">Пульс: частота</td>
+      <td class="v">${pat.c20}</td>
+      <td class="l">Ритм</td>
+      <td class="v">${pat.c21}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Пульс: Частота</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c20}
-      <td style="border:1px solid #e8e8e8"><b>ритм</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c21}
+      <td class="l">Шумы в сердце</td>
+      <td colspan="3">${pat.c37}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Шумы в сердце</b>:
-      <td style="border:1px solid #e8e8e8" colspan="3">${pat.c37}
+      <td class="l">Артериальное давление</td>
+      <td colspan="3">${pat.c25}</td>
+    </tr>
+
+    <tr class="sec"><td colspan="4">Органы пищеварения и мочевыделения</td></tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Артериальное давление</b>:
-      <td style="border:1px solid #e8e8e8" colspan="3">${pat.c25}
+      <td class="l">Язык</td>
+      <td class="v">${pat.c26}</td>
+      <td class="l">Живот</td>
+      <td class="v">${pat.c27}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Язык</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c26}
-      <td style="border:1px solid #e8e8e8"><b>Живот</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c27}
+      <td class="l">Печень</td>
+      <td class="v">${pat.c28}</td>
+      <td class="l">Селезёнка</td>
+      <td class="v">${pat.c29}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Печень</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c28}
-      <td style="border:1px solid #e8e8e8"><b>Селезенка</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c29}
+      <td class="l">Стул</td>
+      <td class="v">${pat.c30}</td>
+      <td class="l">Мочеиспускание</td>
+      <td class="v">${pat.c31}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Стул</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c30}
-      <td style="border:1px solid #e8e8e8"><b>Мочеиспускание</b>:
-      <td style="border:1px solid #e8e8e8">${pat.c31}
+      <td class="l">Симптом Пастернацкого</td>
+      <td colspan="3">${pat.c33}</td>
+    </tr>
     <tr>
-      <td style="border:1px solid #e8e8e8"><b>Симптом Пастернацкого</b>:
-      <td colspan="4" style="border:1px solid #e8e8e8">${pat.c33}
-    <tr>
-      <td style="border:1px solid #e8e8e8"><b>Периферические отеки</b>:
-      <td colspan="4" style="border:1px solid #e8e8e8">${pat.c34}
+      <td class="l">Периферические отёки</td>
+      <td colspan="3">${pat.c34}</td>
+    </tr>
   </table>
 </c:if>

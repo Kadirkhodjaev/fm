@@ -12,4 +12,10 @@ public interface DDrugActDrug extends Dao<DrugActDrugs> {
   List<Drugs> getExists();
 
   Double getActSum(Integer id);
+
+  // atomic: decreases the batch balance only if there is enough stock; returns the number of changed rows (0 = not enough)
+  int takeStock(Integer id, double qty);
+
+  // returns the quantity to the batch (compensation)
+  void giveBack(Integer id, double qty);
 }

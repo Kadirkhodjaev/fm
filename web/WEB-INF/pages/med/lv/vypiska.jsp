@@ -12,11 +12,35 @@
 <script src="/res/bs/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
 
 <script src="/res/js/common.js" type="text/javascript"></script>
-<script src="/res/editor/nicEdit.js" type="text/javascript"></script>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
+<link href="/res/quill/quill.snow.css" rel="stylesheet">
+<script src="/res/quill/quill.js" type="text/javascript"></script>
+<script src="/res/js/fms-calendar.js" type="text/javascript"></script>
+<script src="/res/js/fms-templates.js" type="text/javascript"></script>
 
+<style>
+  .osm-editor .ql-editor { min-height: 150px; max-height: 420px; overflow-y: auto; font-size: 14px; }
+  .osm-editor.ql-container { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+  .ql-toolbar.ql-snow { border-top-left-radius: 6px; border-top-right-radius: 6px; }
+</style>
 <script type="text/javascript">
-  bkLib.onDomLoaded(nicEditors.allTextAreas);
+  window.quills = window.quills || {};
+  window.quillRange = window.quillRange || {};
+  $(function () {
+    $('#lv_doc textarea').each(function () {
+      var ta = this;
+      var host = $('<div class="osm-editor"></div>').insertAfter(ta)[0];
+      var q = new Quill(host, {
+        theme: 'snow',
+        modules: {
+          toolbar: [['bold', 'italic', 'underline', 'strike'], [{list: 'ordered'}, {list: 'bullet'}], [{script: 'sub'}, {script: 'super'}], ['clean']]
+        }
+      });
+      if (ta.value && ta.value.trim() !== '')
+        q.setContents(q.clipboard.convert({html: ta.value}), 'silent');
+      window.quills[ta.id] = q;
+      q.on('selection-change', function (r) { if (r) window.quillRange[ta.id] = r; });
+    });
+  });
   function getResult() {
     $.ajax({
       url:'/lv/results.s',
@@ -24,7 +48,7 @@
       method:'post',
       dataType:'json',
       success:function(res) {
-        nicEditors.findEditor("c5").setContent(res.results);
+        setEditorHtml('c5', res.results);
       }
     });
   }
@@ -35,24 +59,25 @@
       method:'post',
       dataType:'json',
       success:function(res) {
-        nicEditors.findEditor("c6").setContent(res.results);
+        setEditorHtml('c6', res.results);
       }
     });
   }
   function setMkb(text, id) {
-    var obos =  nicEditors.findEditor('c1').getContent();
+    var q = window.quills['c1'];
     $('#mkb').val(text);
     $('#mkb_id').val(id);
-    nicEditors.findEditor('c1').setContent(obos.length > 0 && obos != '<br>' ? obos + ', ' + text : text);
+    var hasText = q.getText().trim().length > 0;
+    q.insertText(q.getLength() - 1, (hasText ? ', ' : '') + text);
   }
   function printRecommend() {
     window.open('/lv/print_recommend.s');
   }
   function saveDoc() {
     $('#doc_form').html('');
-    $('#lv_doc input, #lv_doc textarea').each((i, v) => {
+    $('#lv_doc input[name], #lv_doc textarea[name]').each((i, v) => {
       let input = $('<input type="hidden" name="' + v.name + '"/>');
-      input.val(v.tagName == 'TEXTAREA' ? nicEditors.findEditor(v.id).getContent() : v.value);
+      input.val(v.tagName == 'TEXTAREA' ? getEditorHtml(v.id) : v.value);
       $('#doc_form').append(input);
     })
     $.ajax({
@@ -62,14 +87,14 @@
       dataType: 'json',
       success: function (res) {
         openMsg(res)
-        if(res.success)
-          setPage('/lv/doc.s?doc_code=vypiska');
+        if(res.success && res.id)
+          $('#lv_doc input[name=id]').val(res.id);
       }
     });
   }
 </script>
 <form id="doc_form" action="#"></form>
-<div class="panel panel-info" style="width: 800px !important; margin: auto">
+<div class="panel panel-info" style="width: 1100px !important; margin: auto">
   <div class="panel-heading">
     Выписка
   </div>
@@ -79,21 +104,14 @@
     <div class="panel-body">
       <table class="formTable" style="width:100%;">
         <tr>
-          <td style="font-weight: bold; text-align: center" colspan="2">
-            ВЫПИСКА
-          </td>
-        </tr>
-        <tr>
           <td><b>Пациент(ка):</b> ${patient.fio}</td>
           <td><b>Год рождения:</b> ${patient.birthyear}</td>
+          <td nowrap class="bold"><b>Дата выписки:</b></td>
+          <td class="wpx-200"><input name="Date_End" id="Date_End" type="text" class="form-control fms-cal" autocomplete="off" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.dateEnd}" />"/>
         </tr>
+        <tr><td colspan="4"><b>Клинический диагноз</b></td></tr>
         <tr>
-          <td nowrap class="bold">находился на стац. лечении в клинике с <fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.dateBegin}" /> по:
-          <td><input name="Date_End" id="Date_End" type="text" class="form-control datepicker" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.dateEnd}" />"/>
-        </tr>
-        <tr><td colspan="2"><b>Клинический диагноз</b></td></tr>
-        <tr>
-          <td colspan="2">
+          <td colspan="4">
             <table style="width:100%">
               <tr>
                 <td style="width:100px"><a href="#" onclick="window.open('/mkb/index.s', '_blank')">МКБ 10</a>:</td>
@@ -106,91 +124,97 @@
           </td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Основной диагноз
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c1', 'c1'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c1', 'c1'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c1', 'c1'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c1', 'c1'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c1" name="c1" style="width: 100%" rows="8" cols="2">${doc.c1}</textarea></td>
+          <td colspan="4"><textarea id="c1" name="c1" style="display:none" rows="8" cols="2">${doc.c1}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Сопуствующие болезни
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c8', 'c8'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c8', 'c8'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c8', 'c8'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c8', 'c8'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c8" name="c8" style="width: 100%" rows="8" cols="2">${doc.c8}</textarea></td>
+          <td colspan="4"><textarea id="c8" name="c8" style="display:none" rows="8" cols="2">${doc.c8}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Осложнение
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c9', 'c9'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c9', 'c9'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c9', 'c9'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c9', 'c9'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c9" name="c9" style="width: 100%" rows="8" cols="2">${doc.c9}</textarea></td>
+          <td colspan="4"><textarea id="c9" name="c9" style="display:none" rows="8" cols="2">${doc.c9}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Жалобы при поступлении:
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c2', 'c2'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c2', 'c2'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c2', 'c2'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c2', 'c2'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c2" name="c2" style="width: 100%" rows="8" cols="2">${doc.c2}</textarea></td>
+          <td colspan="4"><textarea id="c2" name="c2" style="display:none" rows="8" cols="2">${doc.c2}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Из анамнеза:
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c3', 'c3'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c3', 'c3'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c3', 'c3'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c3', 'c3'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c3" name="c3" style="width: 100%" rows="8" cols="2">${doc.c3}</textarea></td>
+          <td colspan="4"><textarea id="c3" name="c3" style="display:none" rows="8" cols="2">${doc.c3}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Состояние при поступлении:
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c4', 'c4'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c4', 'c4'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c4', 'c4'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c4', 'c4'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c4" name="c4" style="width: 100%" rows="8" cols="2">${doc.c4}</textarea></td>
+          <td colspan="4"><textarea id="c4" name="c4" style="display:none" rows="8" cols="2">${doc.c4}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Проведённые исследования:
             <a title="Результаты" style="float: right; font-weight: bold" class="btn btn-xs btn-default" onclick="getResult (); return false;">
               <span class="fa fa-flask"></span> Обновить
@@ -198,10 +222,10 @@
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c5" name="c5" style="width: 100%" rows="8" cols="2">${doc.c5}</textarea></td>
+          <td colspan="4"><textarea id="c5" name="c5" style="display:none" rows="8" cols="2">${doc.c5}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Проведено лечение:
             <a title="Результаты" style="float: right; font-weight: bold" class="btn btn-xs btn-default" onclick="getDrugResult (); return false;">
               <span class="fa fa-flask"></span> Обновить
@@ -209,81 +233,81 @@
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c6" name="c6" style="width: 100%" rows="8" cols="2">${doc.c6}</textarea></td>
+          <td colspan="4"><textarea id="c6" name="c6" style="display:none" rows="8" cols="2">${doc.c6}</textarea></td>
         </tr>
 
 
 
 
 
-        <tr><td colspan="2"><b>Диагноз при выписке</b></td></tr>
+        <tr><td colspan="4"><b>Диагноз при выписке</b></td></tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Основной диагноз
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c10', 'c10'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c10', 'c10'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c10', 'c10'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c10', 'c10'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c10" name="c10" style="width: 100%" rows="8" cols="2">${doc.c10}</textarea></td>
+          <td colspan="4"><textarea id="c10" name="c10" style="display:none" rows="8" cols="2">${doc.c10}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Сопуствующие болезни
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c11', 'c11'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c11', 'c11'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c11', 'c11'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c11', 'c11'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c11" name="c11" style="width: 100%" rows="8" cols="2">${doc.c11}</textarea></td>
+          <td colspan="4"><textarea id="c11" name="c11" style="display:none" rows="8" cols="2">${doc.c11}</textarea></td>
         </tr>
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             Осложнение
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c12', 'c12'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c12', 'c12'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c12', 'c12'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c12', 'c12'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c12" name="c12" style="width: 100%" rows="8" cols="2">${doc.c12}</textarea></td>
+          <td colspan="4"><textarea id="c12" name="c12" style="display:none" rows="8" cols="2">${doc.c12}</textarea></td>
         </tr>
-
-
-
-
         <tr>
-          <td nowrap class="bold" colspan="2">
+          <td nowrap class="bold" colspan="4">
             <c:if test="${!dieFlag}">
               Рекомендовано:
             </c:if>
             <c:if test="${dieFlag}">
               Посмертный диагноз:
             </c:if>
-            <a title="Сохранить как шаблон" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="saveTemplate('vyp_c7', 'c7'); return false;">
-              <span class="fa fa-save"></span>
-            </a>
-            <a title="Из шаблона" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="getTemplate('vyp_c7', 'c7'); return false;">
-              <span class="fa fa-plus"></span>
-            </a>
+            <div class="btn-group pull-right" style="margin-left:6px">
+              <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
+              <ul class="dropdown-menu pull-right">
+                <li><a href="#" onclick="fmsTpl.pick('vyp_c7', 'c7'); return false;"><i class="fa fa-download fa-fw"></i> Вставить шаблон…</a></li>
+                <li><a href="#" onclick="fmsTpl.save('vyp_c7', 'c7'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
+              </ul>
+            </div>
             <a title="Распечатать рекомендацию" style="float: right;padding:3px" class="btn btn-xs btn-default" onclick="printRecommend(); return false;">
               <span class="fa fa-print"></span>
             </a>
           </td>
         </tr>
         <tr>
-          <td colspan="2"><textarea id="c7" name="c7" style="width: 100%" rows="8" cols="2">${doc.c7}</textarea></td>
+          <td colspan="4"><textarea id="c7" name="c7" style="display:none" rows="8" cols="2">${doc.c7}</textarea></td>
         </tr>
       </table>
     </div>

@@ -252,7 +252,7 @@ public class Util {
       cipher.init(cipherType, secretKey);
       return cipher.doFinal(inputByte);
     }
-    catch (Exception ex){ System.out.print(ex);}
+    catch (Exception ex){}
     return null;
   }
 

@@ -1102,36 +1102,50 @@ public class CView {
     //
     Patients pat = dPatient.get(session.getCurPat());
     Date d = pat.getDateEnd() == null ? new Date() : pat.getDateEnd();
-    Double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
-    Double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
-    Double total = (pat.getDayCount() == null ? 0 : pat.getDayCount()) * price;
+    double ndsProc = d.after(startDate) ? beanSession.getNds() : 0;
+    int days = pat.getDayCount() == null ? 0 : pat.getDayCount();
+    double price = pat.getRoomPrice() * (100 + ndsProc) / 100;
+    double total = days * price;
     ObjList obj = new ObjList();
-    obj.setC1("Оплата за койку: Кол-во дней: " + pat.getDayCount());
-    obj.setC2(total + "");
+    obj.setC1("Койка (дней: " + days + ")");
+    obj.setC2(String.valueOf(Math.round(days * price)));
+    obj.setC3("bed");
     list.add(obj);
     List<PatientWatchers> watchers = dPatientWatchers.byPatient(pat.getId());
     for(PatientWatchers watcher: watchers) {
+      double wTotal = watcher.getTotal() == null ? 0D : watcher.getTotal();
+      total += wTotal;
       obj = new ObjList();
-      total += watcher.getTotal();
-      obj.setC1("Дополнительное спальное место по типу: " + watcher.getType().getName() + ". Кол-во дней: " + watcher.getDayCount());
-      obj.setC2(watcher.getTotal() + "");
+      obj.setC1("Дополнительное спальное место" + (watcher.getType() == null ? "" : ": " + watcher.getType().getName()) + " (дней: " + watcher.getDayCount() + ")");
+      obj.setC2(String.valueOf(Math.round(wTotal)));
+      obj.setC3("watcher");
       list.add(obj);
     }
     List<PatientPays> pays = dPatientPays.byPatient(pat.getId());
-    Double paid = 0D;
+    double paid = 0D;
     for(PatientPays pay: pays) {
-      paid += pay.getCard() + pay.getTransfer() + pay.getCash() + pay.getOnline();
+      paid += (pay.getCard() == null ? 0D : pay.getCard()) + (pay.getTransfer() == null ? 0D : pay.getTransfer())
+        + (pay.getCash() == null ? 0D : pay.getCash()) + (pay.getOnline() == null ? 0D : pay.getOnline());
     }
     List<LvPlans> plans = dLvPlan.getByPatientId(pat.getId());
     for(LvPlans plan: plans) {
-      total += plan.getPrice() != null ? plan.getPrice() : 0D;
+      double pPrice = plan.getPrice() != null ? plan.getPrice() : 0D;
+      total += pPrice;
       obj = new ObjList();
       obj.setC1(plan.getKdo().getName());
-      obj.setC2((plan.getPrice() != null ? plan.getPrice() : 0D) + "");
+      obj.setC2(String.valueOf(Math.round(pPrice)));
+      obj.setC3("plan");
       list.add(obj);
     }
-    model.addAttribute("paid", paid);
-    model.addAttribute("total", total);
+    double debt = total - paid;
+    String status = Math.abs(debt) < 1 ? "paid" : debt > 0 ? "debt" : "over";
+    long percent = total <= 0 ? 100 : Math.max(0, Math.min(100, Math.round(paid * 100 / total)));
+    model.addAttribute("paid", Math.round(paid));
+    model.addAttribute("total", Math.round(total));
+    model.addAttribute("debt", Math.round(debt));
+    model.addAttribute("debtAbs", Math.abs(Math.round(debt)));
+    model.addAttribute("status", status);
+    model.addAttribute("percent", percent);
     model.addAttribute("services", list);
     return "/med/lv/cashbox";
   }

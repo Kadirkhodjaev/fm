@@ -55,7 +55,7 @@ public class SDrugImp implements SDrug {
 
   @Override
   public double drug_saldo(Integer drug) {
-    List<DrugActDrugs> drugs = dDrugActDrug.list("From DrugActDrugs Where drug.id = " + drug + " And counter - rasxod > 0");
+    List<DrugActDrugs> drugs = dDrugActDrug.list("From DrugActDrugs Where act.state != 'E' And drug.id = " + drug + " And counter - rasxod > 0");
     if(drugs.isEmpty())
       return 0;
     double saldo = 0;

@@ -53,8 +53,15 @@ public class MedScheduler implements Job {
         dPatient.save(pat);
       }
       String[] commands = {"cmd", "/c", "mysqldump -uroot -proot fm > D:\\dump\\" + Util.getCurDate().replace(".", "") + ".sql"};
-      Process pb = Runtime.getRuntime().exec(commands);
-      pb.waitFor();
+      ProcessBuilder builder = new ProcessBuilder(commands);
+      builder.redirectErrorStream(true);
+      builder.redirectOutput(new java.io.File("NUL"));
+      Process pb = builder.start();
+      if (!pb.waitFor(30, java.util.concurrent.TimeUnit.MINUTES)) {
+        pb.destroyForcibly();
+        throw new RuntimeException("mysqldump timeout");
+      }
+
       byte[] buf = new byte[1024];
       File f = new File("D:\\dump\\" + Util.getCurDate().replace(".", "") + ".zip");
       ZipOutputStream out = new ZipOutputStream(new FileOutputStream(f));

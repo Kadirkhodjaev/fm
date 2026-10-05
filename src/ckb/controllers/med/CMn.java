@@ -37,8 +37,6 @@ import java.util.Objects;
 @RequestMapping("/mn/")
 public class CMn {
 
-  private Session session = null;
-
   @Autowired private DKdoTypes dKdoType;
   @Autowired private DAmbGroup dAmbGroup;
   @Autowired private DDrugDirection dDrugDirection;
@@ -48,7 +46,7 @@ public class CMn {
   // Медикаменты
   @RequestMapping("drugs.s")
   protected String drugs(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/drugs.s");
     Connection cn = null;
     PreparedStatement ps = null;
@@ -180,7 +178,7 @@ public class CMn {
   // Анализ склада
   @RequestMapping("analys.s")
   protected String analys(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/analys.s");
     Connection cn = null;
     PreparedStatement ps = null;
@@ -280,7 +278,7 @@ public class CMn {
   // Анализ медикаметов
   @RequestMapping("drugs/days.s")
   protected String drugDays(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/drugs/days.s");
     Connection cn = null;
     PreparedStatement ps = null;
@@ -359,7 +357,7 @@ public class CMn {
   // Рейтинг услуг
   @RequestMapping("/services.s")
   protected String services(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/services.s");
     Connection cn = null;
     PreparedStatement ps = null;
@@ -443,7 +441,7 @@ public class CMn {
   // Рейтинг по врачам
   @RequestMapping("/users.s")
   protected String users(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/users.s");
     Connection cn = null;
     PreparedStatement ps = null;
@@ -553,7 +551,7 @@ public class CMn {
   // Аптека
   @RequestMapping("/drugstore.s")
   protected String drugstore(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/drugstore.s");
     String startDate = Util.get(req, "period_start", "01" + Util.getCurDate().substring(2));
     String endDate = Util.get(req, "period_end", Util.getCurDate());
@@ -628,7 +626,7 @@ public class CMn {
   // Склад
   @RequestMapping("/stores.s")
   protected String stores(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/stores.s");
     Connection cn = null;
     PreparedStatement ps = null;
@@ -696,7 +694,7 @@ public class CMn {
   // Склад: Простой
   @RequestMapping("drug_downtime.s")
   protected String drug_downtime(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/drug_downtime.s");
     Connection cn = null;
     PreparedStatement ps = null;
@@ -771,7 +769,7 @@ public class CMn {
 
   @RequestMapping("drug/analys.s")
   protected String drugAnalys(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/mn/analys.s");
     Connection cn = null;
     PreparedStatement ps = null;

@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -241,6 +242,7 @@ public class CDrug {
       drug.setCrOn(new Date());
       drug.setDone("N");
       dDrugActDrug.save(drug);
+      json.put("id", drug.getId());
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -273,6 +275,8 @@ public class CDrug {
       drug.setBlockCount(Util.getDouble(req, "count_block"));
       drug.setCountPrice(Util.getDouble(req, "price_drug"));
       drug.setCounter(Util.getDouble(req, "count_drug"));
+      if (drug.getCountPrice() != null && drug.getNdsProc() != null)
+        drug.setNds(Math.round(drug.getNdsProc() * drug.getCountPrice()) / 100.0);
       dDrugActDrug.save(drug);
       json.put("success", true);
     } catch (Exception e) {
@@ -297,10 +301,10 @@ public class CDrug {
     try {
       conn = DB.getConnection();
       //
-      Double income_in = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
+      Double income_in = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.state != 'E' And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       Double out_in = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate < '" + Util.dateDBBegin(startDate) + "'");
       //
-      Double income_period = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
+      Double income_period = DB.getSum(conn, "Select Sum(c.countprice * c.counter) From Drug_Acts t, Drug_Act_Drugs c Where t.id = c.act_id And t.state != 'E' And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' ");
       Double out_period = DB.getSum(conn, "Select Sum(c.price * c.drugCount) From Drug_Outs t, Drug_Out_Rows c Where t.id = c.doc_id And t.regDate Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "'");
       //
       model.addAttribute("saldo_in", income_in - out_in);
@@ -309,17 +313,28 @@ public class CDrug {
       model.addAttribute("saldo_out", income_in - out_in + income_period - out_period);
       //
       List<ObjList> rows = new ArrayList<>();
+      // stock = batches of CONFIRMED acts (draft acts are not on the warehouse yet), with expiry, act and manufacturer
       ps = conn.prepareStatement(
-          " Select t.Drug_Id, " +
-            "      c.name, " +
+          " Select t.Id batch_id, " +
+          "        t.Drug_Id, " +
+          "        c.name, " +
+          "        m.name measure, " +
           "        t.countPrice * (t.counter - t.rasxod) summ, " +
           "        t.counter - t.rasxod counter, " +
-          "        t.countprice Price," +
-            "      t.nds " +
-          "   From drug_act_drugs t, drug_s_names c " +
-          "  Where t.counter - t.rasxod > 0" +
-          "    And t.drug_id = c.id " +
-          "  Order By c.Name");
+          "        t.countprice Price, " +
+          "        t.nds, " +
+          "        date_format(t.endDate, '%Y-%m-%d') end_date, " +
+          "        a.regNum, " +
+          "        date_format(a.regDate, '%d.%m.%Y') reg_date, " +
+          "        f.name man " +
+          "   From drug_act_drugs t " +
+          "   Join drug_s_names c On c.id = t.drug_id " +
+          "   Join drug_acts a On a.id = t.act_id " +
+          "   Left Join drug_s_measures m On m.id = t.measure_id " +
+          "   Left Join drug_s_manufacturers f On f.id = t.manufacturer_id " +
+          "  Where t.counter - t.rasxod > 0 " +
+          "    And a.state != 'E' " +
+          "  Order By c.Name, t.endDate");
       rs = ps.executeQuery();
       while (rs.next()) {
         ObjList obj = new ObjList();
@@ -329,6 +344,12 @@ public class CDrug {
         obj.setC3(rs.getString("summ"));
         obj.setC4(rs.getString("price"));
         obj.setC5(rs.getString("nds"));
+        obj.setC6(rs.getString("end_date"));
+        obj.setC7(rs.getString("regNum"));
+        obj.setC8(rs.getString("reg_date"));
+        obj.setC9(rs.getString("man"));
+        obj.setC10(rs.getString("measure"));
+        obj.setC11(rs.getString("batch_id"));
         //
         rows.add(obj);
       }
@@ -358,11 +379,15 @@ public class CDrug {
       //
       List<ObjList> rows = new ArrayList<>();
       ps = conn.prepareStatement(
-        "Select t.drug_id, t.summ, t.counter, t.price, c.name From (" +
-          " Select t.Drug_Id, t.countprice * (t.counter - t.rasxod) summ, t.counter - t.rasxod counter, t.countprice Price From drug_act_drugs t Where t.counter - t.rasxod > 0 " +
-          " ) t, drug_s_names c " +
-          " Where c.Id = t.drug_Id " +
-          " Order By c.Name" );
+        " Select t.drug_id, c.name, m.name measure, t.countPrice * (t.counter - t.rasxod) summ, t.counter - t.rasxod counter, t.countPrice price, " +
+        "        date_format(t.endDate, '%d.%m.%Y') end_date, f.name man, a.regNum, date_format(a.regDate, '%d.%m.%Y') reg_date " +
+        "   From drug_act_drugs t " +
+        "   Join drug_s_names c On c.id = t.drug_id " +
+        "   Join drug_acts a On a.id = t.act_id " +
+        "   Left Join drug_s_measures m On m.id = t.measure_id " +
+        "   Left Join drug_s_manufacturers f On f.id = t.manufacturer_id " +
+        "  Where t.counter - t.rasxod > 0 And a.state != 'E' " +
+        "  Order By c.Name, t.endDate");
       rs = ps.executeQuery();
       while (rs.next()) {
         ObjList obj = new ObjList();
@@ -371,6 +396,11 @@ public class CDrug {
         obj.setC2(rs.getString("counter"));
         obj.setC3(rs.getString("summ"));
         obj.setC4(rs.getString("price"));
+        obj.setC5(rs.getString("end_date"));
+        obj.setC6(rs.getString("man"));
+        obj.setC7(rs.getString("regNum"));
+        obj.setC8(rs.getString("reg_date"));
+        obj.setC9(rs.getString("measure"));
         //
         rows.add(obj);
       }
@@ -393,45 +423,103 @@ public class CDrug {
     Session session = SessionUtil.getUser(request);
     String code = Util.get(request, "code", "all");
     session.setCurUrl("/drugs/details.s?code=" + code);
+    // the rows are loaded by the page itself (one compact json request): see /details/list.s
+    model.addAttribute("page_code", code);
+    return "/med/drugs/details/index";
+  }
+
+  private static void jsonText(StringBuilder sb, String s) {
+    if(s == null) {
+      sb.append("null");
+      return;
+    }
+    sb.append('"');
+    for(int i = 0; i < s.length(); i++) {
+      char ch = s.charAt(i);
+      switch(ch) {
+        case '"': sb.append("\\\""); break;
+        case '\\': sb.append("\\\\"); break;
+        case '\n': sb.append("\\n"); break;
+        case '\r': sb.append("\\r"); break;
+        case '\t': sb.append("\\t"); break;
+        case '/': sb.append("\\/"); break;
+        default:
+          if(ch < 0x20) sb.append(String.format("\\u%04x", (int) ch));
+          else sb.append(ch);
+      }
+    }
+    sb.append('"');
+  }
+
+  private static void jsonNum(StringBuilder sb, double v) {
+    sb.append(new java.math.BigDecimal(v).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
+  }
+
+  // All batches of all acts as compact arrays (one request instead of a 30 000 row html page).
+  // Row: [batch id, drug id, drug, act no, act date, act state, expiry yyyy-MM-dd, unit price, received, used, sum of out rows, manufacturer, unit]
+  @RequestMapping("/details/list.s")
+  protected void detailsList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
+    StringBuilder sb = new StringBuilder(1 << 20);
     try {
       conn = DB.getConnection();
-      List<ObjList> rows = new ArrayList<>();
       ps = conn.prepareStatement(
-        " Select t.id, " +
-          "          c.name, " +
-          "          t.drug_id, " +
-          "          t.countprice * t.counter summ, " +
-          "          Round(t.counter * 100) / 100 counter, " +
-          "          t.price, " +
-          "          t.rasxod " +
-          "     From drug_act_drugs t, drug_s_names c Where c.id = t.drug_id " + (code.equals("out") ? "  " : "") + (code.equals("saldo") ? " And t.counter - t.rasxod != 0 " : "") + (code.equals("rasxod") ? " And t.rasxod > 0 " : "") +
-          "  Order By c.Name");
+        " Select t.id, t.drug_id, c.name, a.regNum, date_format(a.regDate, '%d.%m.%Y') reg_date, a.state act_state, " +
+        "        date_format(t.endDate, '%Y-%m-%d') end_date, t.countPrice price, t.counter, t.rasxod, " +
+        "        (Select Sum(r.drugCount) From drug_out_rows r Where r.income_id = t.id) out_sum, " +
+        "        f.name man, m.name measure " +
+        "   From drug_act_drugs t " +
+        "   Join drug_s_names c On c.id = t.drug_id " +
+        "   Join drug_acts a On a.id = t.act_id " +
+        "   Left Join drug_s_manufacturers f On f.id = t.manufacturer_id " +
+        "   Left Join drug_s_measures m On m.id = t.measure_id " +
+        "  Order By c.name, t.endDate, t.id");
       rs = ps.executeQuery();
-      while (rs.next()) {
-        ObjList obj = new ObjList();
-        obj.setIb(rs.getString("id"));
-        obj.setC1(rs.getString("name"));
-        obj.setC3(rs.getString("price"));
-        obj.setC4(rs.getString("counter"));
-        obj.setC5(rs.getString("summ"));
-        obj.setC6(rs.getString("rasxod"));
-        //
-        rows.add(obj);
+      sb.append("{\"success\":true,\"rows\":[");
+      boolean first = true;
+      while(rs.next()) {
+        if(!first) sb.append(',');
+        first = false;
+        sb.append('[').append(rs.getInt("id")).append(',').append(rs.getInt("drug_id")).append(',');
+        jsonText(sb, rs.getString("name")); sb.append(',');
+        jsonText(sb, rs.getString("regNum")); sb.append(',');
+        jsonText(sb, rs.getString("reg_date")); sb.append(',');
+        jsonText(sb, rs.getString("act_state")); sb.append(',');
+        jsonText(sb, rs.getString("end_date")); sb.append(',');
+        jsonNum(sb, rs.getDouble("price")); sb.append(',');
+        jsonNum(sb, rs.getDouble("counter")); sb.append(',');
+        jsonNum(sb, rs.getDouble("rasxod")); sb.append(',');
+        jsonNum(sb, rs.getDouble("out_sum")); sb.append(',');
+        jsonText(sb, rs.getString("man")); sb.append(',');
+        jsonText(sb, rs.getString("measure"));
+        sb.append(']');
       }
-      model.addAttribute("page_code", code);
-      model.addAttribute("rows", rows);
+      sb.append("]}");
     } catch (Exception e) {
       e.printStackTrace();
+      sb.setLength(0);
+      sb.append("{\"success\":false,\"msg\":");
+      jsonText(sb, String.valueOf(e.getMessage()));
+      sb.append('}');
     } finally {
       DB.done(rs);
       DB.done(ps);
       DB.done(conn);
     }
-    //
-    return "/med/drugs/details/index";
+    byte[] bytes = sb.toString().getBytes("UTF-8");
+    resp.setContentType("application/json;charset=UTF-8");
+    String ae = req.getHeader("Accept-Encoding");
+    if(ae != null && ae.contains("gzip")) {
+      resp.setHeader("Content-Encoding", "gzip");
+      java.util.zip.GZIPOutputStream gz = new java.util.zip.GZIPOutputStream(resp.getOutputStream());
+      gz.write(bytes);
+      gz.finish();
+      gz.close();
+    } else {
+      resp.getOutputStream().write(bytes);
+    }
   }
 
   @RequestMapping(value = "/details.s", method = RequestMethod.POST)
@@ -1043,7 +1131,7 @@ public class CDrug {
       b.setPrice(r.getPrice());
       if(r.getPerc() != null)
         b.setPerc(Math.ceil(r.getPerc() * 10000) / 100);
-      List<DrugActDrugs> act = dDrugActDrug.getList("From DrugActDrugs Where act.state != 'E' And counter - rasxod > 0 And drug.id = " + r.getDrug().getId());
+      List<DrugActDrugs> act = dDrugActDrug.getList("From DrugActDrugs Where act.state != 'E' And counter - rasxod > 0 And drug.id = " + r.getDrug().getId() + " Order By endDate, id");
       List<ObjList> variuos = new ArrayList<>();
       if(!act.isEmpty())
         for(DrugActDrugs a: act) {
@@ -1054,6 +1142,7 @@ public class CDrug {
           o.setC4(a.getBlockCount().toString());
           o.setC5(Util.dateToString(a.getAct().getRegDate()));
           o.setC6(Util.dateToString(a.getEndDate()));
+          o.setC7(a.getManufacturer() == null ? "" : a.getManufacturer().getName());
           variuos.add(o);
         }
       b.setList(variuos);
@@ -1064,7 +1153,7 @@ public class CDrug {
             b.setFio(norma.getId().toString());
           }
         } catch (Exception e) {
-          System.out.println(r.getDrug().getId() + " - " + r.getDrug().getName());
+
         }
       }
       list.add(b);
@@ -1206,24 +1295,125 @@ public class CDrug {
       String[] row_ids = req.getParameterValues("row_id");
       String[] drug_ids = req.getParameterValues("drug_id");
       String[] drug_counts = req.getParameterValues("drug_count");
+      if(row_ids == null) {
+        json.put("success", true);
+        return json.toString();
+      }
       for(int i=0;i<row_ids.length;i++) {
         DrugOutRows row = dDrugOutRow.get(Integer.parseInt(row_ids[i]));
-        row.setDrugCount(Double.parseDouble(drug_counts[i]));
-        DrugActDrugs actDrug = dDrugActDrug.get(Integer.parseInt(drug_ids[i]));
-        if(row.getDrugCount() > actDrug.getCounter() - actDrug.getRasxod()) {
+        // the row is already issued (second click / second request): never write it off twice
+        if(row.getDrugCount() != null)
+          continue;
+        double cnt = Double.parseDouble(drug_counts[i]);
+        int batchId = Integer.parseInt(drug_ids[i]);
+        // nothing to issue for this row (no stock / zero): leave it untouched
+        if(batchId <= 0 || cnt <= 0)
+          continue;
+        // atomic: the batch balance is checked and decreased by one statement, so two users cannot take the same stock
+        if(dDrugActDrug.takeStock(batchId, cnt) == 0) {
+          DrugActDrugs fresh = dDrugActDrug.get(batchId);
+          double left = fresh == null ? 0 : fresh.getCounter() - fresh.getRasxod();
           json.put("success", false);
-          json.put("msg", "Кол-во списании не может быть больше остатка. Препарад: " + row.getDrug().getName() + " Остаток: " + (actDrug.getCounter() - actDrug.getRasxod()) + " Списание: " + row.getDrugCount());
+          json.put("msg", "Кол-во списания не может быть больше остатка. Препарат: " + row.getDrug().getName() + ". Остаток по партии: " + left);
           return json.toString();
         }
-        actDrug.setRasxod(actDrug.getRasxod() + row.getDrugCount());
-        if(Objects.equals(actDrug.getCounter(), actDrug.getRasxod()))
-          actDrug.setDone("Y");
-        dDrugActDrug.save(actDrug);
-        row.setPrice(actDrug.getCountPrice());
-        row.setIncome(actDrug);
-        dDrugOutRow.save(row);
+        try {
+          DrugActDrugs actDrug = dDrugActDrug.get(batchId);
+          row.setDrugCount(cnt);
+          row.setPrice(actDrug.getCountPrice());
+          row.setIncome(actDrug);
+          dDrugOutRow.save(row);
+        } catch (Exception e) {
+          dDrugActDrug.giveBack(batchId, cnt);
+          throw e;
+        }
       }
       json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  // Auto issue of the whole document: every pending row is covered by the batches that expire first (FEFO).
+  // If one batch is not enough the row is split: one row per batch. What cannot be covered stays as a pending row.
+  @RequestMapping(value = "/out/auto.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String outAuto(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      DrugOuts out = dDrugOut.get(Util.getInt(req, "id"));
+      if(out == null || !"SND".equals(out.getState()))
+        return Util.err(json, "Документ нельзя обработать: состояние не «Отправлен»");
+      List<DrugOutRows> rows = dDrugOutRow.getList("From DrugOutRows Where doc.id = " + out.getId() + " And drugCount is null Order By id");
+      int issued = 0, lines = 0;
+      JSONArray shortage = new JSONArray();
+      for(DrugOutRows row : rows) {
+        double need = row.getClaimCount() == null ? 0 : row.getClaimCount();
+        if(need <= 0)
+          continue;
+        List<DrugActDrugs> batches = dDrugActDrug.getList("From DrugActDrugs Where act.state != 'E' And counter - rasxod > 0 And endDate > CURRENT_DATE() And drug.id = " + row.getDrug().getId() + " Order By endDate, id");
+        double left = need;
+        boolean first = true;
+        for(DrugActDrugs b : batches) {
+          if(left <= 0.0001)
+            break;
+          double take = Math.round(Math.min(left, b.getCounter() - b.getRasxod()) * 100) / 100.0;
+          if(take <= 0)
+            continue;
+          // somebody has just taken this batch: try the next one
+          if(dDrugActDrug.takeStock(b.getId(), take) == 0)
+            continue;
+          DrugOutRows target = row;
+          if(!first) {
+            target = new DrugOutRows();
+            target.setDoc(out);
+            target.setDrug(row.getDrug());
+            target.setMeasure(row.getMeasure());
+            target.setPerc(row.getPerc());
+            target.setHndrug(row.getHndrug());
+            target.setCrBy(row.getCrBy());
+            target.setCrOn(row.getCrOn());
+          }
+          try {
+            target.setClaimCount(take);
+            target.setDrugCount(take);
+            target.setIncome(b);
+            target.setPrice(b.getCountPrice());
+            dDrugOutRow.save(target);
+          } catch (Exception e) {
+            dDrugActDrug.giveBack(b.getId(), take);
+            throw e;
+          }
+          first = false;
+          lines++;
+          left = Math.round((left - take) * 100) / 100.0;
+        }
+        if(first) {
+          // nothing was found for this row
+          shortage.put(row.getDrug().getName() + ": " + need);
+        } else {
+          issued++;
+          if(left > 0.0001) {
+            DrugOutRows rest = new DrugOutRows();
+            rest.setDoc(out);
+            rest.setDrug(row.getDrug());
+            rest.setMeasure(row.getMeasure());
+            rest.setPerc(row.getPerc());
+            rest.setHndrug(row.getHndrug());
+            rest.setCrBy(row.getCrBy());
+            rest.setCrOn(row.getCrOn());
+            rest.setClaimCount(left);
+            dDrugOutRow.save(rest);
+            shortage.put(row.getDrug().getName() + ": " + left);
+          }
+        }
+      }
+      json.put("success", true);
+      json.put("issued", issued);
+      json.put("lines", lines);
+      json.put("shortage", shortage);
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
@@ -1306,12 +1496,23 @@ public class CDrug {
     return json.toString();
   }
 
+  // departments served by the automatic requests: set the system parameter DRUG_AUTO_OUT_DIRS (ids separated by commas); default 25, 28, 29
+  private String autoDirections() {
+    String v = beanSession.getParam("DRUG_AUTO_OUT_DIRS");
+    return v != null && v.matches("^\\s*\\d+(\\s*,\\s*\\d+)*\\s*$") ? v.trim() : "25, 28, 29";
+  }
+
+  // days when the pharmacy orders from the suppliers: system parameter DRUG_ORDER_DAYS (1 = Monday ... 7 = Sunday, separated by commas); default Mon, Wed, Fri
+  private String orderDays() {
+    String v = beanSession.getParam("DRUG_ORDER_DAYS");
+    return v != null && v.matches("^\\s*[1-7](\\s*,\\s*[1-7])*\\s*$") ? v.trim() : "1,3,5";
+  }
   @RequestMapping(value = "/out/gen_auto_out.s", method = RequestMethod.POST)
   @ResponseBody
   protected String gen_auto_out(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (25, 28, 29)");
+      List<DrugDirections> directions = dDrugDirection.list("From DrugDirections Where id in (" + autoDirections() + ")");
       double pog = 0;// Double.parseDouble(beanSession.getParam("DRUG_AUTO_OUT_PROC"));
       for(DrugDirections dd : directions) {
         if(dDrugOut.getCount("From DrugOuts Where direction.id = " + dd.getId() + " And state != 'CON' And autoFlag = 'Y'") > 0)
@@ -1385,74 +1586,137 @@ public class CDrug {
   protected String out_drug_claim(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/drugs/out/drug/claim.s");
-    String deep_ana = session.getSessionFilter("drug_out_claim_type", "deep_ana", req, "0");
-    int deep_size = Integer.parseInt(session.getSessionFilter("drug_out_claim_size", "deep_size", req, "2"));
+    // purchase planning page: the data are loaded by the page itself, see /order/data.s
+    model.addAttribute("autoDirs", autoDirections());
+    return "/med/drugs/order/index";
+  }
+
+  private static int intParam(HttpServletRequest req, String name, int def, int min, int max) {
+    try {
+      int v = Integer.parseInt(req.getParameter(name).trim());
+      return Math.max(min, Math.min(max, v));
+    } catch (Exception e) {
+      return def;
+    }
+  }
+
+  private static void jsonNum3(StringBuilder sb, double v) {
+    sb.append(new java.math.BigDecimal(v).setScale(3, java.math.RoundingMode.HALF_UP).toPlainString());
+  }
+
+  // What to order from the suppliers: demand, stock, expiry and norms of every drug (see ckb.utils.OrderCalc).
+  // Row: [id, name, unit, block, per day, trend, sigma/day, usable stock, to expire unused, unconfirmed acts, in departments, deficit to norms,
+  //       cover days, reorder point, target, order units, order blocks, unit price, vat, supplier, status, ABC, issued in period, history days,
+  //       low data, limited by shelf life, shelf days, safety stock, has norm,
+  //       main departments [[direction id, stock, up to the norm, use per day, norm, to issue, used today, threshold, surplus], ...],
+  //       transfers between the main departments [[from direction id, to direction id, quantity], ...],
+  //       pharmacy: expired, expires before it is used up, all the stock, stock of unconfirmed acts]
+  @RequestMapping("/order/data.s")
+  protected void orderData(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+    ckb.utils.OrderCalc.Params p = new ckb.utils.OrderCalc.Params();
+    p.period = intParam(req, "period", 28, 14, 365);
+    p.cover = intParam(req, "cover", 0, 0, 14);
+    p.service = intParam(req, "service", 90, 80, 99) / 100.0;
+    p.dirs = autoDirections();
+    p.orderDays = orderDays();
     Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    List<ObjList> rows = new ArrayList<>();
+    StringBuilder sb = new StringBuilder(1 << 18);
     try {
       conn = DB.getConnection();
-      ps = conn.prepareStatement(
-        "Select t.id, " +
-          "       t.name, " +
-          "       (t.rasxod + t.patient_rasxod) / 10 rasxod " +
-          "  From ( " +
-          "    Select q.id, " +
-          "           q.name, " +
-          "           (Select ifnull(Sum(t.rasxod), 0) rasxod   " +
-          "              From hn_date_rows t, hn_dates c, hn_drugs g   " +
-          "             Where t.doc_Id = c.Id   " +
-          "               And g.id = t.drug_Id   " +
-          "               And date(t.crOn) between date_sub(now(), interval 10 day) And now()   " +
-          "               And c.direction_Id in (25, 28, 29)   " +
-          "               And g.drug_Id = q.id) rasxod, " +
-          "         (Select ifnull(Sum(t.rasxod), 0) rasxod   " +
-          "            From hn_date_patient_rows t, hn_dates c, hn_drugs g   " +
-          "           Where t.doc_Id = c.Id   " +
-          "             And g.id = t.drug_Id   " +
-          "             And date(t.crOn) between date_sub(now(), interval 10 day) And now()   " +
-          "             And c.direction_Id in (25, 28, 29)   " +
-          "             And g.drug_Id = q.id) patient_rasxod " +
-          "    From Drug_s_Names q " +
-          "    Where q.id in (Select d.drug_Id From drug_s_normas d) " +
-          ") t Order By name "
-      );
-      rs = ps.executeQuery();
-      while (rs.next()) {
-        int drug = rs.getInt("id");
-        DrugNormas n = dDrugNorma.obj("From DrugNormas Where drug.id = " + drug);
-        double norma = 0;
-        if(n.getNormaType().equals("ALL")) {
-          norma = n.getNorma() * 3;
-        } else {
-          List<DrugNormaDirections> nds = dDrugNormaDirection.list("From DrugNormaDirections Where doc.id = " + n.getId());
-          for(DrugNormaDirections nd: nds) {
-            norma += nd.getNorma();
-          }
+      List<ckb.utils.OrderCalc.Result> res = ckb.utils.OrderCalc.run(conn, p);
+      sb.append("{\"success\":true,\"rows\":[");
+      boolean first = true;
+      for(ckb.utils.OrderCalc.Result r : res) {
+        ckb.utils.OrderCalc.Input in = r.in;
+        if(!first) sb.append(',');
+        first = false;
+        sb.append('[').append(in.id).append(',');
+        jsonText(sb, in.name); sb.append(',');
+        jsonText(sb, in.measure); sb.append(',');
+        jsonNum(sb, in.block); sb.append(',');
+        jsonNum3(sb, r.d); sb.append(',');
+        jsonNum(sb, r.trend); sb.append(',');
+        jsonNum3(sb, r.sigma); sb.append(',');
+        jsonNum(sb, r.usable); sb.append(',');
+        jsonNum(sb, r.risk); sb.append(',');
+        jsonNum(sb, r.draftQty); sb.append(',');
+        jsonNum(sb, in.deptAll); sb.append(',');
+        jsonNum(sb, in.deficit); sb.append(',');
+        jsonNum(sb, Math.min(r.cover, 99999)); sb.append(',');
+        jsonNum(sb, r.rop); sb.append(',');
+        jsonNum(sb, r.target); sb.append(',');
+        jsonNum(sb, r.orderUnits); sb.append(',');
+        jsonNum(sb, r.orderBlocks); sb.append(',');
+        jsonNum(sb, in.lastPrice); sb.append(',');
+        jsonNum(sb, in.lastNds); sb.append(',');
+        jsonText(sb, in.partner); sb.append(',');
+        jsonText(sb, r.status); sb.append(',');
+        jsonText(sb, r.abc); sb.append(',');
+        jsonNum(sb, in.qTotal); sb.append(',');
+        sb.append(in.effDays).append(',');
+        sb.append(r.lowData ? 1 : 0).append(',');
+        sb.append(r.capped ? 1 : 0).append(',');
+        jsonNum(sb, in.shelfDays); sb.append(',');
+        jsonNum(sb, r.ss); sb.append(',');
+        sb.append(in.hasNorm ? 1 : 0).append(",[");
+        for(int k = 0; k < p.dirIds.length; k++) {
+          if(k > 0) sb.append(',');
+          sb.append('[').append(p.dirIds[k]).append(',');
+          jsonNum(sb, in.depStock[k]); sb.append(',');
+          jsonNum(sb, r.depToNorm[k]); sb.append(',');
+          jsonNum3(sb, in.depRate[k]); sb.append(',');
+          jsonNum(sb, in.depNorm[k]); sb.append(',');
+          jsonNum(sb, r.depIssue[k]); sb.append(',');
+          jsonNum(sb, in.depToday[k]); sb.append(',');
+          jsonNum(sb, r.depThreshold[k]); sb.append(',');
+          jsonNum(sb, r.depSurplus[k]); sb.append(']');
         }
-        double saldo = DB.getSum(conn, "Select Sum(drugCount - rasxod) From Hn_Drugs Where drug_id = " + drug + " And drugCount - rasxod > 0 And direction_id in (25, 28, 29)");
-        double drugSaldo = DB.getSum(conn, "Select Sum(counter - rasxod) From Drug_Act_Drugs Where drug_id = " + drug + " And counter - rasxod > 0");
-        double diff = drugSaldo - (norma - saldo) - rs.getDouble("rasxod") * deep_size;
-        ObjList row = new ObjList();
-        row.setC1(rs.getString("name"));
-        row.setC2("" + rs.getDouble("rasxod"));
-        row.setC3(norma + "");
-        row.setC4(saldo + "");
-        row.setC5(drugSaldo + "");
-        row.setC6(diff + "");
-        if(deep_ana.equals("0") || (deep_ana.equals("1") && diff < 0) || (deep_ana.equals("2") && diff > 0))
-          rows.add(row);
+        sb.append("],[");
+        for(int k = 0; k < r.transfers.size(); k++) {
+          double[] t = r.transfers.get(k);
+          if(k > 0) sb.append(',');
+          sb.append('[').append(p.dirIds[(int) t[0]]).append(',').append(p.dirIds[(int) t[1]]).append(',');
+          jsonNum(sb, t[2]); sb.append(']');
+        }
+        sb.append("],");
+        jsonNum(sb, r.expired); sb.append(',');
+        jsonNum(sb, r.late); sb.append(',');
+        jsonNum(sb, r.pharmacy); sb.append(',');
+        jsonNum(sb, r.draftAll);
+        sb.append(']');
       }
-      model.addAttribute("rows", rows);
-      model.addAttribute("deep_ana", deep_ana);
-      model.addAttribute("deep_size", deep_size);
+      sb.append("],\"params\":{\"period\":").append(p.period).append(",\"coverDays\":").append(p.coverDays).append(",\"auto\":").append(p.cover == 0)
+        .append(",\"orderDays\":");
+      jsonText(sb, p.orderDays);
+      sb.append(",\"service\":").append((int) Math.round(p.service * 100)).append(",\"dirs\":[");
+      for(int k = 0; k < p.dirIds.length; k++) {
+        if(k > 0) sb.append(',');
+        sb.append('[').append(p.dirIds[k]).append(',');
+        jsonText(sb, p.dirNames[k]);
+        sb.append(']');
+      }
+      sb.append("]}}");
     } catch (Exception e) {
       e.printStackTrace();
+      sb.setLength(0);
+      sb.append("{\"success\":false,\"msg\":");
+      jsonText(sb, String.valueOf(e.getMessage()));
+      sb.append('}');
     } finally {
-      DB.done(conn, ps, rs);
+      DB.done(conn);
     }
-    return "/med/drugs/claim";
+    byte[] bytes = sb.toString().getBytes("UTF-8");
+    resp.setContentType("application/json;charset=UTF-8");
+    String ae = req.getHeader("Accept-Encoding");
+    if(ae != null && ae.contains("gzip")) {
+      resp.setHeader("Content-Encoding", "gzip");
+      java.util.zip.GZIPOutputStream gz = new java.util.zip.GZIPOutputStream(resp.getOutputStream());
+      gz.write(bytes);
+      gz.finish();
+      gz.close();
+    } else {
+      resp.getOutputStream().write(bytes);
+    }
   }
   //endregion
 }

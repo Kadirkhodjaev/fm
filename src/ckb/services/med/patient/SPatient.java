@@ -1,5 +1,6 @@
 package ckb.services.med.patient;
 
+import ckb.models.ActCalc;
 import ckb.domains.admin.Kdos;
 import ckb.domains.med.lv.LvEpics;
 import ckb.domains.med.patient.Patients;
@@ -57,4 +58,12 @@ public interface SPatient {
   List<PatientDrug> getDrugsByTypeToDate(Integer patId, Date operDay, int i, String time);
 
   List<PatientDrugNurseDate> getPatientNewDrugs(int dep);
+
+  ActCalc act_calc(int actId) throws Exception;
+
+  void updateLabServices(java.sql.Connection conn, ckb.domains.med.head_nurse.HNPatients pat);
+
+  void updateMedServices(java.sql.Connection conn, ckb.domains.med.head_nurse.HNPatients pat);
+
+  void updateCountServices(java.sql.Connection conn, ckb.domains.med.head_nurse.HNPatients pat);
 }

@@ -1,10 +1,17 @@
 package ckb.utils;
 
-import java.io.InputStream;
-import java.sql.*;
-import java.util.Properties;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DB {
+
+  private static volatile javax.sql.DataSource dataSource;
+
+  public static void setDataSource(javax.sql.DataSource ds) {
+    dataSource = ds;
+  }
 
   public static void done(Connection obj) {
     try {
@@ -36,22 +43,14 @@ public class DB {
     done(conn);
   }
 
-
   public static Connection getConnection() {
-    Connection conn = null;
-    Properties prop = null;
     try {
-      InputStream is = DB.class.getClassLoader().getResourceAsStream("db.properties");
-      prop = new Properties();
-      if (is != null) prop.load(is);
-      if(prop != null) {
-        Class.forName(prop.getProperty("jdbc.driverClassName"));
-        return DriverManager.getConnection(prop.getProperty("jdbc.url"), prop.getProperty("jdbc.username"), prop.getProperty("jdbc.password"));
-      }
+      return dataSource.getConnection();
     } catch (Exception e) {
       System.err.println("DB_CONN_ERR = " + e.getMessage());
+      e.printStackTrace();
+      return null;
     }
-    return conn;
   }
 
   public static Double getSum(Connection conn, String sql) throws SQLException {

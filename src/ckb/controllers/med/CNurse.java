@@ -36,16 +36,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 @Controller
 @RequestMapping("/nurses")
 public class CNurse {
-
-  private Session session = null;
 
   @Autowired private DPatient dPatient;
   @Autowired private DKdoTypes dKdoType;
@@ -62,7 +57,7 @@ public class CNurse {
 
   @RequestMapping("/work.s")
   protected String acts(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/nurses/work.s");
 
     String dep = Util.get(req, "dep");
@@ -92,6 +87,9 @@ public class CNurse {
       ps.setInt(1, dep == null ? session.getDeptId() : Integer.parseInt(dep));
       rs = ps.executeQuery();
       //
+      Map<Integer, Kdos> kdoMap = new HashMap<>();
+      for (Kdos k : dKdo.getAll()) kdoMap.put(k.getId(), k);
+      //
       while (rs.next()) {
         ObjList row = new ObjList();
         Patients d = dPatient.get(rs.getInt("id"));
@@ -116,7 +114,7 @@ public class CNurse {
         int i = 0;
         while (rc.next()) {
           i++;
-          Kdos kdo = dKdo.get(rc.getInt("kdo_id"));
+          Kdos kdo = kdoMap.get(rc.getInt("kdo_id"));
           String name = kdo.getName();
           int type = rc.getInt("kdo_type_id");
           if (rc.getInt("kdo_id") == 13) { // Биохимия
@@ -336,7 +334,7 @@ public class CNurse {
 
   @RequestMapping("/fizio.s")
   protected String fizio(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("nurses/fizio.s");
     //
     Connection conn = null;
@@ -379,6 +377,8 @@ public class CNurse {
       );
       ps.setString(1, Util.dateDB(dated));
       rs = ps.executeQuery();
+      Map<Integer, Kdos> kdoMap = new HashMap<>();
+      for (Kdos k : dKdo.getAll()) kdoMap.put(k.getId(), k);
       while(rs.next()) {
         Obj p = new Obj();
         p.setId(rs.getInt("patient"));
@@ -417,7 +417,7 @@ public class CNurse {
           row.setC7(rc.getString("room"));
           rws.add(row);
           if(!kdos.containsKey(rc.getInt("kdo_id")))
-            kdos.put(rc.getInt("kdo_id"), dKdo.get(rc.getInt("kdo_id")));
+            kdos.put(rc.getInt("kdo_id"), kdoMap.get(rc.getInt("kdo_id")));
         }
         DB.done(rc);
         DB.done(ps);

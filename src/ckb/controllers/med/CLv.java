@@ -323,7 +323,7 @@ public class CLv {
     String actDate = Util.get(request, "act_Date");
     dairy.setActDate(Util.toDate(Util.getCurDate()));
     // Validation
-    if(Util.nvl(actDate).isEmpty() || dairy.getText().equals("<br>") || (!Util.nvl(actDate).isEmpty() && Util.toDate(actDate).after(Util.toDate(Util.getCurDate())))){
+    if(Util.nvl(actDate).isEmpty() || Util.nvl(dairy.getText()).isEmpty() || dairy.getText().equals("<br>") || (!Util.nvl(actDate).isEmpty() && Util.toDate(actDate).after(Util.toDate(Util.getCurDate())))){
       Patients m = dPatient.get(session.getCurPat());
       model.addAttribute("fio", Util.nvl(m.getSurname()) + " " + Util.nvl(m.getName()) + " " + Util.nvl(m.getMiddlename()));
       model.addAttribute("birthyear", m.getBirthyear());

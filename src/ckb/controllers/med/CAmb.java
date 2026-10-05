@@ -51,7 +51,6 @@ import java.util.concurrent.TimeUnit;
 public class CAmb {
 
   //region AUTOWIRED
-  private Session session = null;
   @Autowired private SAmb sAmb;
   @Autowired private SForm sForm;
   @Autowired private DForm dForm;
@@ -88,7 +87,7 @@ public class CAmb {
   @RequestMapping(value = "/setFilter.s", method = RequestMethod.POST)
   @ResponseBody
   protected void setFilter(HttpServletRequest req){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.clearFilter();
     String[] filters = {"birthBegin", "birthEnd", "regDateBegin", "regDateEnd", "group_id", "group_id", "state"};
     HashMap<String, String> hash = new HashMap<>();
@@ -103,10 +102,7 @@ public class CAmb {
   @RequestMapping("/home.s")
   protected String mains(HttpServletRequest r, Model model) {
     try {
-      /*for(int i=61;i<=140;i++) {
-        System.out.println("makeCell(c, " + i + ", f.getC" + i + "()) +");
-      }*/
-      session = SessionUtil.getUser(r);
+      Session session = SessionUtil.getUser(r);
       session.setCurUrl("/amb/home.s");
       session.setArchive(false);
       session.setCurPat(0);
@@ -129,9 +125,11 @@ public class CAmb {
         if (session.getFilterFio().isEmpty())
           session.setFiltered(false);
         sql += " And ( " +
-          "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') " +
+          " Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
+          " Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
+          " Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') Or " +
+          " Upper(concat(t.surname, ' ', t.name, ' ', t.middlename)) Like Upper('%" + session.getFilterFio() + "%') Or " +
+          " t.id Like Upper('%" + session.getFilterFio() + "%') " +
           ")";
       }
       sql += session.getAmbFilterSql();
@@ -195,7 +193,7 @@ public class CAmb {
   @RequestMapping("/archive.s")
   protected String archive(HttpServletRequest r, Model model) {
     try {
-      session = SessionUtil.getUser(r);
+      Session session = SessionUtil.getUser(r);
       session.setCurUrl("/amb/archive.s");
       session.setArchive(true);
       session.setCurPat(0);
@@ -215,9 +213,11 @@ public class CAmb {
         if (session.getFilterFio().isEmpty())
           session.setFiltered(false);
         sql += " And ( " +
-          "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') " +
+          " Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
+          " Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
+          " Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') Or " +
+          " Upper(concat(t.surname, ' ', t.name, ' ', t.middlename)) Like Upper('%" + session.getFilterFio() + "%') Or " +
+          " t.id Like Upper('%" + session.getFilterFio() + "%') " +
           ")";
       }
       sql += session.getAmbFilterSql();
@@ -283,7 +283,7 @@ public class CAmb {
   //region REGISTRATION
   @RequestMapping("/reg.s")
   protected String reg(@ModelAttribute("patient") AmbPatients p, HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     boolean isDone = true;
     session.setCurPat(0);
     if (!Req.isNull(req, "id"))
@@ -364,7 +364,7 @@ public class CAmb {
   @RequestMapping(value = "/reg.s", method = RequestMethod.POST)
   @ResponseBody
   protected String save(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       AmbPatients p = sAmb.save(req);
@@ -410,7 +410,7 @@ public class CAmb {
   @ResponseBody
   protected String delPatient(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       if(dAmbPatients.get(session.getCurPat()).getState().equals("PRN")) {
         List<AmbPatientLinks> links = dAmbPatientLinks.getList("From AmbPatientLinks Where parent = " + session.getCurPat());
@@ -434,7 +434,7 @@ public class CAmb {
 
   @RequestMapping("/services.s")
   protected String serviceList(HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     //region Groups
     List<AmbGroups> groups = dAmbGroups.getList("From AmbGroups t Where t.active = 1");
     List<AmbGroup> gs = new ArrayList<>();
@@ -460,7 +460,7 @@ public class CAmb {
 
   @RequestMapping("/prices.s")
   protected String prices(HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/amb/prices.s");
     //region Groups
     List<AmbGroups> groups = dAmbGroups.getList("From AmbGroups t Where t.active = 1");
@@ -487,7 +487,7 @@ public class CAmb {
   @ResponseBody
   protected String services(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatients pat = dAmbPatients.get(session.getCurPat());
       String[] ids = req.getParameterValues("ids");
@@ -543,7 +543,7 @@ public class CAmb {
   @ResponseBody
   protected String delSer(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       if(Util.isNull(req, "msg")) {
         AmbPatientServices ser = dAmbPatientServices.get(Util.getInt(req, "id"));
@@ -596,7 +596,7 @@ public class CAmb {
   @ResponseBody
   protected String confirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatients patient = dAmbPatients.get(session.getCurPat());
       if("PRN".equals(patient.getState())) patient.setState("CASH");
@@ -614,7 +614,7 @@ public class CAmb {
   //region Амбулаторные услуги
   @RequestMapping("/patientServices.s")
   protected String patientServices(HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     AmbPatients pat = dAmbPatients.get(Util.getInt(req, "id"));
     m.addAttribute("patient", pat);
     m.addAttribute("curUser", session.getUserId());
@@ -631,7 +631,7 @@ public class CAmb {
 
   @RequestMapping("/doWork.s")
   protected String doWork(HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     AmbPatientServices service = dAmbPatientServices.get(Util.getInt(req, "id"));
     session.setCurUrl("/amb/work.s?id=" + service.getId());
     AmbPatients pat = dAmbPatients.get(service.getPatient());
@@ -668,7 +668,7 @@ public class CAmb {
   @ResponseBody
   protected String workSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatientServices service = dAmbPatientServices.get(Util.getInt(req, "id"));
       AmbResults result = service.getResult() > 0 ? dAmbResults.get(service.getResult()) : new AmbResults();
@@ -878,7 +878,7 @@ public class CAmb {
   @ResponseBody
   protected String confirmService(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatientServices service = dAmbPatientServices.get(Util.getInt(req, "id"));
       service.setState("DONE");
@@ -915,7 +915,7 @@ public class CAmb {
 
   @RequestMapping("/printPage.s")
   protected String printPage(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     List<AmbService> list = new ArrayList<>();
     String[] ids = Util.get(req, "ids").split("_");
     for(String id: ids) {
@@ -948,7 +948,7 @@ public class CAmb {
 
   @RequestMapping("/word.s")
   protected String printPage(HttpServletResponse res, HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     List<AmbService> list = new ArrayList<>();
     String[] ids = Util.get(req, "ids").split("_");
     for(String id: ids) {
@@ -987,7 +987,7 @@ public class CAmb {
 
   @RequestMapping("/view.s")
   protected String viewPage(HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     AmbService ser = new AmbService();
     AmbPatientServices service = dAmbPatientServices.get(Util.getInt(req, "id"));
     ser.setService(service.getService());
@@ -1022,7 +1022,7 @@ public class CAmb {
   @ResponseBody
   protected String fizio(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatients patient = dAmbPatients.get(session.getCurPat());
       patient.setFizio("Y");
@@ -1038,7 +1038,7 @@ public class CAmb {
 
   @RequestMapping("/fizio/print.s")
   protected String fizioPrint(HttpServletRequest req, Model m){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     //
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
     m.addAttribute("pat", pat);
@@ -1052,7 +1052,7 @@ public class CAmb {
   @ResponseBody
   protected String reiterativeConsul(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatientServices ser = dAmbPatientServices.get(Req.getInt(req, "id"));
       ser.setAmb_repeat("D");
@@ -1089,7 +1089,7 @@ public class CAmb {
   //region DRUGS
   @RequestMapping("/drug.s")
   protected String drug(HttpServletRequest req, Model model){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     //
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
     model.addAttribute("pat", pat);
@@ -1135,7 +1135,7 @@ public class CAmb {
 
   @RequestMapping("/drug/view.s")
   protected String drugView(HttpServletRequest req, Model model){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     //
     Date minDate = dAmbDrugDate.minDate(session.getCurPat());
     Date maxDate = dAmbDrugDate.maxDate(session.getCurPat());

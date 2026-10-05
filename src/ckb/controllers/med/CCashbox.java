@@ -11,6 +11,8 @@ import ckb.dao.med.cashbox.discount.DCashDiscount;
 import ckb.dao.med.head_nurse.date.DHNDate;
 import ckb.dao.med.head_nurse.date.DHNDateRow;
 import ckb.dao.med.head_nurse.patient.DHNPatient;
+import ckb.dao.med.head_nurse.patient.drugs.DHNPatientDrug;
+import ckb.dao.med.head_nurse.patient.kdos.DHNPatientKdo;
 import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.bio.DLvBio;
 import ckb.dao.med.lv.coul.DLvCoul;
@@ -38,6 +40,7 @@ import ckb.domains.med.patient.Patients;
 import ckb.models.AmbService;
 import ckb.models.ObjList;
 import ckb.services.med.amb.SAmb;
+import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.BeanSession;
@@ -68,7 +71,6 @@ import java.util.List;
 @RequestMapping("/cashbox")
 public class CCashbox {
 
-  private Session session = null;
   Date startDate = Util.stringToDate("31.03.2024");
 
   @Autowired private DAmbPatient dAmbPatients;
@@ -86,6 +88,7 @@ public class CCashbox {
   @Autowired private DLvFizio dLvFizio;
   @Autowired private DLvFizioDate dLvFizioDate;
   @Autowired private DHNPatient dhnPatient;
+  @Autowired private SPatient sPatient;
   //
   @Autowired private DLvBio dLvBio;
   @Autowired private DLvGarmon dLvGarmon;
@@ -105,7 +108,7 @@ public class CCashbox {
   @ResponseBody
   protected String setServicePayState(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatientServices service = dAmbPatientServices.get(Util.getInt(req, "id"));
       service.setState(Util.get(req, "code").equals("pay") ? "PAID" : "ENT");
@@ -130,7 +133,7 @@ public class CCashbox {
   @ResponseBody
   protected String ambDelPay(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       dAmbPatientPay.delete(Util.getInt(req, "id"));
       json.put("success", true);
@@ -144,7 +147,7 @@ public class CCashbox {
 
   @RequestMapping("/amb.s")
   protected String cash(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurPat(Util.getInt(req, "id"));
     session.setCurUrl("/cashbox/amb.s?id=" + session.getCurPat());
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
@@ -258,7 +261,7 @@ public class CCashbox {
 
   @RequestMapping("/amb/check.s")
   protected String printCheck(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     AmbPatients pat = dAmbPatients.get(session.getCurPat());
     model.addAttribute("pat", pat);
     int id = Util.getInt(req, "id");
@@ -289,7 +292,7 @@ public class CCashbox {
   @ResponseBody
   protected String cashSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       AmbPatients patient = dAmbPatients.get(session.getCurPat());
       List<HNDates> docs = dhnDate.list("From HNDates Where amb.id = " + patient.getId());
@@ -354,9 +357,16 @@ public class CCashbox {
   @ResponseBody
   protected String delDiscount(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
-      dCashDiscount.delete(Util.getInt(req, "id"));
+      CashDiscounts cashDiscount = dCashDiscount.get(Util.getInt(req, "id"));
+      dCashDiscount.delete(cashDiscount.getId());
+      if(cashDiscount.getAmbStat().equals("STAT")) {
+        try {
+          HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where patient.id = " + cashDiscount.getPatient());
+          sPatient.act_calc(hnPatient.getId());
+        } catch (Exception ignored) {}
+      }
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -369,7 +379,7 @@ public class CCashbox {
   @ResponseBody
   protected String saveAmbDiscount(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       CashDiscounts discount = Util.isNull(req, "id") ? new CashDiscounts() : dCashDiscount.get(Util.getInt(req, "id"));
       discount.setAmbStat(Util.get(req, "code"));
@@ -383,6 +393,13 @@ public class CCashbox {
       }
       //
       dCashDiscount.save(discount);
+      if(discount.getAmbStat().equals("STAT")) {
+        try {
+          HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where patient.id = " + discount.getPatient());
+          sPatient.act_calc(hnPatient.getId());
+        } catch (Exception ignored) {
+        }
+      }
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -553,9 +570,13 @@ public class CCashbox {
     }
   }
 
+  @Autowired private DHNPatientDrug dhnPatientDrug;
+  @Autowired private DHNPatientKdo dhnPatientKdo;
+  @Autowired private DPatientWatchers dPatientWatcher;
+
   @RequestMapping("stat.s")
   protected String statCash(HttpServletRequest request, Model model) {
-    session = SessionUtil.getUser(request);
+    Session session = SessionUtil.getUser(request);
     if(!(session.getCurPat() > 0)) session.setCurPat(Util.getInt(request, "id"));
     session.setCurUrl("/cashbox/stat.s?id=" + session.getCurPat());
     Patients pat = dPatient.get(session.getCurPat());
@@ -657,16 +678,22 @@ public class CCashbox {
       if(hnPatient != null) {
         model.addAttribute("actExist", true);
         model.addAttribute("actSum", hnPatient.getPaySum());
-        if(Math.abs(paid - hnPatient.getTotalSum()) <= 1) {
+        model.addAttribute("act",  hnPatient);
+        model.addAttribute("actDrugs", dhnPatientDrug.list("From HNPatientDrugs Where parent.id = " + hnPatient.getId()));
+        model.addAttribute("actLabs", dhnPatientKdo.list("From HNPatientKdos Where parent.id = " + hnPatient.getId() + " And serviceType = 0 "));
+        model.addAttribute("actKdos", dhnPatientKdo.list("From HNPatientKdos Where parent.id = " + hnPatient.getId() + " And serviceType = 1 "));
+        model.addAttribute("actConsuls", dhnPatientKdo.list("From HNPatientKdos Where parent.id = " + hnPatient.getId() + " And serviceType = 2 "));
+        model.addAttribute("actWatchers", dPatientWatcher.byPatient(pat.getId()));
+        if(Math.abs(paid - hnPatient.getTotalSum()) == 0) {
           model.addAttribute("serviceTotal", 0);
         } else {
-          model.addAttribute("serviceTotal", hnPatient.getTotalSum() - paid - discountSum);
+          model.addAttribute("serviceTotal", Math.round((hnPatient.getTotalSum() - paid - discountSum) / 1000) * 1000);
         }
       }
     } catch (Exception e) {
       model.addAttribute("actExist", false);
       model.addAttribute("actSum", 0);
-      model.addAttribute("serviceTotal", total - discountSum);
+      model.addAttribute("serviceTotal", Math.round((total - discountSum) / 1000) * 1000);
     }
     return "med/cashbox/stat";
   }
@@ -675,6 +702,7 @@ public class CCashbox {
   protected @ResponseBody String statCashSave(HttpServletRequest req, HttpServletResponse res) throws JSONException {
     JSONObject data = new JSONObject();
     res.setContentType("text/plain;charset=UTF-8");
+    Session session = SessionUtil.getUser(req);
     try {
       PatientPays pay = new PatientPays();
       pay.setPatient_id(Util.getInt(req, "id"));
@@ -715,11 +743,8 @@ public class CCashbox {
       if(!paid.equals(total))
         pat.setPaid("C");
       try {
-        HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where state = 'D' And patient.id = " + pat.getId());
-        if (hnPatient.getPaySum() == pay.getCard() + pay.getCash()  + pay.getTransfer() + Util.nvl(pay.getOnline(), 0)) {
-          hnPatient.setPaySum(0D);
-          dhnPatient.save(hnPatient);
-        }
+        HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where patient.id = " + pat.getId());
+        sPatient.act_calc(hnPatient.getId());
       } catch (Exception ignored) {}
       dPatient.save(pat);
       data.put("success", true);
@@ -736,6 +761,10 @@ public class CCashbox {
     res.setContentType("text/plain;charset=UTF-8");
     try {
       Patients pat = dPatient.get(Util.getInt(req, "id"));
+      HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where patient.id = " + pat.getId());
+      if(hnPatient.getPaySum() != 0) {
+        return Util.err(data, "Сумма оплаты по акту не равно 0. Для закрытия поле К оплате должно быть 0");
+      }
       pat.setPaid("CLOSED");
       dPatient.save(pat);
       data.put("success", true);
@@ -766,9 +795,14 @@ public class CCashbox {
   @ResponseBody
   protected String statDelPay(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
-      dPatientPays.delete(Util.getInt(req, "id"));
+      PatientPays pay = dPatientPays.get(Util.getInt(req, "id"));
+      dPatientPays.delete(pay.getId());
+      try {
+        HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where patient.id = " + pay.getPatient_id());
+        sPatient.act_calc(hnPatient.getId());
+      } catch (Exception ignored) {}
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -782,7 +816,6 @@ public class CCashbox {
   @ResponseBody
   protected String statDelWatcher(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       dPatientWatchers.delete(Util.getInt(req, "id"));
       json.put("success", true);
@@ -857,6 +890,10 @@ public class CCashbox {
       Patients p = dPatient.get(Util.getInt(req, "id"));
       p.setDis_perc(Double.parseDouble(Util.get(req, "perc", "0")));
       dPatient.save(p);
+      try {
+        HNPatients hnPatient = dhnPatient.getObj("From HNPatients Where patient.id = " + p.getId());
+        sPatient.act_calc(hnPatient.getId());
+      } catch (Exception ignored) {}
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);

@@ -39,8 +39,6 @@ import java.util.*;
 @RequestMapping("/exp/")
 public class CExp {
 
-  private Session session;
-
   @Autowired private DExpCategory dExpCategory;
   @Autowired private DExpProduct dExpProduct;
   @Autowired private DExpMeasure dExpMeasure;
@@ -53,7 +51,7 @@ public class CExp {
 
   @RequestMapping("stat.s")
   private String home(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/exp/stat.s");
     String startDate = Util.get(req, "period_start", Util.getCurDate());
     String endDate = Util.get(req, "period_end", Util.getCurDate());
@@ -222,7 +220,7 @@ public class CExp {
 
   @RequestMapping("dicts.s")
   protected String dicts(HttpServletRequest request, Model model) {
-    session = SessionUtil.getUser(request);
+    Session session = SessionUtil.getUser(request);
     session.setCurUrl("/exp/dicts.s");
     if(!session.getCurSubUrl().contains("/exp/dict/"))
       session.setCurSubUrl("/exp/dict/categories.s");

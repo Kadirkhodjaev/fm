@@ -48,7 +48,6 @@ import java.util.List;
 @RequestMapping("/reg/")
 public class CReg {
 
-  private Session session = null;
   @Autowired SForm sForm;
   @Autowired SPatient sPatient;
   @Autowired DPatient dPatient;
@@ -70,7 +69,7 @@ public class CReg {
   @RequestMapping("nurse/index.s")
   protected String view(@ModelAttribute("patient") Patients p, HttpServletRequest req, Model m) {
     //if(!Util.getCurDate().substring(6, 10).equals("2018")) return "redirect:/out.s";
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     if (!Req.isNull(req, "id"))
       session.setCurPat(Req.getInt(req, "id"));
     session.setCurUrl("/reg/nurse/index.s" + (Req.isNull(req, "id") ? "" : "?id=" + Req.get(req, "id")));
@@ -173,7 +172,7 @@ public class CReg {
   @ResponseBody
   protected String nurseNecKdoSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       Patients pat = dPatient.get(session.getCurPat());
       String[] ids = req.getParameterValues("id");
@@ -229,7 +228,7 @@ public class CReg {
   protected String delPatient(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
-      session = SessionUtil.getUser(req);
+      Session session = SessionUtil.getUser(req);
       if(dPatient.get(session.getCurPat()).getState().equals("PRN")) {
         dPatientLink.deletePatient(session.getCurPat());
         dPatient.delete(session.getCurPat());
@@ -246,7 +245,7 @@ public class CReg {
 
   @RequestMapping("nurse/view.s")
   protected String nursePrint(HttpServletRequest request, Model model) {
-    session = SessionUtil.getUser(request);
+    Session session = SessionUtil.getUser(request);
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("pat", pat);
     if(pat.getLv_id() != null)
@@ -266,7 +265,7 @@ public class CReg {
   @ResponseBody
   protected String saveWatcher(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       Patients pat = dPatient.get(Util.getInt(req, "id"));
       if(pat.getRoom().getRoomType().getId() == 7) {
@@ -321,7 +320,7 @@ public class CReg {
 
   @RequestMapping("doctor/index.s")
   protected String regDoc(@ModelAttribute("patient") Patients patient, HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurPat(Req.getInt(req, "id"));
     Patients pat = dPatient.get(Req.getInt(req, "id"));
     session.setCurUrl("/reg/doctor/index.s?id=" + pat.getId());
@@ -368,7 +367,7 @@ public class CReg {
 
   @RequestMapping("doctor/view.s")
   protected String docPrint(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("pat", pat);
     if(pat.getLv_id() != null)
@@ -398,7 +397,7 @@ public class CReg {
   @RequestMapping(value = "doctor/archive.s", method = RequestMethod.POST)
   protected @ResponseBody String doctor_archive(HttpServletRequest req) throws JSONException {
     JSONObject data = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       if(dLvDoc.hasOSM(session.getCurPat()))
         return Util.err(data, "Данный пациент уже в процессе обработке нельзя Архивировать");
@@ -440,14 +439,14 @@ public class CReg {
 
   @RequestMapping(value = "doctor/getIbNum.s", method = RequestMethod.POST)
   protected @ResponseBody String getNum(HttpServletRequest req) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     Patients p = dPatient.get(session.getCurPat());
     return "{\"y\":" + (p.getYearNum() == null ? dPatient.getNextYearNum() : p.getYearNum()) + "}";
   }
 
   @RequestMapping(value = "lvConf.s", method = RequestMethod.POST)
   protected @ResponseBody String lvConf(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     Patients p = dPatient.get(session.getCurPat());
     JSONObject data = new JSONObject();
     try {
@@ -468,14 +467,14 @@ public class CReg {
 
   @RequestMapping("print.s")
   protected String regPrint(HttpServletRequest request, Model model) {
-    session = SessionUtil.getUser(request);
+    Session session = SessionUtil.getUser(request);
     model.addAttribute("p", dPatient.get(session.getCurPat()));
     return "med/registration/print";
   }
 
   @RequestMapping("ekg.s")
   protected String regEkg(HttpServletRequest req, Model model) {
-     session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     if(session.getCurPat() != 0)
       model.addAttribute("patFio", dPatient.getFio(session.getCurPat()));
     Integer id = Util.getInt(req, "id");

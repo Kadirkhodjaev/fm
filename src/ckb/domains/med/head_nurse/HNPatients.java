@@ -26,6 +26,16 @@ public class HNPatients extends GenId {
 
   @Column private String closed = "N";
 
+  @Column(scale = 2, length = 20) private Double kdoSum;
+  @Column(scale = 2, length = 20) private Double labSum;
+  @Column(scale = 2, length = 20) private Double consulSum;
+  @Column(scale = 2, length = 20) private Double koykoSum;
+  @Column(scale = 2, length = 20) private Double disSum;
+  @Column(scale = 2, length = 20) private Double watcherSum;
+  @Column(scale = 2, length = 20) private Double eatSum;
+  @Column(scale = 2, length = 20) private Double drugSum;
+  @Column private String checked = "N";
+
   public Patients getPatient() {
     return patient;
   }
@@ -112,5 +122,77 @@ public class HNPatients extends GenId {
 
   public void setNdsProc(Double ndsProc) {
     this.ndsProc = ndsProc;
+  }
+
+  public Double getKdoSum() {
+    return kdoSum;
+  }
+
+  public void setKdoSum(Double kdoSum) {
+    this.kdoSum = kdoSum;
+  }
+
+  public Double getLabSum() {
+    return labSum;
+  }
+
+  public void setLabSum(Double labSum) {
+    this.labSum = labSum;
+  }
+
+  public Double getConsulSum() {
+    return consulSum;
+  }
+
+  public void setConsulSum(Double consulSum) {
+    this.consulSum = consulSum;
+  }
+
+  public Double getKoykoSum() {
+    return koykoSum;
+  }
+
+  public void setKoykoSum(Double koykoSum) {
+    this.koykoSum = koykoSum;
+  }
+
+  public Double getDisSum() {
+    return disSum;
+  }
+
+  public void setDisSum(Double disSum) {
+    this.disSum = disSum;
+  }
+
+  public Double getWatcherSum() {
+    return watcherSum;
+  }
+
+  public void setWatcherSum(Double watcherSum) {
+    this.watcherSum = watcherSum;
+  }
+
+  public Double getEatSum() {
+    return eatSum;
+  }
+
+  public void setEatSum(Double eatSum) {
+    this.eatSum = eatSum;
+  }
+
+  public Double getDrugSum() {
+    return drugSum;
+  }
+
+  public void setDrugSum(Double drugSum) {
+    this.drugSum = drugSum;
+  }
+
+  public String getChecked() {
+    return checked;
+  }
+
+  public void setChecked(String checked) {
+    this.checked = checked;
   }
 }

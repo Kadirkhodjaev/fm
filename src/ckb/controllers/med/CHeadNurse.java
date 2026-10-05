@@ -3,19 +3,13 @@ package ckb.controllers.med;
 import ckb.dao.admin.depts.DDept;
 import ckb.dao.admin.users.DUser;
 import ckb.dao.admin.users.DUserDrugLine;
-import ckb.dao.med.amb.DAmbDrug;
-import ckb.dao.med.amb.DAmbDrugDate;
-import ckb.dao.med.amb.DAmbDrugRow;
 import ckb.dao.med.amb.DAmbPatient;
-import ckb.dao.med.dicts.rooms.DRooms;
 import ckb.dao.med.drug.act.DDrugAct;
 import ckb.dao.med.drug.actdrug.DDrugActDrug;
 import ckb.dao.med.drug.dict.directions.DDrugDirection;
 import ckb.dao.med.drug.dict.directions.DDrugDirectionDep;
 import ckb.dao.med.drug.dict.drugs.DDrug;
 import ckb.dao.med.drug.dict.drugs.measure.DDrugDrugMeasure;
-import ckb.dao.med.drug.dict.drugs.norma.DDrugNorma;
-import ckb.dao.med.drug.dict.drugs.norma.DDrugNormaDirection;
 import ckb.dao.med.drug.outs.DDrugOut;
 import ckb.dao.med.drug.outs.DDrugOutRow;
 import ckb.dao.med.eat.dict.menuTypes.DEatMenuType;
@@ -51,15 +45,11 @@ import ckb.models.Obj;
 import ckb.models.ObjList;
 import ckb.models.PatientList;
 import ckb.models.eat.EatMenuTable;
-import ckb.services.med.amb.SAmb;
 import ckb.services.med.drug.SDrug;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
-import ckb.utils.BeanSession;
-import ckb.utils.DB;
-import ckb.utils.Req;
-import ckb.utils.Util;
+import ckb.utils.*;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -81,13 +71,10 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/head_nurse/")
 public class CHeadNurse {
 
-  private Session session = null;
-
   //region AUTOWIREDS
   @Autowired private DDrug dDrug;
   @Autowired private DHNPatient dhnPatient;
   @Autowired private DHNPatientDrug dhnPatientDrug;
-  @Autowired private DHNDateAmbRow dhnDateAmbRow;
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private DPatient dPatient;
   @Autowired private DDrugOut dDrugOut;
@@ -109,10 +96,6 @@ public class CHeadNurse {
   @Autowired private DHNDatePatient dhnDatePatient;
   @Autowired private DDrugDirectionDep dDrugDirectionDep;
   @Autowired private DAmbPatient dAmbPatient;
-  @Autowired private SAmb sAmb;
-  @Autowired private DAmbDrug dAmbDrug;
-  @Autowired private DAmbDrugDate dAmbDrugDate;
-  @Autowired private DAmbDrugRow dAmbDrugRow;
 
   @Autowired private DEatMenuType dEatMenuType;
   @Autowired private DNurseEats dNurseEat;
@@ -121,18 +104,16 @@ public class CHeadNurse {
   @Autowired private DPatientEat dPatientEat;
 
   @Autowired private DUser dUser;
-  @Autowired private DRooms dRoom;
   @Autowired private DDept dDept;
   @Autowired private SDrug sDrug;
-  @Autowired private DDrugNorma dDrugNorma;
-  @Autowired private DDrugNormaDirection dDrugNormaDirection;
   @Autowired private BeanSession beanSession;
+  @Autowired private BeanUsers beanUsers;
   //endregion
 
   //region OUT_PATIENT
   @RequestMapping("out/patient.s")
   protected String outPatient(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out/patient.s");
     //
     String s_dr = session.getFilters("out_patient_direction", "0");
@@ -238,7 +219,7 @@ public class CHeadNurse {
   @RequestMapping(value = "out/patient/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outPatientSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       String id = Util.nvl(req, "id", "0");
@@ -302,7 +283,7 @@ public class CHeadNurse {
   @RequestMapping(value = "out/row/patient/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outPatientRowSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       double rasxod = Double.parseDouble(Util.get(req, "rasxod"));
@@ -339,7 +320,7 @@ public class CHeadNurse {
   @RequestMapping(value = "out/row/patient/saves.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outPatientRowSaves(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       //
@@ -374,7 +355,7 @@ public class CHeadNurse {
 
   @RequestMapping("out/patient/list.s")
   protected String outPatientDrugsList(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     HNDates doc = dhnDate.get(Util.getInt(req, "id"));
     m.addAttribute("doc", doc);
     Patients pat = dPatient.get(Util.getInt(req, "patient"));
@@ -472,7 +453,6 @@ public class CHeadNurse {
     try {
       String dept = Util.get(req, "dept", "0");
       conn = DB.getConnection();
-      session = SessionUtil.getUser(req);
       List<DrugDirectionDeps> deps = dDrugDirectionDep.getList("From DrugDirectionDeps Where direction.id = " + date.getDirection().getId());
       String depIds = "0,";
       if(deps != null && deps.size() > 0) {
@@ -491,13 +471,13 @@ public class CHeadNurse {
         o.setIbNum(rs.getString("yearNum"));
         o.setDateBegin(Util.dateToString(rs.getDate("date_begin")));
         o.setDateEnd(Util.dateToString(rs.getDate("date_end")));
-        o.setLv(rs.getInt("lv_id") != 0 ? dUser.get(rs.getInt("lv_id")).getFio() : "");
+        o.setLv(rs.getInt("lv_id") != 0 ? beanUsers.get(rs.getInt("lv_id")).getFio() : "");
         if(rs.getString("palata") == null) {
           if(rs.getString("Dept_Id") != null) {
             o.setOtdPal(beanSession.getDept(rs.getInt("Dept_Id")).getName());
           }
           if(rs.getString("Room_Id") != null) {
-            Rooms room = dRoom.get(rs.getInt("room_id"));
+            Rooms room = beanSession.getRoom(rs.getInt("room_id"));
             String palata = room.getName() + "-" + room.getRoomType().getName();
             o.setOtdPal(o.getOtdPal() + ("".equals(o.getOtdPal()) ? "" : " / ") + palata);
           }
@@ -521,7 +501,6 @@ public class CHeadNurse {
   @RequestMapping(value = "out/row/patient/add.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outPatientAdd(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       if(dhnDatePatient.getCount("From HNDatePatients Where date.id = " + Util.get(req, "id") + " And patient.id = " + Util.get(req, "patient")) == 0) {
@@ -542,7 +521,6 @@ public class CHeadNurse {
   @RequestMapping(value = "out/row/patient/del.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outPatientDel(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       HNDatePatients dp = dhnDatePatient.get(Util.getInt(req, "id"));
@@ -561,7 +539,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String outPatientRowDelete(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       HNDatePatientRows row = dhnDatePatientRow.get(Util.getInt(req, "id"));
       sDrug.hndrug_rasxod(row.getDrug().getId(), -row.getRasxod());
@@ -576,7 +553,6 @@ public class CHeadNurse {
 
   @RequestMapping("out/patient/report.s")
   protected String outPatientReport(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
     //
     Connection conn = null;
     PreparedStatement ps = null;
@@ -648,7 +624,7 @@ public class CHeadNurse {
   //region OUT
   @RequestMapping("out.s")
   protected String out(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out.s");
     String s_dr = session.getFilters("hn_out_direction", "0");
     String dr = Util.get(req, "dr", s_dr);
@@ -730,11 +706,11 @@ public class CHeadNurse {
   @RequestMapping(value = "out/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       String id = Util.nvl(req, "id", "0");
-      HNDates obj = id.equals("0") || id.equals("") ? new HNDates() : dhnDate.get(Integer.parseInt(id));
+      HNDates obj = id.equals("0") || id.isEmpty() ? new HNDates() : dhnDate.get(Integer.parseInt(id));
       obj.setDirection(dDrugDirection.get(Util.getInt(req, "direction")));
       obj.setReceiver(dhnDirection.get(Util.getInt(req, "receiver")));
       obj.setAmb(Util.isNull(req, "amb") ? null : dAmbPatient.get(Util.getInt(req, "amb")));
@@ -760,7 +736,7 @@ public class CHeadNurse {
   @RequestMapping(value = "out/return.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outReturn(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       String id = Util.nvl(req, "id", "0");
@@ -778,7 +754,7 @@ public class CHeadNurse {
   @RequestMapping(value = "out/row/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outRowSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       double rasxod = Double.parseDouble(Util.get(req, "rasxod"));
@@ -816,7 +792,6 @@ public class CHeadNurse {
   @RequestMapping(value = "out/row/delete.s", method = RequestMethod.POST)
   @ResponseBody
   protected String outRowDelete(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       HNDateRows row = dhnDateRow.get(Util.getInt(req, "id"));
@@ -854,7 +829,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String outConfirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
@@ -894,7 +868,7 @@ public class CHeadNurse {
   //region SALDO
   @RequestMapping("saldo.s")
   protected String saldo(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/saldo.s");
     String page_code = Util.get(req, "code", "saldo");
     String filter = Util.get(req, "filter", "");
@@ -949,7 +923,7 @@ public class CHeadNurse {
   //region INCOMES
   @RequestMapping("incomes.s")
   protected String incomes(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/incomes.s");
     //
     String s_dr = session.getFilters("income_direction", "0");
@@ -1060,6 +1034,7 @@ public class CHeadNurse {
   @ResponseBody
   protected String incomeSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
+    Session session = SessionUtil.getUser(req);
     try {
       String id = Util.nvl(req, "id", "0");
       DrugOuts obj = id.equals("0") || id.equals("") ? new DrugOuts() : dDrugOut.get(Integer.parseInt(id));
@@ -1093,7 +1068,7 @@ public class CHeadNurse {
   @ResponseBody
   protected String dropIncome(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     DrugOuts doc = dDrugOut.get( Util.getInt(req, "id"));
     try {
       List<DrugOutRows> rows = dDrugOutRow.getList("From DrugOutRows t Where t.doc.id = " + doc.getId());
@@ -1150,7 +1125,7 @@ public class CHeadNurse {
   @ResponseBody
   protected String incomeRowSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       DrugOutRows row = new DrugOutRows();
       row.setDoc(dDrugOut.get(Util.getInt(req, "doc")));
@@ -1209,7 +1184,7 @@ public class CHeadNurse {
   //region Перевод
   @RequestMapping("transfer.s")
   protected String shock(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/transfer.s");
     String s_dr = session.getFilters("trasfer_direction", "0");
     String dr = Util.get(req, "dr", s_dr);
@@ -1292,7 +1267,7 @@ public class CHeadNurse {
   @RequestMapping(value = "transfer/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String shockSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       String id = Util.nvl(req, "id", "0");
@@ -1318,7 +1293,7 @@ public class CHeadNurse {
   @RequestMapping(value = "transfer/row/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String shockRowSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       HNDrugs row = dhnDrug.get(Util.getInt(req, "id"));;
@@ -1344,7 +1319,6 @@ public class CHeadNurse {
   @RequestMapping(value = "transfer/row/delete.s", method = RequestMethod.POST)
   @ResponseBody
   protected String shockRowDelete(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       HNDrugs row = dhnDrug.get(Util.getInt(req, "id"));
@@ -1382,7 +1356,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String shockConfirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       HNOpers doc = dhnOper.get(Util.getInt(req, "id"));
       if(dhnDrug.getCount("From HNDrugs Where transfer = " + doc.getId()) == 0)
@@ -1401,7 +1374,7 @@ public class CHeadNurse {
   //region HN_PATIENTS
   @RequestMapping("total/patients.s")
   protected String totalPatients(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/total/patients.s");
     String setFilter = Util.get(req, "set");
     String filter = session.getFilters().get("hn_patient_filter");
@@ -1465,7 +1438,7 @@ public class CHeadNurse {
 
   @RequestMapping("total/patients/info.s")
   protected String totalPatientInfo(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/total/patients/info.s?id=" + Util.getInt(req, "id"));
     //
     Patients patient = dPatient.get(Util.getInt(req, "id"));
@@ -1558,7 +1531,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String totalPatientConfirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       HNPatients hnPatient = new HNPatients();
       hnPatient.setPatient(dPatient.get(Util.getInt(req, "id")));
@@ -1619,7 +1591,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String totalPatientUpdate(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       HNPatients hnPatient = dhnPatient.get(Util.getInt(req, "id"));
       Date startDate = Util.stringToDate("31.03.2024");
@@ -1750,7 +1721,7 @@ public class CHeadNurse {
   @RequestMapping(value = "eat/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String eatSave(HttpServletRequest req) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
       NurseEats eat = new NurseEats();
@@ -1874,7 +1845,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String eatTableRefresh(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       EatTables table = dEatTable.get(Util.getInt(req, "id"));
       NurseEats eat = dNurseEat.get(Util.getInt(req, "eat"));
@@ -2046,7 +2016,7 @@ public class CHeadNurse {
   //region PATIENT
   @RequestMapping("patients.s")
   protected String patients(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/patients.s");
     String setFilter = Util.get(req, "set");
     String filter = session.getFilters().get("hn_patient_filter");
@@ -2090,7 +2060,7 @@ public class CHeadNurse {
 
   @RequestMapping("patient/info.s")
   protected String addPatients(HttpServletRequest req, Model m) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     String id = Util.get(req, "id");
     session.setCurUrl("/head_nurse/patient/info.s?id=" + id);
     //
@@ -2105,7 +2075,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String patientFilter(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     JSONArray list = new JSONArray();
     try {
       String fio = Util.get(req, "fio");
@@ -2134,7 +2103,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String patientSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       HNPatients hnPatient = new HNPatients();
       hnPatient.setPatient(dPatient.get(Util.getInt(req, "patient")));
@@ -2161,7 +2129,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String deletePatient(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       dhnPatientDrug.deletePatient(Util.getInt(req, "id"));
       dhnPatient.delete(Util.getInt(req, "id"));
@@ -2177,7 +2144,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String patientDrugSave(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     Connection conn = null;
     try {
       conn = DB.getConnection();
@@ -2203,7 +2169,7 @@ public class CHeadNurse {
   @ResponseBody
   protected String patientDrugDelete(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       if(session.getUserId() == 1)
         dhnPatientDrug.delete(Util.getInt(req, "id"));
@@ -2219,7 +2185,6 @@ public class CHeadNurse {
   @ResponseBody
   protected String patientConfirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
     try {
       HNPatients pat = dhnPatient.get(Util.getInt(req, "id"));
       pat.setState("C");
@@ -2235,7 +2200,7 @@ public class CHeadNurse {
 
   @RequestMapping(value = "new_drugs.s")
   protected String patientNewDrugs(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/new_drugs.s");
     Depts d = dUser.get(session.getUserId()).getDept();
     if(d != null) {
@@ -2247,7 +2212,7 @@ public class CHeadNurse {
 
   @RequestMapping("/new_income_drugs.s")
   protected String new_income_drugs(HttpServletRequest req, Model model){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/new_income_drugs.s");
     Calendar cal = Calendar.getInstance();
     cal.setTime(new Date());
@@ -2264,7 +2229,7 @@ public class CHeadNurse {
 
   @RequestMapping(value = "stat.s")
   protected String stat(HttpServletRequest req, Model model) throws JSONException {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/stat.s");
     String deps = "0,";
     Connection con = null;
@@ -2299,7 +2264,6 @@ public class CHeadNurse {
 
   @RequestMapping("/print.s")
   protected String print(HttpServletRequest req, Model model){
-    session = SessionUtil.getUser(req);
     String dep = Util.get(req, "dep", "");
     SessionUtil.addSession(req, "fontSize", Req.get(req, "font", "14"));
     model.addAttribute("printPage", "/view/stat/home.s?stat=" + Util.getInt(req, "stat") + "&dep=" + dep + "&date=" + Util.get(req, "date"));

@@ -1,8 +1,8 @@
 $(document).ready(function(){
-  $('printButton').html("<button title='Печать' type='button' onclick='printPage()' class='btn btn-outline btn-primary print-button'><i class='fa fa-print'></i></button>");
+  $('printButton').html("<button title='\u041f\u0435\u0447\u0430\u0442\u044c' type='button' onclick='printPage()' class='btn btn-outline btn-primary print-button'><i class='fa fa-print'></i></button>");
 });
 
-// возвращает cookie с именем name, если есть, если нет, то undefined
+// РІРѕР·РІСЂР°С‰Р°РµС‚ cookie СЃ РёРјРµРЅРµРј name, РµСЃР»Рё РµСЃС‚СЊ, РµСЃР»Рё РЅРµС‚, С‚Рѕ undefined
 function getCookie(name) {
   var matches = document.cookie.match(new RegExp("(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"));
   return matches ? decodeURIComponent(matches[1]) : undefined;
@@ -12,8 +12,8 @@ function setLocation(url){
   document.location = url;
 }
 
-// устанавливает cookie c именем name и значением value
-// options - объект с свойствами cookie (expires, path, domain, secure)
+// СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ cookie c РёРјРµРЅРµРј name Рё Р·РЅР°С‡РµРЅРёРµРј value
+// options - РѕР±СЉРµРєС‚ СЃ СЃРІРѕР№СЃС‚РІР°РјРё cookie (expires, path, domain, secure)
 function setCookie(name, value, options) {
   options = options || {};
   var expires = options.expires;
@@ -35,7 +35,7 @@ function setCookie(name, value, options) {
   document.cookie = updatedCookie;
 }
 
-// удаляет cookie с именем name
+// СѓРґР°Р»СЏРµС‚ cookie СЃ РёРјРµРЅРµРј name
 function deleteCookie(name) {
   setCookie(name, "", { expires: -1 })
 }
@@ -64,12 +64,12 @@ function checkForm(form) {
 }
 
 function saveTemplate(field, fieldId) {
-  if (confirm('Вы действительно хотите сохранить значения данного поля как шаблон')) {
-    var name = prompt('Наименование шаблона');
+  if (confirm('\u0412\u044b \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0445\u043e\u0442\u0438\u0442\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u0434\u0430\u043d\u043d\u043e\u0433\u043e \u043f\u043e\u043b\u044f \u043a\u0430\u043a \u0448\u0430\u0431\u043b\u043e\u043d')) {
+    var name = prompt('\u041d\u0430\u0438\u043c\u0435\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u0448\u0430\u0431\u043b\u043e\u043d\u0430');
     if (name != '') {
       $.ajax({
         url: '/templates/lv/save.s',
-        data: 'field=' + field + '&name=' + name + '&template=' + encodeURIComponent(nicEditors.findEditor(fieldId).getContent()),
+        data: 'field=' + field + '&name=' + name + '&template=' + encodeURIComponent(getEditorHtml(fieldId)),
         method: 'post',
         dataType: 'json',
         success: function (res) {
@@ -189,7 +189,7 @@ function saveDrugTemplate(id){
   var goal = $('#drugTr' + id + ' select[name=goal]').val();
   var cat = $('#drugTr' + id + ' select[name=cat]').val();
   var doza = $('#drugTr' + id + ' input[name=note]').val();
-  if (confirm('Вы действительно хотите сохранить значения данного поля как шаблон')) {
+  if (confirm('\u0412\u044b \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0445\u043e\u0442\u0438\u0442\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u0434\u0430\u043d\u043d\u043e\u0433\u043e \u043f\u043e\u043b\u044f \u043a\u0430\u043a \u0448\u0430\u0431\u043b\u043e\u043d')) {
     $.ajax({
       url: '/templates/lv/drug/save.s',
       data: 'name=' + encodeURIComponent(name) + '&cat=' + cat + '&goal=' + goal + '&doza=' + encodeURIComponent(doza),
@@ -205,8 +205,10 @@ function saveDrugTemplate(id){
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+var medMsgTimer = null;
 function closeMedMsg() {
-  $('.med-msg').slideUp(500);
+  clearTimeout(medMsgTimer);
+  $('.med-msg').stop(true, true).slideUp(500);
 }
 function openMsg(res) {
   if($('.med-msg').length === 0) {
@@ -215,33 +217,29 @@ function openMsg(res) {
       '        <tr> ' +
       '          <td id="med-msg-text" style="overflow: hidden;color:white"></td> ' +
       '          <td style="width:35px;border-left: 1px solid #ababab; cursor: pointer;color:white" onClick="closeMedMsg()"> ' +
-      '            <div class="close-msg" title="Закрыть">X</div> ' +
+      '            <div class="close-msg" title="\u0417\u0430\u043a\u0440\u044b\u0442\u044c">X</div> ' +
       '          </td> ' +
       '        </tr> ' +
       '      </table> ' +
       '    </div>');
   }
   if(res.success) {
-    openMedMsg("Данные успешно сохранены", true);
+    openMedMsg("\u0414\u0430\u043d\u043d\u044b\u0435 \u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u044b", true);
   } else {
     openMedMsg(res.msg, false);
   }
 }
 function openMedMsg(msg, isOk) {
-  $('.med-msg').hide();
-  if(isOk || isOk == null) {
-    $('.med-msg').removeClass('error').slideDown(500).find('#med-msg-text').html(msg);
-    setTimeout(() => {
-      $('.med-msg').slideUp(1000);
-    }, 8000)
-  } else {
-    $('.med-msg').addClass('error').slideDown(500).find('#med-msg-text').html(msg);
-    setTimeout(() => {
-      $('.med-msg').slideUp(1000);
-    }, 10000);
-  }
+  var ok = isOk || isOk == null;
+  var box = $('.med-msg');
+  clearTimeout(medMsgTimer);
+  box.stop(true, true).hide();
+  box.toggleClass('error', !ok).find('#med-msg-text').html(msg);
+  box.slideDown(500);
+  medMsgTimer = setTimeout(function () {
+    box.stop(true, true).slideUp(1000);
+  }, ok ? 8000 : 10000);
 }
-
 function errMsg(msg) {
   if($('.med-msg').length === 0) {
     $('body').append('<div class="med-msg" style="display: none"> ' +
@@ -249,7 +247,7 @@ function errMsg(msg) {
       '        <tr> ' +
       '          <td id="med-msg-text" style="overflow: hidden;color:white"></td> ' +
       '          <td style="width:35px;border-left: 1px solid #ababab; cursor: pointer;color:white" onClick="closeMedMsg()"> ' +
-      '            <div class="close-msg" title="Закрыть">X</div> ' +
+      '            <div class="close-msg" title="\u0417\u0430\u043a\u0440\u044b\u0442\u044c">X</div> ' +
       '          </td> ' +
       '        </tr> ' +
       '      </table> ' +
@@ -274,4 +272,39 @@ function moPrintPage(id, param) {
   $('body').append(form);
   form.submit();
   form.remove();
+}
+
+// ---- rich text editor adapter: works with Quill (window.quills) and legacy nicEdit ----
+window.quills = window.quills || {};
+function getEditorHtml(id) {
+  var q = window.quills[id];
+  if (q) {
+    var empty = q.getText().trim() === '' && !q.root.querySelector('img, table');
+    return empty ? '' : q.getSemanticHTML().replace(/&nbsp;/g, ' ');
+  }
+  return nicEditors.findEditor(id).getContent();
+}
+function setEditorHtml(id, html) {
+  var q = window.quills[id];
+  if (q) {
+    q.setContents(q.clipboard.convert({html: html}));
+    return;
+  }
+  nicEditors.findEditor(id).setContent(html);
+}
+// show a message without a server response (creates the message box when it does not exist yet)
+function showMsg(msg, isOk) {
+  if($('.med-msg').length === 0) {
+    $('body').append('<div class="med-msg" style="display: none"> ' +
+      '      <table style="width:100%"> ' +
+      '        <tr> ' +
+      '          <td id="med-msg-text" style="overflow: hidden;color:white"></td> ' +
+      '          <td style="width:35px;border-left: 1px solid #ababab; cursor: pointer;color:white" onClick="closeMedMsg()"> ' +
+      '            <div class="close-msg" title="x">X</div> ' +
+      '          </td> ' +
+      '        </tr> ' +
+      '      </table> ' +
+      '    </div>');
+  }
+  openMedMsg(msg, isOk);
 }

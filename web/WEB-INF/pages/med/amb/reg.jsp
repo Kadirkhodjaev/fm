@@ -12,7 +12,6 @@
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 <script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
 <link href="/res/css/styles.css" rel="stylesheet">
-<script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
 <script>
   $(".chzn-select").chosen();
   $("#birthdate").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
@@ -134,7 +133,7 @@
     window.open('/amb/print.s?fizio=Y');
   }
   function reiterativeConsul(id) {
-    if (confirm('Повторная консультация в течении 5 дней?')) {
+    if (confirm('Повторная консультация в течение 5 дней?')) {
       $.ajax({
         url: '/amb/reiterativeConsul.s',
         data: 'id=' + id,
@@ -173,7 +172,7 @@
   $('input[name=client_name]').keyup( () => {
     <c:if test="${patient.id != null}">return;</c:if>
     let div = $('#client_filter'), elem = $('input[name=client_name]'), v = elem.val().toUpperCase();
-    div.width(elem.width() + 12);
+    div.width(elem.outerWidth());
 
     if(v.length === 0) div.hide();
     if(v.length > 3) {
@@ -211,11 +210,10 @@
         $('#client_buttons .btn-success').hide();
         $('#client_buttons .btn-info').show();
         $('#client_buttons .btn-danger').show();
-        $('#client_buttons').width(80);
         setClient(tr.attr('cid'));
       });
       let fio = $('<td>' + client.name + '</td>');
-      let bd = $('<td class="center">' + client.birthdate + '</td>');
+      let bd = $('<td class="cf-bd">' + client.birthdate + '</td>');
       tr.append(fio).append(bd);
       table.append(tr);
     }
@@ -236,7 +234,6 @@
     $('#client_buttons .btn-success').show();
     $('#client_buttons .btn-info').hide();
     $('#client_buttons .btn-danger').hide();
-    $('#client_buttons').width(40);
     clients = [];
     setClient(0);
   });
@@ -363,7 +360,6 @@
           $('input[name=cl_middlename]').val(res.middlename);
           $('input[name=cl_birthdate]').val(res.birthdate);
           $('select[name=cl_sex_id]').val(res.sex_id);
-          $('input[name=cl_birthdate]').val(res.birthdate);
           $('input[name=cl_doc_seria]').val(res.doc_seria);
           $('input[name=cl_doc_num]').val(res.doc_num);
           $('input[name=cl_doc_info]').val(res.passport);
@@ -379,121 +375,198 @@
   function podCash() {
     setPage("/cashbox/amb.s?id=${patient.id}");
   }
+  // закрыть подсказку клиентов при клике мимо
+  $(document).on('click.clientFilter', function(e){
+    if (!$(e.target).closest('.client-field').length) $('#client_filter').hide();
+  });
 </script>
+
 <style>
-  .blink_me {
-    animation: blinker 1s linear infinite;
+  /* ================= Общие элементы карточки ================= */
+  .ar { --brand:#D7182E; --brand-dark:#A50F22; --brand-soft:#FDECEE; --text:#1F2430; --muted:#6B7280; --border:#E6E8EC; --bg:#F5F6F8;
+    max-width: 1200px; margin: 0 auto; padding: 16px 20px 40px; color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+  .ar-card { background:#fff; border:1px solid var(--border); border-radius:14px; margin-bottom:16px; }
+  .ar-card-h { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .ar-card-h h3 { margin:0; font-size:16px; font-weight:700; }
+  .ar-card-h .sp { flex:1; }
+  .ar-card-b { padding:18px; }
+
+  /* Кнопки */
+  .ab { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 14px; border-radius:9px;
+    border:1.5px solid var(--border); background:#fff; color:var(--text); font-size:13.5px; font-weight:600;
+    white-space:nowrap; cursor:pointer; text-decoration:none !important; transition:background .12s,border-color .12s,color .12s; }
+  .ab:hover { background:var(--bg); color:var(--text); }
+  .ab .fa { color:var(--muted); }
+  .ab.primary { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .ab.primary .fa { color:#fff; }
+  .ab.primary:hover { background:var(--brand-dark); border-color:var(--brand-dark); }
+  .ab.danger:hover { background:var(--brand-soft); border-color:#F5C2C8; color:var(--brand); }
+  .ab.danger:hover .fa { color:var(--brand); }
+  .ab.sm { height:32px; padding:0 12px; font-size:13px; }
+  .ab-ico { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
+    border:0; background:transparent; color:var(--muted); cursor:pointer; }
+  .ab-ico:hover { background:var(--bg); color:var(--text); }
+  .ab-ico.del:hover { background:var(--brand-soft); color:var(--brand); }
+  .ab-ico.rep:hover { background:#EAF1FE; color:#2563EB; }
+
+  /* Шапка пациента */
+  .ar-head { display:flex; align-items:center; gap:14px; padding:16px 18px; }
+  .ar-avatar { flex:none; width:48px; height:48px; border-radius:14px; background:var(--brand-soft); color:var(--brand);
+    display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .ar-title { min-width:0; }
+  .ar-title h2 { margin:0 0 4px; font-size:20px; font-weight:700; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ar-meta { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); }
+  .ar-actions { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+  .st { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .st::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .st-new  { background:#EAF1FE; color:#2563EB; }
+  .st-red  { background:var(--brand-soft); color:var(--brand); }
+  .st-amb  { background:#FEF3E2; color:#B45309; }
+  .st-grn  { background:#E8F7EE; color:#15803D; }
+  .st-gry  { background:#F1F2F4; color:#6B7280; }
+
+  /* Сетка полей */
+  .fg { display:grid; grid-template-columns:repeat(6, 1fr); gap:14px 16px; }
+  .fg .f { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .fg .s2 { grid-column:span 2; } .fg .s3 { grid-column:span 3; } .fg .s4 { grid-column:span 4; } .fg .s6 { grid-column:span 6; }
+  .fg label { margin:0; font-size:12.5px; font-weight:600; color:var(--muted); }
+  .fg label req, .ar-modal label req { color:var(--brand); }
+  .fg .hint { font-size:11.5px; color:#9AA1AC; }
+  .ar .form-control, .ar-modal .form-control {
+    height:38px; border:1.5px solid var(--border); border-radius:9px; box-shadow:none; font-size:14px; color:var(--text);
   }
-  @keyframes blinker {
-    50% {
-      opacity: 0;
-    }
-  }
+  .ar .form-control:focus, .ar-modal .form-control:focus { border-color:var(--brand); box-shadow:0 0 0 3px rgba(215,24,46,.10); }
+  .ar .form-control[readonly] { background:#F8F9FA; color:#3C4250; cursor:default; }
+  .ar .form-control[readonly]:focus { border-color:var(--border); box-shadow:none; }
+
+  /* Поле клиента с подсказкой */
+  .client-field { position:relative; display:flex; gap:8px; }
+  .client-field .inp { flex:1; position:relative; }
+  #client_buttons { display:flex; gap:6px; }
+  #client_buttons .btn { width:38px; height:38px; padding:0; border-radius:9px; }
+  #client_filter { top:calc(100% + 4px); left:0; z-index:50; max-height:280px; overflow-y:auto;
+    border:1px solid var(--border); border-radius:10px; box-shadow:0 12px 30px rgba(20,25,40,.14); }
+  #client_filter table { width:100%; border:0; }
+  #client_filter td { padding:9px 12px; border:0; border-bottom:1px solid #F0F1F4; font-size:14px; cursor:pointer; }
+  #client_filter td.cf-bd { color:var(--muted); text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #client_filter tr:hover td { background:var(--brand-soft); }
+
+  /* Таблица услуг */
+  .st-table { width:100%; border-collapse:separate; border-spacing:0; font-size:14px; }
+  .st-table th { padding:10px 12px; background:#F8F9FA; border-bottom:1px solid var(--border); color:var(--muted);
+    font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; text-align:left; white-space:nowrap; }
+  .st-table td { padding:8px 12px; border-bottom:1px solid #F0F1F4; vertical-align:middle; }
+  .st-table tr:last-child td { border-bottom:0; }
+  .st-table tbody tr:hover td { background:#FAFBFC; }
+  .st-table .c { text-align:center; } .st-table .r { text-align:right; font-variant-numeric:tabular-nums; }
+  .st-table .n { color:#9AA1AC; font-size:13px; }
+  .st-table .form-control { height:34px; font-size:13px; min-width:180px; }
+  .st-table .sname { font-weight:500; }
+  .st-table .sname .fa-medkit { color:#2563EB; margin-right:4px; }
+  .st-table tr.unpaid .sname { color:var(--brand-dark); }
+  .st-table .sale { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; background:#FEF3E2; color:#B45309; font-size:12px; font-weight:700; }
+  .st-table tfoot td { padding:12px; background:#FAFBFC; border-top:1px solid var(--border); font-weight:700; }
+  .st-table input[type=checkbox] { width:16px; height:16px; margin:0; cursor:pointer; accent-color:var(--brand); }
+  .st-empty { padding:36px; text-align:center; color:#9AA1AC; }
+
+  /* История */
+  details.his { border-top:1px solid var(--border); }
+  details.his:first-of-type { border-top:0; }
+  details.his > summary { display:flex; align-items:center; gap:10px; padding:12px 18px; cursor:pointer; list-style:none; user-select:none; }
+  details.his > summary::-webkit-details-marker { display:none; }
+  details.his > summary .chev { color:#9AA1AC; transition:transform .15s; }
+  details.his[open] > summary .chev { transform:rotate(90deg); }
+  details.his > summary b { font-weight:600; }
+  details.his > summary .cnt { color:var(--muted); font-size:13px; }
+  details.his > summary .sp { flex:1; }
+  details.his > summary:hover { background:#FAFBFC; }
+
+  /* Модальные окна */
+  .ar-modal .modal-content { border:0; border-radius:16px; box-shadow:0 24px 60px rgba(20,25,40,.25); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+  .ar-modal .modal-header { padding:16px 20px; border-bottom:1px solid #E6E8EC; }
+  .ar-modal .modal-title { font-size:17px; font-weight:700; color:#1F2430; }
+  .ar-modal .modal-title .fa { color:#D7182E; margin-right:6px; }
+  .ar-modal .modal-body { padding:20px; }
+  .ar-modal .modal-footer { padding:14px 20px; border-top:1px solid #E6E8EC; display:flex; justify-content:flex-end; gap:8px; }
+  .ar-modal .fg label { color:#6B7280; }
 </style>
+
+<!-- ================= Модальное окно: реквизиты клиента ================= -->
 <button class="hidden" id="btn_client_view" data-toggle="modal" data-target="#client_info"></button>
-<div class="modal fade" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog wpx-1000">
+<div class="modal fade ar-modal" id="client_info" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:880px; max-width:95vw">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title text-danger"><b class="fa fa-user"></b> Реквизиты клиента</h4>
+        <h4 class="modal-title"><i class="fa fa-user"></i> Реквизиты клиента</h4>
       </div>
       <div class="modal-body">
         <form id="clientForm" name="clientForm">
           <input type="hidden" name="cl_id"/>
           <input type="hidden" name="amb_id" value="${patient.id}"/>
-          <table class="formTable w-100">
-            <tr>
-              <td class="right" nowrap>ФИО <req>*</req>:</td>
-              <td colspan="3">
-                <table class="w-100">
-                  <tr>
-                    <td>
-                      <input name="cl_surname" title="Фамилия" placeholder="Фамилия" type="text" class="form-control w-100" required maxlength="64" autocomplete="off"/>
-                    </td>
-                    <td>
-                      <input name="cl_name" title="Исми" placeholder="Исми" type="text" class="form-control w-100" required  maxlength="64" autocomplete="off"/>
-                    </td>
-                    <td>
-                      <input name="cl_middlename" title="Шарифи" placeholder="Шарифи" class="form-control w-100" maxlength="64" autocomplete="off"/>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td class="right" nowrap>Дата рождения <req>*</req>:</td>
-              <td>
-                <input name="cl_birthdate" type="text" class="form-control center date-format" placeholder="dd.mm.yyyy" style="width:100px;" maxlength="10"/>
-              </td>
-              <td class="right" nowrap>Пол <req>*</req>:</td>
-              <td>
-                <select name="cl_sex_id" class="form-control">
-                  <c:forEach items="${sex}" var="sx">
-                    <option value="${sx.id}">${sx.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right" nowrap>Серия паспорта:</td>
-              <td><input name="cl_doc_seria" type="text" class="form-control text-center uppercase" maxlength="2" placeholder="XX"/></td>
-              <td class="right" nowrap>Номер паспорта:</td>
-              <td><input name="cl_doc_num" type="text" class="form-control text-center" maxlength="10" placeholder="XXXXXXX"/></td>
-            </tr>
-            <tr>
-              <td class="right" nowrap>Паспортные данные:</td>
-              <td><input name="cl_doc_info" type="text" class="form-control" maxlength="64"/></td>
-              <td class="right" nowrap>Номер телефона:</td>
-              <td><input name="cl_tel" type="text" class="form-control" maxlength="400"/></td>
-            </tr>
-            <tr>
-              <td class="right" nowrap>Резиденство <req>*</req>:</td>
-              <td>
-                <select name="cl_country_id" class="form-control" onchange="$('select[name=cl_region_id]').toggle(this.value === '199').val()">
-                  <c:forEach items="${countries}" var="reg">
-                    <option value="${reg.id}">${reg.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-              <td class="right" nowrap>Область:</td>
-              <td>
-                <select name="cl_region_id" class="form-control">
-                  <option value=""></option>
-                  <c:forEach items="${regions}" var="reg">
-                    <option value="${reg.id}">${reg.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right" nowrap>Адрес:</td>
-              <td colspan="3"><input name="cl_address" type="text" class="form-control" maxlength="400"/></td>
-            </tr>
-          </table>
+          <div class="fg">
+            <div class="f s2"><label>Фамилия <req>*</req></label>
+              <input name="cl_surname" title="Фамилия" placeholder="Фамилия" type="text" class="form-control" required maxlength="64" autocomplete="off"/></div>
+            <div class="f s2"><label>Имя <req>*</req></label>
+              <input name="cl_name" title="Имя" placeholder="Имя" type="text" class="form-control" required maxlength="64" autocomplete="off"/></div>
+            <div class="f s2"><label>Отчество</label>
+              <input name="cl_middlename" title="Отчество" placeholder="Отчество" class="form-control" maxlength="64" autocomplete="off"/></div>
+
+            <div class="f s2"><label>Дата рождения <req>*</req></label>
+              <input name="cl_birthdate" type="text" class="form-control date-format" placeholder="дд.мм.гггг" maxlength="10"/></div>
+            <div class="f s2"><label>Пол <req>*</req></label>
+              <select name="cl_sex_id" class="form-control">
+                <c:forEach items="${sex}" var="sx">
+                  <option value="${sx.id}">${sx.name}</option>
+                </c:forEach>
+              </select></div>
+            <div class="f s2"><label>Номер телефона</label>
+              <input name="cl_tel" type="text" class="form-control" maxlength="400"/></div>
+
+            <div class="f"><label>Серия паспорта</label>
+              <input name="cl_doc_seria" type="text" class="form-control text-center uppercase" maxlength="2" placeholder="AA"/></div>
+            <div class="f s2"><label>Номер паспорта</label>
+              <input name="cl_doc_num" type="text" class="form-control" maxlength="10" placeholder="1234567"/></div>
+            <div class="f s3"><label>Паспортные данные</label>
+              <input name="cl_doc_info" type="text" class="form-control" maxlength="64" placeholder="Кем и когда выдан"/></div>
+
+            <div class="f s3"><label>Резидентство <req>*</req></label>
+              <select name="cl_country_id" class="form-control" onchange="$('select[name=cl_region_id]').toggle(this.value === '199').val()">
+                <c:forEach items="${countries}" var="reg">
+                  <option value="${reg.id}">${reg.name}</option>
+                </c:forEach>
+              </select></div>
+            <div class="f s3"><label>Область</label>
+              <select name="cl_region_id" class="form-control">
+                <option value=""></option>
+                <c:forEach items="${regions}" var="reg">
+                  <option value="${reg.id}">${reg.name}</option>
+                </c:forEach>
+              </select></div>
+
+            <div class="f s6"><label>Адрес</label>
+              <input name="cl_address" type="text" class="form-control" maxlength="400"/></div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-success btn-sm" onclick="saveClient()">
-          <i class="fa fa-save"></i> Сохранить
-        </button>
-        <button class="btn btn-danger btn-sm" id="close_client_info" data-dismiss="modal" aria-hidden="true">
-          <i class="fa fa-remove"></i> Закрыть
-        </button>
+        <button type="button" class="ab" id="close_client_info" data-dismiss="modal" aria-hidden="true">Закрыть</button>
+        <button type="button" class="ab primary" onclick="saveClient()"><i class="fa fa-save"></i> Сохранить</button>
       </div>
     </div>
-    <!-- /.modal-content -->
   </div>
-  <!-- /.modal-dialog -->
 </div>
 
+<!-- ================= Модальное окно: список совпавших клиентов ================= -->
 <button class="hidden" id="btn_client_list" data-toggle="modal" data-target="#client_list"></button>
-<div class="modal fade" id="client_list" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog wpx-1000">
+<div class="modal fade ar-modal" id="client_list" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:880px; max-width:95vw">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" id="client_list_close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title text-danger"><b class="fa fa-list"></b> Список клиентов</h4>
+        <h4 class="modal-title"><i class="fa fa-users"></i> Похожие клиенты</h4>
       </div>
       <div class="modal-body" id="client_list_content"></div>
     </div>
@@ -501,113 +574,143 @@
 </div>
 
 <iframe id="frmDiv" name="frm" class="hidden"></iframe>
-<div class="panel panel-info" style="width: 1200px !important; margin: auto">
-  <div class="panel-heading">
-    <span title="${patient.id}" onclick="setPage('/ambs/reg.s?id=${patient.id}')">Реквизиты пациента</span>
-    <ul class="pagination" style="float:right; margin-top:-5px">
-      <c:if test="${patient.state != 'ARCH'}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="doSave()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
-        <c:if test="${patient.fizio != 'Y' && patient.id != null}">
-          <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="fizioterapia()"><i title="Физиотерапия" class="fa fa-file-sound-o"></i> Физиотерапия</a></li>
+
+<div class="ar">
+
+  <!-- ================= Шапка пациента ================= -->
+  <div class="ar-card">
+    <div class="ar-head">
+      <div class="ar-avatar"><i class="fa fa-user"></i></div>
+      <div class="ar-title">
+        <h2 title="ID ${patient.id}">
+          <c:choose>
+            <c:when test="${patient.id != null}">${patient.fio}</c:when>
+            <c:otherwise>Новый пациент</c:otherwise>
+          </c:choose>
+        </h2>
+        <div class="ar-meta">
+          <c:choose>
+            <c:when test="${patient.id == null}"><span class="st st-new">Новая регистрация</span></c:when>
+            <c:when test="${patient.state == 'PRN'}"><span class="st st-new">Регистрация</span></c:when>
+            <c:when test="${patient.state == 'CASH'}"><span class="st st-amb">Ожидание оплаты</span></c:when>
+            <c:when test="${patient.state == 'WORK'}"><span class="st st-amb">Оказание услуг</span></c:when>
+            <c:when test="${patient.state == 'DONE'}"><span class="st st-grn">Услуги оказаны</span></c:when>
+            <c:when test="${patient.state == 'ARCH'}"><span class="st st-gry">Закрыта</span></c:when>
+            <c:otherwise><span class="st st-gry">${patient.state}</span></c:otherwise>
+          </c:choose>
+          <c:if test="${patient.id != null}"><span>ID ${patient.id}</span></c:if>
+        </div>
+      </div>
+
+      <div class="ar-actions">
+        <c:if test="${pat != null}">
+          <a href="#" class="ab" onclick="openMainPage('/${pat.state == 'ARCH' ? 'view' : 'lv'}/index.s?id=${pat.id}', false); return false"><i class="fa fa-folder-open-o"></i> ИБ №${pat.yearNum}</a>
         </c:if>
-        <c:if test="${drug_exist}">
-          <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="openDrug()"><i title="Физиотерапия" class="fa fa-list"></i> Лист назначение</a></li>
+        <c:if test="${patient.id != null && patient.state != 'ENT' && sessionScope.ENV.roleId == 15}">
+          <a href="#" class="ab" onclick="loadPdf(); return false;" title="Генерация PDF файла"><i class="fa fa-file-pdf-o"></i> Результаты PDF</a>
+          <iframe name="pdffile" id="pdffile" src="about:blank" style="display: none"></iframe>
         </c:if>
-        <c:if test="${patient.fizio == 'Y' && patient.id != null && fizio_user}">
-          <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="fizioterapiaPrint()"><i title="Физиотерапия печать" class="fa fa-print"></i> Физиотерапия печать</a></li>
+        <c:if test="${patient.state != 'ARCH'}">
+          <c:if test="${patient.fizio != 'Y' && patient.id != null}">
+            <a href="#" class="ab" onclick="fizioterapia(); return false;"><i class="fa fa-heartbeat"></i> Физиотерапия</a>
+          </c:if>
+          <c:if test="${patient.fizio == 'Y' && patient.id != null && fizio_user}">
+            <a href="#" class="ab" onclick="fizioterapiaPrint(); return false;"><i class="fa fa-print"></i> Физиотерапия</a>
+          </c:if>
+          <c:if test="${drug_exist}">
+            <a href="#" class="ab" onclick="openDrug(); return false;"><i class="fa fa-list-alt"></i> Лист назначений</a>
+          </c:if>
+          <c:if test="${fn:length(services) > 0 && (patient.state == 'CASH' || patient.state == 'WORK') && (sessionScope.ENV.userId == 1 || sessionScope.ENV.userId == 99)}">
+            <a href="#" class="ab" onclick="podCash(); return false;"><i class="fa fa-money"></i> Касса</a>
+          </c:if>
         </c:if>
-        <c:if test="${fn:length(services) > 0 && (patient.state == 'CASH' || patient.state == 'WORK') && (sessionScope.ENV.userId == 1 || sessionScope.ENV.userId == 99)}">
-          <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="podCash()"><i title="Касса" class="fa fa-money"></i> Касса</a></li>
+        <c:if test="${patient.id != null && patient.state == 'PRN'}">
+          <a href="#" class="ab danger" onclick="delPatient(); return false;"><i class="fa fa-trash-o"></i> Удалить</a>
         </c:if>
-      </c:if>
-      <c:if test="${patient.id != null && patient.state == 'PRN'}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="delPatient()"><i title="Удалить" class="fa fa-remove"></i> Удалить</a></li>
-        <c:if test="${fn:length(services) > 0}">
-          <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="patientConfirm()"><i title="Подтвердить" class="fa fa-check"></i> Подтвердить</a></li>
+        <c:if test="${done}">
+          <a href="#" class="ab" onclick="archiveIt(); return false;"><i class="fa fa-archive"></i> В архив</a>
         </c:if>
-      </c:if>
-      <c:if test="${done}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="archiveIt()"><i title="Отправить в архив" class="fa fa-arrow-right"></i> Архивация</a></li>
-      </c:if>
-      <%--<c:if test="${patient.state == 'ARCH' && sessionScope.ENV.roleId == 15}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="ambReg()"><i title="Регистрация" class="fa fa-reorder"></i> Регистрация</a></li>
-      </c:if>--%>
-      <c:if test="${patient.id != null && patient.state != 'ENT' && sessionScope.ENV.roleId == 15}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="loadPdf()"><i title="Генерация PDF файла" class="fa fa-reorder"></i> Результаты PDF</a></li>
-        <iframe name="pdffile" id="pdffile" src="about:blank" style="display: none"></iframe>
-      </c:if>
-      <c:if test="${pat != null}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="openMainPage('/${pat.state == 'ARCH' ? 'view' : 'lv'}/index.s?id=${pat.id}', false); return false"><i title="Назад" class="fa fa-user"></i> ИБ №${pat.yearNum}</a></li>
-      </c:if>
-    </ul>
+        <c:if test="${patient.id != null && patient.state == 'PRN' && fn:length(services) > 0}">
+          <a href="#" class="ab" onclick="patientConfirm(); return false;"><i class="fa fa-check"></i> К оплате</a>
+        </c:if>
+        <c:if test="${patient.state != 'ARCH'}">
+          <a href="#" class="ab primary" onclick="doSave(); return false;"><i class="fa fa-save"></i> Сохранить</a>
+        </c:if>
+      </div>
+    </div>
   </div>
+
   <f:form commandName="patient" action='/amb/reg.s' method="post" id='bf' target="frm">
     <f:hidden path="id"/>
-    <div class="panel-body">
-      <%@include file="/incs/msgs/successError.jsp"%>
-      <table class="formTable w-100">
-        <tr>
-          <td class="right">Клиент <req>*</req>:</td>
-          <td colspan="3">
-            <table class="w-100">
-              <tr>
-                <td>
-                  <input type="hidden" name="client_id" value="${patient.client.id}">
-                  <input type="text" class="form-control uppercase" name="client_name" placeholder="Ф.И.О." value="<c:if test="${patient.id != null}">${patient.fio}</c:if>" <c:if test="${patient.id != null}">readonly</c:if>/>
-                  <div id="client_filter" style="display: none; position: absolute; background:white">
-                    <table class="w-100 table-bordered tablehover p-3"><tbody></tbody></table>
-                  </div>
-                </td>
-                <td class="center" style="<c:if test="${patient.id == null || (patient.id > 0 && patient.state == 'ARCH' && patient.client == null)}">width:40px</c:if>" id="client_buttons">
+
+    <!-- ================= Реквизиты ================= -->
+    <div class="ar-card">
+      <div class="ar-card-h"><h3>Реквизиты пациента</h3></div>
+      <div class="ar-card-b panel-body" style="padding:18px">
+        <%@include file="/incs/msgs/successError.jsp"%>
+        <div class="fg">
+
+          <div class="f s6">
+            <label>Клиент <req>*</req></label>
+            <div class="client-field">
+              <div class="inp">
+                <input type="hidden" name="client_id" value="${patient.client.id}">
+                <input type="text" class="form-control uppercase" name="client_name" autocomplete="off"
+                       placeholder="<c:if test="${patient.id == null}">Начните вводить ФИО (от 4 букв) или добавьте нового клиента</c:if>"
+                       value="<c:if test="${patient.id != null}">${patient.fio}</c:if>" <c:if test="${patient.id != null}">readonly</c:if>/>
+                <div id="client_filter" style="display: none; position: absolute; background:white">
+                  <table class="w-100"><tbody></tbody></table>
+                </div>
+              </div>
+              <c:if test="${patient.id == null || (patient.id > 0 && patient.state == 'ARCH' && patient.client == null)}">
+                <div id="client_buttons">
                   <c:if test="${patient.id == null}">
-                    <button type="button" class="btn btn-success btn-icon" onclick="addClient()">
-                      <b class="fa fa-plus"></b>
-                    </button>
-                    <button type="button" class="btn btn-info btn-icon display-none" onclick="clientView()">
-                      <b class="fa fa-user"></b>
-                    </button>
-                    <button type="button" class="btn btn-danger btn-icon display-none">
-                      <b class="fa fa-remove"></b>
-                    </button>
+                    <button type="button" class="btn btn-success btn-icon" onclick="addClient()" title="Новый клиент"><i class="fa fa-plus"></i></button>
+                    <button type="button" class="btn btn-info btn-icon display-none" onclick="clientView()" title="Реквизиты клиента"><i class="fa fa-user"></i></button>
+                    <button type="button" class="btn btn-danger btn-icon display-none" title="Сбросить клиента"><i class="fa fa-times"></i></button>
                   </c:if>
                   <c:if test="${patient.id > 0 && patient.state == 'ARCH' && patient.client == null}">
-                    <button type="button" class="btn btn-success btn-icon" id="add_arch_client" onclick="addArchClient(${patient.id})">
-                      <b class="fa fa-save"></b>
-                    </button>
+                    <button type="button" class="btn btn-success btn-icon" id="add_arch_client" onclick="addArchClient(${patient.id})" title="Привязать клиента"><i class="fa fa-save"></i></button>
                   </c:if>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td class="right" nowrap>
-            <c:if test="${patient.birthday == null}">Год рождения</c:if><c:if test="${patient.birthday != null}">Дата рождения</c:if>:
-          </td>
-          <td><input type="text" name="birthday" class="form-control center" readonly value="<c:if test="${patient.birthday == null}">${patient.birthyear}</c:if><c:if test="${patient.birthday != null}"><fmt:formatDate pattern="dd.MM.yyyy" value="${patient.birthday}"/></c:if>" placeholder="dd.mm.yyyy"/></td>
-          <td class="right" nowrap><ui:message code="sex"/>:</td>
-          <td><input type="text" name="sex_id" class="form-control center" readonly value="${patient.sex.name}"/></td>
-        </tr>
-        <tr>
-          <td class="right" nowrap><ui:message code="phone"/>:</td>
-          <td><f:input path="tel" type="text" class="form-control" maxlength="400"/></td>
-          <td class="right" nowrap><ui:message code="passportInfo"/>:</td>
-          <td><input type="text" name="passport" class="form-control center" readonly value="${patient.passportInfo}"/></td>
-        </tr>
-        <tr>
-          <td class="right" nowrap>Резиденство:</td>
-          <td><input type="text" name="country" class="form-control center" readonly value="${countryName}"/></td>
-          <td class="right" nowrap>Область:</td>
-          <td><input type="text" name="region" class="form-control center" readonly value="${regionName}"/></td>
-        </tr>
-        <tr>
-          <td class="right" nowrap><ui:message code="address"/>:</td>
-          <td colspan="3"><f:input path="address" type="text" class="form-control" maxlength="400"/></td>
-        </tr>
-        <c:if test="${sessionScope.ENV.roleId == 15}">
-          <tr>
-            <td class="right" nowrap colspan="2">Код отправителя (Лечащего врача):</td>
-            <td colspan="2">
+                </div>
+              </c:if>
+            </div>
+          </div>
+
+          <div class="f s2">
+            <label><c:if test="${patient.birthday == null}">Год рождения</c:if><c:if test="${patient.birthday != null}">Дата рождения</c:if></label>
+            <input type="text" name="birthday" class="form-control" readonly value="<c:if test="${patient.birthday == null}">${patient.birthyear}</c:if><c:if test="${patient.birthday != null}"><fmt:formatDate pattern="dd.MM.yyyy" value="${patient.birthday}"/></c:if>"/>
+          </div>
+          <div class="f s2">
+            <label><ui:message code="sex"/></label>
+            <input type="text" name="sex_id" class="form-control" readonly value="${patient.sex.name}"/>
+          </div>
+          <div class="f s2">
+            <label><ui:message code="phone"/></label>
+            <f:input path="tel" type="text" class="form-control" maxlength="400"/>
+          </div>
+
+          <div class="f s2">
+            <label><ui:message code="passportInfo"/></label>
+            <input type="text" name="passport" class="form-control" readonly value="${patient.passportInfo}"/>
+          </div>
+          <div class="f s2">
+            <label>Резидентство</label>
+            <input type="text" name="country" class="form-control" readonly value="${countryName}"/>
+          </div>
+          <div class="f s2">
+            <label>Область</label>
+            <input type="text" name="region" class="form-control" readonly value="${regionName}"/>
+          </div>
+
+          <div class="f s6">
+            <label><ui:message code="address"/></label>
+            <f:input path="address" type="text" class="form-control" maxlength="400"/>
+          </div>
+
+          <c:if test="${sessionScope.ENV.roleId == 15}">
+            <div class="f s2">
+              <label>Код отправителя (лечащего врача)</label>
               <c:if test="${sessionScope.ENV.userId == 1 && patient.state == 'ARCH'}">
                 <select class="form-control" onchange="setArchPartner(this.value)">
                   <option value=""></option>
@@ -622,185 +725,176 @@
                   <f:options items="${lvpartners}" itemValue="id" itemLabel="code"></f:options>
                 </f:select>
               </c:if>
-            </td>
-          </tr>
-        </c:if>
-        <tr>
-        <tr>
-          <td class="right" nowrap colspan="2">Мобильный номер (Телеграм и СМС):</td>
-          <td colspan="2"><f:input path="tgNumber" type="number" class="form-control" maxlength="15"/></td>
-        </tr>
-        <tr>
-          <td class="right" nowrap colspan="2">&nbsp;</td>
-          <td class="right" nowrap colspan="2" style="font-size: 10px">Номер телефона пищется без символа "+" и без пробелов с кодом страны</td>
-        </tr>
-        <tr>
-          <td class="right" nowrap colspan="2">Тип скидки:</td>
-          <td colspan="2">
+            </div>
+          </c:if>
+          <div class="f s2">
+            <label>Мобильный (Telegram и SMS)</label>
+            <f:input path="tgNumber" type="number" class="form-control" maxlength="15" placeholder="998901234567"/>
+            <span class="hint">С кодом страны, без «+» и пробелов</span>
+          </div>
+          <div class="f s2">
+            <label>Тип скидки</label>
             <select class="form-control" name="discount_type">
               <c:forEach items="${discount_type}" var="a">
                 <option <c:if test="${patient.discountType.id == a.id}">selected</c:if> value="${a.id}">${a.name}</option>
               </c:forEach>
             </select>
-          </td>
-        </tr>
-      </table>
-    </div>
-    <c:if test="${patient.id != null}">
-      <div class="panel panel-info" style="margin-left:-1px; width: 100% !important;">
-        <div class="panel-heading">
-          Услуги
-          <div style="float:right">
-            <button class="btn btn-sm" type="button" onclick="printService(null)" style="margin-top: -5px"><span class="fa fa-print"></span> Печать</button>
-            <c:if test="${patient.state != 'ARCH' && packs > 0 && sessionScope.ENV.roleId == 15}">
-              <button class="btn btn-sm btn-success" type="button" onclick="openMainPage('/amb/packs.s')" style="margin-top: -5px"><i class="fa fa-plus"></i> Пакеты</button>
-            </c:if>
-            <c:if test="${patient.state != 'ARCH'}">
-              <button class="btn btn-sm btn-success" type="button" onclick="openMainPage('/amb/services.s')" style="margin-top: -5px"><i class="fa fa-plus"></i> Услуги</button>
-            </c:if>
           </div>
         </div>
-        <div>
-          <table class="table table-bordered">
-            <tr>
-              <td class="center bold">№</td>
-              <td class="center bold"><input type="checkbox" onclick="setAllCheck(this, null)"></td>
-              <td class="center bold">&nbsp;</td>
-              <td class="center bold">Наименование</td>
-              <td class="center bold">Сумма</td>
-              <td class="center bold">С НДС</td>
-              <td class="center bold">Подтверждение</td>
-              <td class="center bold">Врач</td>
-              <c:if test="${patient.state != 'ARCH'}">
-                <td class="center bold" style="width: 30px">Уд.</td>
-              </c:if>
-              <td class="center bold" style="width: 30px">Пов.</td>
-            </tr>
-            <c:forEach items="${services}" var="ser" varStatus="loop">
-              <tr id="ser${ser.id}" <c:if test="${ser.pack != '' && ser.pack != null}">title="Услуга пакета: ${ser.pack}"</c:if>>
-                <td class="center">${loop.index + 1}</td>
-                <td class="center hand" title="Печать">
-                  <c:if test="${ser.state == 'DONE'}">
-                    <input type="checkbox" name="sers" value="${ser.id}"/>
-                  </c:if>
-                </td>
-                <td class="center">
-                  <c:if test="${ser.state == 'DEL'}"><span style="color:red;font-weight:bold">Возврат</span></c:if>
-                  <c:if test="${ser.state == 'AUTO_DEL'}"><span style="color:red;font-weight:bold">Удален</span></c:if>
-                  <c:if test="${ser.state == 'ENT'}"><img src='/res/imgs/red.gif'/></c:if>
-                  <c:if test="${ser.state == 'PAID'}"><img src='/res/imgs/yellow.gif'/></c:if>
-                  <c:if test="${ser.state == 'DONE'}"><img src='/res/imgs/green.gif'/></c:if>
-                </td>
-                <td <c:if test="${ser.state == 'ENT'}">style="color:red"</c:if>>
-                  <c:if test="${ser.pack != '' && ser.pack != null}">
-                    <i class="fa fa-medkit" title="Пакет: ${ser.pack}"></i>
-                  </c:if>
-                  ${ser.service.name}
-                  <c:if test="${ser.saleProc > 0}">
-                    <span style="font-weight:bold; color:red" class="blink_me">(Скидка:${ser.saleProc}%)</span>
-                  </c:if>
-                </td>
-                <td class="right" style="padding-right:7px">${ser.price}</td>
-                <td class="right" style="padding-right:7px">${ser.nds}</td>
-                <td class="center" nowrap style="padding-right:7px"><fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${ser.confDate}" /></td>
-                <td class="center">
-                  <input type="hidden" name="service" value="${ser.id}"/>
-                  <select name="user" class="form-control">
-                    <c:forEach items="${ser.users}" var="u" >
-                      <option <c:if test="${ser.worker.id == u.id}">selected</c:if> value="${u.id}">${u.fio}</option>
-                    </c:forEach>
-                  </select>
-                </td>
-                <c:if test="${patient.state != 'ARCH'}">
-                  <td class="center">
-                    <c:if test="${ser.state == 'ENT'}">
-                      <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delService(${ser.id})"><span class="fa fa-minus"></span></button>
-                    </c:if>
-                    <c:if test="${ser.state == 'PAID' && ser.resultId == 0 && patient.emp != 0 && ser.crBy == sessionScope.ENV.userId}">
-                      <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delService(${ser.id})"><span class="fa fa-minus"></span></button>
-                    </c:if>
-                  </td>
-                </c:if>
-                <td class="center">
-                  <c:if test="${ser.repeat}">
-                    <button class="btn btn-primary btn-sm" style="height:20px;padding:1px 10px" title="Повторная консультация" onclick="reiterativeConsul(${ser.id})"><span class="fa fa-repeat"></span></button>
-                  </c:if>
-                </td>
-              </tr>
-            </c:forEach>
-            <c:if test="${serviceTotal > 0}">
-              <tr style="font-weight: bold">
-                <td class="center">&nbsp;</td>
-                <td class="center">&nbsp;</td>
-                <td class="center">&nbsp;</td>
-                <td>ИТОГО не оплаченных</td>
-                <td class="right" style="padding-right:7px">
-                  <fmt:formatNumber value = "${serviceTotal}" type = "number"/>
-                </td>
-                <td class="right" style="padding-right:7px">
-                  <fmt:formatNumber value = "${ndsTotal}" type = "number"/>
-                </td>
-                <td class="center">&nbsp;</td>
-                <td class="center">&nbsp;</td>
-                <td class="center">&nbsp;</td>
-              </tr>
-            </c:if>
-          </table>
+      </div>
+    </div>
+
+    <!-- ================= Услуги ================= -->
+    <c:if test="${patient.id != null}">
+      <div class="ar-card">
+        <div class="ar-card-h">
+          <h3>Услуги</h3>
+          <span class="sp"></span>
+          <button class="ab sm" type="button" onclick="printService(null)"><i class="fa fa-print"></i> Печать</button>
+          <c:if test="${patient.state != 'ARCH' && packs > 0 && sessionScope.ENV.roleId == 15}">
+            <button class="ab sm" type="button" onclick="openMainPage('/amb/packs.s')"><i class="fa fa-plus"></i> Пакеты</button>
+          </c:if>
+          <c:if test="${patient.state != 'ARCH'}">
+            <button class="ab sm primary" type="button" onclick="openMainPage('/amb/services.s')"><i class="fa fa-plus"></i> Услуги</button>
+          </c:if>
         </div>
+
+        <c:choose>
+          <c:when test="${fn:length(services) == 0}">
+            <div class="st-empty">Услуги ещё не добавлены</div>
+          </c:when>
+          <c:otherwise>
+            <div style="overflow-x:auto">
+              <table class="st-table">
+                <thead>
+                <tr>
+                  <th class="c" style="width:44px">№</th>
+                  <th class="c" style="width:40px"><input type="checkbox" onclick="setAllCheck(this, null)" title="Выбрать все для печати"></th>
+                  <th>Наименование</th>
+                  <th style="width:130px">Статус</th>
+                  <th class="r" style="width:110px">Сумма</th>
+                  <th class="r" style="width:110px">С НДС</th>
+                  <th style="width:140px">Подтверждено</th>
+                  <th style="width:210px">Врач</th>
+                  <th class="c" style="width:76px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach items="${services}" var="ser" varStatus="loop">
+                  <tr id="ser${ser.id}" class="${ser.state == 'ENT' ? 'unpaid' : ''}" <c:if test="${ser.pack != '' && ser.pack != null}">title="Услуга пакета: ${ser.pack}"</c:if>>
+                    <td class="c n">${loop.index + 1}</td>
+                    <td class="c" title="Печать">
+                      <c:if test="${ser.state == 'DONE'}"><input type="checkbox" name="sers" value="${ser.id}"/></c:if>
+                    </td>
+                    <td class="sname">
+                      <c:if test="${ser.pack != '' && ser.pack != null}"><i class="fa fa-medkit" title="Пакет: ${ser.pack}"></i></c:if>
+                        ${ser.service.name}
+                      <c:if test="${ser.saleProc > 0}"><span class="sale">−${ser.saleProc}%</span></c:if>
+                    </td>
+                    <td>
+                      <c:choose>
+                        <c:when test="${ser.state == 'ENT'}"><span class="st st-red">Не оплачено</span></c:when>
+                        <c:when test="${ser.state == 'PAID'}"><span class="st st-amb">Оплачено</span></c:when>
+                        <c:when test="${ser.state == 'DONE'}"><span class="st st-grn">Выполнено</span></c:when>
+                        <c:when test="${ser.state == 'DEL'}"><span class="st st-gry">Возврат</span></c:when>
+                        <c:when test="${ser.state == 'AUTO_DEL'}"><span class="st st-gry">Удалён</span></c:when>
+                      </c:choose>
+                    </td>
+                    <td class="r">${ser.price}</td>
+                    <td class="r">${ser.nds}</td>
+                    <td style="white-space:nowrap; color:#6B7280"><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${ser.confDate}"/></td>
+                    <td>
+                      <input type="hidden" name="service" value="${ser.id}"/>
+                      <select name="user" class="form-control">
+                        <c:forEach items="${ser.users}" var="u">
+                          <option <c:if test="${ser.worker.id == u.id}">selected</c:if> value="${u.id}">${u.fio}</option>
+                        </c:forEach>
+                      </select>
+                    </td>
+                    <td class="c" style="white-space:nowrap">
+                      <c:if test="${ser.repeat}">
+                        <button type="button" class="ab-ico rep" title="Повторная консультация" onclick="reiterativeConsul(${ser.id})"><i class="fa fa-repeat"></i></button>
+                      </c:if>
+                      <c:if test="${patient.state != 'ARCH' && (ser.state == 'ENT' || (ser.state == 'PAID' && ser.resultId == 0 && patient.emp != 0 && ser.crBy == sessionScope.ENV.userId))}">
+                        <button type="button" class="ab-ico del" title="Удалить" onclick="delService(${ser.id})"><i class="fa fa-trash-o"></i></button>
+                      </c:if>
+                    </td>
+                  </tr>
+                </c:forEach>
+                </tbody>
+                <c:if test="${serviceTotal > 0}">
+                  <tfoot>
+                  <tr>
+                    <td colspan="4">Итого не оплачено</td>
+                    <td class="r"><fmt:formatNumber value="${serviceTotal}" type="number"/></td>
+                    <td class="r"><fmt:formatNumber value="${ndsTotal}" type="number"/></td>
+                    <td colspan="3"></td>
+                  </tr>
+                  </tfoot>
+                </c:if>
+              </table>
+            </div>
+          </c:otherwise>
+        </c:choose>
       </div>
     </c:if>
   </f:form>
-  <c:if test="${patient.id != null}">
-    <c:forEach items="${histories}" var="his" varStatus="loop">
-      <div class="panel panel-info" style="margin-left:-1px; width: 100% !important;">
-        <div class="panel-heading">
-          История - <fmt:formatDate pattern = "dd.MM.yyyy" value = "${his.regDate}" />
-          <div style="float:right">
-            <button class="btn btn-sm" type="button" onclick="printService(${his.id})" style="margin-top: -5px"><span class="fa fa-print"></span> Печать</button>
-          </div>
-        </div>
-        <div>
-          <table class="table table-bordered">
-            <tr>
-              <td class="center bold">№</td>
-              <td class="center bold"><input type="checkbox" onclick="setAllCheck(this, ${his.id})"></td>
-              <td class="center bold">Наименование</td>
-              <td class="center bold">Сумма</td>
-              <td class="center bold">C НДС</td>
-            </tr>
-            <c:forEach items="${his.services}" var="ser" varStatus="loop">
-              <tr id="ser${ser.id}">
-                <td class="center">${loop.index + 1}</td>
-                <td class="center hand" title="Печать">
-                  <c:if test="${ser.state == 'DONE'}">
-                    <input type="checkbox" name="sers${his.id}" value="${ser.id}"/>
-                  </c:if>
-                </td>
-                <td <c:if test="${ser.state == 'ENT'}">style="color:red"</c:if>>
-                    ${ser.service.name}
-                </td>
-                <td class="right" style="padding-right:7px">${ser.price}</td>
-                <td class="right" style="padding-right:7px">${ser.nds}</td>
+
+  <!-- ================= История ================= -->
+  <c:if test="${patient.id != null && fn:length(histories) > 0}">
+    <div class="ar-card">
+      <div class="ar-card-h"><h3>История обращений</h3><span class="sp"></span><span style="color:#6B7280;font-size:13px">${fn:length(histories)}</span></div>
+      <c:forEach items="${histories}" var="his">
+        <details class="his">
+          <summary>
+            <i class="fa fa-angle-right chev"></i>
+            <b><fmt:formatDate pattern="dd.MM.yyyy" value="${his.regDate}"/></b>
+            <span class="cnt">· услуг: ${fn:length(his.services)}</span>
+            <span class="sp"></span>
+            <button class="ab sm" type="button" onclick="event.preventDefault(); printService(${his.id})"><i class="fa fa-print"></i> Печать</button>
+          </summary>
+          <div style="overflow-x:auto; border-top:1px solid #F0F1F4">
+            <table class="st-table">
+              <thead>
+              <tr>
+                <th class="c" style="width:44px">№</th>
+                <th class="c" style="width:40px"><input type="checkbox" onclick="setAllCheck(this, ${his.id})"></th>
+                <th>Наименование</th>
+                <th class="r" style="width:130px">Сумма</th>
+                <th class="r" style="width:130px">С НДС</th>
               </tr>
-            </c:forEach>
-          </table>
-        </div>
-      </div>
-    </c:forEach>
+              </thead>
+              <tbody>
+              <c:forEach items="${his.services}" var="ser" varStatus="loop">
+                <tr id="ser${ser.id}" class="${ser.state == 'ENT' ? 'unpaid' : ''}">
+                  <td class="c n">${loop.index + 1}</td>
+                  <td class="c" title="Печать">
+                    <c:if test="${ser.state == 'DONE'}"><input type="checkbox" name="sers${his.id}" value="${ser.id}"/></c:if>
+                  </td>
+                  <td class="sname">${ser.service.name}</td>
+                  <td class="r">${ser.price}</td>
+                  <td class="r">${ser.nds}</td>
+                </tr>
+              </c:forEach>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </c:forEach>
+    </div>
   </c:if>
 </div>
 
+<!-- ================= Модальное окно: лист назначений ================= -->
 <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog" style="width:100%">
+<div class="modal fade ar-modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog" style="width:96%; max-width:1400px">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Лист назначение</h4>
+        <h4 class="modal-title" id="myModalLabel"><i class="fa fa-list-alt"></i> Лист назначений</h4>
       </div>
       <div class="modal-body" id="amb_drug"></div>
     </div>
-    <!-- /.modal-content -->
   </div>
-  <!-- /.modal-dialog -->
 </div>

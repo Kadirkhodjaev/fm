@@ -1,35 +1,59 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="/res/css/styles.css" rel="stylesheet">
+<%
+  if(request.getParameter("word") != null) {
+    response.setContentType("application/msword;charset=UTF-8");
+    response.setHeader("Content-Disposition", "attachment; filename=report.doc;");
+  }
+%>
+<c:set var="fs" value="${empty sessionScope.fontSize ? 14 : sessionScope.fontSize}"/>
 <style>
-  * {font-size:${sessionScope.fontSize}px !important;color:black}
+  .osmp { width:100%; max-width:790px; margin:0 auto; font-family:Arial, 'Segoe UI', sans-serif; font-size:${fs}px; color:#000; line-height:1.4; }
+  .osmp table { border-collapse:collapse; width:100%; }
+  .osmp td, .osmp th { color:#000; vertical-align:top; }
+  .osmp .doc-title { text-align:center; font-size:${fs + 5}px; font-weight:bold; letter-spacing:.6px; padding:0 0 10px 0; }
+  .osmp .info td { border:1px solid #888; padding:5px 9px; }
+  .osmp .info .l { width:17%; background:#f3f3f3; color:#333; font-size:${fs - 1}px; }
+  .osmp .info .v { width:33%; font-weight:bold; }
+  .osmp .tbl { margin-top:14px; }
+  .osmp .tbl th { border:1px solid #888; background:#f3f3f3; padding:6px 9px; font-size:${fs - 1}px; text-transform:uppercase; letter-spacing:.3px; text-align:center; }
+  .osmp .tbl td { border:1px solid #888; padding:6px 9px; }
+  .osmp .tbl .c { text-align:center; white-space:nowrap; }
+  .osmp tr { page-break-inside:avoid; }
 </style>
-<div class="panel panel-info" style="width: 850px !important; margin: auto">
-  <div class="panel-heading">Утказилиш эпикризи</div>
-  <table class="formTable" width="95%">
+<div class="osmp">
+  <div class="doc-title">УТКАЗИЛИШ ЭПИКРИЗИ</div>
+
+  <table class="info">
     <tr>
-      <td class="bold">Бемор:</td>
-      <td colspan="2">${pat.surname}&nbsp;${pat.name}&nbsp;${pat.middlename}</td>
-      <td class="bold right">Тугилган йили:</td>
-      <td>${pat.birthyear}</td>
+      <td class="l">Бемор</td>
+      <td class="v" colspan="3">${pat.surname}&nbsp;${pat.name}&nbsp;${pat.middlename}</td>
+    </tr>
+    <tr>
+      <td class="l">Тугилган йили</td>
+      <td class="v">${pat.birthyear}</td>
+      <td class="l">ИБ №</td>
+      <td class="v">${pat.yearNum}</td>
+    </tr>
+  </table>
+
+  <table class="tbl">
+    <tr>
+      <th colspan="2">Давр</th>
+      <th rowspan="2">Булим</th>
+      <th rowspan="2">Хона</th>
+      <th rowspan="2">Шифокор</th>
+    </tr>
+    <tr>
+      <th>дан</th>
+      <th>гача</th>
     </tr>
     <c:forEach items="${epics}" var="e">
       <tr>
-        <td colspan="2" style="text-align: center; font-weight: bold; background-color: #e8e8e8">Давр</td>
-        <td rowspan="2" width="80px" style="text-align: center; font-weight: bold; background-color: #e8e8e8">Булим</td>
-        <td rowspan="2" style="text-align: center; font-weight: bold; background-color: #e8e8e8">Хона</td>
-        <td rowspan="2" style="text-align: center; font-weight: bold; background-color: #e8e8e8">Шифокор</td>
-      </tr>
-      <tr>
-        <td style="text-align: center; font-weight: bold; background-color: #e8e8e8">дан</td>
-        <td style="text-align: center; font-weight: bold; background-color: #e8e8e8">гача</td>
-      </tr>
-      <tr>
-        <td width="100px" align="center">${e.c1}</td>
-        <td width="140px" align="center">${e.c2}</td>
+        <td class="c">${e.c1}</td>
+        <td class="c">${e.c2}</td>
         <td>${e.c3}</td>
-        <td style="text-align: center !important;">${e.c4}</td>
+        <td class="c">${e.c4}</td>
         <td>${e.c5}</td>
       </tr>
     </c:forEach>

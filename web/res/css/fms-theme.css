@@ -1,0 +1,156 @@
+/*
+ * FMS theme — новый стиль поверх Bootstrap 3 для старых страниц.
+ * Подключается ПОСЛЕ bootstrap.min.css / styles.css.
+ * В карточке истории болезни (lv_index.jsp) подключается во фрейм автоматически.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --fms-brand: #D7182E;
+  --fms-brand-dark: #A50F22;
+  --fms-brand-soft: #FDECEE;
+  --fms-text: #1F2430;
+  --fms-muted: #6B7280;
+  --fms-border: #E6E8EC;
+  --fms-bg: #F5F6F8;
+}
+
+body {
+  font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  color: var(--fms-text);
+  background: #fff;
+}
+
+/* ---------- Панели ---------- */
+.panel {
+  border: 1px solid var(--fms-border) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.panel > .panel-heading,
+.panel-info > .panel-heading,
+.panel-primary > .panel-heading,
+.panel-default > .panel-heading,
+.panel-green > .panel-heading {
+  background: #FAFBFC !important;
+  color: var(--fms-text) !important;
+  border-bottom: 1px solid var(--fms-border) !important;
+  border-radius: 0 !important;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+.panel > .panel-heading a { color: var(--fms-brand-dark); }
+.panel-body { padding: 16px 18px; }
+.panel-footer { background: #FAFBFC; border-top: 1px solid var(--fms-border); }
+
+/* ---------- Таблицы ---------- */
+.table { margin-bottom: 0; }
+.table > thead > tr > th,
+.table > tbody > tr > th {
+  background: #F8F9FA;
+  color: var(--fms-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  border-bottom: 1px solid var(--fms-border) !important;
+}
+.table > thead > tr > th, .table > tbody > tr > th,
+.table > tbody > tr > td, .table > tfoot > tr > td {
+  border-color: #F0F1F4 !important;
+  vertical-align: middle;
+  padding: 8px 10px;
+}
+.table-bordered { border-color: var(--fms-border) !important; }
+.table-hover > tbody > tr:hover > td { background: #FAFBFC; }
+.table-striped > tbody > tr:nth-of-type(odd) { background: #FCFCFD; }
+
+/* ---------- Поля ---------- */
+.form-control,
+input[type=text], input[type=number], input[type=date], input[type=password], select, textarea {
+  border-radius: 9px;
+}
+.form-control {
+  height: 36px;
+  border: 1.5px solid var(--fms-border);
+  box-shadow: none;
+  color: var(--fms-text);
+  font-size: 14px;
+  transition: border-color .15s, box-shadow .15s;
+}
+textarea.form-control { height: auto; }
+.form-control:focus {
+  border-color: var(--fms-brand);
+  box-shadow: 0 0 0 3px rgba(215,24,46,.10);
+}
+.form-control[readonly], .form-control[disabled] { background: #F8F9FA; color: #3C4250; }
+input[type=checkbox], input[type=radio] { accent-color: var(--fms-brand); }
+label { font-weight: 600; color: var(--fms-muted); font-size: 13px; }
+
+/* ---------- Кнопки ---------- */
+.btn {
+  border-radius: 9px;
+  font-weight: 600;
+  border-width: 1.5px;
+  box-shadow: none !important;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.btn-default { background: #fff; border-color: var(--fms-border); color: var(--fms-text); }
+.btn-default:hover, .btn-default:focus { background: var(--fms-bg); border-color: #D5D8DE; color: var(--fms-text); }
+
+.btn-primary, .btn-success {
+  background: var(--fms-brand); border-color: var(--fms-brand); color: #fff;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active,
+.btn-success:hover, .btn-success:focus, .btn-success:active {
+  background: var(--fms-brand-dark) !important; border-color: var(--fms-brand-dark) !important; color: #fff;
+}
+.btn-danger { background: #fff; border-color: #F3C6CC; color: var(--fms-brand); }
+.btn-danger:hover, .btn-danger:focus { background: var(--fms-brand-soft); border-color: var(--fms-brand); color: var(--fms-brand-dark); }
+.btn-info, .btn-warning { background: #fff; border-color: var(--fms-border); color: var(--fms-text); }
+.btn-info:hover, .btn-warning:hover { background: var(--fms-bg); color: var(--fms-text); border-color: #D5D8DE; }
+.btn-info .fa, .btn-warning .fa, .btn-default .fa { color: var(--fms-muted); }
+
+/* ---------- Вкладки ---------- */
+.nav-tabs { border-bottom: 1px solid var(--fms-border); }
+.nav-tabs > li > a { border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0; color: var(--fms-muted); font-weight: 600; }
+.nav-tabs > li > a:hover { background: transparent; color: var(--fms-text); }
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {
+  color: var(--fms-brand-dark); border-bottom-color: var(--fms-brand) !important; background: transparent;
+}
+
+/* ---------- Пагинация как ряд кнопок (старые панели действий) ---------- */
+.pagination > li > a, .pagination > li > span {
+  border: 1.5px solid var(--fms-border); color: var(--fms-text); font-weight: 600; margin-left: 4px; border-radius: 9px !important;
+}
+.pagination > li > a:hover { background: var(--fms-bg); color: var(--fms-text); }
+.pagination > li > a .fa { color: var(--fms-muted); }
+
+/* ---------- Модальные окна ---------- */
+.modal-content { border: 0; border-radius: 16px; box-shadow: 0 24px 60px rgba(20,25,40,.25); }
+.modal-header { border-bottom: 1px solid var(--fms-border); }
+.modal-title { font-weight: 700; color: var(--fms-text); }
+.modal-footer { border-top: 1px solid var(--fms-border); }
+
+/* ---------- Алерты ---------- */
+.alert { border-radius: 10px; }
+
+/* ---------- Редакторы текста ---------- */
+/* jQuery TE */
+.jqte { border: 1.5px solid var(--fms-border) !important; border-radius: 10px !important; box-shadow: none !important; overflow: hidden; margin: 6px 0 12px; }
+.jqte_focused { border-color: var(--fms-brand) !important; box-shadow: 0 0 0 3px rgba(215,24,46,.10) !important; }
+.jqte_toolbar { background: #FAFBFC !important; border-bottom: 1px solid var(--fms-border) !important; }
+/* nicEdit: панель инструментов и область текста */
+.nicEdit-panelContain { background: #FAFBFC !important; border-color: var(--fms-border) !important; border-radius: 10px 10px 0 0; }
+.nicEdit-main { font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.55; color: var(--fms-text); }
+
+/* ---------- Мелочи ---------- */
+a { color: var(--fms-brand-dark); }
+a:hover { color: var(--fms-brand); }
+.text-danger, .red { color: var(--fms-brand) !important; }
+hr { border-color: var(--fms-border); }
+::selection { background: var(--fms-brand-soft); }

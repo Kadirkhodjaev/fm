@@ -1,0 +1,187 @@
+/*
+ * Модуль «Руководство и учредители» для Farhod Madad Shifo.
+ * Все правила внутри .fms-ruk, чтобы не пересекаться с Bootstrap 3 и sb-admin-2,
+ * которые подключены в index.jsp. Только светлая тема. Шрифт Inter уже подключён в index.jsp.
+ */
+.fms-ruk{
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#FAFBFC; --line:#E6E8EC; --line-soft:#EEF0F3;
+  --ink:#1F2430; --ink-2:#3C4250; --muted:#6B7280; --faint:#9AA1AC;
+  --accent:#D7182E; --accent-hover:#A50F22; --accent-ink:#A50F22; --accent-soft:#FDECEE; --hover-bg:#F0F1F4; --focus:#D7182E; --on-accent:#FFFFFF;
+  --s1:#D7182E; --s2:#3C4250; --bar:#3C4250;
+  --good:#15803D; --good-bg:#E8F7EE; --warn:#8A4F0C; --warn-bg:#F6ECDB; --bad:#A50F22; --bad-bg:#FDECEE;
+  --font:"Inter",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color-scheme:light;
+  background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;
+  max-width:1440px;margin:0 auto;padding:28px 40px 48px;display:flex;flex-direction:column;gap:20px;
+  transition:opacity .15s;
+}
+@media (max-width:700px){.fms-ruk{padding-inline:16px}}
+.fms-ruk *,.fms-ruk *::before,.fms-ruk *::after{box-sizing:border-box}
+.fms-ruk [hidden],.fms-ruk [data-panel].stale{display:none!important}
+.fms-ruk.is-loading [data-rk-body]{opacity:.45;pointer-events:none}
+.fms-ruk .num{font-variant-numeric:tabular-nums}
+.fms-ruk button,.fms-ruk input{font:inherit;color:inherit}
+.fms-ruk :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.fms-ruk h1,.fms-ruk h3,.fms-ruk h4{font-family:var(--font);color:var(--ink);line-height:1.3}
+
+/* Заголовок страницы */
+.fms-ruk .head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.fms-ruk .spacer{flex:1}
+.fms-ruk .crumb{font-size:13px;color:var(--muted);margin-bottom:4px}
+.fms-ruk .crumb a{color:var(--accent-ink);text-decoration:none}
+.fms-ruk .head h1{margin:0;font-size:26px;font-weight:600}
+.fms-ruk .head p{margin:4px 0 0;color:var(--muted)}
+.fms-ruk .sample{display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);font-size:12px;font-weight:600;border-radius:999px;padding:4px 10px}
+.fms-ruk .err-box{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--bad-bg);color:var(--bad);border-radius:10px;padding:8px 8px 8px 14px;font-weight:500}
+.fms-ruk .err-box span{flex:1;min-width:200px}
+.fms-ruk .loading{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:-8px 0}
+.fms-ruk .spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:fms-ruk-spin .8s linear infinite}
+@keyframes fms-ruk-spin{to{transform:rotate(360deg)}}
+
+/* Период и сравнение */
+.fms-ruk .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.fms-ruk .hint{color:var(--muted);font-size:12.5px;font-weight:400}
+.fms-ruk .cmp{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:10px;color:var(--ink-2);font-size:13px}
+.fms-ruk .cmp b{color:var(--ink);font-weight:600}
+
+/* Вкладки */
+/* Линия под вкладками тенью, а не рамкой: кнопки не вылезают вниз, и у блока не появляется вертикальный скролл */
+.fms-ruk .tabs{display:flex;gap:4px;box-shadow:inset 0 -1px 0 var(--line);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.fms-ruk .tabs::-webkit-scrollbar{display:none}
+.fms-ruk .tabs button{border:0;background:none;padding:10px 14px;cursor:pointer;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent;font-weight:500}
+.fms-ruk .tabs button[aria-selected="true"]{color:var(--accent-ink);border-bottom-color:var(--accent);font-weight:600}
+.fms-ruk .tabs button:hover{color:var(--ink)}
+
+/* Сетка и карточки */
+.fms-ruk .grid{display:grid;align-items:start;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.fms-ruk .c12{grid-column:span 12}.fms-ruk .c7{grid-column:span 7}.fms-ruk .c6{grid-column:span 6}.fms-ruk .c5{grid-column:span 5}
+@media (max-width:1000px){.fms-ruk .c7,.fms-ruk .c6,.fms-ruk .c5{grid-column:span 12}}
+.fms-ruk .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-width:0}
+.fms-ruk .card h3{margin:0 0 2px;font-size:15px;font-weight:600}
+.fms-ruk .card .sub{margin:0 0 14px;color:var(--muted);font-size:12.5px}
+
+/* Показатели */
+.fms-ruk .kpis{display:grid;gap:12px;grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (min-width:1151px){.fms-ruk .kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media (max-width:1150px){.fms-ruk .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.fms-ruk .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fms-ruk .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.fms-ruk .kpi:first-child{border-top:3px solid var(--accent)}
+.fms-ruk .kpi .lab{font-size:12px;color:var(--muted);font-weight:600}
+.fms-ruk .kpi .val{font-size:24px;font-weight:700}
+.fms-ruk .kpi .val small{font-size:13px;font-weight:500;color:var(--muted);margin-left:3px}
+.fms-ruk .kpi .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.fms-ruk .kpi .was{font-size:12px;color:var(--muted)}
+.fms-ruk .chip{display:inline-flex;align-items:center;gap:3px;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:600;white-space:nowrap}
+.fms-ruk .chip.good{background:var(--good-bg);color:var(--good)}
+.fms-ruk .chip.warn{background:var(--warn-bg);color:var(--warn)}
+.fms-ruk .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.fms-ruk .chip.neu{background:var(--hover-bg);color:var(--ink-2)}
+.fms-ruk .spark{height:28px;width:100%}
+
+/* График */
+.fms-ruk .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-bottom:6px}
+.fms-ruk .legend i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.fms-ruk svg text{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.fms-ruk .chart{width:100%;display:block}
+
+/* Горизонтальные полосы */
+.fms-ruk .hbar{display:grid;grid-template-columns:minmax(100px,170px) minmax(0,1fr) auto;gap:7px 12px;align-items:center;font-size:13px}
+.fms-ruk .hbar .t{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fms-ruk .hbar .tr{height:14px;background:var(--line-soft);border-radius:4px;overflow:hidden}
+.fms-ruk .hbar .f{height:100%;background:var(--bar);border-radius:0 4px 4px 0}
+.fms-ruk .hbar .f.warn{background:var(--warn)}
+.fms-ruk .hbar .f.brand{background:var(--accent)}
+.fms-ruk .hbar .v{text-align:right;font-weight:600}
+
+/* Амбулатория: статусы регистраций */
+.fms-ruk .flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+@media (max-width:700px){.fms-ruk .flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fms-ruk .step{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2);display:flex;flex-direction:column;gap:2px}
+.fms-ruk .step b{font-size:22px;font-weight:700}
+.fms-ruk .step span{font-size:12px;color:var(--muted)}
+.fms-ruk .step.hot{border-color:var(--warn);background:var(--warn-bg)}
+.fms-ruk .step.hot span,.fms-ruk .step.hot b{color:var(--warn)}
+
+/* Коечный фонд по этажам */
+.fms-ruk .floors{display:flex;flex-direction:column;gap:14px}
+.fms-ruk .floor h4{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.fms-ruk .rooms{display:flex;flex-wrap:wrap;gap:6px}
+.fms-ruk .room{border:1px solid var(--line);border-radius:8px;padding:5px 7px;min-width:64px;background:var(--surface-2)}
+.fms-ruk .room .rn{font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.fms-ruk .beds{display:flex;gap:3px;margin-top:4px}
+.fms-ruk .bed{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--ink-2)}
+.fms-ruk .bed.free{background:transparent;border:1.5px solid var(--faint)}
+.fms-ruk .bed.bron{background:var(--warn)}
+.fms-ruk .bedkey{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.fms-ruk .bedkey span{display:inline-flex;align-items:center;gap:5px}
+
+/* Таблицы */
+.fms-ruk .tw{overflow-x:auto}
+.fms-ruk table{border-collapse:collapse;width:100%;font-size:13px;background:none;margin:0}
+.fms-ruk th,.fms-ruk td{padding:8px 10px;border-bottom:1px solid var(--line-soft);text-align:right;white-space:nowrap;vertical-align:middle}
+.fms-ruk th:first-child,.fms-ruk td:first-child{text-align:left}
+.fms-ruk th.l,.fms-ruk td.l{text-align:left}
+.fms-ruk th{font-size:12px;color:var(--muted);font-weight:600;background:var(--surface-2)}
+.fms-ruk th.sort{cursor:pointer}
+.fms-ruk th.sort:hover{color:var(--ink)}
+.fms-ruk tr.tot td{font-weight:700;border-top:1px solid var(--line)}
+.fms-ruk tr.grp td{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;background:var(--surface-2)}
+.fms-ruk td.wrap{white-space:normal}
+/* Защита таблиц от общих стилей MedOnline (рамки и выравнивание у th из styles.css).
+   Через #fmsRuk, чтобы перебить правила вида #mainWindow th. */
+#fmsRuk table,#fmsRuk th,#fmsRuk td{border:0 !important;border-radius:0}
+#fmsRuk th,#fmsRuk td{border-bottom:1px solid var(--line-soft) !important;text-align:right !important;padding:8px 10px;line-height:1.45}
+#fmsRuk th:first-child,#fmsRuk td:first-child,#fmsRuk th.l,#fmsRuk td.l{text-align:left !important}
+#fmsRuk tr.tot td{border-top:1px solid var(--line) !important}
+#fmsRuk tr.grp td{text-align:left !important}
+.fms-ruk td.neg,.fms-ruk .neg{color:var(--bad)}
+
+/* Всплывающая подсказка */
+.fms-ruk-tip{position:fixed;pointer-events:none;background:#1F2430;color:#F5F6F8;padding:7px 10px;border-radius:8px;font:12.5px/1.4 "Inter",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.18);z-index:1000;max-width:260px}
+.fms-ruk-tip .r{display:flex;justify-content:space-between;gap:14px}
+.fms-ruk-tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+
+/* Выбор периода по календарю */
+.fms-ruk .rp{position:relative}
+.fms-ruk .rp-btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;color:var(--ink);font-weight:500}
+.fms-ruk .rp-btn:hover{border-color:var(--faint)}
+.fms-ruk .rp-btn svg{stroke:var(--accent);flex:none}
+.fms-ruk .rp-btn .chev{stroke:var(--muted)}
+.fms-ruk .rp-pop{position:absolute;z-index:20;width:max-content;top:calc(100% + 8px);left:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(20,25,40,.14);display:grid;grid-template-columns:170px auto;max-width:calc(100vw - 32px)}
+@media (max-width:640px){.fms-ruk .rp-pop{grid-template-columns:1fr;width:calc(100vw - 32px)}}
+.fms-ruk .rp-pre{display:flex;flex-direction:column;gap:2px;padding:12px 8px;border-right:1px solid var(--line)}
+@media (max-width:640px){.fms-ruk .rp-pre{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--line)}}
+.fms-ruk .rp-pre button{border:0;background:none;text-align:left;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--ink-2);font-size:13px}
+.fms-ruk .rp-pre button:hover{background:var(--hover-bg)}
+.fms-ruk .rp-pre button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.fms-ruk .rp-main{padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.fms-ruk .rp-months{display:flex;gap:18px;flex-wrap:wrap}
+.fms-ruk .rp-m{width:238px}
+.fms-ruk .rp-mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-weight:600;font-size:13.5px}
+.fms-ruk .rp-nav{width:30px;height:30px;border:0;border-radius:8px;background:none;cursor:pointer;display:grid;place-items:center;color:var(--ink-2)}
+.fms-ruk .rp-nav:hover{background:var(--hover-bg)}
+.fms-ruk .rp-nav:disabled{opacity:.3;cursor:default;background:none}
+.fms-ruk .rp-nav.ghost{visibility:hidden}
+.fms-ruk .rp-g{display:grid;grid-template-columns:repeat(7,34px);gap:0}
+.fms-ruk .rp-g .wd{font-size:11px;color:var(--muted);text-align:center;padding:4px 0;font-weight:600}
+.fms-ruk .rp-d{height:32px;border:0;background:none;cursor:pointer;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums;border-radius:0;padding:0}
+.fms-ruk .rp-d:hover{background:var(--hover-bg);border-radius:8px}
+.fms-ruk .rp-d.out{visibility:hidden;pointer-events:none}
+.fms-ruk .rp-d:disabled{color:var(--faint);cursor:default;background:none}
+.fms-ruk .rp-d.in{background:var(--accent-soft);color:var(--accent-ink);border-radius:0}
+.fms-ruk .rp-d.a,.fms-ruk .rp-d.b{background:var(--accent);color:var(--on-accent);font-weight:600}
+.fms-ruk .rp-d.a{border-radius:8px 0 0 8px}
+.fms-ruk .rp-d.b{border-radius:0 8px 8px 0}
+.fms-ruk .rp-d.a.b{border-radius:8px}
+.fms-ruk .rp-d.today{box-shadow:inset 0 -2px 0 var(--accent)}
+.fms-ruk .rp-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.fms-ruk .rp-foot input{width:112px;height:34px;border:1px solid var(--line);border-radius:8px;padding:0 8px;background:var(--surface);font-variant-numeric:tabular-nums}
+.fms-ruk .rp-foot input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.fms-ruk .rp-foot .grow{flex:1}
+.fms-ruk .rp-foot .err{color:var(--bad);font-size:12px;width:100%}
+.fms-ruk .btn-p,.fms-ruk .btn-g{height:34px;padding:0 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}
+.fms-ruk .btn-p{border:0;background:var(--accent);color:var(--on-accent)}
+.fms-ruk .btn-p:hover{background:var(--accent-hover)}
+.fms-ruk .btn-g{border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.fms-ruk .btn-g:hover{background:var(--hover-bg)}

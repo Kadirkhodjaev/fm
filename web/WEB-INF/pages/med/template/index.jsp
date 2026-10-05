@@ -21,7 +21,8 @@
       self.close();
       return;
     </c:if>
-    opener.nicEditors.findEditor('${id}').setContent(dom.innerHTML);
+    if (opener.setEditorHtml) opener.setEditorHtml('${id}', dom.innerHTML);
+    else opener.nicEditors.findEditor('${id}').setContent(dom.innerHTML);
     self.close();
   }
   function removeTemplate(id) {

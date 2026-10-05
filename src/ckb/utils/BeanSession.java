@@ -101,4 +101,9 @@ public class BeanSession {
   public List<LvPartners> getLvPartners() {
     return lvPartners;
   }
+
+  public Rooms getRoom(Integer id) {
+    for (Rooms r : rooms) if (r.getId().equals(id)) return r;
+    return null;
+  }
 }

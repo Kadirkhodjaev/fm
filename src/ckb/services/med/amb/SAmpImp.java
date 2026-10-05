@@ -78,7 +78,8 @@ public class SAmpImp implements SAmb {
       return list;
     try {
       conn = DB.getConnection();
-      String sql = "Select * From (Select * " + grid.getSql() + ") global Limit " + (grid.getStartPos() - 1) + "," + grid.getPageSize();
+      String sql = "Select * " + grid.getSql() + " Limit " + (grid.getStartPos() - 1) + "," + grid.getPageSize();
+      //String sql = "Select * From (Select * " + grid.getSql() + ") global Limit " + (grid.getStartPos() - 1) + "," + grid.getPageSize();
       rs = conn.prepareStatement(sql).executeQuery();
       while(rs.next()) {
         PatientList pat = new PatientList();

@@ -1,0 +1,11 @@
+/* Только для предпросмотра index.html: фон страницы и шапка как в MedOnline. В JSP не нужен. */
+body{margin:0;background:#F5F6F8;font-family:"Inter",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1F2430}
+.pv-top{background:#fff;border-bottom:1px solid #E6E8EC}
+.pv-in{max-width:1440px;margin:0 auto;min-height:64px;padding:8px 40px;display:flex;align-items:center;gap:12px}
+@media (max-width:700px){.pv-in{padding-inline:16px}}
+.pv-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.pv-brand small{display:block;font-weight:500;font-size:11.5px;color:#6B7280}
+.pv-mark{width:34px;height:34px;border-radius:9px;background:#D7182E;color:#fff;display:grid;place-items:center;font-size:22px;font-weight:700}
+.pv-sp{flex:1}
+.pv-user{display:flex;align-items:center;gap:8px;font-size:14px}
+.pv-ava{width:30px;height:30px;border-radius:15px;background:#D7182E;color:#fff;font-size:12px;font-weight:600;display:grid;place-items:center}

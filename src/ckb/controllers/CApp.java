@@ -10,9 +10,11 @@ import ckb.domains.admin.Users;
 import ckb.models.Login;
 import ckb.models.Menu;
 import ckb.services.admin.user.SUser;
+import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.*;
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,15 +30,14 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -45,6 +46,8 @@ import java.util.zip.ZipOutputStream;
 @RequestMapping("/")
 public class  CApp {
 
+  private static final String JSON = "application/json; charset=UTF-8";
+
   @Autowired private SUser sUser;
   @Autowired private DUser dUser;
   @Autowired private DRole dRole;
@@ -52,6 +55,7 @@ public class  CApp {
   @Autowired private DUserDrugLine dUserDrugLine;
   @Autowired private BeanUsers beanUsers;
   @Autowired private BeanSession beanSession;
+  @Autowired private SPatient sPatient;
 
   @RequestMapping({"/main.s", "/"})
   protected String main(HttpServletRequest req, Model model) {
@@ -325,6 +329,446 @@ public class  CApp {
     return "roles";
   }
 
+  @RequestMapping("/boss.s")
+  protected String boss(HttpServletRequest req, Model model){
+    Session session = SessionUtil.getUser(req);
+    return "boss/boss";
+  }
+
+  @RequestMapping(value = "/boss/data.s", method = RequestMethod.POST)
+  protected void boss_(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    Session session = SessionUtil.getUser(req);
+    String tab = req.getParameter("tab");
+
+    String db = Util.get(req, "from");
+    String de = Util.get(req, "to");
+    String fdb = Util.get(req, "prevFrom");
+    String fde = Util.get(req, "prevTo");
+    JSONObject json = new JSONObject(); // данные вкладки
+    res.setContentType("application/json;charset=UTF-8");
+    res.setCharacterEncoding("UTF-8");
+
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      if(tab.equals("sum")) {
+        JSONObject summary = new JSONObject();
+        JSONObject cur = new JSONObject();
+        JSONObject prev = new JSONObject();
+        for(int i=0;i < 2; i++) {
+          ps = conn.prepareStatement(
+            "Select Sum(case When t.amb_stat = 'AMB' Then t.summ else 0 End) amb, " +
+              "         Sum(case When t.amb_stat = 'STAT' Then t.summ else 0 End) stat, " +
+              "         (Select ifnull(Sum(d.summ), 0) From Cash_Discounts d Where d.ambStat = 'STAT' And date(d.crOn) Between ? And ?) cash_discount," +
+              "         (Select ifnull(Sum(f.disSum), 0) From Hn_Patients f Where f.dateEnd Between ? And ?) disSum, " +
+              "         (Select ifnull(Sum(f.totalSum), 0) From Hn_Patients f Where f.dateEnd Between ? And ?) totalSum " +
+              "  From Dwh_Cashboxs t " +
+              " Where t.oper_day Between ? And ? ");
+          ps.setString(1, Util.dateDB(i == 0 ? db : fdb));
+          ps.setString(2, Util.dateDB(i == 0 ? de : fde));
+          ps.setString(3, Util.dateDB(i == 0 ? db : fdb));
+          ps.setString(4, Util.dateDB(i == 0 ? de : fde));
+          ps.setString(5, Util.dateDB(i == 0 ? db : fdb));
+          ps.setString(6, Util.dateDB(i == 0 ? de : fde));
+          ps.setString(7, Util.dateDB(i == 0 ? db : fdb));
+          ps.setString(8, Util.dateDB(i == 0 ? de : fde));
+          rs = ps.executeQuery();
+          if (rs.next()) {
+            if(i == 0) {
+              cur.put("cash", rs.getDouble("amb") + rs.getDouble("stat"));
+              cur.put("amb", rs.getDouble(1));
+              cur.put("stat", rs.getDouble(2));
+              cur.put("cash_discount", rs.getDouble(3));
+              cur.put("dis_sum", rs.getDouble(4));
+              cur.put("total_sum", rs.getDouble(5));
+            } else {
+              prev.put("cash", rs.getDouble("amb") + rs.getDouble("stat"));
+              prev.put("amb", rs.getDouble(1));
+              prev.put("stat", rs.getDouble(2));
+              prev.put("cash_discount", rs.getDouble(3));
+              prev.put("dis_sum", rs.getDouble(4));
+              prev.put("total_sum", rs.getDouble(5));
+            }
+          }
+          ps = conn.prepareStatement("Select Count(*) Counter, Sum(t.drugSum) drugSum From Hn_Patients t Where t.dateEnd Between ? And ?");
+          ps.setString(1, Util.dateDB(i == 0 ? db : fdb));
+          ps.setString(2, Util.dateDB(i == 0 ? de : fde));
+          rs = ps.executeQuery();
+          if (rs.next()) {
+            if(i == 0) {
+              cur.put("discharged", rs.getDouble(1));
+              cur.put("drugs", rs.getDouble(2));
+            } else {
+              prev.put("discharged", rs.getDouble(1));
+              prev.put("drugs", rs.getDouble(2));
+            }
+          }
+          ps = conn.prepareStatement("Select count(*) From amb_patients t Where date(t.crOn) between ? And ? ");
+          ps.setString(1, Util.dateDB(i == 0 ? db : fdb));
+          ps.setString(2, Util.dateDB(i == 0 ? de : fde));
+          rs = ps.executeQuery();
+          if (rs.next()) {
+            if(i == 0) cur.put("ambRegs", rs.getDouble(1));
+            else prev.put("ambRegs", rs.getDouble(1));
+          }
+        }
+        summary.put("cur", cur);
+        summary.put("prev", prev);
+        json.put("summary", summary);
+        //
+        JSONObject beds =  new JSONObject();
+        ps = conn.prepareStatement(
+          "Select Sum(t.koykoLimit) total, " +
+          "  (Select Count(*) From Patients t Where t.state = 'LV') occupied, " +
+          "  0 booked " +
+          "  From rooms t");
+        rs = ps.executeQuery();
+        if (rs.next()) {
+          beds.put("total", rs.getDouble(1));
+          beds.put("occupied", rs.getDouble(2));
+          beds.put("booked", rs.getDouble(3));
+        }
+        json.put("beds", beds);
+        //
+        JSONArray months =  new JSONArray();
+        for(int i=0;i<12;i++) {
+          Date d = new Date();
+          Calendar cal = Calendar.getInstance();
+          cal.setTime(d);
+          cal.add(Calendar.MONTH, -i);
+          Date ld = cal.getTime();
+          String dd = Util.dateDB(ld);
+
+          JSONObject m = new JSONObject();
+          ps = conn.prepareStatement(
+            "Select Sum(case When t.amb_stat = 'AMB' Then t.Summ Else 0 End) amb, " +
+              "         Sum(case When t.amb_stat = 'STAT' Then t.Summ Else 0 End) stat " +
+              "  From Dwh_Cashboxs t " +
+              " Where DATE_FORMAT(t.oper_day, '%Y-%m-01') = DATE_FORMAT(?, '%Y-%m-01')");
+          ps.setString(1, dd);
+          rs = ps.executeQuery();
+          if (rs.next()) {
+            m.put("ym", dd.substring(0, 7));
+            m.put("amb", rs.getDouble(1));
+            m.put("stat", rs.getDouble(2));
+          }
+          ps = conn.prepareStatement("Select Count(*) Counter From Hn_Patients t Where DATE_FORMAT(t.dateEnd, '%Y-%m-01') = DATE_FORMAT(?, '%Y-%m-01')");
+          ps.setString(1, dd);
+          rs = ps.executeQuery();
+          if(rs.next()) {
+            m.put("discharged", rs.getDouble(1));
+          }
+          ps = conn.prepareStatement("Select count(*) From amb_patients t Where DATE_FORMAT(t.crOn, '%Y-%m-01') = DATE_FORMAT(?, '%Y-%m-01') ");
+          ps.setString(1, dd);
+          rs = ps.executeQuery();
+          if (rs.next()) {
+            m.put("ambRegs", rs.getDouble(1));
+          }
+          months.put(m);
+        }
+        json.put("months", months);
+        //
+        JSONObject debts =  new JSONObject();
+        JSONArray actSections = new JSONArray();
+        JSONObject bed = new JSONObject(); // Койко дней
+        JSONObject svc = new JSONObject(); // KDO
+        JSONObject lab = new JSONObject(); // LAB
+        JSONObject drug = new JSONObject(); // DRUG
+        JSONObject spec = new JSONObject(); // Consul
+        JSONObject extra = new JSONObject(); // Watcher
+        JSONObject food = new JSONObject(); // EatSum
+        ps = conn.prepareStatement(
+          "Select ifnull(Sum(t.koykoSum), 0) koykoSum, " +
+            "         ifnull(Sum(t.kdoSum), 0) kdoSum, " +
+            "         ifnull(Sum(t.labSum), 0) labSum, " +
+            "         ifnull(Sum(t.drugSum), 0) drugSum, " +
+            "         ifnull(Sum(t.consulSum), 0) consulSum, " +
+            "         ifnull(Sum(t.watcherSum), 0) watcherSum, " +
+            "         ifnull(Sum(t.eatSum), 0) eatSum," +
+            "         Sum(Case When t.paySum > 0 Then 1 Else 0 End) debt_count, " +
+            "         Sum(Case When t.paySum > 0 Then t.paySum Else 0 End) debt_sum " +
+            "    From Hn_Patients t Where t.dateEnd Between ? And ? "
+        );
+        ps.setString(1, Util.dateDB(db));
+        ps.setString(2, Util.dateDB(de));
+        rs = ps.executeQuery();
+        if (rs.next()) {
+          bed.put("cur", rs.getDouble("koykoSum"));
+          svc.put("cur", rs.getDouble("kdoSum"));
+          lab.put("cur", rs.getDouble("labSum"));
+          drug.put("cur", rs.getDouble("drugSum"));
+          spec.put("cur", rs.getDouble("consulSum"));
+          extra.put("cur", rs.getDouble("watcherSum"));
+          food.put("cur", rs.getDouble("eatSum"));
+          debts.put("count", rs.getDouble("debt_count"));
+          debts.put("sum", rs.getDouble("debt_sum"));
+        }
+        ps = conn.prepareStatement(
+          "Select ifnull(Sum(t.koykoSum), 0) koykoSum, " +
+            "         ifnull(Sum(t.kdoSum), 0) kdoSum, " +
+            "         ifnull(Sum(t.labSum), 0) labSum, " +
+            "         ifnull(Sum(t.drugSum), 0) drugSum, " +
+            "         ifnull(Sum(t.consulSum), 0) consulSum, " +
+            "         ifnull(Sum(t.watcherSum), 0) watcherSum, " +
+            "         ifnull(Sum(t.eatSum), 0) eatSum " +
+            "    From Hn_Patients t Where t.dateEnd Between ? And ? "
+        );
+        ps.setString(1, Util.dateDB(fdb));
+        ps.setString(2, Util.dateDB(fde));
+        rs = ps.executeQuery();
+        if (rs.next()) {
+          bed.put("prev", rs.getDouble("koykoSum"));
+          svc.put("prev", rs.getDouble("kdoSum"));
+          lab.put("prev", rs.getDouble("labSum"));
+          drug.put("prev", rs.getDouble("drugSum"));
+          spec.put("prev", rs.getDouble("consulSum"));
+          extra.put("prev", rs.getDouble("watcherSum"));
+          food.put("prev", rs.getDouble("eatSum"));
+        }
+        json.put("debts", debts);
+        bed.put("code", "bed");
+        bed.put("name", "Койко дней");
+        actSections.put(bed);
+        svc.put("code", "svc");
+        svc.put("name", "Медицинские услуги");
+        actSections.put(svc);
+        lab.put("code", "lab");
+        lab.put("name", "Лабораторные исследования");
+        actSections.put(lab);
+        drug.put("code", "drug");
+        drug.put("name", "Медикаменты");
+        actSections.put(drug);
+        spec.put("code", "spec");
+        spec.put("name", "Узкие специалисты");
+        actSections.put(spec);
+        extra.put("code", "extra");
+        extra.put("name", "Дополнительное место");
+        actSections.put(extra);
+        food.put("code", "food");
+        food.put("name", "Питание");
+        actSections.put(food);
+        json.put("actSections", actSections);
+      }
+      if(tab.equals("cash")) {
+        JSONArray payTypes = new JSONArray();
+        JSONObject cash = new JSONObject();
+        JSONObject card = new JSONObject();
+        JSONObject transfer = new JSONObject();
+        JSONObject online = new JSONObject();
+        cash.put("code", "cash");
+        card.put("code", "card");
+        transfer.put("code", "transfer");
+        online.put("code", "online");
+        cash.put("name", "Наличные");
+        card.put("name", "Пластик");
+        transfer.put("name", "Перечисление");
+        online.put("name", "Онлайн");
+        ps = conn.prepareStatement(
+          "Select Sum(case When t.pay_type = 'cash' Then t.summ else 0 End) cash, " +
+            "         Sum(case When t.pay_type = 'card' Then t.summ else 0 End) card, " +
+            "         Sum(case When t.pay_type = 'transfer' Then t.summ else 0 End) transfer, " +
+            "         Sum(case When t.pay_type = 'online' Then t.summ else 0 End) online " +
+            "  From Dwh_Cashboxs t " +
+            " Where t.oper_day Between ? And ? ");
+        ps.setString(1, Util.dateDB(db));
+        ps.setString(2, Util.dateDB(de));
+        rs = ps.executeQuery();
+        if (rs.next()) {
+          cash.put("sum", rs.getDouble(1));
+          card.put("sum", rs.getDouble(2));
+          transfer.put("sum", rs.getDouble(3));
+          online.put("sum", rs.getDouble(4));
+        }
+        payTypes.put(cash);
+        payTypes.put(card);
+        payTypes.put(transfer);
+        payTypes.put(online);
+        json.put("payTypes", payTypes);
+        JSONArray discounts = new JSONArray();
+        JSONObject staff = new JSONObject();
+        JSONObject manual = new JSONObject();
+        JSONObject benefit = new JSONObject();
+        JSONObject packages = new JSONObject();
+        DB.done(ps);
+        DB.done(rs);
+        ps = conn.prepareStatement(
+          "Select ifnull(Sum(Round(d.price * (1+ifnull(t.ndsProc, 0) / 100) / 100) * 100 - t.price), 0) " +
+            "  From amb_patient_services t, Amb_Patients c, Amb_Services d " +
+            " Where t.patient = c.id " +
+            "   And c.emp is not null " +
+            "  And t.confDate Is Not Null " +
+            "  And d.id = t.service_Id " +
+            "  And t.crOn Between ? And ? ");
+        ps.setString(1, Util.dateDBBegin(db));
+        ps.setString(2, Util.dateDBEnd(de));
+        rs = ps.executeQuery();
+        if (rs.next()) staff.put("sum", rs.getDouble(1));
+        DB.done(ps);
+        DB.done(rs);
+        ps = conn.prepareStatement("Select ifnull(Sum(t.summ), 0) From cash_discounts t Where date(t.crOn) between ? And ? ");
+        ps.setString(1, Util.dateDB(db));
+        ps.setString(2, Util.dateDB(de));
+        rs = ps.executeQuery();
+        if (rs.next()) manual.put("sum", rs.getDouble(1));
+        DB.done(ps);
+        DB.done(rs);
+        ps = conn.prepareStatement("Select ifnull(Sum(t.disSum), 0) From hn_patients t Where t.dateEnd between ? And ? ");
+        ps.setString(1, Util.dateDB(db));
+        ps.setString(2, Util.dateDB(de));
+        rs = ps.executeQuery();
+        if (rs.next()) benefit.put("sum", rs.getDouble(1));
+        DB.done(ps);
+        DB.done(rs);
+        ps = conn.prepareStatement(
+          "Select ifnull(Sum(Round(d.price * (1+ifnull(t.ndsProc, 0) / 100) / 100) * 100 - t.price), 0) " +
+            "  From Amb_Patient_Services t, Amb_Patients c, amb_services d " +
+            " Where t.patient = c.id " +
+            "   And t.pack is not null " +
+            "   And t.cashDate Is Not Null " +
+            "   And d.id = t.service_Id " +
+            "   And t.crOn Between ? And ? "
+        );
+        ps.setString(1, Util.dateDBBegin(db));
+        ps.setString(2, Util.dateDBEnd(de));
+        rs = ps.executeQuery();
+        if (rs.next()) packages.put("sum", rs.getDouble(1));
+        staff.put("code", "staff");      staff.put("name", "Сотрудники клиники");     staff.put("manual", false);
+        manual.put("code", "manual");    manual.put("name", "Ручная скидка в кассе"); manual.put("manual", true);
+        benefit.put("code", "benefit");  benefit.put("name", "Льготные категории");   benefit.put("manual", false);
+        packages.put("code", "package"); packages.put("name", "Пакеты услуг");        packages.put("manual", false);
+        discounts.put(staff);
+        discounts.put(manual);
+        discounts.put(benefit);
+        discounts.put(packages);
+        json.put("discounts", discounts);
+        JSONArray cashiers = new JSONArray();
+        DB.done(ps);
+        DB.done(rs);
+        ps = conn.prepareStatement(
+          "Select g.fio, " +
+            "       ifnull(Sum(g.ops), 0) ops, " +
+            "       ifnull(Sum(g.ret_count), 0) ret_count, " +
+            "       ifnull(Sum(g.ret_sum), 0) ret_sum, " +
+            "       ifnull(Sum(g.discount), 0) discounts, " +
+            "       ifnull(Sum(g.cash), 0) summ " +
+            "  From ( " +
+            "    Select (Select a.Fio From Users a Where a.id = t.crBy) fio, " +
+            "           Sum(case When t.payType = 'pay' Then t.cash + t.card + t.transfer + t.online else 0 End) cash, " +
+            "           Sum(case When t.payType != 'pay' Then t.cash + t.card + t.transfer + t.online else 0 End) ret_sum, " +
+            "           Sum(case When t.payType = 'pay' Then 1 else 0 End) ops, " +
+            "           Sum(case When t.payType != 'pay' Then 1 else 0 End) ret_count, " +
+            "           (Select ifnull(Sum(d.summ), 0) From cash_discounts d Where d.crOn between ? And ? And d.ambStat = 'AMB' And d.crBy_Id = t.crBy) discount " +
+            "      From amb_patient_pays t " +
+            "     Where t.crOn between ? And ? " +
+            "     GROUP BY t.crBy " +
+            "    Union All " +
+            "    Select (Select a.Fio From Users a Where a.id = t.crBy) fio, " +
+            "           Sum(case When t.payType = 'pay' Then t.cash + t.card + t.transfer + t.online else 0 End) cash, " +
+            "           Sum(case When t.payType != 'pay' Then t.cash + t.card + t.transfer + t.online else 0 End) ret_sum, " +
+            "           Sum(case When t.payType = 'pay' Then 1 else 0 End) ops, " +
+            "           Sum(case When t.payType != 'pay' Then 1 else 0 End) ret_count, " +
+            "           (Select ifnull(Sum(d.summ), 0) From cash_discounts d Where d.crOn between ? And ? And d.ambStat = 'STAT' And d.crBy_Id = t.crBy) discount " +
+            "      From patient_pays t " +
+            "     Where t.crOn between ? And ? " +
+            "     GROUP BY t.crBy " +
+            "    ) g " +
+            "  Group By g.fio "
+        );
+        ps.setString(1, Util.dateDBBegin(db));
+        ps.setString(2, Util.dateDBEnd(de));
+        ps.setString(3, Util.dateDBBegin(db));
+        ps.setString(4, Util.dateDBEnd(de));
+        ps.setString(5, Util.dateDBBegin(db));
+        ps.setString(6, Util.dateDBEnd(de));
+        ps.setString(7, Util.dateDBBegin(db));
+        ps.setString(8, Util.dateDBEnd(de));
+        rs = ps.executeQuery();
+        while (rs.next()) {
+          JSONObject a = new JSONObject();
+          a.put("name", rs.getString(1));
+          a.put("ops", rs.getString("ops"));
+          a.put("returns", rs.getString("ret_count"));
+          a.put("returnsSum", rs.getString("ret_sum"));
+          a.put("discounts", rs.getString("discounts"));
+          a.put("sum", rs.getString("summ"));
+          cashiers.put(a);
+        }
+        json.put("cashiers", cashiers);
+      }
+      if(tab.equals("amb")) {
+        JSONArray flow = new JSONArray();
+        ps = conn.prepareStatement(
+          "Select t.state," +
+            "         Count(*) counter" +
+            "  From Amb_Patients t " +
+            " Where date(t.crOn) = CURRENT_DATE() " +
+            " Group By t.state ");
+        rs = ps.executeQuery();
+        while (rs.next()) {
+          JSONObject a = new JSONObject();
+          a.put("code", "PRN");
+          if(rs.getString("state").equals("PRN")) a.put("name", "Регистрация");
+          if(rs.getString("state").equals("CASH")) a.put("name", "Ожидание оплаты");
+          if(rs.getString("state").equals("WORK")) a.put("name", "Оказание услуг");
+          if(rs.getString("state").equals("DONE")) a.put("name", "Услуги оказаны");
+          if(rs.getString("state").equals("ARCH")) a.put("name", "Закрыта сегодня");
+          a.put("count", rs.getInt("counter"));
+          flow.put(a);
+        }
+        json.put("flow", flow);
+        JSONArray groups = new JSONArray();
+        ps = conn.prepareStatement(
+          "Select a.name, " +
+            "         Sum(t.price + t.nds) summ " +
+            "  From amb_patient_services t, Amb_Services c, amb_groups a " +
+            " Where t.service_Id = c.id " +
+            "   And a.id = c.group_Id " +
+            "   And t.crOn Between ? And ? " +
+            "  Group By a.name ");
+        ps.setString(1, Util.dateDBBegin(db));
+        ps.setString(2, Util.dateDBEnd(de));
+        rs = ps.executeQuery();
+        while (rs.next()) {
+          JSONObject a = new JSONObject();
+          a.put("name", rs.getString(1));
+          a.put("sum", rs.getDouble("summ"));
+          groups.put(a);
+        }
+        json.put("groups", groups);
+        ps = conn.prepareStatement(
+          "Select Sum(case When c.counteryId = 199 Then 1 Else 0 End) residents, " +
+            "       Sum(case When c.counteryId != 199 Then 1 Else 0 End) foreigners, " +
+            "       Sum(case When c.counteryId != 199 Then t.price + t.nds Else 0 End) foreignersSum, " +
+            "       Sum(t.price + t.nds) ambSum " +
+            "  From amb_patient_services t, Amb_Patients c " +
+            " Where t.patient = c.id " +
+            "   And t.crOn Between ? And ? ");
+        ps.setString(1, Util.dateDBBegin(db));
+        ps.setString(2, Util.dateDBEnd(de));
+        rs = ps.executeQuery();
+        JSONObject residents = new JSONObject();
+        if (rs.next()) {
+          residents.put("residents", rs.getInt("residents"));
+          residents.put("foreigners", rs.getInt("foreigners"));
+          residents.put("foreignersSum", rs.getDouble("foreignersSum"));
+          residents.put("ambSum", rs.getDouble("ambSum"));
+        }
+        json.put("waitingLong", 0);
+        json.put("residents", residents);
+      }
+      if(tab.equals("")) {
+
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn, ps, rs);
+    }
+    res.getWriter().write(json.toString());
+  }
+
   @RequestMapping(value = "/login.s", method = RequestMethod.POST)
   protected String loginPost(@ModelAttribute("loginForm") Login auth, Errors errors, HttpServletRequest request, Model model){
     ValidationUtils.rejectIfEmptyOrWhitespace(errors, "login", "login.isEmpty", "Field name is required.");
@@ -592,6 +1036,28 @@ public class  CApp {
       DB.done(conn);
     }
     return "logfile";
+  }
+
+  @RequestMapping("/s.s")
+  protected String sss() {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    //
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement("Select id From hn_clones");
+      ps.execute();
+      rs =  ps.getResultSet();
+      while (rs.next()) {
+        sPatient.act_calc(rs.getInt("id"));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn, ps, rs);
+    }
+    return "redirect:main.s";
   }
 
 }

@@ -87,7 +87,7 @@
       <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">ИТОГО</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
-      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${summ}"/></td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.drugSum}"/></td>
     </tr>
   </c:if>
   <c:if test="${fn:length(labs) > 0}">
@@ -108,7 +108,7 @@
       <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">ИТОГО</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
-      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${labSum}"/></td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.labSum}"/></td>
     </tr>
   </c:if>
   <c:if test="${fn:length(consuls) > 0}">
@@ -129,7 +129,7 @@
       <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">ИТОГО</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
-      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${consulSum}"/></td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.consulSum}"/></td>
     </tr>
   </c:if>
   <c:if test="${fn:length(kdos) > 0}">
@@ -150,7 +150,7 @@
       <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">ИТОГО</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
-      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${kdoSum}"/></td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.kdoSum}"/></td>
     </tr>
   </c:if>
   <tr>
@@ -162,7 +162,7 @@
         <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
         <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">Стоимость палаты: ${epic.c1}</td>
         <td style="border-width: thin; border-color: black; border-style: solid;text-align: center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${epic.c6}"/></td>
-        <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${epic.c5}"/></td>
+        <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${epic.c5+epic.c7}"/></td>
         <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${(epic.c5+epic.c7)*epic.c6}"/></td>
       </tr>
     </c:forEach>
@@ -185,13 +185,13 @@
       <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${watcher.dayCount*(watcher.price + watcher.nds)}"/></td>
     </tr>
   </c:forEach>
-  <c:if test="${dis_perc > 0}">
+  <c:if test="${obj.patient.dis_perc > 0}">
     <tr style="font-size: 14px">
       <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
       <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">Стоимость палаты с учетом скидки</td>
-      <td style="border-width: thin; border-color: black; border-style: solid;text-align: center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${dis_perc}"/>%</td>
-      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${dis_sum}"/></td>
-      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${dis_sum * (100-dis_perc) / 100}"/></td>
+      <td style="border-width: thin; border-color: black; border-style: solid;text-align: center"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.patient.dis_perc}"/>%</td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.koykoSum}"/></td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.koykoSum - obj.disSum}"/></td>
     </tr>
   </c:if>
   <c:if test="${discount_sum > 0}">
@@ -215,14 +215,14 @@
     <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">Медикаменты на сумму</td>
     <td style="border-width: thin; border-color: black; border-style: solid;text-align: center">&nbsp;</td>
     <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold">&nbsp;</td>
-    <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${summ}"/></td>
+    <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.drugSum}"/></td>
   </tr>
   <tr style="font-size: 14px">
     <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
     <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">Медицинские услуги на сумму</td>
     <td style="border-width: thin; border-color: black; border-style: solid;text-align: center">&nbsp;</td>
     <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold">&nbsp;</td>
-    <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${consulSum + labSum + kdoSum}"/></td>
+    <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.consulSum + obj.labSum + obj.kdoSum}"/></td>
   </tr>
   <tr style="font-size: 14px">
     <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
@@ -231,6 +231,22 @@
     <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold">&nbsp;</td>
     <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.totalSum}"/></td>
   </tr>
+  <c:if test="${disSum > 0}">
+    <tr style="font-size: 14px">
+      <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
+      <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">Сумма скидки</td>
+      <td style="border-width: thin; border-color: black; border-style: solid;text-align: center">&nbsp;</td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right">&nbsp;</td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right">-<fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${disSum}"/></td>
+    </tr>
+    <tr style="font-size: 14px">
+      <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
+      <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">ВСЕГО после скидки</td>
+      <td style="border-width: thin; border-color: black; border-style: solid;text-align: center">&nbsp;</td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold">&nbsp;</td>
+      <td style="border-width: thin; border-color: black; border-style: solid;font-weight: bold; text-align: right"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${obj.totalSum - disSum}"/></td>
+    </tr>
+  </c:if>
   <tr style="font-size: 14px">
     <td style="border-width: thin; border-color: black; border-style: solid;">&nbsp;</td>
     <td colspan="3" style="border-width: thin; border-color: black; border-style: solid; font-weight:bold">К доплате</td>

@@ -18,13 +18,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Sardor
- * Date: 19.08.15
- * Time: 23:23
- * To change this template use File | Settings | File Templates.
- */
 public class SUserImp implements SUser {
 
   @Autowired DUser dUser;
@@ -72,5 +65,4 @@ public class SUserImp implements SUser {
         list.add(r);
     return list;
   }
-
 }

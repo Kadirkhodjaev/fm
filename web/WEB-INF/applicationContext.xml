@@ -195,7 +195,7 @@
 
   <bean id="dClient" class="ckb.dao.med.client.DClientImp" parent="daoImpl"/>
 
-  <bean id="beanUsers" class="ckb.utils.BeanUsers" scope="application" init-method="initialize"/>
+  <bean id="beanUsers" class="ckb.utils.BeanUsers" scope="application" init-method="initialize" depends-on="dbInit"/>
   <bean id="beanSession" class="ckb.utils.BeanSession" scope="application" init-method="initialize"/>
 
   <!-- EMPS -->
@@ -220,8 +220,27 @@
     <property name="jdbcUrl" value="${jdbc.url}"/>
     <property name="user" value="${jdbc.username}"/>
     <property name="password" value="${jdbc.password}"/>
-    <property name="maxPoolSize" value="5" />
+    <property name="minPoolSize" value="5"/>
     <property name="initialPoolSize" value="5"/>
+    <property name="maxPoolSize" value="30"/>
+    <property name="acquireIncrement" value="3"/>
+    <!-- не ждать соединение вечно: через 15 сек будет ошибка вместо зависания (мс) -->
+    <property name="checkoutTimeout" value="15000"/>
+    <!-- закрывать простаивающие соединения через 5 мин (сек) -->
+    <property name="maxIdleTime" value="300"/>
+    <!-- проверять соединения раз в 60 сек, чтобы не ловить "мёртвые" после обрыва MySQL -->
+    <property name="idleConnectionTestPeriod" value="60"/>
+    <property name="testConnectionOnCheckin" value="true"/>
+    <!-- ДИАГНОСТИКА (временно): забытые соединения вернутся в пул через 120 сек и в логе будет стек, кто их держал -->
+    <property name="unreturnedConnectionTimeout" value="120"/>
+    <property name="debugUnreturnedConnectionStackTraces" value="true"/>
+  </bean>
+
+  <bean id="dbInit" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod" value="ckb.utils.DB.setDataSource"/>
+    <property name="arguments">
+      <list><ref bean="cleansoftDataSource"/></list>
+    </property>
   </bean>
 
   <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">

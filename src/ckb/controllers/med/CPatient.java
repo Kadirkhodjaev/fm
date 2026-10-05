@@ -46,7 +46,6 @@ import java.util.List;
 @RequestMapping("/patients")
 public class CPatient {
 
-  private Session session = null;
   @Autowired SPatient sPatient;
   @Autowired DPatient dPatient;
   @Autowired DUser dUser;
@@ -62,7 +61,7 @@ public class CPatient {
   @RequestMapping("/index.s")
   protected RedirectView index(HttpServletRequest r) {
     try {
-      session = SessionUtil.getUser(r);
+      Session session = SessionUtil.getUser(r);
       String query = "grid=1";
       if (!Req.isNull(r, "filter"))
         query = "filter=" + Req.get(r, "filter");
@@ -90,7 +89,7 @@ public class CPatient {
   @RequestMapping("/list.s")
   protected String main(HttpServletRequest r, Model model){
     try {
-      session = SessionUtil.getUser(r);
+      Session session = SessionUtil.getUser(r);
       String curPat = Req.get(r, "curPat");
       session.setCurUrl("/patients/list.s" + (curPat.equals("") ? "" : "?curPat=Y"));
       session.setArchive(false);
@@ -204,7 +203,7 @@ public class CPatient {
   @RequestMapping(value = "/setFilter.s", method = RequestMethod.POST)
   @ResponseBody
   protected void setFilter(HttpServletRequest req){
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.clearFilter();
     String[] filters = {"birthBegin", "birthEnd", "regDateBegin", "regDateEnd", "vypDateBegin", "vypDateEnd", "lv_id", "dept_id"};
     HashMap<String, String> hash = new HashMap<String, String>();
@@ -219,7 +218,7 @@ public class CPatient {
   @RequestMapping("/archive.s")
   protected String archive(HttpServletRequest r, Model m) {
     try {
-      session = SessionUtil.getUser(r);
+      Session session = SessionUtil.getUser(r);
       session.setCurUrl("/patients/archive.s");
       session.setArchive(true);
       session.setCurPat(0);
@@ -323,7 +322,7 @@ public class CPatient {
   @RequestMapping("/consul.s")
   protected String consul(HttpServletRequest r, Model m){
     try {
-      session = SessionUtil.getUser(r);
+      Session session = SessionUtil.getUser(r);
       session.setCurUrl("/patients/consul.s");
       session.setCurPat(0);
       session.setBackUrl(session.getCurUrl());
@@ -387,7 +386,7 @@ public class CPatient {
   @RequestMapping("/confirm.s")
   protected String confirm(HttpServletRequest r) {
     try {
-      session = SessionUtil.getUser(r);
+      Session session = SessionUtil.getUser(r);
       String[] ids = r.getParameterValues("id");
       for (String id : ids) {
         Patients p = dPatient.get(Integer.parseInt(id));
@@ -516,7 +515,7 @@ public class CPatient {
 
   @RequestMapping("/contract.s")
   protected String contract(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     Patients pat = dPatient.get(session.getCurPat());
     model.addAttribute("pat", pat);
     double ndsProc = dBeanSession.getNds();

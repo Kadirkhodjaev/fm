@@ -32,8 +32,6 @@ import java.util.Date;
 @RequestMapping("/client/")
 public class CClient {
 
-  private Session session = null;
-
   @Autowired private DClient dClient;
   @Autowired private DOpt dOpt;
   @Autowired private DUser dUser;
@@ -47,7 +45,7 @@ public class CClient {
   @RequestMapping("list.s")
   protected String mains(HttpServletRequest req, Model model) {
     try {
-      session = SessionUtil.getUser(req);
+      Session session = SessionUtil.getUser(req);
       session.setCurUrl("/client/list.s");
       session.setArchive(false);
       session.setCurPat(0);
@@ -124,7 +122,7 @@ public class CClient {
 
   @RequestMapping(value = "edit.s")
   protected String editClient(HttpServletRequest req, Model model) {
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     session.setCurUrl("/client/edit.s?id=" + Util.get(req, "id"));
     model.addAttribute("client", dClient.get(Util.getInt(req, "id")));
     model.addAttribute("counteries", beanSession.getCounteries());
@@ -139,7 +137,7 @@ public class CClient {
   @ResponseBody
   protected String addClient(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       Clients client = Util.isNull(req, "id") ? new Clients() : dClient.get(Util.getInt(req, "id"));
       client.setSurname(Util.get(req, "surname", "").toUpperCase());
@@ -185,7 +183,7 @@ public class CClient {
   @ResponseBody
   protected String getClient(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
-    session = SessionUtil.getUser(req);
+    Session session = SessionUtil.getUser(req);
     try {
       Clients c = dClient.get(Util.getInt(req, "id"));
       json.put("surname", c.getSurname());

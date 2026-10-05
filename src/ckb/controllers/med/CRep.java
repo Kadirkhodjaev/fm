@@ -27,7 +27,6 @@ import java.util.List;
 @RequestMapping("/rep/")
 public class CRep {
 
-  private Session session;
   @Autowired DUser dUser;
   @Autowired DRepParam dRepParam;
   @Autowired DReport dReport;
@@ -35,7 +34,7 @@ public class CRep {
 
   @RequestMapping("home.s")
   private String home(HttpServletRequest r, Model m){
-    session = SessionUtil.getUser(r);
+    Session session = SessionUtil.getUser(r);
     session.setCurUrl("/rep/home.s?id=" + Req.get(r, "id"));
     m.addAttribute("authErr", session == null);
     m.addAttribute("id", Req.get(r, "id"));
@@ -46,7 +45,6 @@ public class CRep {
   @RequestMapping("run.s")
   private String runRep(HttpServletRequest req, Model m){
     try {
-      session = SessionUtil.getUser(req);
       Integer id = Util.getInt(req, "repId");
       sRep.gRep(req, m);
       m.addAttribute("excel", Util.get(req, "word"));
@@ -58,7 +56,6 @@ public class CRep {
 
   @RequestMapping("params.s")
   private String params(HttpServletRequest r, Model m) {
-    session = SessionUtil.getUser(r);
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;

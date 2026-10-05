@@ -83,7 +83,6 @@ public class ApiSchedule implements Job {
         JSONObject res = APIresult(con);
         //
         con.disconnect();
-        System.out.println(res);
         ps = conn.prepareStatement("Insert Into Crm_Patients(patient_Id) values(?)");
         ps.setInt(1, rs.getInt("id"));
         ps.executeUpdate();

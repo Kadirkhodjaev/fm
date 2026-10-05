@@ -48,347 +48,490 @@
     window.open('/amb/print.s?drugcheck=Y');
   }
 </script>
-<div class="panel panel-info" style="width: 1000px !important; margin: auto">
-  <div class="panel-heading bold">
-    Реквизиты пациента <span style="color:red">ID: ${patient.id}</span>
-    <c:if test="${serviceTotalSum == 0}">
-      <button type="button" class="btn btn-info" style="float:right; height:25px; padding:1px 10px" onclick="printCheck(0)"><b class="fa fa-print"></b> Чек</button>
-    </c:if>
-  </div>
-  <div class="panel-body">
-    <table class="formTable" style="width:100%">
-      <tr>
-        <td class="right bold" nowrap>ФИО<d></d>:</td>
-        <td colspan="3">
-          ${patient.surname} ${patient.name} ${patient.middlename}
-        </td>
-      </tr>
-      <tr>
-        <td class="right bold" nowrap><ui:message code="birthyear"/>:</td>
-        <td>${patient.birthyear}</td>
-        <td class="right bold" nowrap><ui:message code="sex"/>:</td>
-        <td>${patient.sex.name}</td>
-      </tr>
-      <tr>
-        <td class="right bold" nowrap><ui:message code="phone"/>:</td>
-        <td>${patient.tel}</td>
-        <td class="right bold" nowrap><ui:message code="passportInfo"/>:</td>
-        <td>${patient.passportInfo}</td>
-      </tr>
-      <tr>
-        <td class="right bold" nowrap>Резиденство:</td>
-        <td>${country}</td>
-        <td class="right bold" nowrap>Область:</td>
-        <td>${region}</td>
-      </tr>
-      <tr>
-        <td class="right bold" nowrap><ui:message code="address"/>:</td>
-        <td colspan="3">${patient.address}</td>
-      </tr>
-      <tr>
-        <td class="right bold" nowrap>Тип скидки:</td>
-        <td colspan="3">${patient.discountType.name}</td>
-      </tr>
-    </table>
-  </div>
-  <div class="panel panel-info" style="margin-left:-1px; width: 100%;">
-    <div class="panel-heading bold">
-      Услуги и медикаменты<c:if test="${fn:length(ds) > 0}"> и медикаменты</c:if>
+
+<style>
+  /* ================= Общие элементы карточки ================= */
+  .ar { --brand:#D7182E; --brand-dark:#A50F22; --brand-soft:#FDECEE; --text:#1F2430; --muted:#6B7280; --border:#E6E8EC; --bg:#F5F6F8;
+    max-width: 1200px; margin: 0 auto; padding: 16px 20px 40px; color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+  .ar-card { background:#fff; border:1px solid var(--border); border-radius:14px; margin-bottom:16px; }
+  .ar-card-h { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .ar-card-h h3 { margin:0; font-size:16px; font-weight:700; }
+  .ar-card-h .sp { flex:1; }
+  .ar-card-b { padding:18px; }
+
+  /* Кнопки */
+  .ab { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 14px; border-radius:9px;
+    border:1.5px solid var(--border); background:#fff; color:var(--text); font-size:13.5px; font-weight:600;
+    white-space:nowrap; cursor:pointer; text-decoration:none !important; transition:background .12s,border-color .12s,color .12s; }
+  .ab:hover { background:var(--bg); color:var(--text); }
+  .ab .fa { color:var(--muted); }
+  .ab.primary { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .ab.primary .fa { color:#fff; }
+  .ab.primary:hover { background:var(--brand-dark); border-color:var(--brand-dark); }
+  .ab.danger:hover { background:var(--brand-soft); border-color:#F5C2C8; color:var(--brand); }
+  .ab.danger:hover .fa { color:var(--brand); }
+  .ab.sm { height:32px; padding:0 12px; font-size:13px; }
+  .ab-ico { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px;
+    border:0; background:transparent; color:var(--muted); cursor:pointer; }
+  .ab-ico:hover { background:var(--bg); color:var(--text); }
+  .ab-ico.del:hover { background:var(--brand-soft); color:var(--brand); }
+  .ab-ico.rep:hover { background:#EAF1FE; color:#2563EB; }
+
+  /* Шапка пациента */
+  .ar-head { display:flex; align-items:center; flex-wrap:wrap; gap:14px; padding:16px 18px; }
+  .ar-avatar { flex:none; width:48px; height:48px; border-radius:14px; background:var(--brand-soft); color:var(--brand);
+    display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .ar-title { flex:1 1 320px; min-width:0; }
+  .ar-title h2 { margin:0 0 4px; font-size:20px; font-weight:700; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ar-meta { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); white-space:nowrap; }
+  .ar-actions { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+  .st { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .st::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .st-new  { background:#EAF1FE; color:#2563EB; }
+  .st-red  { background:var(--brand-soft); color:var(--brand); }
+  .st-amb  { background:#FEF3E2; color:#B45309; }
+  .st-grn  { background:#E8F7EE; color:#15803D; }
+  .st-gry  { background:#F1F2F4; color:#6B7280; }
+
+  /* Сетка полей */
+  .fg { display:grid; grid-template-columns:repeat(6, 1fr); gap:14px 16px; }
+  .fg .f { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .fg .s2 { grid-column:span 2; } .fg .s3 { grid-column:span 3; } .fg .s4 { grid-column:span 4; } .fg .s6 { grid-column:span 6; }
+  .fg label { margin:0; font-size:12.5px; font-weight:600; color:var(--muted); }
+  .fg label req, .ar-modal label req { color:var(--brand); }
+  .fg .hint { font-size:11.5px; color:#9AA1AC; }
+  .ar .form-control, .ar-modal .form-control {
+    height:38px; border:1.5px solid var(--border); border-radius:9px; box-shadow:none; font-size:14px; color:var(--text);
+  }
+  .ar .form-control:focus, .ar-modal .form-control:focus { border-color:var(--brand); box-shadow:0 0 0 3px rgba(215,24,46,.10); }
+  .ar .form-control[readonly] { background:#F8F9FA; color:#3C4250; cursor:default; }
+  .ar .form-control[readonly]:focus { border-color:var(--border); box-shadow:none; }
+
+  /* Поле клиента с подсказкой */
+  .client-field { position:relative; display:flex; gap:8px; }
+  .client-field .inp { flex:1; position:relative; }
+  #client_buttons { display:flex; gap:6px; }
+  #client_buttons .btn { width:38px; height:38px; padding:0; border-radius:9px; }
+  #client_filter { top:calc(100% + 4px); left:0; z-index:50; max-height:280px; overflow-y:auto;
+    border:1px solid var(--border); border-radius:10px; box-shadow:0 12px 30px rgba(20,25,40,.14); }
+  #client_filter table { width:100%; border:0; }
+  #client_filter td { padding:9px 12px; border:0; border-bottom:1px solid #F0F1F4; font-size:14px; cursor:pointer; }
+  #client_filter td.cf-bd { color:var(--muted); text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #client_filter tr:hover td { background:var(--brand-soft); }
+
+  /* Таблица услуг */
+  .st-table { width:100%; border-collapse:separate; border-spacing:0; font-size:14px; }
+  .st-table th { padding:10px 12px; background:#F8F9FA; border-bottom:1px solid var(--border); color:var(--muted);
+    font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; text-align:left; white-space:nowrap; }
+  .st-table td { padding:8px 12px; border-bottom:1px solid #F0F1F4; vertical-align:middle; }
+  .st-table tr:last-child td { border-bottom:0; }
+  .st-table tbody tr:hover td { background:#FAFBFC; }
+  .st-table .c { text-align:center; } .st-table .r { text-align:right; font-variant-numeric:tabular-nums; }
+  .st-table .n { color:#9AA1AC; font-size:13px; }
+  .st-table .form-control { height:34px; font-size:13px; min-width:180px; }
+  .st-table .sname { font-weight:500; }
+  .st-table .sname .fa-medkit { color:#2563EB; margin-right:4px; }
+  .st-table tr.unpaid .sname { color:var(--brand-dark); }
+  .st-table .sale { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; background:#FEF3E2; color:#B45309; font-size:12px; font-weight:700; }
+  .st-table tfoot td { padding:12px; background:#FAFBFC; border-top:1px solid var(--border); font-weight:700; }
+  .st-table input[type=checkbox] { width:16px; height:16px; margin:0; cursor:pointer; accent-color:var(--brand); }
+  .st-empty { padding:36px; text-align:center; color:#9AA1AC; }
+
+  /* История */
+  details.his { border-top:1px solid var(--border); }
+  details.his:first-of-type { border-top:0; }
+  details.his > summary { display:flex; align-items:center; gap:10px; padding:12px 18px; cursor:pointer; list-style:none; user-select:none; }
+  details.his > summary::-webkit-details-marker { display:none; }
+  details.his > summary .chev { color:#9AA1AC; transition:transform .15s; }
+  details.his[open] > summary .chev { transform:rotate(90deg); }
+  details.his > summary b { font-weight:600; }
+  details.his > summary .cnt { color:var(--muted); font-size:13px; }
+  details.his > summary .sp { flex:1; }
+  details.his > summary:hover { background:#FAFBFC; }
+
+  /* Модальные окна */
+  .ar-modal .modal-content { border:0; border-radius:16px; box-shadow:0 24px 60px rgba(20,25,40,.25); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+  .ar-modal .modal-header { padding:16px 20px; border-bottom:1px solid #E6E8EC; }
+  .ar-modal .modal-title { font-size:17px; font-weight:700; color:#1F2430; }
+  .ar-modal .modal-title .fa { color:#D7182E; margin-right:6px; }
+  .ar-modal .modal-body { padding:20px; }
+  .ar-modal .modal-footer { padding:14px 20px; border-top:1px solid #E6E8EC; display:flex; justify-content:flex-end; gap:8px; }
+  .ar-modal .fg label { color:#6B7280; }
+  /* --- дополнительно для кассы --- */
+  .ar { max-width: 1100px; }
+  .ar-avatar.cash { background:#E8F7EE; color:#15803D; }
+
+  /* Реквизиты — компактный список */
+  .dl { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px 20px; padding:16px 18px; }
+  .dl div { min-width:0; }
+  .dl dt { font-size:12px; font-weight:600; color:var(--muted); margin-bottom:3px; }
+  .dl dd { margin:0; font-size:14px; font-weight:500; color:var(--text); overflow-wrap:anywhere; }
+  .dl .w2 { grid-column:span 2; } .dl .w4 { grid-column:span 4; }
+
+  .pay-btn { display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 9px; border-radius:7px; border:1.5px solid var(--border);
+    background:#fff; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .pay-btn.ok  { color:#15803D; } .pay-btn.ok:hover  { background:#E8F7EE; border-color:#BFE6CD; }
+  .pay-btn.ret { color:var(--brand); } .pay-btn.ret:hover { background:var(--brand-soft); border-color:#F5C2C8; }
+
+  .sub-h { padding:10px 18px; background:#FAFBFC; border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:#3C4250; }
+  .sub-h .sp { flex:1; }
+
+  /* ---------- Блок оплаты ---------- */
+  .pay-card { border-color:#F3C6CC; box-shadow:0 8px 24px rgba(215,24,46,.06); }
+  .pay-due { display:flex; align-items:baseline; gap:8px; }
+  .pay-due span { font-size:13px; font-weight:600; color:var(--muted); }
+  .pay-due b { font-size:24px; font-weight:700; color:var(--brand); font-variant-numeric:tabular-nums; }
+
+  .pay-tabs.nav-tabs { display:flex; gap:4px; margin:0; padding:10px 18px 0; border-bottom:1px solid var(--border); }
+  .pay-tabs.nav-tabs > li { float:none; margin-bottom:-1px; }
+  .pay-tabs.nav-tabs > li > a { margin:0; padding:9px 16px; border:0; border-bottom:2px solid transparent; border-radius:0;
+    color:var(--muted); font-weight:600; font-size:14px; background:transparent; }
+  .pay-tabs.nav-tabs > li > a:hover { color:var(--text); background:transparent; border-color:transparent; border-bottom-color:#D5D8DE; }
+  .pay-tabs.nav-tabs > li.active > a, .pay-tabs.nav-tabs > li.active > a:hover, .pay-tabs.nav-tabs > li.active > a:focus {
+    color:var(--brand-dark); border:0; border-bottom:2px solid var(--brand); background:transparent; }
+
+  .pay-methods { width:100%; border-collapse:separate; border-spacing:0 8px; padding:10px 18px 4px; }
+  .pay-methods td { padding:0 12px; height:58px; background:#FAFBFC; border-top:1.5px solid var(--border); border-bottom:1.5px solid var(--border); vertical-align:middle; }
+  .pay-methods td:first-child { width:48px; text-align:center; border-left:1.5px solid var(--border); border-radius:12px 0 0 12px; }
+  .pay-methods td:last-child { width:280px; border-right:1.5px solid var(--border); border-radius:0 12px 12px 0; }
+  .pay-methods tr.m { cursor:pointer; }
+  .pay-methods tr.m:hover td { background:#F5F6F8; }
+  .pay-methods tr.m:has(input[type=checkbox]:checked) td { background:#FFF7F8; border-color:#F3C6CC; }
+  .pay-methods .m-name { display:flex; align-items:center; gap:12px; font-size:15px; font-weight:600; }
+  .pay-methods .m-ico { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#fff; border:1px solid var(--border); color:var(--muted); }
+  .pay-methods tr.m:has(input:checked) .m-ico { color:var(--brand); border-color:#F3C6CC; }
+  .pay-methods input[type=checkbox] { width:18px; height:18px; margin:0; cursor:pointer; accent-color:var(--brand); }
+  .pay-methods input.form-control { height:42px; font-size:18px; font-weight:600; text-align:right; font-variant-numeric:tabular-nums; }
+  .pay-methods input.form-control[readonly] { background:#F1F2F4; color:#B0B5BD; cursor:pointer; }
+  .pay-methods tr.total td { background:#fff; border-color:transparent; height:54px; }
+  .pay-methods tr.total .m-name { justify-content:flex-end; font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; }
+  .pay-methods tr.total input.form-control { background:#fff; border:1.5px solid var(--text); color:var(--text); font-size:20px; cursor:default; }
+
+  .pay-foot { display:flex; align-items:center; gap:8px; padding:12px 18px 16px; }
+  .pay-foot .hint { flex:1; font-size:12.5px; color:#9AA1AC; }
+
+  @media (max-width: 900px) { .dl { grid-template-columns:repeat(2, 1fr); } .dl .w4 { grid-column:span 2; } }
+</style>
+
+<div class="ar">
+
+  <!-- ================= Шапка ================= -->
+  <div class="ar-card">
+    <div class="ar-head">
+      <div class="ar-avatar cash"><i class="fa fa-money"></i></div>
+      <div class="ar-title">
+        <h2>${patient.surname} ${patient.name} ${patient.middlename}</h2>
+        <div class="ar-meta">
+          <span>ID ${patient.id}</span>
+          <c:if test="${not empty patient.discountType.name}"><span class="st st-amb">${patient.discountType.name}</span></c:if>
+        </div>
+      </div>
+      <div class="ar-actions">
+        <c:if test="${serviceTotalSum == 0}">
+          <button type="button" class="ab" onclick="printCheck(0)"><i class="fa fa-print"></i> Чек</button>
+        </c:if>
+      </div>
     </div>
-    <div>
-      <table class="table table-bordered">
+    <dl class="dl" style="border-top:1px solid var(--border); margin:0">
+      <div><dt><ui:message code="birthyear"/></dt><dd>${patient.birthyear}</dd></div>
+      <div><dt><ui:message code="sex"/></dt><dd>${patient.sex.name}</dd></div>
+      <div><dt><ui:message code="phone"/></dt><dd>${patient.tel}</dd></div>
+      <div><dt><ui:message code="passportInfo"/></dt><dd>${patient.passportInfo}</dd></div>
+      <div><dt>Резидентство</dt><dd>${country}</dd></div>
+      <div><dt>Область</dt><dd>${region}</dd></div>
+      <div class="w2"><dt><ui:message code="address"/></dt><dd>${patient.address}</dd></div>
+    </dl>
+  </div>
+
+  <!-- ================= Услуги ================= -->
+  <div class="ar-card" style="overflow:hidden">
+    <div class="ar-card-h"><h3>Услуги<c:if test="${fn:length(drugs) > 0 || fn:length(ds) > 0}"> и медикаменты</c:if></h3></div>
+    <div style="overflow-x:auto">
+      <table class="st-table">
+        <thead>
         <tr>
-          <td class="center bold">№</td>
-          <td class="center bold">#</td>
-          <td class="center bold">Наименование</td>
-          <td class="center bold">Сумма</td>
-          <td class="center bold">С НДС</td>
-          <td class="center bold">Врач</td>
-          <c:if test="${patient.state != 'ARCH'}">
-            <td class="center bold" style="width: 30px">Удалить</td>
-          </c:if>
+          <th class="c" style="width:44px">№</th>
+          <th>Наименование</th>
+          <th style="width:230px">Статус</th>
+          <th class="r" style="width:110px">Сумма</th>
+          <th class="r" style="width:110px">С НДС</th>
+          <th style="width:170px">Врач</th>
+          <c:if test="${patient.state != 'ARCH'}"><th class="c" style="width:50px"></th></c:if>
         </tr>
+        </thead>
+        <tbody>
         <c:forEach items="${services}" var="ser" varStatus="loop">
-          <tr id="ser${ser.id}">
-            <td class="center">${loop.index + 1}</td>
-            <td class="center">
-              <c:if test="${ser.state == 'DEL'}"><span style="color:red;font-weight:bold">Возврат</span></c:if>
-              <c:if test="${ser.state == 'AUTO_DEL'}"><span style="color:red;font-weight:bold">Удален</span></c:if>
-              <c:if test="${ser.state == 'DONE'}"><img src='/res/imgs/green.gif'/></c:if>
-              <%--<c:if test="${ser.state == 'ENT'}"><img src='/res/imgs/red.gif'/></c:if>--%>
+          <tr id="ser${ser.id}" class="${ser.state == 'ENT' ? 'unpaid' : ''}">
+            <td class="c n">${loop.index + 1}</td>
+            <td class="sname">${ser.service.name}</td>
+            <td style="white-space:nowrap">
+              <c:choose>
+                <c:when test="${ser.state == 'ENT'}"><span class="st st-red">Не оплачено</span></c:when>
+                <c:when test="${ser.state == 'PAID'}"><span class="st st-amb">Оплачено</span></c:when>
+                <c:when test="${ser.state == 'DONE'}"><span class="st st-grn">Выполнено</span></c:when>
+                <c:when test="${ser.state == 'DEL'}"><span class="st st-gry">Возврат</span></c:when>
+                <c:when test="${ser.state == 'AUTO_DEL'}"><span class="st st-gry">Удалён</span></c:when>
+              </c:choose>
               <c:if test="${ser.state == 'PAID' && ser.result.id == 0}">
-                <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Сделать не оплаченным" onclick="setServicePayState('ret', ${ser.id})"><span class="fa fa-remove"></span></button>
+                <button type="button" class="pay-btn ret" title="Сделать не оплаченным" onclick="setServicePayState('ret', ${ser.id})"><i class="fa fa-undo"></i> Снять</button>
               </c:if>
               <c:if test="${ser.state == 'ENT'}">
-                <button class="btn btn-success btn-sm" style="height:20px;padding:1px 10px" title="Сделать оплаченным" onclick="setServicePayState('pay', ${ser.id})"><span class="fa fa-check"></span></button>
+                <button type="button" class="pay-btn ok" title="Сделать оплаченным" onclick="setServicePayState('pay', ${ser.id})"><i class="fa fa-check"></i> Оплачено</button>
               </c:if>
             </td>
-            <td <c:if test="${ser.state == 'ENT'}">style="color:red"</c:if>>
-                ${ser.service.name}
-            </td>
-            <td class="right" style="padding-right:7px">${ser.price}</td>
-            <td class="right" style="padding-right:7px">${ser.nds}</td>
-            <td class="center">${ser.users[0].fio}</td>
+            <td class="r">${ser.price}</td>
+            <td class="r">${ser.nds}</td>
+            <td style="color:#3C4250">${ser.users[0].fio}</td>
             <c:if test="${patient.state != 'ARCH'}">
-              <td class="center">
-                <c:if test="${ser.state == 'ENT' || (ser.state != 'DEL' && ser.state != 'DONE' && set.state != 'ARCH' && is_admin && ser.state != 'AUTO_DEL')}">
-                  <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delService(${ser.id}, '${ser.state}')"><span class="fa fa-minus"></span></button>
+              <td class="c">
+                <c:if test="${ser.state == 'ENT' || (ser.state != 'DEL' && ser.state != 'DONE' && ser.state != 'ARCH' && is_admin && ser.state != 'AUTO_DEL')}">
+                  <button type="button" class="ab-ico del" title="${ser.state == 'PAID' ? 'Возврат денег' : 'Удалить'}" onclick="delService(${ser.id}, '${ser.state}')"><i class="fa fa-trash-o"></i></button>
                 </c:if>
               </td>
             </c:if>
           </tr>
         </c:forEach>
+        </tbody>
         <c:if test="${serviceTotalSum > 0}">
-          <tr style="font-weight: bold">
-            <td class="center">&nbsp;</td>
-            <td class="center">&nbsp;</td>
-            <td>ИТОГО к оплате</td>
-            <td class="right" style="padding-right:7px">
-              <fmt:formatNumber value = "${serviceTotalSum}" type = "number"/>
-            </td>
-            <td class="right" style="padding-right:7px">
-              <fmt:formatNumber value = "${ndsTotal}" type = "number"/>
-            </td>
-            <td class="center">&nbsp;</td>
-            <td class="center">&nbsp;</td>
+          <tfoot>
+          <tr>
+            <td colspan="3">Итого к оплате</td>
+            <td class="r"><fmt:formatNumber value="${serviceTotalSum}" type="number"/></td>
+            <td class="r"><fmt:formatNumber value="${ndsTotal}" type="number"/></td>
+            <td colspan="${patient.state != 'ARCH' ? 2 : 1}"></td>
           </tr>
+          </tfoot>
         </c:if>
       </table>
-      <table class="table table-bordered">
-        <c:if test="${fn:length(drugs) > 0}">
-          <tr>
-            <td class="center bold">№</td>
-            <td class="center bold">Наименование</td>
-            <td class="center bold">Кол-во</td>
-            <td class="center bold">Цена</td>
-            <td class="center bold">Сумма</td>
-            <td class="center bold">С НДС</td>
-          </tr>
-          <tr>
-            <td>&nbsp;</td>
-            <td colspan="4" class="center bold">Медикаменты</td>
-            <td class="text-center">
-              <button class="btn btn-info btn-icon" type="button" onclick="setDrugPrint()"><i class="fa fa-print"></i></button>
-            </td>
-          </tr>
-        </c:if>
-        <c:forEach items="${drugs}" var="drug" varStatus="loop">
-          <tr>
-            <td class="center">${loop.index + 1}</td>
-            <td>
-                ${drug.drug.drug.name}
-            </td>
-            <td class="right" style="padding-right:7px">${drug.rasxod}</td>
-            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.drug.price}" type = "number"/></td>
-            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.rasxod * drug.drug.price}" type = "number"/></td>
-            <td class="right" style="padding-right:7px"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value = "${drug.rasxod * (drug.drug.price + drug.drug.nds)}" type = "number"/></td>
-          </tr>
-        </c:forEach>
-        <c:if test="${drugSum > 0}">
-          <tr style="font-weight: bold">
-            <td class="center">&nbsp;</td>
-            <td colspan="4">ИТОГО</td>
-            <td class="right" style="padding-right:7px">
-              <fmt:formatNumber value = "${drugSum}" type = "number"/>
-            </td>
-          </tr>
-        </c:if>
-      </table>
-      <c:if test="${fn:length(pays) > 0}">
-        <table class="table table-bordered">
-          <tr>
-            <td class="center bold">Тип</td>
-            <td class="center bold">Дата</td>
-            <td class="center bold">Наличные</td>
-            <td class="center bold">Карта</td>
-            <td class="center bold">Онлайн</td>
-            <td class="center bold">Перечисление</td>
-            <td class="center bold">Пользователь</td>
-            <td width="80px" class="center bold">Чек</td>
-            <td width="80px" class="center bold">Удалить</td>
-          </tr>
-          <c:forEach items="${pays}" var="pay">
-            <tr>
-              <td align="center">
-                <c:if test="${pay.payType == 'ret'}">Возврат</c:if>
-                <c:if test="${pay.payType != 'ret'}">Оплата</c:if>
-              </td>
-              <td align="center">
-                <fmt:formatDate pattern = "dd.MM.yyyy HH:mm" value = "${pay.crOn}" />
-              </td>
-              <td align="center"><fmt:formatNumber value="${pay.cash}" type = "number"/></td>
-              <td align="center"><fmt:formatNumber value="${pay.card}" type = "number"/></td>
-              <td align="center"><fmt:formatNumber value="${pay.online}" type = "number"/></td>
-              <td align="center"><fmt:formatNumber value="${pay.transfer}" type = "number"/></td>
-              <td>${users[pay.crBy]}</td>
-              <td class="center">
-                <button type="button" class="btn btn-info" style="height:20px;padding:0 10px" onclick="printCheck(${pay.id})"><b class="fa fa-print"></b></button>
-              </td>
-              <td align="center">
-                <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" onclick="delCashOper(${pay.id})">
-                  <span class="fa fa-minus"></span>
-                </button>
-              </td>
-            </tr>
-          </c:forEach>
-          <c:forEach items="${discounts}" var="discount" varStatus="loop">
-            <tr>
-              <td align="center">
-                Скидка
-              </td>
-              <td align="center">
-                <a href="#" onclick="addEditDiscount(${discount.id})" title="Редактировать">
-                  <fmt:formatDate pattern = "dd.MM.yyyy" value = "${discount.crOn}" />
-                </a>
-              </td>
-              <td align="center" colspan="3"><fmt:formatNumber value="${discount.summ}" type = "number"/></td>
-              <td align="center">
-                <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDiscount(${discount.id})"><span class="fa fa-minus"></span></button>
-              </td>
-            </tr>
-          </c:forEach>
-        </table>
-      </c:if>
     </div>
-    <c:if test="${serviceTotalSum > 0 || paidSum > 0}">
-      <div class="panel-heading">
-        Оплата. Итоговая сумма к оплате <span id="totalSumSpan" style="color:red;font-weight:bold"></span>
-        <c:if test="${patient.state != 'ARCH'}">
-          <ul class="pagination" style="float:right; margin-top:-5px">
-            <li class="paginate_button" style="display:none" id="discount_add" tabindex="0"><a href="#" onclick="addEditDiscount(0);return false"><i title="Добавить скидку" class="fa fa-plus"></i> Добавить</a></li>
-            <li class="paginate_button" tabindex="0"><a href="#" onclick="calcTotal(); return false;"><i title="Расчет" class="fa fa-print"></i> Расчет</a></li>
-            <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="saveForm();return false;"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
-          </ul>
-        </c:if>
+
+    <!-- Медикаменты -->
+    <c:if test="${fn:length(drugs) > 0}">
+      <div class="sub-h">
+        <i class="fa fa-medkit" style="color:#2563EB"></i> Медикаменты
+        <span class="sp"></span>
+        <button class="ab sm" type="button" onclick="setDrugPrint()"><i class="fa fa-print"></i> Печать</button>
       </div>
-      <ul class="nav nav-tabs">
-        <input name="pay_type" value="<c:if test="${serviceTotalSum > 0}">pay</c:if><c:if test="${serviceTotalSum == 0 && paidSum > 0}">ret</c:if>" id="pay_type" type="hidden"/>
-        <c:if test="${serviceTotalSum > 0}">
-          <li class="active"><a href="#pager" onclick="setPayType('pay')" data-toggle="tab" aria-expanded="true">Опалата</a></li>
-        </c:if>
-        <c:if test="${paidSum > 0}">
-          <li class=""><a href="#pager" onclick="setPayType('ret')" data-toggle="tab" aria-expanded="false">Возврат</a></li>
-        </c:if>
-        <c:if test="${serviceTotalSum > 0}">
-          <li class=""><a href="#discount" onclick="setPayType('discount')" data-toggle="tab" aria-expanded="false">Скидки</a></li>
-        </c:if>
-      </ul>
-      <div class="tab-content">
-        <div class="tab-pane active fade in" id="pager">
-          <table class="table table-bordered">
+      <div style="overflow-x:auto">
+        <table class="st-table">
+          <thead>
+          <tr>
+            <th class="c" style="width:44px">№</th>
+            <th>Наименование</th>
+            <th class="r" style="width:90px">Кол-во</th>
+            <th class="r" style="width:120px">Цена</th>
+            <th class="r" style="width:130px">Сумма</th>
+            <th class="r" style="width:130px">С НДС</th>
+          </tr>
+          </thead>
+          <tbody>
+          <c:forEach items="${drugs}" var="drug" varStatus="loop">
             <tr>
-              <td class="center vertical-align-middle hand" onclick="tdClick('card')">
-                <input type="checkbox" id="cardCheck" tabindex="-1" onchange="setPay('card', this)" />
-              </td>
-              <td class="center bold vertical-align-middle hand" onclick="tdClick('card')">Пластиковая карта</td>
-              <td class="center">
-                <input class="form-control center" style="font-size:20px" id="cardInput" onblur="calcSum(this)" type="number" value="" readonly />
-              </td>
+              <td class="c n">${loop.index + 1}</td>
+              <td class="sname">${drug.drug.drug.name}</td>
+              <td class="r">${drug.rasxod}</td>
+              <td class="r"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${drug.drug.price}" type="number"/></td>
+              <td class="r"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${drug.rasxod * drug.drug.price}" type="number"/></td>
+              <td class="r"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" value="${drug.rasxod * (drug.drug.price + drug.drug.nds)}" type="number"/></td>
             </tr>
+          </c:forEach>
+          </tbody>
+          <c:if test="${drugSum > 0}">
+            <tfoot>
             <tr>
-              <td class="center vertical-align-middle hand" onclick="tdClick('cash')">
-                <input type="checkbox" id="cashCheck" tabindex="-1" onclick="setPay('cash', this)"/>
-              </td>
-              <td class="center bold vertical-align-middle hand" onclick="tdClick('cash')">Наличные</td>
-              <td class="center">
-                <input  class="form-control center" style="font-size:20px" id="cashInput" readonly onblur="calcSum(this)" type="number"/>
-              </td>
+              <td colspan="5">Итого</td>
+              <td class="r"><fmt:formatNumber value="${drugSum}" type="number"/></td>
             </tr>
-            <tr>
-              <td class="center vertical-align-middle hand" onclick="tdClick('transfer')">
-                <input type="checkbox" id="transferCheck" tabindex="-1" onclick="setPay('transfer', this)"/>
-              </td>
-              <td class="center bold vertical-align-middle hand" onclick="tdClick('transfer')">Печисление</td>
-              <td class="center">
-                <input  class="form-control center" style="font-size:20px" id="transferInput" readonly onblur="calcSum(this)" type="number"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="center vertical-align-middle hand" onclick="tdClick('online')">
-                <input type="checkbox" id="onlineCheck" tabindex="-1" onclick="setPay('online', this)"/>
-              </td>
-              <td class="center bold vertical-align-middle hand" onclick="tdClick('online')">Онлайн</td>
-              <td class="center">
-                <input  class="form-control center" style="font-size:20px" id="onlineInput" readonly onblur="calcSum(this)" type="number"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="center">
-                &nbsp;
-              </td>
-              <td class="center bold">ИТОГО</td>
-              <td class="center">
-                <input class="form-control center" style="font-size:20px" id="totalInput" readonly/>
-              </td>
-            </tr>
-          </table>
-        </div>
-        <div class="tab-pane fade" id="discount">
-          <table class="table table-bordered">
-            <tr>
-              <td width="50px" class="center bold">№</td>
-              <td width="120px" class="center bold">Дата</td>
-              <td class="center bold">Описание</td>
-              <td class="center bold">Сумма</td>
-              <td width="150px" class="center bold">Пользователь</td>
-              <td width="100px" class="center bold">#</td>
-            </tr>
-            <c:forEach items="${discounts}" var="discount" varStatus="loop">
-              <tr class="hover hand" ondblclick="addEditDiscount(${discount.id})">
-                <td class="center">${loop.index + 1}</td>
-                <td class="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${discount.crOn}" /></td>
-                <td>${discount.text}</td>
-                <td class="right"><fmt:formatNumber value = "${discount.summ}" type = "number"/></td>
-                <td nowrap class="center">${discount.crBy.fio}</td>
-                <td nowrap class="center">
-                  <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDiscount(${discount.id})"><span class="fa fa-minus"></span></button>
-                </td>
-              </tr>
-            </c:forEach>
-          </table>
-        </div>
+            </tfoot>
+          </c:if>
+        </table>
       </div>
     </c:if>
   </div>
+
+  <!-- ================= История оплат ================= -->
+  <c:if test="${fn:length(pays) > 0}">
+    <div class="ar-card" style="overflow:hidden">
+      <div class="ar-card-h"><h3>Операции по кассе</h3></div>
+      <div style="overflow-x:auto">
+        <table class="st-table">
+          <thead>
+          <tr>
+            <th style="width:100px">Тип</th>
+            <th style="width:140px">Дата</th>
+            <th class="r">Наличные</th>
+            <th class="r">Карта</th>
+            <th class="r">Онлайн</th>
+            <th class="r">Перечисление</th>
+            <th>Пользователь</th>
+            <th class="c" style="width:90px"></th>
+          </tr>
+          </thead>
+          <tbody>
+          <c:forEach items="${pays}" var="pay">
+            <tr>
+              <td>
+                <c:if test="${pay.payType == 'ret'}"><span class="st st-red">Возврат</span></c:if>
+                <c:if test="${pay.payType != 'ret'}"><span class="st st-grn">Оплата</span></c:if>
+              </td>
+              <td style="white-space:nowrap; color:#6B7280"><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${pay.crOn}"/></td>
+              <td class="r"><fmt:formatNumber value="${pay.cash}" type="number"/></td>
+              <td class="r"><fmt:formatNumber value="${pay.card}" type="number"/></td>
+              <td class="r"><fmt:formatNumber value="${pay.online}" type="number"/></td>
+              <td class="r"><fmt:formatNumber value="${pay.transfer}" type="number"/></td>
+              <td>${users[pay.crBy]}</td>
+              <td class="c" style="white-space:nowrap">
+                <button type="button" class="ab-ico" title="Печать чека" onclick="printCheck(${pay.id})"><i class="fa fa-print"></i></button>
+                <button type="button" class="ab-ico del" title="Удалить оплату" onclick="delCashOper(${pay.id})"><i class="fa fa-trash-o"></i></button>
+              </td>
+            </tr>
+          </c:forEach>
+          <c:forEach items="${discounts}" var="discount">
+            <tr>
+              <td><span class="st st-amb">Скидка</span></td>
+              <td style="white-space:nowrap"><a href="#" onclick="addEditDiscount(${discount.id}); return false;" title="Редактировать"><fmt:formatDate pattern="dd.MM.yyyy" value="${discount.crOn}"/></a></td>
+              <td class="r" colspan="4"><fmt:formatNumber value="${discount.summ}" type="number"/></td>
+              <td>${discount.crBy.fio}</td>
+              <td class="c">
+                <button type="button" class="ab-ico del" title="Удалить скидку" onclick="delDiscount(${discount.id})"><i class="fa fa-trash-o"></i></button>
+              </td>
+            </tr>
+          </c:forEach>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </c:if>
+
+  <!-- ================= Оплата / возврат / скидки ================= -->
+  <c:if test="${serviceTotalSum > 0 || paidSum > 0}">
+    <div class="ar-card pay-card">
+      <div class="ar-card-h">
+        <h3>Касса</h3>
+        <span class="sp"></span>
+        <div class="pay-due"><span>К оплате</span><b id="totalSumSpan"></b></div>
+      </div>
+
+      <input name="pay_type" value="<c:if test="${serviceTotalSum > 0}">pay</c:if><c:if test="${serviceTotalSum == 0 && paidSum > 0}">ret</c:if>" id="pay_type" type="hidden"/>
+      <ul class="nav nav-tabs pay-tabs">
+        <c:if test="${serviceTotalSum > 0}">
+          <li class="active"><a href="#pager" onclick="setPayType('pay')" data-toggle="tab" aria-expanded="true"><i class="fa fa-credit-card"></i>&nbsp; Оплата</a></li>
+        </c:if>
+        <c:if test="${paidSum > 0}">
+          <li class="${serviceTotalSum > 0 ? '' : 'active'}"><a href="#pager" onclick="setPayType('ret')" data-toggle="tab" aria-expanded="false"><i class="fa fa-undo"></i>&nbsp; Возврат</a></li>
+        </c:if>
+        <c:if test="${serviceTotalSum > 0}">
+          <li class=""><a href="#discount" onclick="setPayType('discount')" data-toggle="tab" aria-expanded="false"><i class="fa fa-percent"></i>&nbsp; Скидки</a></li>
+        </c:if>
+      </ul>
+
+      <div class="tab-content">
+        <div class="tab-pane active fade in" id="pager">
+          <table class="pay-methods">
+            <tr class="m" onclick="tdClick('card')">
+              <td><input type="checkbox" id="cardCheck" tabindex="-1" onchange="setPay('card', this)"/></td>
+              <td><div class="m-name"><span class="m-ico"><i class="fa fa-credit-card"></i></span>Пластиковая карта</div></td>
+              <td><input class="form-control" id="cardInput" onblur="calcSum(this)" type="number" value="" readonly placeholder="0"/></td>
+            </tr>
+            <tr class="m" onclick="tdClick('cash')">
+              <td><input type="checkbox" id="cashCheck" tabindex="-1" onclick="setPay('cash', this)"/></td>
+              <td><div class="m-name"><span class="m-ico"><i class="fa fa-money"></i></span>Наличные</div></td>
+              <td><input class="form-control" id="cashInput" readonly onblur="calcSum(this)" type="number" placeholder="0"/></td>
+            </tr>
+            <tr class="m" onclick="tdClick('transfer')">
+              <td><input type="checkbox" id="transferCheck" tabindex="-1" onclick="setPay('transfer', this)"/></td>
+              <td><div class="m-name"><span class="m-ico"><i class="fa fa-university"></i></span>Перечисление</div></td>
+              <td><input class="form-control" id="transferInput" readonly onblur="calcSum(this)" type="number" placeholder="0"/></td>
+            </tr>
+            <tr class="m" onclick="tdClick('online')">
+              <td><input type="checkbox" id="onlineCheck" tabindex="-1" onclick="setPay('online', this)"/></td>
+              <td><div class="m-name"><span class="m-ico"><i class="fa fa-mobile"></i></span>Онлайн</div></td>
+              <td><input class="form-control" id="onlineInput" readonly onblur="calcSum(this)" type="number" placeholder="0"/></td>
+            </tr>
+            <tr class="total">
+              <td></td>
+              <td><div class="m-name">Итого</div></td>
+              <td><input class="form-control" id="totalInput" readonly/></td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="tab-pane fade" id="discount">
+          <div style="overflow-x:auto; padding-top:6px">
+            <table class="st-table">
+              <thead>
+              <tr>
+                <th class="c" style="width:44px">№</th>
+                <th style="width:110px">Дата</th>
+                <th>Описание</th>
+                <th class="r" style="width:130px">Сумма</th>
+                <th style="width:170px">Пользователь</th>
+                <th class="c" style="width:56px"></th>
+              </tr>
+              </thead>
+              <tbody>
+              <c:forEach items="${discounts}" var="discount" varStatus="loop">
+                <tr style="cursor:pointer" ondblclick="addEditDiscount(${discount.id})" title="Двойной клик — редактировать">
+                  <td class="c n">${loop.index + 1}</td>
+                  <td><fmt:formatDate pattern="dd.MM.yyyy" value="${discount.crOn}"/></td>
+                  <td>${discount.text}</td>
+                  <td class="r"><fmt:formatNumber value="${discount.summ}" type="number"/></td>
+                  <td style="white-space:nowrap">${discount.crBy.fio}</td>
+                  <td class="c">
+                    <button type="button" class="ab-ico del" title="Удалить" onclick="delDiscount(${discount.id})"><i class="fa fa-trash-o"></i></button>
+                  </td>
+                </tr>
+              </c:forEach>
+              </tbody>
+            </table>
+            <c:if test="${fn:length(discounts) == 0}"><div class="st-empty">Скидок нет</div></c:if>
+          </div>
+        </div>
+      </div>
+
+      <c:if test="${patient.state != 'ARCH'}">
+        <div class="pay-foot">
+          <span class="hint">Отметьте способы оплаты и введите суммы. «Рассчитать» заполнит оставшийся способ автоматически.</span>
+          <button type="button" class="ab" id="discount_add" style="display:none" onclick="addEditDiscount(0); return false"><i class="fa fa-plus"></i> Добавить скидку</button>
+          <button type="button" class="ab" onclick="calcTotal(); return false;"><i class="fa fa-calculator"></i> Рассчитать</button>
+          <button type="button" class="ab primary" onclick="saveForm(); return false;"><i class="fa fa-save"></i> Провести</button>
+        </div>
+      </c:if>
+    </div>
+  </c:if>
 </div>
-<!-- Add Edit Discount -->
+
+<!-- ================= Модальное окно: скидка ================= -->
 <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
+<div class="modal fade ar-modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog" style="width:520px; max-width:95vw">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты скидки</h4>
+        <h4 class="modal-title" id="myModalLabel"><i class="fa fa-percent"></i> Скидка</h4>
       </div>
       <div class="modal-body">
         <form id="addEditForm" name="addEditForm">
           <input type="hidden" name="id" value="" />
           <input type="hidden" name="code" value="AMB" />
           <input type="hidden" name="patient" value="${patient.id}" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Сумма скидки*:</td>
-              <td>
-                <input type="number" class="form-control right" maxlength="20" name="summ"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Описание:</td>
-              <td>
-                <textarea class="form-control" name="text" maxlength="200"></textarea>
-              </td>
-            </tr>
-          </table>
+          <div class="fg">
+            <div class="f s6"><label>Сумма скидки <req>*</req></label>
+              <input type="number" class="form-control" maxlength="20" name="summ" style="text-align:right; font-size:18px; font-weight:600"/></div>
+            <div class="f s6"><label>Описание</label>
+              <textarea class="form-control" name="text" maxlength="200" rows="3" style="height:auto; font-family:inherit"></textarea></div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveDiscount()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
+        <button type="button" class="ab" id="close-modal" data-dismiss="modal">Закрыть</button>
+        <button type="button" class="ab primary" onclick="saveDiscount()"><i class="fa fa-save"></i> Сохранить</button>
       </div>
     </div>
-    <!-- /.modal-content -->
   </div>
-  <!-- /.modal-dialog -->
 </div>
 
 <script>
@@ -400,6 +543,7 @@
     var elem = document.getElementById(type + 'Input');
     if (dom.checked) {
       elem.removeAttribute("readonly");
+      elem.focus();
     } else {
       dom.removeAttribute("checked");
       elem.setAttribute("readonly", "true");
@@ -407,10 +551,11 @@
     }
     calcSum(null);
   }
+  // клик по строке способа оплаты = переключить галочку (кроме клика по самой галочке и активному полю суммы)
   function tdClick(type) {
-    if(event.target.tagName === 'TD') {
-      getDOM(type + 'Check').click();
-    }
+    var t = event.target;
+    if (t.tagName === 'INPUT' && (t.type === 'checkbox' || !t.readOnly)) return;
+    getDOM(type + 'Check').click();
   }
   function calcTotal(){
     var total = document.getElementById("totalInput"),
@@ -451,8 +596,8 @@
         online = document.getElementById('onlineInput'),
         cash = document.getElementById('cashInput');
       var sum = 0;
-      total.style.border = '1px solid #eee';
-      total.style.color = 'black';
+      total.style.borderColor = '';
+      total.style.color = '';
       total.title = 'Сумма оплаты';
       if (card.value !== '') sum = parseFloat(card.value);
       if (cash.value !== '') sum += parseFloat(cash.value);
@@ -472,13 +617,13 @@
           elem.value = 0;
         }
         alert('ИТОГО не может быть больше суммы к оплате');
-        total.style.border = '1px solid red';
-        total.style.color = 'red';
+        total.style.borderColor = '#D7182E';
+        total.style.color = '#D7182E';
         total.title = 'Сумма оплаты больше ожидаемого';
       }
       document.getElementById("totalInput").value = sum;
     } catch (e) {
-      alert('Проверьте правильности ввода цифр');
+      alert('Проверьте правильность ввода цифр');
       document.getElementById("totalInput").value = '0';
     }
   }
@@ -494,7 +639,7 @@
     if (transfer.value !== '') {sum += parseFloat(transfer.value); params += 'transfer=' + transfer.value + '&';}
     if (online.value !== '') {sum += parseFloat(online.value); params += 'online=' + online.value + '&';}
     if (payType === 'pay' && totalSum !== sum) {
-      alert('Сумма не верна. Проверьте правильности итоговой суммы');
+      alert('Сумма неверна. Проверьте итоговую сумму');
       return;
     }
     $.ajax({
@@ -533,9 +678,9 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            $('*[name=id]').val(res.id);
-            $('*[name=summ]').val(res.summ);
-            $('*[name=text]').val(res.text);
+            $('#addEditForm *[name=id]').val(res.id);
+            $('#addEditForm *[name=summ]').val(res.summ);
+            $('#addEditForm *[name=text]').val(res.text);
           } else {
             alert(res.msg);
           }
@@ -545,7 +690,7 @@
   }
   function saveDiscount() {
     try {
-      var discountSum = parseFloat($('*[name=summ]').val());
+      var discountSum = parseFloat($('#addEditForm *[name=summ]').val());
       if(discountSum + discountSumm > totalSum) {
         alert('Сумма скидки не может превышать сумму к оплате');
         return;
@@ -569,10 +714,11 @@
         }
       });
     } catch (e) {
-      alert('Проверьте правильности ввода');
+      alert('Проверьте правильность ввода');
     }
   }
   function delDiscount(id) {
+    if (!confirm('Удалить скидку?')) return;
     $.ajax({
       url: '/cashbox/delDiscount.s',
       method: "post",
