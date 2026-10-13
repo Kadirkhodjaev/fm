@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Second level cache for reference tables (classes marked @Cache: Users, Roles, Dicts, SelOpts, Depts, Rooms, ...).
+  Changes made through the application update the cache at once.
+  Changes made directly in MySQL become visible after timeToLiveSeconds (10 minutes) or after a restart.
+-->
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" updateCheck="false">
+  <diskStore path="java.io.tmpdir/fm-ehcache"/>
+  <defaultCache
+    maxElementsInMemory="10000"
+    eternal="false"
+    timeToIdleSeconds="0"
+    timeToLiveSeconds="600"
+    overflowToDisk="false"
+    memoryStoreEvictionPolicy="LRU"/>
+</ehcache>
