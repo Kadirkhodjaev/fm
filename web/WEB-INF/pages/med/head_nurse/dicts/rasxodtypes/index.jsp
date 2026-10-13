@@ -128,7 +128,7 @@
     });
   }
   function delDrugRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
+    FmsConfirm('Дейтвительно хотите удалить?', function () {
       $.ajax({
         url: '/head_nurse/dict/delete.s',
         method: 'post',
@@ -142,6 +142,6 @@
           }
         }
       });
-    }
+    });
   }
 </script>

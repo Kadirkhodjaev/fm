@@ -10,7 +10,7 @@
 <link href="/res/choosen/chosen.min.css" rel="stylesheet">
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
-<script src="/res/js/common.js" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 
 <style>
@@ -95,7 +95,7 @@
       autocomplete(names[i], templates);
   }
   function delRow(idx) {
-    if (confirm('Вы действительно хотети удалить запись?')) {
+    FmsConfirm('Вы действительно хотети удалить запись?', function () {
       var id = $('#drugTr' + idx).find('input[name=id]').val();
       if (id != '')
         $.ajax({
@@ -105,7 +105,7 @@
           dataType: 'json'
         });
       document.getElementById('drugTr' + idx).remove();
-    }
+    });
   }
   $(function() {
     $(".chzn-select").chosen();
@@ -148,7 +148,7 @@
       <button class="btn btn-sm" title="Обоснование" type="button" onclick="printObos()" style="float:right;margin-top:-5px"><i class="fa fa-print"></i> Обоснование</button>
       <div style="float:right">
         <button class="btn btn-sm hidden" type="button" onclick="setLocation('/lv/drug/home.s')" title="Добавить новые препараты" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
-        <button class="btn btn-sm btn-success hidden" title="Сохранить" style="margin-top: -5px"><i class="fa fa-check"></i> Сохранить</button>
+        <button class="btn btn-sm btn-success hidden" title="Сохранить" style="margin-top: -5px"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
     <table class="formTable" style="width:100%">

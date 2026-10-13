@@ -14,6 +14,7 @@ import ckb.models.ObjList;
 import ckb.services.med.patient.SPatient;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
+import ckb.utils.DB;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -25,6 +26,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 
 @Controller
@@ -40,73 +44,131 @@ public class CProc {
   @Autowired private DPatientDrugExp dPatientDrugExp;
   @Autowired private DPatientTabExp dPatientTabExp;
 
+  /** Время приёма: 1 - утро, 2 - день, 3 - вечер (запоминается в сессии) */
+  private String nurseTime(HttpServletRequest req, Session session) {
+    String time = Util.get(req, "time");
+    String sTime = session.getFilters().get("NURSE_TIME");
+    HashMap<String, String> filters = session.getFilters();
+    time = time == null ? sTime != null ? sTime : "1" : time;
+    if (!time.equals("1") && !time.equals("2") && !time.equals("3")) time = "1";
+    filters.put("NURSE_TIME", time);
+    session.setFilters(filters);
+    return time;
+  }
+
+  /**
+   * Пациенты отделения на лечении с отметками по выбранному времени приёма на дату:
+   * meds - есть назначения на это время, pending - есть ещё не отмеченные медсестрой.
+   */
+  private List<Map<String, Object>> nursePatients(int deptId, Integer roomId, String time, String dbDate) {
+    String slot = time.equals("1") ? "morning" : time.equals("2") ? "noon" : "evening";
+    List<Map<String, Object>> list = new ArrayList<>();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select p.id, p.surname, p.name, p.middlename, p.yearNum, p.birthyear, p.Sex_Id, p.Room_Id, r.name room_name, rt.name room_type, u.fio lv_fio, " +
+        "       Exists(Select 1 From patient_drug_dates dd Join patient_drugs d On d.id = dd.patientDrug_Id " +
+        "               Where d.patient_Id = p.id And dd.checked = 1 And dd.date = ? And d." + slot + "Time = 1) meds, " +
+        "       (Select Count(*) From patient_drug_dates dd Join patient_drugs d On d.id = dd.patientDrug_Id " +
+        "               Where d.patient_Id = p.id And dd.checked = 1 And dd.date = ? And d." + slot + "Time = 1 And IfNull(dd." + slot + "TimeDone, 0) != 1) pending " +
+        "  From Patients p Join Rooms r On r.id = p.Room_Id Left Join Dicts rt On rt.id = r.roomType Left Join Users u On u.id = p.lv_id " +
+        " Where p.state = 'LV' And r.dept_Id = ?" + (roomId != null ? " And r.id = ?" : "") +
+        " Order By r.name, p.surname, p.name");
+      ps.setString(1, dbDate);
+      ps.setString(2, dbDate);
+      ps.setInt(3, deptId);
+      if (roomId != null) ps.setInt(4, roomId);
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", rs.getInt("id"));
+        m.put("fio", (Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")) + " " + Util.nvl(rs.getString("middlename"))).trim());
+        m.put("yearNum", rs.getInt("yearNum") == 0 ? "" : rs.getInt("yearNum") + "");
+        m.put("birthyear", rs.getInt("birthyear") == 0 ? "" : rs.getInt("birthyear") + "");
+        m.put("sex", rs.getInt("Sex_Id") == 12 ? "M" : rs.getInt("Sex_Id") == 13 ? "F" : "");
+        m.put("roomId", rs.getInt("Room_Id"));
+        m.put("room", Util.nvl(rs.getString("room_name")));
+        m.put("roomType", Util.nvl(rs.getString("room_type")));
+        m.put("lv", Util.nvl(rs.getString("lv_fio")));
+        m.put("meds", rs.getBoolean("meds"));
+        m.put("pending", rs.getInt("pending"));
+        list.add(m);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn, ps, rs);
+    }
+    return list;
+  }
+
+  // Палаты отделения: плитки палат с пациентами и отметкой, у кого остались не сделанные процедуры
   @RequestMapping("palatas.s")
   protected String palatas(HttpServletRequest req, Model m) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/proc/palatas.s");
     Users user = dUser.get(session.getUserId());
-    m.addAttribute("dep_name", user.getDept().getName());
-    String time = Util.get(req, "time");
-    String sTime = session.getFilters().get("NURSE_TIME");
-    HashMap<String, String> filters = session.getFilters();
-    time = time == null ? sTime != null ? sTime : "1" : time;
-    filters.put("NURSE_TIME", time);
-    session.setFilters(filters);
-    List<Rooms> rs = dRoom.getList("From Rooms Where dept.id = " + user.getDept().getId());
-    List<Obj> rooms = new ArrayList<>();
-    String dbDate = Util.dateDB(new Date());
-    for(Rooms r: rs) {
-      Obj room = new Obj();
-      room.setId(r.getId());
-      room.setName(r.getName());
-      List<ObjList> list = new ArrayList<>();
-      List<Patients> patients = dPatient.getList("From Patients Where state = 'LV' And room.id = " + r.getId());
-      for(Patients pat: patients) {
-        ObjList l = new ObjList();
-        if(dPatientDrug.getCount("From PatientDrugDates Where checked=1 And date='" + dbDate + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1" : time.equals("2") ? "patientDrug.noonTime = 1" : "patientDrug.eveningTime = 1")) > 0) {
-          l.setC1(pat.getSex() == null ? "fa-asterisk" : pat.getSex().getId() == 12 ? "fa-male" : "fa-female");
-          l.setC2(dPatientDrug.getCount("From PatientDrugDates Where checked=1 And date='" + dbDate + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1 And morningTimeDone !=1 " : time.equals("2") ? "patientDrug.noonTime = 1 And noonTimeDone!=1" : "patientDrug.eveningTime = 1 And eveningTimeDone!=1")) > 0 ? "text-danger" : "text-success");
-          list.add(l);
+    m.addAttribute("dep_name", user.getDept() == null ? "" : user.getDept().getName());
+    String time = nurseTime(req, session);
+    List<Map<String, Object>> rooms = new ArrayList<>();
+    int pendingAll = 0, patientsAll = 0;
+    if (user.getDept() != null) {
+      Map<Integer, Map<String, Object>> byRoom = new LinkedHashMap<>();
+      for (Map<String, Object> p : nursePatients(user.getDept().getId(), null, time, Util.dateDB(new Date()))) {
+        Integer rid = (Integer) p.get("roomId");
+        Map<String, Object> r = byRoom.get(rid);
+        if (r == null) {
+          r = new HashMap<>();
+          r.put("id", rid);
+          r.put("name", p.get("room"));
+          r.put("type", p.get("roomType"));
+          r.put("patients", new ArrayList<Map<String, Object>>());
+          r.put("pending", 0);
+          r.put("withMeds", 0);
+          byRoom.put(rid, r);
         }
+        ((List<Map<String, Object>>) r.get("patients")).add(p);
+        int pend = (Integer) p.get("pending");
+        if (pend > 0) r.put("pending", (Integer) r.get("pending") + 1);
+        if ((Boolean) p.get("meds")) r.put("withMeds", (Integer) r.get("withMeds") + 1);
+        patientsAll++;
+        if (pend > 0) pendingAll++;
       }
-      room.setList(list);
-      if(!room.getList().isEmpty())
-        rooms.add(room);
+      rooms.addAll(byRoom.values());
     }
     m.addAttribute("rooms", rooms);
+    m.addAttribute("patientsAll", patientsAll);
+    m.addAttribute("pendingAll", pendingAll);
     m.addAttribute("time", time);
     return "proc/palatas";
   }
 
+  // Палата: выбор пациента (крупные карточки для планшета), под ним назначения на выбранное время
   @RequestMapping("palata.s")
   protected String palata(HttpServletRequest req, Model m) {
     Session session = SessionUtil.getUser(req);
-    //
-    String time = Util.get(req, "time");
-    String sTime = session.getFilters().get("NURSE_TIME");
-    HashMap<String, String> filters = session.getFilters();
-    time = time == null ? sTime != null ? sTime : "1" : time;
-    filters.put("NURSE_TIME", time);
-    session.setFilters(filters);
-    //
+    String time = nurseTime(req, session);
     Integer roomId = Util.getInt(req, "id");
     Date operDay = Util.getDate(req, "oper_day");
-    if(operDay == null) operDay = new Date();
+    if (operDay == null) operDay = new Date();
     session.setCurUrl("/proc/palata.s?id=" + roomId);
     Users user = dUser.get(session.getUserId());
-    m.addAttribute("dep_name", user.getDept().getName());
+    m.addAttribute("dep_name", user.getDept() == null ? "" : user.getDept().getName());
     m.addAttribute("room", dRoom.get(roomId));
-    List<Patients> patients = dPatient.getList("From Patients Where state = 'LV' And room.id = " + roomId);
-    List<Patients> pats = new ArrayList<>();
-    for(Patients pat: patients) {
-      if(dPatientDrug.getCount("From PatientDrugDates Where checked=1 And date='" + Util.dateDB(new Date()) + "' And patientDrug.patient.id = " + pat.getId() + " And " + (time.equals("1") ? "patientDrug.morningTime = 1" : time.equals("2") ? "patientDrug.noonTime = 1" : "patientDrug.eveningTime = 1")) > 0) {
-        pats.add(pat);
-      }
-    }
-    m.addAttribute("first_one", pats.get(0).getId());
+    List<Map<String, Object>> pats = user.getDept() == null ? new ArrayList<Map<String, Object>>()
+      : nursePatients(user.getDept().getId(), roomId, time, Util.dateDB(operDay));
+    // открыт пациент из параметра, иначе первый, у кого есть не сделанные процедуры, иначе первый
+    Integer sel = Util.isNotNull(req, "pat") ? Util.getInt(req, "pat") : null;
+    if (sel == null) for (Map<String, Object> p : pats) if ((Integer) p.get("pending") > 0) { sel = (Integer) p.get("id"); break; }
+    if (sel == null && !pats.isEmpty()) sel = (Integer) pats.get(0).get("id");
+    m.addAttribute("first_one", sel);
     m.addAttribute("patients", pats);
     m.addAttribute("oper_day", Util.dateToString(operDay));
     m.addAttribute("time", time);
+    m.addAttribute("tgEnabled", ckb.utils.tg.TgPatientBot.isEnabled());
     return "proc/palata";
   }
 

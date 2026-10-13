@@ -1,219 +1,147 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%-- Склады → Питание → заявка: пациенты по столам --%>
+<%@include file="/WEB-INF/pages/med/head_nurse/hn_style.jsp"%>
 <style>
-  .miniGrid tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
+  .ep-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(420px, 1fr)); gap:12px; align-items:start; }
+  .ep-t { background:#fff; border:1px solid #E6E8EC; border-radius:14px; overflow:hidden; box-shadow:0 1px 2px rgba(20,25,40,.04); }
+  .ep-t-h { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid #F0F1F4; }
+  .ep-t-h h4 { margin:0; font-size:14px; font-weight:700; }
+  .ep-cnt { min-width:22px; height:20px; padding:0 7px; border-radius:10px; background:#EEF1F6; color:#3C4A63; font-size:12px; font-weight:700; line-height:20px; text-align:center; }
+  .ep-row { display:flex; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid #F5F6F8; font-size:13px; }
+  .ep-row:last-child { border-bottom:0; }
+  .ep-row:hover { background:#FAFBFC; }
+  .ep-dot { flex:none; width:8px; height:8px; border-radius:50%; background:#2E9E62; }
+  .ep-dot.out { background:#D92D3C; }
+  .ep-row .tx { flex:1; min-width:0; }
+  .ep-row a { color:#1F2430; text-decoration:none; }
+  .ep-row a:hover { text-decoration:underline; }
+  .ep-row a.new { font-weight:700; }
+  .ep-row .fm-act { flex:none; opacity:0; }
+  .ep-row:hover .fm-act { opacity:1; }
+  .ep-empty { padding:14px 12px; color:#9AA1AC; font-size:13px; }
+  .ep-add { display:flex; justify-content:flex-end; padding:8px 12px; border-top:1px solid #F0F1F4; background:#FAFBFC; }
 </style>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    Заявки по пациентам на дату <b><fmt:formatDate pattern = "dd.MM.yyyy" value = "${eat.actDate}" /></b> по типу <b>${eat.menuType.name}</b> Кол-во новых пациентов: <span class="bold">${newCount}</span>
-    <button class="btn btn-xs btn-default" onclick="setPage('/head_nurse/eats.s')" style="float:right;"><i class="fa fa-arrow-left"></i> Назад</button>
-    <button class="btn btn-xs btn-success" onclick="refreshPage()" style="float:right;margin-right: 5px"><i class="fa fa-refresh"></i> Обновить</button>
-    <button class="btn btn-xs btn-info" onclick="printEat()" style="float:right;margin-right: 5px"><i class="fa fa-print"></i> Печать</button>
-    <c:if test="${eat.state == 'ENT'}">
-      <button  class="btn btn-xs btn-success" onclick="confirmEatClaim()" style="float:right;margin-right: 5px"><i class="fa fa-check"></i> Подтвердить</button>
-    </c:if>
-  </div>
-  <div class="panel-body">
-    <div class="row" style="margin:0">
-      <c:forEach items="${list}" var="table">
-        <div class="col-md-6">
-          <div class="panel panel-default">
-            <div class="panel-heading hand" data-toggle="collapse" href="#table_${table.id}">
-              <h4 class="panel-title">
-                ${table.name}
-                <div style="float:right; color:white; background-color:green; padding:2px 6px; border-radius: 20px">${fn:length(table.patients)}</div>
-                <button class="btn btn-success btn-sm" title="Обновить стол" style="height:20px;padding:1px 10px" onclick="refreshTable(${table.id})">
-                  <span class="fa fa-refresh"></span>
-                </button>
-              </h4>
-            </div>
-            <div id="table_${table.id}" class="panel-collapse collapse in">
-              <div class="panel-body">
-                <fieldset>
-                  <table class="table table-bordered miniGrid">
-                    <tr>
-                      <th>#</th>
-                      <th>Описание</th>
-                      <th style="width:40px">Удалить</th>
-                    </tr>
-                    <tbody>
-                    <c:forEach items="${table.patients}" var="patient">
-                      <tr>
-                        <td align="center" title="<c:if test="${patient.dateEnd != null}">Дата выписки: ${patient.dateEnd}</c:if>">
-                          <c:if test="${patient.dateEnd == null || patient.dateEnd == ''}">
-                            <img src="/res/imgs/green.gif">
-                          </c:if>
-                          <c:if test="${patient.dateEnd != null && patient.dateEnd != ''}">
-                            <img src="/res/imgs/red.gif">
-                          </c:if>
-                        </td>
-                        <td>
-                          <c:if test="${patient.ibNum == null}">
-                            ${patient.fio}
-                          </c:if>
-                          <c:if test="${patient.ibNum != null}">
-                            <a href="#" class="<c:if test="${patient.dateBegin == 'true'}">bold</c:if>" onclick="setPage('/head_nurse/eat/patient/edit.s?id=${patient.ibNum}&eat_id=${eat.id}'); return false;">${patient.fio}</a>
-                          </c:if>
-                        </td>
-                        <td class="center">
-                          <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delTableRow(${patient.id})"><i class="fa fa-minus"></i></button>
-                        </td>
-                      </tr>
-                    </c:forEach>
-                    </tbody>
-                  </table>
-                  <div style="float:right">
-                    <button class="btn btn-sm btn-success" onclick="addTableRow(${table.id})">
-                      <span class="fa fa-plus"></span> Добавить
-                    </button>
-                  </div>
-                </fieldset>
-              </div>
-            </div>
-          </div>
-        </div>
-      </c:forEach>
+<c:set var="total" value="0"/>
+<c:forEach items="${list}" var="t"><c:set var="total" value="${total + fn:length(t.patients)}"/></c:forEach>
+
+<div class="hn-page">
+  <div class="hn-card" style="margin-bottom:12px">
+    <div class="hn-card-h">
+      <div>
+        <h3>Заявка на питание · <fmt:formatDate pattern="dd.MM.yyyy" value="${eat.actDate}"/> · ${eat.menuType.name}</h3>
+        <span class="hn-st ${eat.state == 'ENT' ? 'ent' : 'con'}">${eat.state == 'ENT' ? 'Введена' : 'Подтверждена'}</span>
+        <span class="fm-count" style="display:inline; margin-left:8px">порций <b>${total}</b> · новых пациентов <b>${newCount}</b></span>
+      </div>
+      <span class="fm-spacer"></span>
+      <button type="button" class="fm-btn" onclick="printEat()"><i class="fa fa-print"></i>Печать</button>
+      <button type="button" class="fm-btn" onclick="refreshPage()" title="Пересобрать заявку по текущим пациентам"><i class="fa fa-refresh"></i>Обновить</button>
+      <c:if test="${eat.state == 'ENT'}">
+        <button type="button" class="fm-btn primary" onclick="confirmEatClaim()"><i class="fa fa-check"></i>Подтвердить</button>
+      </c:if>
+      <button type="button" class="fm-btn" onclick="setPage('/head_nurse/eats.s')"><i class="fa fa-arrow-left"></i>Назад</button>
     </div>
+  </div>
+
+  <div class="ep-grid">
+    <c:forEach items="${list}" var="table">
+      <div class="ep-t">
+        <div class="ep-t-h">
+          <h4>${table.name}</h4>
+          <span class="ep-cnt">${fn:length(table.patients)}</span>
+          <span class="fm-spacer"></span>
+          <button type="button" class="fm-act" title="Обновить стол по текущим пациентам" onclick="refreshTable(${table.id})"><i class="fa fa-refresh"></i></button>
+        </div>
+        <c:forEach items="${table.patients}" var="patient">
+          <c:set var="out" value="${patient.dateEnd != null && patient.dateEnd != ''}"/>
+          <div class="ep-row">
+            <span class="ep-dot ${out ? 'out' : ''}" title="<c:if test="${out}">Выписан: ${patient.dateEnd}</c:if><c:if test="${!out}">В стационаре</c:if>"></span>
+            <span class="tx">
+              <c:choose>
+                <c:when test="${patient.ibNum == null}">${patient.fio}</c:when>
+                <c:otherwise><a href="#" class="${patient.dateBegin == 'true' ? 'new' : ''}" onclick="setPage('/head_nurse/eat/patient/edit.s?id=${patient.ibNum}&eat_id=${eat.id}'); return false;">${patient.fio}</a></c:otherwise>
+              </c:choose>
+            </span>
+            <button type="button" class="fm-act danger" title="Убрать из заявки" onclick="delTableRow(${patient.id})"><i class="fa fa-times"></i></button>
+          </div>
+        </c:forEach>
+        <c:if test="${empty table.patients}"><div class="ep-empty">Пока никого</div></c:if>
+        <div class="ep-add">
+          <button type="button" class="fm-btn" data-name="${fn:escapeXml(table.name)}" onclick="addTableRow(${table.id}, $(this).attr('data-name'))"><i class="fa fa-plus"></i>Добавить</button>
+        </div>
+      </div>
+    </c:forEach>
   </div>
 </div>
 
-<button data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></button>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" id="new-patient-close-btn" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Добавить строку</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="eat_id" value="${eat.id}"/>
-          <input type="hidden" id="new-patient-table-id" name="table_id" value="0"/>
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Описание *:</td>
-              <td>
-                <input name="text" id="patient-desc" type="text" class="form-control" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Кол-во *:</td>
-              <td>
-                <input name="counter" id="pat-counter" type="number" class="form-control" value="1"/>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveEatForm()">Выполнить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
+<div class="fm-overlay" id="epModal" onclick="if (event.target === this) $('#epModal').removeClass('open')">
+  <div class="fm-modal" style="width:440px">
+    <div class="fm-modal-head">
+      <h3>Добавить в <span id="epTable"></span></h3>
+      <button type="button" class="fm-x" onclick="$('#epModal').removeClass('open')"><i class="fa fa-times"></i></button>
     </div>
-    <!-- /.modal-content -->
+    <form id="addEditForm" name="addEditForm" onsubmit="saveEatForm(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="eat_id" value="${eat.id}"/>
+        <input type="hidden" id="new-patient-table-id" name="table_id" value="0"/>
+        <div class="fm-err" id="epErr"></div>
+        <div>
+          <label class="fm-l">Описание *</label>
+          <input name="text" id="patient-desc" type="text" class="fm-in" placeholder="Например: кузатувчи" autocomplete="off"/>
+        </div>
+        <div style="max-width:140px">
+          <label class="fm-l">Количество *</label>
+          <input name="counter" id="pat-counter" type="number" min="1" class="fm-in" value="1" style="text-align:center"/>
+        </div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="$('#epModal').removeClass('open')">Отмена</button>
+        <button type="submit" class="fm-btn primary"><i class="fa fa-plus"></i>Добавить</button>
+      </div>
+    </form>
   </div>
-  <!-- /.modal-dialog -->
 </div>
 
 <script>
-  function saveEatForm() {
-    if($('#patient-desc').val() == null || $('#patient-desc').val() == '' || $('#pat-counter').val() == null || $('#pat-counter').val() == '' || $('#pat-counter').val() == '0') {
-      alert('Не все поля заполнены корректно! Кол-во и описание не можут быть пустыми и кол-во должно быть больше 0');
-      return;
-    }
+  function epPost(url, data, okText) {
     $.ajax({
-      url: '/head_nurse/eat/patient/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
+      url: url, method: 'post', data: data, dataType: 'json',
       success: function (res) {
-        if (res.success) {
-          $('#new-patient-close-btn').click();
-          alert('Данные успешно сохранены');
-          setPage('/head_nurse/eat.s?id=${eat.id}');
-        } else {
-          alert(res.msg);
-        }
+        if (res.success) { openMedMsg(okText, true); setPage('/head_nurse/eat.s?id=${eat.id}'); }
+        else errMsg(res.msg);
       }
     });
   }
-  function addTableRow(id) {
+  function addTableRow(id, name) {
+    document.addEditForm.reset();
     $('#new-patient-table-id').val(id);
-    $('#modal_window').click();
+    $('#epTable').text(name);
+    $('#epErr').hide();
+    $('#epModal').addClass('open');
+    $('#patient-desc').focus();
+  }
+  function saveEatForm() {
+    if (!$.trim($('#patient-desc').val()) || !(parseInt($('#pat-counter').val(), 10) > 0)) {
+      $('#epErr').text('Заполните описание и количество больше нуля').show();
+      return;
+    }
+    $('#epModal').removeClass('open');
+    epPost('/head_nurse/eat/patient/save.s', $('#addEditForm').serialize(), 'Добавлено');
   }
   function refreshPage() {
-    if(confirm('Вы действительно обновить данные? Все измененные данные будут потерены!!!')) {
-      $.ajax({
-        url: '/head_nurse/eat/refresh.s',
-        data: 'id=${eat.id}',
-        method: 'post',
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert('Данные успешно сохранены');
-            setPage('/head_nurse/eat.s?id=${eat.id}');
-          } else
-            alert(res.msg);
-        }
-      });
-    }
+    FmsConfirm('Пересобрать заявку по текущим пациентам? Ручные изменения будут потеряны.', function () { epPost('/head_nurse/eat/refresh.s', 'id=${eat.id}', 'Заявка обновлена'); });
   }
   function confirmEatClaim() {
-    if(confirm('Вы действительно хотите подтвердить Заявку?')) {
-      $.ajax({
-        url: '/head_nurse/eat/confirm.s',
-        data: 'id=${eat.id}',
-        method: 'post',
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert('Данные успешно сохранены');
-            setPage('/head_nurse/eat.s?id=${eat.id}');
-          } else
-            alert(res.msg);
-        }
-      });
-    }
+    FmsConfirm('Подтвердить заявку на питание?', function () { epPost('/head_nurse/eat/confirm.s', 'id=${eat.id}', 'Заявка подтверждена'); });
   }
   function delTableRow(id) {
-    if(confirm('Вы действительно хотите удалить запись?')) {
-      $.ajax({
-        url: '/head_nurse/eat/patient/del.s',
-        data: 'id=' + id,
-        method: 'post',
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert('Данные успешно сохранены');
-            setPage('/head_nurse/eat.s?id=${eat.id}');
-          } else
-            alert(res.msg);
-        }
-      });
-    }
+    FmsConfirm('Убрать запись из заявки?', function () { epPost('/head_nurse/eat/patient/del.s', 'id=' + id, 'Запись удалена'); });
   }
   function refreshTable(table) {
-    if(confirm('Вы действительно обновить стол? Все измененные данные по столу будут потерены!!!')) {
-      $.ajax({
-        url: '/head_nurse/eat/table/refresh.s',
-        data: 'id=' + table + '&eat=${eat.id}',
-        method: 'post',
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert('Данные успешно сохранены');
-            setPage('/head_nurse/eat.s?id=${eat.id}');
-          } else
-            alert(res.msg);
-        }
-      });
-    }
+    FmsConfirm('Обновить стол по текущим пациентам? Ручные изменения по этому столу будут потеряны.', function () { epPost('/head_nurse/eat/table/refresh.s', 'id=' + table + '&eat=${eat.id}', 'Стол обновлён'); });
   }
-  function printEat() {
-    window.open("/head_nurse/eat/print.s?id=${eat.id}")
-  }
+  function printEat() { window.open('/head_nurse/eat/print.s?id=${eat.id}'); }
 </script>

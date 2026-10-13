@@ -1,7 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
+<%@include file="/WEB-INF/pages/core/skin.jsp"%>
+<div class="fm-skin">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <script>
   function doSave() {
     if (checkForm($('#bf'))) {
@@ -24,9 +26,9 @@
 <div class="panel panel-info" style="width: 800px !important; margin: auto">
   <div class="panel-heading">
     Реквизиты услуги
-    <ul class="pagination" style="float:right; margin-top:-5px">
-      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="doSave()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
-    </ul>
+    <div class="fm-hbtns">
+      <button type="button" class="fm-btn primary" onclick="doSave()"><i class="fa fa-save"></i>Сохранить</button>
+    </div>
   </div>
   <hidden path="id"/>
   <div class="panel-body">
@@ -56,4 +58,5 @@
       </table>
     </form>
   </div>
+</div>
 </div>

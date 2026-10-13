@@ -1,360 +1,218 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="/res/bs/metisMenu/metisMenu.min.css" rel="stylesheet">
-<link href="/res/bs/sb_admin/css/timeline.css" rel="stylesheet">
-<link href="/res/bs/sb_admin/css/sb-admin-2.css" rel="stylesheet">
-<link href="/res/bs/morrisjs/morris.css" rel="stylesheet">
-<link href="/res/css/styles.css" rel="stylesheet">
-<link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-<link href="/res/tinymce/jquery-te-1.4.0.css" rel="stylesheet">
-
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/bs/metisMenu/metisMenu.min.js"></script>
-<script src="/res/bs/morrisjs/morris.min.js"></script>
-<script src="/res/bs/sb_admin/js/sb-admin-2.js"></script>
-<script src="/res/js/common.js"></script>
-<script src="/res/editor/nicEdit.js" type="text/javascript"></script>
-<script src="/res/tinymce/jquery-te-1.4.0.js" type="text/javascript"></script>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%-- Администрирование → Стационар → вкладка «Услуги» (грузится в #pager страницы core/stat/hub.jsp) --%>
+<%@include file="/WEB-INF/pages/core/forms/style.jsp"%>
+<%@include file="/WEB-INF/pages/core/ambv2/list_style.jsp"%>
 <script src="/res/js/tableToExcel.js" type="text/javascript"></script>
+<c:set var="nds" value="${sessionScope.ENV.params['NDS_PROC']}"/>
 <style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
+  .st-sub { display:block; font-size:11.5px; color:#9AA1AC; font-weight:400; }
 </style>
-<script>
-  function addStatService() {
-    $('#addEditForm').find('*[name=group]').val('');
-    $('#addEditForm').find('*[name=id]').val('');
-    $('#addEditForm').find('*[name=name]').val('');
-    $('#addEditForm').find('*[name=price]').val('0');
-    $('#addEditForm').find('*[name=for_price]').val('0');
-    $('#addEditForm').find('*[name=real_price]').val('0');
-    $('#addEditForm').find('*[name=for_real_price]').val('0');
-    $('#addEditForm').find('*[name=state]').attr('checked', true);
-    $('#addEditForm').find('*[name=necKdo]').attr('checked', false);
-    $('#uzi-free').hide();
-    $('.form777').hide();
-    $('#modal_window').click();
-  }
-  function setStatGroup(dom) {
-    $('#uzi-free').toggle(dom.value == 4);
-  }
-  var button = getDOM('toExcel');
-  button.addEventListener('click', function (e) {
-    var table = document.querySelector('#excel_table');
-    TableToExcel.convert(table);
-  });
-</script>
-<style>
-  table tr.selected {background: #eee}
-</style>
-<div class="panel panel-info">
-  <div class="panel-heading">
-    <table class="w-100">
-      <tr>
-        <td>
-          Список стационарных услуг
-        </td>
-        <td class="wpx-400">
-          <select class="form-control" onchange="setPage('core/stat/services.s?group=' + this.value)" id="sel_kdo_group">
-            <option value="0">Все</option>
-            <c:forEach items="${groups}" var="g">
-              <option <c:if test="${g.id == group}">selected</c:if> value="${g.id}">${g.name}</option>
-            </c:forEach>
-          </select>
-        </td>
-        <td class="wpx-150">
-          <select class="form-control" onchange="setPage('core/stat/services.s?state=' + this.value)">
-            <option <c:if test="${stateCode == '0'}">selected</c:if> value="0">Все</option>
-            <option <c:if test="${stateCode == 'A'}">selected</c:if> value="A">Активный</option>
-            <option <c:if test="${stateCode == 'P'}">selected</c:if> value="P">Пассивный</option>
-          </select>
-        </td>
-        <td class="right wpx-200">
-          <button class="btn btn-icon btn-success" type="button" onclick="addStatService()"><i class="fa fa-plus"></i> Добавить</button>
-          <button class="btn btn-info btn-icon" id="toExcel">
-            <span class="fa fa-file-excel-o"></span> Excel
-          </button>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div class="panel-body">
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered" id="excel_table" data-cols-width="10,20,40,20,20,20,20,20,20,20,20,20">
+
+<div class="fm-page fm-admin">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-hospital-o"></i></span>
+        <div>
+          <h2>Стационарные услуги</h2>
+          <span class="fm-count"><b id="ssShown">${fn:length(services)}</b> из <b>${fn:length(services)}</b></span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg">
+        <button type="button" class="${stateCode == '0' ? 'on' : ''}" onclick="ssLoad(null, '0')">Все</button>
+        <button type="button" class="${stateCode == 'A' ? 'on' : ''}" onclick="ssLoad(null, 'A')">Активные</button>
+        <button type="button" class="${stateCode == 'P' ? 'on' : ''}" onclick="ssLoad(null, 'P')">Пассивные</button>
+      </div>
+      <select class="fm-in fms-select" style="width:220px" onchange="ssLoad(this.value || '0', null)">
+        <option value="0">Все группы</option>
+        <c:forEach items="${groups}" var="g">
+          <option <c:if test="${g.id == group}">selected</c:if> value="${g.id}">${g.name}</option>
+        </c:forEach>
+      </select>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="ssSearch" placeholder="Название или ID" oninput="avFilter('ss')" autocomplete="off"/>
+      </div>
+      <button type="button" class="fm-btn" onclick="TableToExcel.convert(document.getElementById('excel_table'))"><i class="fa fa-file-excel-o"></i>Excel</button>
+      <button type="button" class="fm-btn primary" onclick="ssEdit(0)"><i class="fa fa-plus"></i>Новая услуга</button>
+    </div>
+
+    <div class="fm-table-wrap">
+      <table class="fm-grid" id="excel_table" data-cols-width="10,22,50,16,16,16,16,16,16,12">
         <thead>
         <tr>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">ID</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Группировка</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Наименование</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Стоимость</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Стоимость (С НДС)</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Стоимость (Иностранцы)</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Стоимость (Иностранцы) (С НДС)</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Реальная стоимость</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Реальная стоимость (С НДС)</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Реальная стоимость (Иностранцы)</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Реальная стоимость (Иностранцы) (С НДС)</th>
-          <th data-a-h="center" data-b-a-s="thin" data-f-bold="true">Состояние</th>
+          <th style="width:60px" data-f-bold="true">ID</th>
+          <th style="width:180px" data-f-bold="true">Группа</th>
+          <th data-f-bold="true">Наименование</th>
+          <th style="width:105px" class="r" data-f-bold="true">Цена</th>
+          <th style="width:105px" class="r" data-f-bold="true">С НДС</th>
+          <th style="width:110px" class="r" data-f-bold="true">Иностранцы</th>
+          <th style="width:115px" class="r" data-f-bold="true">Иностр. с НДС</th>
+          <th style="width:105px" class="r" data-f-bold="true">Реальная</th>
+          <th style="width:115px" class="r" data-f-bold="true">Реальная иностр.</th>
+          <th style="width:105px" data-f-bold="true">Состояние</th>
+          <th style="width:50px" data-exclude="true"></th>
+        </tr>
         </thead>
-        <tbody>
-        <c:forEach items="${services}" var="s" varStatus="loop">
-          <tr>
-            <td data-a-h="center" data-b-a-s="thin" style="vertical-align: middle" class="center">${s.id}</td>
-            <td data-a-h="center" data-b-a-s="thin" style="vertical-align: middle">${s.kdoType.name}</td>
-            <td data-a-h="left" data-b-a-s="thin" style="vertical-align: middle">
-              <a href="#" onclick="editDict(${s.id});return false;">${s.name}</a>
-            </td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.price}" type = "number"/></td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.price * (100 + sessionScope.ENV.params['NDS_PROC']) / 100}" type = "number"/></td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.for_price}" type = "number"/></td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.for_price * (100 + sessionScope.ENV.params['NDS_PROC']) / 100}" type = "number"/></td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.real_price}" type = "number"/></td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.real_price * (100 + sessionScope.ENV.params['NDS_PROC']) / 100}" type = "number"/></td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.for_real_price}" type = "number"/></td>
-            <td data-a-h="right" data-b-a-s="thin" style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.for_real_price * (100 + sessionScope.ENV.params['NDS_PROC']) / 100}" type = "number"/></td>
-            <td data-a-h="center" data-b-a-s="thin" style="vertical-align: middle; text-align: center">
-              <c:if test="${s.state == 'A'}">Активный</c:if>
-              <c:if test="${s.state == 'P'}">Пассивный</c:if>
-            </td>
+        <tbody id="ssRows">
+        <c:forEach items="${services}" var="s">
+          <tr data-s="${s.id} ${fn:toLowerCase(fn:escapeXml(s.name))}" onclick="ssEdit(${s.id})" title="Изменить">
+            <td class="mut" data-t="n"><b>${s.id}</b></td>
+            <td><span class="av-grp">${s.kdoType.name}</span></td>
+            <td><span class="nm">${s.name}</span></td>
+            <td class="r"><fmt:formatNumber value="${s.price}" type="number" maxFractionDigits="2"/></td>
+            <td class="r mut"><fmt:formatNumber value="${s.price * (100 + nds) / 100}" type="number" maxFractionDigits="2"/></td>
+            <td class="r"><fmt:formatNumber value="${s.for_price}" type="number" maxFractionDigits="2"/></td>
+            <td class="r mut"><fmt:formatNumber value="${s.for_price * (100 + nds) / 100}" type="number" maxFractionDigits="2"/></td>
+            <td class="r"><fmt:formatNumber value="${s.real_price}" type="number" maxFractionDigits="2"/></td>
+            <td class="r"><fmt:formatNumber value="${s.for_real_price}" type="number" maxFractionDigits="2"/></td>
+            <td><span class="av-st ${s.state == 'A' ? 'A' : 'P'}">${s.state == 'A' ? 'Активный' : 'Пассивный'}</span></td>
+            <td class="r" data-exclude="true"><button type="button" class="fm-act" title="Изменить"><i class="fa fa-pencil"></i></button></td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="ssEmpty" style="display:none"><i class="fa fa-hospital-o"></i>Услуги не найдены</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
 </div>
-<a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog" style="width:900px">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты услуги</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value="" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Группа*:</td>
-              <td>
-                <select id="kdo_group" class="form-control" name="group" onchange="setStatGroup(this)">
-                  <c:forEach items="${groups}" var="g">
-                  <option value="${g.id}">${g.name}</option>
-                </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Наименование*:</td>
-              <td>
-                <input type="text" id="kdo-name" class="form-control" name="name" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Форма*:</td>
-              <td>
-                <select id="form_id" class="form-control" name="form_id" onchange="setForm(this)">
-                  <c:forEach items="${forms}" var="g">
-                    <option value="${g.id}">${g.id} - ${g.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr class="form777">
-              <td class="right bold">Норма*:</td>
-              <td>
-                <input type="text" id="norma" class="form-control" name="norma" value=""/>
-              </td>
-            </tr>
-            <tr class="form777">
-              <td class="right bold">Ед. изм.*:</td>
-              <td>
-                <input type="text" id="ei" class="form-control" name="ei" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Цена (Резиденты)*:</td>
-              <td>
-                <input type="text" id="kdo-price" class="form-control right" name="price" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Цена (Не резиденты)*:</td>
-              <td>
-                <input type="text" id="kdo-for-price" class="form-control right" name="for_price" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Процент вознограждения (%):</td>
-              <td>
-                <input type="text" id="bonus_proc" class="form-control right" name="bonus_proc" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Реальная стоимость*:</td>
-              <td>
-                <input type="text" id="kdo-real-price" class="form-control right" name="real_price" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Реальная стоимость (Иностранцы)*:</td>
-              <td>
-                <input type="text" id="kdo-for-real-price" class="form-control right" name="for_real_price" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Физиотерапия время (мин)*:</td>
-              <td>
-                <input type="text" id="minTime" class="form-control right" name="minTime" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Физиотерапия время (макс)*:</td>
-              <td>
-                <input type="text" id="maxTime" class="form-control right" name="maxTime" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Комната*:</td>
-              <td>
-                <input type="text" id="room" class="form-control center" name="room" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Единица для физиотерапии*:</td>
-              <td>
-                <input type="text" id="fizei" class="form-control center" name="fizei" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Активный?:</td>
-              <td class="left">
-                <input type="checkbox" checked name="state" value="Y"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Обязательное обследование?:</td>
-              <td class="left">
-                <input type="checkbox" checked name="necKdo" value="Y"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Внешняя услуга?:</td>
-              <td class="left">
-                <input type="checkbox" checked name="out_service" value="Y"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Выбор врача (для леч врачей)?:</td>
-              <td class="left">
-                <input type="checkbox" checked name="multiUser" value="Y"/>
-              </td>
-            </tr>
-            <tr id="uzi-free">
-              <td class="right bold">1 услуга бесплатная?:</td>
-              <td class="left">
-                <input type="checkbox" name="priced" value="Y"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Пользователи:</td>
-              <td class="left" id="kdo_users"></td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveStatKdo()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
+
+<div class="fm-overlay fm-admin" id="ssModal" onclick="if (event.target === this) avClose('ss')">
+  <div class="fm-modal" style="width:720px">
+    <div class="fm-modal-head">
+      <h3 id="ssTitle">Услуга</h3>
+      <button type="button" class="fm-x" onclick="avClose('ss')"><i class="fa fa-times"></i></button>
     </div>
-    <!-- /.modal-content -->
+    <form id="addEditForm" name="addEditForm" onsubmit="saveStatKdo(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="id"/>
+        <div class="fm-err" id="ssErr"></div>
+        <div class="fm-row" style="grid-template-columns:1fr 2fr">
+          <div>
+            <label class="fm-l">Группа *</label>
+            <select id="kdo_group" class="fm-in" name="group" onchange="ssKind()">
+              <option value="">Не выбрано</option>
+              <c:forEach items="${groups}" var="g">
+                <option value="${g.id}">${g.name}</option>
+              </c:forEach>
+            </select>
+          </div>
+          <div>
+            <label class="fm-l">Наименование *</label>
+            <input type="text" id="kdo-name" class="fm-in" name="name" autocomplete="off"/>
+          </div>
+        </div>
+        <div class="fm-row" style="grid-template-columns:2fr 1fr 1fr">
+          <div>
+            <label class="fm-l">Форма результата *</label>
+            <select id="form_id" class="fm-in" name="form_id" onchange="ssKind()">
+              <c:forEach items="${forms}" var="g">
+                <option value="${g.id}">${g.id} - ${g.name}</option>
+              </c:forEach>
+            </select>
+          </div>
+          <div class="ss-777"><label class="fm-l">Норма</label><input type="text" class="fm-in" name="norma"/></div>
+          <div class="ss-777"><label class="fm-l">Ед. изм.</label><input type="text" class="fm-in" name="ei"/></div>
+        </div>
+
+        <span class="fm-sec">Цены</span>
+        <div class="fm-row" style="grid-template-columns:repeat(5, 1fr); margin-top:-6px">
+          <div><label class="fm-l">Резиденты *</label><input type="text" class="fm-in" name="price" style="text-align:right"/></div>
+          <div><label class="fm-l">Нерезиденты *</label><input type="text" class="fm-in" name="for_price" style="text-align:right"/></div>
+          <div><label class="fm-l">Реальная</label><input type="text" class="fm-in" name="real_price" style="text-align:right"/></div>
+          <div><label class="fm-l">Реальная иностр.</label><input type="text" class="fm-in" name="for_real_price" style="text-align:right"/></div>
+          <div><label class="fm-l">Вознагр., %</label><input type="text" class="fm-in" name="bonus_proc" style="text-align:right"/></div>
+        </div>
+
+        <span class="fm-sec">Физиотерапия</span>
+        <div class="fm-row" style="grid-template-columns:repeat(4, 1fr); margin-top:-6px">
+          <div><label class="fm-l">Время, мин</label><input type="text" class="fm-in" name="minTime" style="text-align:right"/></div>
+          <div><label class="fm-l">Время, макс</label><input type="text" class="fm-in" name="maxTime" style="text-align:right"/></div>
+          <div><label class="fm-l">Комната</label><input type="text" class="fm-in" name="room" style="text-align:center"/></div>
+          <div><label class="fm-l">Единица</label><input type="text" class="fm-in" name="fizei" style="text-align:center"/></div>
+        </div>
+
+        <span class="fm-sec">Состояние и настройки</span>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:-6px">
+          <div class="fm-state">
+            <label><input type="radio" class="a" name="state" value="A"/><span>Активная</span></label>
+            <label><input type="radio" class="p" name="state" value=""/><span>Пассивная</span></label>
+          </div>
+          <label class="fm-tgl"><input type="checkbox" name="necKdo" value="Y"/><span>Обязательное обследование</span></label>
+          <label class="fm-tgl"><input type="checkbox" name="out_service" value="Y"/><span>Внешняя услуга</span></label>
+          <label class="fm-tgl"><input type="checkbox" name="multiUser" value="Y"/><span>Выбор врача</span></label>
+          <label class="fm-tgl" id="uzi-free"><input type="checkbox" name="priced" value="Y"/><span>1 услуга бесплатно</span></label>
+        </div>
+        <div class="fm-hint" id="kdo_users_box"><b style="color:#6B7280">Пользователи:</b> <span id="kdo_users"></span></div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="avClose('ss')">Отмена</button>
+        <button type="submit" class="fm-btn primary" id="ssSaveBtn"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      </div>
+    </form>
   </div>
-  <!-- /.modal-dialog -->
 </div>
+
 <script>
-  function saveStatKdo() {
-    if($('#kdo-name').val() == '') {
-      errMsg('Наименование не может быть пустым');
-      return;
-    }
-    if($('#kdo_group').val() == '' || $('#kdo_group').val() == null) {
-      errMsg('Группа не может быть пустым');
-      return;
-    }
+  avFilter('ss');
+  var ssGroup = '${empty group ? '0' : group}', ssState = '${stateCode}';
+  function ssLoad(group, state) {
+    $('#pager').load('/core/stat/services.s?group=' + (group === null ? ssGroup : group) + '&state=' + (state === null ? ssState : state));
+  }
+  function ssKind() {
+    var f = document.addEditForm;
+    $('.ss-777').toggle(f.elements['form_id'].value == '777');
+    $('#uzi-free').toggle(f.elements['group'].value == '4');
+  }
+  function ssFill(d) {
+    var f = document.addEditForm;
+    f.reset();
+    $('#ssErr').hide();
+    $.each(['id', 'name', 'price', 'for_price', 'real_price', 'for_real_price', 'bonus_proc', 'minTime', 'maxTime', 'room', 'fizei', 'norma', 'ei'], function (i, k) {
+      f.elements[k].value = d[k] == null ? '' : d[k];
+    });
+    f.elements['group'].value = d.group || '';
+    if (d.form != null) f.elements['form_id'].value = d.form;
+    f.elements['necKdo'].checked = d.necKdo == 'Y';
+    f.elements['out_service'].checked = d.out_service == 'Y';
+    f.elements['multiUser'].checked = d.multiUser == 'Y';
+    f.elements['priced'].checked = d.priced == 'Y';
+    $(f).find('[name=state][value="' + (d.state == 'P' ? '' : 'A') + '"]').prop('checked', true);
+    $('#kdo_users').text(d.users || '');
+    $('#kdo_users_box').toggle(!!d.users);
+    ssKind();
+  }
+  function ssEdit(id) {
+    $('#ssTitle').text(id ? 'Изменить услугу' : 'Новая услуга');
+    ssFill({id: '', price: 0, for_price: 0, real_price: 0, for_real_price: 0, group: ssGroup != '0' ? ssGroup : '', state: 'A'});
+    $('#ssModal').addClass('open');
+    if (!id) { document.addEditForm.elements['name'].focus(); return; }
     $.ajax({
-      url: '/core/stat/service/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
+      url: '/core/stat/kdo/get.s', method: 'post', data: 'id=' + id, dataType: 'json',
       success: function (res) {
-        openMsg(res);
-        if (res.success) {
-          getDOM('close-modal').click();
-          setTimeout(function() {
-            setPage('/core/stat/services.s?group=' + $('#sel_kdo_group').val());
-          }, 500);
-        }
+        if (res.success) { res.id = id; ssFill(res); }
+        else $('#ssErr').text(res.msg).show();
       }
     });
   }
-  function setForm(dom){
-    if(dom.value == 777) {
-      $('.form777').show();
-    } else {
-      $('.form777').hide();
-    }
-  }
-  function editDict(id) {
-    document.getElementById("modal_window").click();
+  function saveStatKdo() {
+    var f = document.addEditForm, err = '';
+    if (!f.elements['group'].value) err = 'Выберите группу';
+    else if (!$.trim(f.elements['name'].value)) err = 'Укажите наименование';
+    if (err) { $('#ssErr').text(err).show(); return; }
+    $('#ssSaveBtn').prop('disabled', true);
     $.ajax({
-      url: '/core/stat/kdo/get.s',
-      method: 'post',
-      data: 'id=' + id,
-      dataType: 'json',
+      url: '/core/stat/service/save.s', method: 'post', data: $(f).serialize(), dataType: 'json',
       success: function (res) {
-        if (res.success) {
-          $('*[name=id]').val(id);
-          $('*[name=name]').val(res.name);
-          $('*[name=price]').val(res.price);
-          $('*[name=form_id]').val(res.form);
-          $('*[name=norma]').val(res.norma);
-          $('*[name=ei]').val(res.ei);
-          $('*[name=for_price]').val(res.for_price);
-          $('*[name=real_price]').val(res.real_price);
-          $('*[name=for_real_price]').val(res.for_real_price);
-          $('*[name=bonus_proc]').val(res.bonus_proc);
-          $('*[name=minTime]').val(res.minTime);
-          $('*[name=maxTime]').val(res.maxTime);
-          $('*[name=group]').val(res.group);
-          $('*[name=room]').val(res.room);
-          $('*[name=fizei]').val(res.fizei);
-          $('#kdo_users').html(res.users);
-          $('*[name=necKdo]').prop('checked', res.necKdo == 'Y');
-          $('*[name=multiUser]').prop('checked', res.multiUser == 'Y');
-          $('*[name=out_service]').prop('checked', res.out_service == 'Y');
-          $('*[name=state]').prop('checked', res.state == 'A');
-          if(res.kdoType === 4) {
-            $('#uzi-free').show();
-            $('*[name=priced]').prop('checked', res.priced == 'Y');
-          } else
-            $('#uzi-free').hide();
-          if(res.form == 777) {
-            $('.form777').show();
-          } else {
-            $('.form777').hide();
-          }
-        } else {
-          errMsg(res.msg);
-        }
-      }
+        if (res.success) { openMsg(res); avClose('ss'); ssLoad(null, null); }
+        else $('#ssErr').text(res.msg).show();
+      },
+      complete: function () { $('#ssSaveBtn').prop('disabled', false); }
     });
   }
 </script>

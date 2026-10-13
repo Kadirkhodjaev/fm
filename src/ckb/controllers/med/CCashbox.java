@@ -47,6 +47,7 @@ import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
+import ckb.utils.tg.TgAmbConsul;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -326,14 +327,17 @@ public class CCashbox {
         if ("CASH".equals(patient.getState())) patient.setState("WORK");
         dAmbPatients.save(patient);
         List<AmbPatientServices> services = dAmbPatientServices.getList("From AmbPatientServices Where patient = " + session.getCurPat());
+        List<AmbPatientServices> paidNow = new ArrayList<AmbPatientServices>();
         for (AmbPatientServices service : services) {
           if ("ENT".equals(service.getState())) {
             service.setPay(pay.getId());
             service.setState("PAID");
             service.setCashDate(new Date());
             dAmbPatientServices.save(service);
+            paidNow.add(service);
           }
         }
+        TgAmbConsul.send(patient, paidNow);
       }
       if(!docs.isEmpty()) {
         for(HNDates doc: docs) {
@@ -687,13 +691,13 @@ public class CCashbox {
         if(Math.abs(paid - hnPatient.getTotalSum()) == 0) {
           model.addAttribute("serviceTotal", 0);
         } else {
-          model.addAttribute("serviceTotal", Math.round((hnPatient.getTotalSum() - paid - discountSum) / 1000) * 1000);
+          model.addAttribute("serviceTotal", Math.round((hnPatient.getTotalSum() - paid - discountSum) / 100) * 100);
         }
       }
     } catch (Exception e) {
       model.addAttribute("actExist", false);
       model.addAttribute("actSum", 0);
-      model.addAttribute("serviceTotal", Math.round((total - discountSum) / 1000) * 1000);
+      model.addAttribute("serviceTotal", Math.round((total - discountSum) / 100) * 100);
     }
     return "med/cashbox/stat";
   }
@@ -910,8 +914,6 @@ public class CCashbox {
     session.setCurUrl("/cashbox/sales.s");
     m.addAttribute("page", Util.get(req, "page", "amb"));
     //
-    List<Kdos> kdos = dKdo.list("From Kdos Where state = 'A' Order By kdoType.id");
-    m.addAttribute("kdos", kdos);
     //
     List<AmbServices> services = dAmbService.list("From AmbServices Where state = 'A' Order By group.id");
     m.addAttribute("services", services);

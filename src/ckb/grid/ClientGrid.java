@@ -29,9 +29,14 @@ public class ClientGrid {
   }
 
   private String filter() {
-    String a = "";
-    if(!word.isEmpty()) a = " Where (upper(surname) like '%" + word + "%' Or upper(name) like '%" + word + "%' Or upper(middlename) like '%" + word + "%' Or upper(Concat(trim(surname), ' ', trim(name), ' ', trim(middlename))) like '%" + word + "%')";
-    return a;
+    if(word.isEmpty()) return "";
+    // слово экранируется (в узбекских фамилиях есть апостроф: O'G'LI)
+    String w = word.trim().replace("\\", "\\\\").replace("'", "''").replace("%", "\\%").replace("_", "\\_");
+    String a = "upper(surname) like '%" + w + "%' Or upper(name) like '%" + w + "%' Or upper(middlename) like '%" + w + "%' Or upper(Concat(trim(surname), ' ', trim(name), ' ', trim(ifnull(middlename, '')))) like '%" + w + "%'";
+    // поиск по номеру телефона и паспорту
+    String digits = word.replaceAll("[^0-9]", "");
+    if(digits.length() >= 4) a += " Or Replace(Replace(Replace(Replace(tel, ' ', ''), '-', ''), '+', ''), '(', '') like '%" + digits + "%' Or docNum like '%" + digits + "%'";
+    return (sql != null && sql.toLowerCase().contains(" where ") ? " And (" : " Where (") + a + ")";
   }
 
   private String orderBy() {

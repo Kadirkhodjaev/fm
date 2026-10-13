@@ -6,7 +6,7 @@
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <script src="/res/js/jquery.mask.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 
 <div class="panel panel-info w-100 margin-auto">
   <div class="panel-heading" title="ID : ${patient.id}">
@@ -392,7 +392,7 @@
     }
   }
   function delDiscount(id) {
-    if(confirm('Вы действительно хотите удалить скидку?')) {
+    FmsConfirm('Вы действительно хотите удалить скидку?', function () {
       $.ajax({
         url: '/cash/amb/discount/del.s',
         method: 'post',
@@ -403,7 +403,7 @@
           if(res.success) reloadPage();
         }
       });
-    }
+    });
   }
   function savePay() {
     let card = fSum('card'), cash = fSum('cash');
@@ -429,8 +429,7 @@
     });
   }
   function delPay(id) {
-    if(confirm('Вы действительно хотите удалить платеж?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить платеж?', function () { $.ajax({
         url: '/cash/amb/pay/del.s',
         method: 'post',
         data: 'patient=${patient.id}&id=' + id,
@@ -439,11 +438,11 @@
           openMsg(res);
           if(res.success) reloadPage();
         }
-      });
+      }); });
   }
   function delService(id, state, price) {
     if (state === 'PAID') {
-      if (confirm('Оформить как возврат денежных средств?')) {
+      FmsConfirm('Оформить как возврат денежных средств?', function () {
         let msg = prompt('Причина возврата денег');
         if (msg != null && msg.length > 0) {
           let params = 'id=${patient.id}&service=' + id + '&cash=' + price + '&pay_type=ret&msg=' + encodeURIComponent(msg);
@@ -458,9 +457,9 @@
             }
           });
         }
-      }
+      });
     } else {
-      if (confirm('Вы действительно хотите удалить услугу?')) {
+      FmsConfirm('Вы действительно хотите удалить услугу?', function () {
         $.ajax({
           url: '/ambs/patient/del-service.s',
           method: 'post',
@@ -471,7 +470,7 @@
             if(res.success) reloadPage();
           }
         });
-      }
+      });
     }
   }
 </script>

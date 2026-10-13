@@ -5266,10 +5266,10 @@ public class SRepImp implements SRep {
 					"  Where c.id = t.lv " +
 					"  Group By t.lv"
 			);
-			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
-			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
-			ps.setString(3, Util.dateDB(Util.get(req, "period_start")));
-			ps.setString(4, Util.dateDB(Util.get(req, "period_end")));
+			ps.setString(1, Util.dateDBBegin(Util.get(req, "period_start")));
+			ps.setString(2, Util.dateDBEnd(Util.get(req, "period_end")));
+			ps.setString(3, Util.dateDBBegin(Util.get(req, "period_start")));
+			ps.setString(4, Util.dateDBEnd(Util.get(req, "period_end")));
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				ObjList a = new ObjList();
@@ -5314,8 +5314,8 @@ public class SRepImp implements SRep {
 					"   	 And a.id = t.worker_Id " +
 					" 	 Group By a.fio, c.name"
 			);
-			ps.setString(1, Util.dateDB(Util.get(req, "period_start")));
-			ps.setString(2, Util.dateDB(Util.get(req, "period_end")));
+			ps.setString(1, Util.dateDBBegin(Util.get(req, "period_start")));
+			ps.setString(2, Util.dateDBEnd(Util.get(req, "period_end")));
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				ObjList a = new ObjList();

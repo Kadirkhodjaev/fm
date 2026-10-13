@@ -3,12 +3,8 @@
 <%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<link href="/res/choosen/chosen.min.css" rel="stylesheet">
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
+<%-- jQuery, bootstrap и common.js уже подключены на главной странице: повторное подключение сбрасывало плагины и общие уведомления --%>
 <script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
-<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/js/common.js" type="text/javascript"></script>
 <script src="/res/js/fms-calendar.js" type="text/javascript"></script>
 <style>
   .act { --brand:#D7182E; --brand-dark:#A50F22; --text:#1F2430; --muted:#6B7280; --border:#E6E8EC; --bg:#F5F6F8;
@@ -144,7 +140,7 @@
           <button type="button" class="ab dark" onclick="confirmPatient()"><i class="fa fa-check"></i> Подтвердить</button>
         </c:if>
         <c:if test="${obj.closed != 'Y'}">
-          <button type="button" class="ab main" onclick="savePatient()"><i class="fa fa-save"></i> Сохранить</button>
+          <button type="button" class="ab main" onclick="savePatient()"><i class="fa fa-floppy-o"></i> Сохранить</button>
         </c:if>
         <button type="button" class="ab back" onclick="setPage('/act/index.s')" title="Назад к списку актов"><i class="fa fa-arrow-left"></i> Назад</button>
       </div>
@@ -524,7 +520,7 @@
               <td>${p.c9}</td>
               <td style="text-align:center">
                 <c:if test="${p.c7 == 'N'}">
-                  <button class="btn btn-default btn-xs" type="button" title="Удалить" onclick="delPlan('${p.c1}')"><i class="fa fa-trash-o"></i></button>
+                  <button class="ib" type="button" title="Удалить" onclick="delPlan('${p.c1}')"><i class="fa fa-trash-o"></i></button>
                 </c:if>
               </td>
             </tr>
@@ -552,7 +548,7 @@
   }
 
   function openCash(){
-    if(confirm('Вы действительно хотите открыть кассу?')) {
+    FmsConfirm('Вы действительно хотите открыть кассу?', function () {
       $.ajax({
         url: '/act/patient/cash.s',
         method: 'post',
@@ -560,18 +556,18 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             parent.setPage('/act/info.s?id=${obj.id}');
           } else {
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
           }
         }
       });
-    }
+    });
   }
 
   function delPlan(id){
-    if(confirm('Вы действительно хотите удалить?')) {
+    FmsConfirm('Вы действительно хотите удалить?', function () {
       $.ajax({
         url: '/act/stat/del/obs.s',
         method: 'post',
@@ -579,17 +575,17 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             $('#stat_obs_row_' + id).remove();
           } else {
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
           }
         }
       });
-    }
+    });
   }
   function delDrugRow(id) {
-    if(confirm('Действительно хотите удалить?')) {
+    FmsConfirm('Действительно хотите удалить?', function () {
       $.ajax({
         url: '/head_nurse/patient/drug/delete.s',
         data: 'id=' + id,
@@ -597,16 +593,16 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            alert('Данные успешно сохранены');
+            FmsToast.show('Данные успешно сохранены', 'ok');
             parent.setPage('/act/info.s?id=${obj.id}');
           } else
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
         }
       });
-    }
+    });
   }
   function confirmPatient() {
-    if(confirm('Действительно хотите подтвердить?')) {
+    FmsConfirm('Действительно хотите подтвердить?', function () {
       $.ajax({
         url: '/act/confirm.s',
         data: 'id=${obj.id}',
@@ -614,13 +610,13 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            alert('Данные успешно сохранены');
+            FmsToast.show('Данные успешно сохранены', 'ok');
             setPage('/act/info.s?id=${obj.id}');
           } else
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
         }
       });
-    }
+    });
   }
   function excel() {
     drug_excel.location = '/act/excel.s?id=${obj.id}';
@@ -633,10 +629,10 @@
       dataType: 'json',
       success: function (res) {
         if (res.success) {
-          alert('Данные успешно сохранены');
+          FmsToast.show('Данные успешно сохранены', 'ok');
           setPage('/act/info.s?id=${obj.id}');
         } else
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
       }
     });
   }
@@ -663,7 +659,7 @@
     var counter = $('<input type="text" name="counter" value="' + $('#row_' + idx).find('input[name=counter]').val() + '">');
     form.append(id).append(type).append(name).append(price).append(counter);
     if(name.val() === '' || price.val() === '' || counter.val() === '') {
-      alert('Не все поля заполнены');
+      FmsToast.show('Не все поля заполнены', 'err');
       return;
     }
     $.ajax({
@@ -675,7 +671,7 @@
         if (res.success) {
           setPage('/act/info.s?id=${obj.id}');
         } else
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
       }
     });
   }
@@ -693,7 +689,7 @@
         if (res.success) {
           setPage('/act/info.s?id=${obj.id}');
         } else
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
       }
     });
     </c:if>
@@ -706,16 +702,15 @@
       dataType: 'json',
       success: function (res) {
         if (res.success) {
-          alert('Данные успешно сохранены');
+          FmsToast.show('Данные успешно сохранены', 'ok');
           setPage('/act/info.s?id=${obj.id}');
         } else
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
       }
     });
   }
   function delServiceRow(id) {
-    if(confirm('Вы действительно хотите удалить?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить?', function () { $.ajax({
         url: '/act/patient/service/del.s',
         data: 'id=' + id,
         method: 'post',
@@ -724,13 +719,12 @@
           if (res.success) {
             setPage('/act/info.s?id=${obj.id}');
           } else
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
         }
-      });
+      }); });
   }
   function restoreServiceRow(type, id) {
-    if(confirm('Вы действительно хотите восстановить данные? Все изменения будут сброшены.'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите восстановить данные? Все изменения будут сброшены.', function () { $.ajax({
         url: '/act/patient/service/restore.s',
         data: 'id=' + id + '&type=' + type,
         method: 'post',
@@ -739,9 +733,9 @@
           if (res.success) {
             setPage('/act/info.s?id=${obj.id}');
           } else
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
         }
-      });
+      }); });
   }
   function addNewDrug() {
     var typeIdx = drugCount++;
@@ -768,7 +762,7 @@
     var drug_count = $('<input type="text" name="drug_count" value="' + $('#drug_row_' + idx).find('input[name=drug_count]').val() + '">');
     form.append(id).append(name).append(price).append(counter).append(drug_count);
     if(name.val() === '' || price.val() === '' || counter.val() === '' || drug_count.val() === '') {
-      alert('Не все поля заполнены');
+      FmsToast.show('Не все поля заполнены', 'err');
       return;
     }
     $.ajax({
@@ -780,25 +774,24 @@
         if (res.success) {
           setPage('/act/info.s?id=${obj.id}');
         } else
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
       }
     });
   }
   function setArchive() {
-    if(confirm('Вы действительно хотите архивировать пациента?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите архивировать пациента?', function () { $.ajax({
         url: '/act/patient/confirm.s',
         data: 'id=${obj.patient.id}',
         method: 'post',
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            alert('Данные успешно сохранены');
+            FmsToast.show('Данные успешно сохранены', 'ok');
             setPage('/act/info.s?id=${obj.id}');
           } else
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
         }
-      });
+      }); });
   }
   function removeNewDrug(idx) {
     $('#drug_row_' + idx).remove();

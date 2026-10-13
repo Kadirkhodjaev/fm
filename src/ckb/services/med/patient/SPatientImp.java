@@ -47,6 +47,7 @@ import ckb.utils.BeanSession;
 import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
+import ckb.utils.tg.TgNewPatientLv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 
@@ -54,9 +55,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -120,7 +124,7 @@ public class SPatientImp implements SPatient {
       pat.setBirthday(c.getBirthdate());
     }
     pat.setPost(Util.get(req, "post"));
-    pat.setTel(Util.get(req, "tel"));
+    pat.setTel(ckb.utils.Phone.format(Util.get(req, "tel")));
     pat.setWork(Util.get(req, "work"));
     pat.setMetka(Util.isNull(req, "metka.id") ? null : dOpt.get(Util.getInt(req, "metka.id")));
     pat.setCat(Util.isNull(req, "cat.id") ? null : dOpt.get(Util.getInt(req, "cat.id")));
@@ -145,6 +149,7 @@ public class SPatientImp implements SPatient {
     pat.setBloodGroup(Util.isNull(req, "bloodGroup.id") ? null : dOpt.get(Util.getInt(req, "bloodGroup.id")));
     pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
     pat.setDept(Util.isNull(req, "dept.id") ? null : beanSession.getDept(Util.getInt(req, "dept.id")));
+    pat.setSickLeave(Util.get(req, "sickLeave", "N"));
     if(pat.getBirthday() != null) {
       pat.setBirthyear(1900 + pat.getBirthday().getYear());
     }
@@ -213,6 +218,7 @@ public class SPatientImp implements SPatient {
       pat.setDayCount(p.getDayCount());
       pat.setBirthday(p.getBirthday());
       pat.setLvpartner(p.getLvpartner());
+      pat.setSickLeave(p.getSickLeave());
     } else if(!Req.isNull(request, "reg")) {
       Patients p = dPatient.get(SessionUtil.getUser(request).getCurPat());
       pat.setSex(p.getSex());
@@ -343,6 +349,8 @@ public class SPatientImp implements SPatient {
       return list;
     try {
       conn = DB.getConnection();
+      // names of rooms, options and doctors are looked up once per page, not once per row
+      Map<Integer, String> roomNames = new HashMap<>(), optNames = new HashMap<>(), userNames = new HashMap<>();
       rs = conn.prepareStatement("Select * " + grid.getSql() + " Limit " + (grid.getStartPos() - 1) + "," + grid.getPageSize()).executeQuery();
       //rs = conn.prepareStatement("Select * From (Select * " + grid.getSql() + ") global Limit " + (grid.getStartPos() - 1) + "," + grid.getPageSize()).executeQuery();
       while(rs.next()) {
@@ -380,26 +388,17 @@ public class SPatientImp implements SPatient {
           if(session.getRoleId() == 6)
             pat.setShowCheckbox(true);
         }
-        if(session.getRoleId() == 7) {
-          Long conCount = dLvConsul.getCount("From PatientPlans c Where c.patient_id = " + rs.getInt("id") + " And done = 'Y'");
-          pat.setIconUrl(conCount == 0 ? "red" : "green");
-        }
+
         //pat.setPaid("Y".equals(rs.getString("paid")) ? "Оплачено" : "C".equals(rs.getString("paid")) ? "Частично" : "Не оплачено");
         /*if(session.getRoleId() == 13) {
           String paid = rs.getString("paid") == null ? "N" : rs.getString("paid");
           pat.setIconUrl(!"Y".equals(paid) ? "red" : "green");
         }*/
-        if(session.getRoleId() == 9 || (session.getRoleId() == 5 && session.getCurUrl().contains("consul.s"))) {
-          Long conCount = dLvConsul.getCount("From LvConsuls c Where c.patientId = " + rs.getInt("id") + " And (c.text = null Or c.text='') And c.lvId = " + session.getUserId());
-          pat.setIconUrl(conCount > 0 ? "red" : "green");
-        }
+
         // Если это консультация, то скрвываем чекбокс
         if(session.getCurUrl().equals("/patients/consul.s"))
           pat.setShowCheckbox(false);
-        if(session.getRoleId() == 16) {
-          if(dLvFizio.getCount("From LvFizios Where patientId = " + rs.getInt("id")) > 0)
-            pat.setIconUrl("green");
-        }
+
         //
         pat.setId(rs.getInt("id"));
         pat.setFio(Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")) + " " + Util.nvl(rs.getString("middlename")));
@@ -413,17 +412,31 @@ public class SPatientImp implements SPatient {
             pat.setOtdPal(beanSession.getDept(rs.getInt("Dept_Id")).getName());
           }
           if(rs.getString("Room_Id") != null) {
-            Rooms room = dRoom.get(rs.getInt("room_id"));
-            String palata = room.getName() + "-" + room.getRoomType().getName();
+            String palata = roomName(roomNames, rs.getInt("room_id"));
             pat.setOtdPal(pat.getOtdPal() + ("".equals(pat.getOtdPal()) ? "" : " / ") + palata);
           }
         } else {
           pat.setOtdPal(rs.getInt("Dept_Id") != 0 ? beanSession.getDept(rs.getInt("Dept_Id")).getName() + " / " + rs.getString("palata") : "");
         }
-        pat.setCat(rs.getInt("cat_id") != 0 ? dOpt.get(rs.getInt("cat_id")).getName() : "");
-        pat.setMetka(rs.getInt("metka_id") != 0 ? dOpt.get(rs.getInt("metka_id")).getName() : "");
-        pat.setLv(rs.getInt("lv_id") != 0 ? dUser.get(rs.getInt("lv_id")).getFio() : "");
+        pat.setCat(rs.getInt("cat_id") != 0 ? optName(optNames, rs.getInt("cat_id")) : "");
+        pat.setMetka(rs.getInt("metka_id") != 0 ? optName(optNames, rs.getInt("metka_id")) : "");
+        pat.setLv(rs.getInt("lv_id") != 0 ? userFio(userNames, rs.getInt("lv_id")) : "");
         list.add(pat);
+      }
+      // status icons by role: one query for the whole page instead of one per row
+      List<Integer> ids = new ArrayList<>();
+      for (PatientList p : list) ids.add(p.getId());
+      if(session.getRoleId() == 7) {
+        Map<Integer, Long> cnt = countByPatient(conn, "Select patient_id, Count(*) From Patient_Plans Where done = 'Y' And patient_id In (#IDS#) Group By patient_id", ids);
+        for (PatientList p : list) p.setIconUrl(cnt.containsKey(p.getId()) ? "green" : "red");
+      }
+      if(session.getRoleId() == 9 || (session.getRoleId() == 5 && session.getCurUrl().contains("consul.s"))) {
+        Map<Integer, Long> cnt = countByPatient(conn, "Select patientId, Count(*) From Lv_Consuls Where (text Is Null Or text = '') And lvId = " + session.getUserId() + " And patientId In (#IDS#) Group By patientId", ids);
+        for (PatientList p : list) p.setIconUrl(cnt.containsKey(p.getId()) ? "red" : "green");
+      }
+      if(session.getRoleId() == 16) {
+        Map<Integer, Long> cnt = countByPatient(conn, "Select patientId, Count(*) From Lv_Fizios Where patientId In (#IDS#) Group By patientId", ids);
+        for (PatientList p : list) if (cnt.containsKey(p.getId())) p.setIconUrl("green");
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -432,6 +445,43 @@ public class SPatientImp implements SPatient {
       DB.done(conn);
     }
     return list;
+  }
+
+  private String roomName(Map<Integer, String> cache, int id) {
+    if (!cache.containsKey(id)) {
+      Rooms room = dRoom.get(id);
+      cache.put(id, room.getName() + "-" + room.getRoomType().getName());
+    }
+    return cache.get(id);
+  }
+
+  private String optName(Map<Integer, String> cache, int id) {
+    if (!cache.containsKey(id)) cache.put(id, dOpt.get(id).getName());
+    return cache.get(id);
+  }
+
+  private String userFio(Map<Integer, String> cache, int id) {
+    if (!cache.containsKey(id)) cache.put(id, dUser.get(id).getFio());
+    return cache.get(id);
+  }
+
+  // patient id -> count, for the ids of one page (ids come from the database, so they are inlined)
+  private Map<Integer, Long> countByPatient(Connection conn, String sql, List<Integer> ids) throws SQLException {
+    Map<Integer, Long> res = new HashMap<>();
+    if (ids.isEmpty()) return res;
+    StringBuilder in = new StringBuilder();
+    for (Integer id : ids) in.append(in.length() == 0 ? "" : ",").append(id);
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      ps = conn.prepareStatement(sql.replace("#IDS#", in.toString()));
+      rs = ps.executeQuery();
+      while (rs.next()) res.put(rs.getInt(1), rs.getLong(2));
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+    }
+    return res;
   }
 
   @Override
@@ -849,6 +899,7 @@ public class SPatientImp implements SPatient {
   @Override
   public void saveEpic(LvEpics epic) {
     Patients pat = dPatient.get(epic.getPatientId());
+    Integer oldLv = pat.getLv_id();
     if(!pat.getRoom().getId().equals(epic.getRoom().getId()) || !pat.getLv_id().equals(epic.getLvId()) || !pat.getDept().getId().equals(epic.getDeptId())) {
       //
       Double ndsProc = beanSession.getNds();
@@ -872,6 +923,7 @@ public class SPatientImp implements SPatient {
       //
       dPatient.save(pat);
       dLvEpic.save(e);
+      if (epic.getLvId() != null && !epic.getLvId().equals(oldLv)) TgNewPatientLv.send(pat, epic.getLvId(), true);
     }
   }
 
@@ -1658,8 +1710,8 @@ public class SPatientImp implements SPatient {
       consulSum = Math.round(consulSum / 100) * 100;
       hnPatient.setEatSum((double) (Math.round(hnPatient.getEatPrice() * hnPatient.getDayCount() / 100) * 100));
       hnPatient.setDisSum((double) (Math.round(koyko * disPerc / 100) * 100));
-      totalSum = Math.round((watcherSum + drugSum + labSum + kdoSum + consulSum + koyko + hnPatient.getEatSum() - hnPatient.getDisSum()) / 1000) * 1000;
-      hnPatient.setPaySum((double) Math.round((totalSum - paidSum - discountSum) / 1000) * 1000);
+      totalSum = Math.round((watcherSum + drugSum + labSum + kdoSum + consulSum + koyko + hnPatient.getEatSum() - hnPatient.getDisSum()) / 100) * 100;
+      hnPatient.setPaySum((double) Math.round((totalSum - paidSum - discountSum) / 100) * 100);
       hnPatient.setTotalSum(totalSum);
       hnPatient.setKdoSum(kdoSum);
       hnPatient.setDrugSum(drugSum);

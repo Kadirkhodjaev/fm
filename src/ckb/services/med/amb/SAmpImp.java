@@ -209,7 +209,7 @@ public class SAmpImp implements SAmb {
       pat.setSex(c.getSex());
       pat.setAddress(c.getAddress());
     }
-    pat.setTel(Util.get(req, "tel"));
+    pat.setTel(ckb.utils.Phone.format(Util.get(req, "tel")));
     pat.setTgNumber(Util.get(req, "tgNumber"));
     pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
     pat.setDiscountType(Util.isNull(req, "discount_type") ? null : dOpt.get(Util.getInt(req, "discount_type")));
@@ -360,6 +360,7 @@ public class SAmpImp implements SAmb {
       li.setId(f.getId());
       li.setName(f.getField());
       li.setFieldCode(f.getFieldCode());
+      li.setCode(Util.nvl(f.getCodes()));
       li.setHtml(getValue(result, f));
       if(f.getNormaFrom() != null && !f.getNormaFrom().equals("")) {
         li.setNorma(f.getNormaFrom() + (!"".equals(f.getNormaTo()) ? " - " + f.getNormaTo() : ""));

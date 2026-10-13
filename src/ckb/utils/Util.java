@@ -172,12 +172,23 @@ public class Util {
     return (d.getHours() <= 9 ? "0" + d.getHours() : d.getHours()) + ":" + (d.getMinutes() <= 9 ? "0" + d.getMinutes() : d.getMinutes());
   }
 
+  /** „асть ‘»ќ: без пробелов по кра€м, внутри не больше одного пробела подр€д (неразрывный и табул€ци€ Ч тоже пробелы). null остаЄтс€ null */
+  public static String fioPart(String val) {
+    if (val == null) return null;
+    return val.replace('\u00A0', ' ').replaceAll("\\s+", " ").trim();
+  }
+
   public static String nvl(String val) {
     return val == null || val.equals("") ? "" : val;
   }
 
   public static Integer nvl(Integer val, Integer def) {
     return val == null ? def : val;
+  }
+
+  // escapes user text placed inside a quoted SQL string (search box), so a quote cannot break the query
+  public static String sqlText(String val) {
+    return val == null ? "" : val.replace("\\", "\\\\").replace("'", "''");
   }
 
   public static String nvl(String val, String defaultVal) {

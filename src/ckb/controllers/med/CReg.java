@@ -28,6 +28,7 @@ import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.Req;
 import ckb.utils.Util;
+import ckb.utils.tg.TgNewPatientLv;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,8 +102,9 @@ public class CReg {
     //
     List<Rooms> list = dRooms.getActives();
     List<Rooms> rooms = new ArrayList<>();
+    java.util.Map<Integer, Long> roomCounts = ckb.utils.Counts.patientsByRoom("state Not In ('ARCH', 'ZGV')");
     for(Rooms room: list) {
-      Long count = dPatient.getCount("From Patients Where state Not In ('ARCH', 'ZGV') And room.id = " + room.getId());
+      Long count = ckb.utils.Counts.get(roomCounts, room.getId());
       if(count < room.getKoykoLimit() || room.getAccess().equals("Y"))
         rooms.add(room);
     }
@@ -323,6 +325,8 @@ public class CReg {
     Session session = SessionUtil.getUser(req);
     session.setCurPat(Req.getInt(req, "id"));
     Patients pat = dPatient.get(Req.getInt(req, "id"));
+    // без пациента (открыли адрес без id) форма врача не строится: возвращаемся к списку
+    if(pat == null) return "redirect:/patients/list.s";
     session.setCurUrl("/reg/doctor/index.s?id=" + pat.getId());
     model.addAttribute("fio", pat.getSurname() + " " + pat.getName());
     model.addAttribute("lvs", beanUsers.getLvs());
@@ -456,6 +460,8 @@ public class CReg {
       }
       p.setZavlv(dUser.get(Util.getInt(req, "zavlv")));
       dPatient.save(p);
+      // the head doctor's assignment; a repeated save does not send again (Tg_Events)
+      if (p.getLv_id() != null) TgNewPatientLv.send(p, p.getLv_id(), false);
       data.put("success", true);
       return data.toString();
     } catch (Exception e) {

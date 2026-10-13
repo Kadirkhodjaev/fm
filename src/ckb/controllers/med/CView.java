@@ -95,34 +95,47 @@ public class CView {
     //
     List<Menu> m = new ArrayList<>();
     session.setCurSubUrl("/view/reg.s");
-    m.add(new Menu("Регистация", "/view/reg.s", "fa fa-medkit fa-fw", false));
+    m.add(new Menu("Регистация", "/view/reg.s", "fa fa-user fa-fw", false));
     m.add(new Menu("Осмотр врача", "/view/osm.s", "fa fa-stethoscope fa-fw", false));
     if(!dLvDrug.getPatientDrugs(session.getCurPat()).isEmpty())
-      m.add(new Menu("Назначение", "/view/drug/index.s", "fa fa-th-list fa-fw", false));
+      m.add(new Menu("Назначение", "/view/drug/index.s", "fa fa-medkit fa-fw", false));
     else
-      m.add(new Menu("Назначение", "/view/drugs.s", "fa fa-th-list fa-fw", false));
+      m.add(new Menu("Назначение", "/view/drugs.s", "fa fa-medkit fa-fw", false));
     if(!pat.getState().equals("ARCH")) {
       m.add(new Menu(session.getRoleId() == 7 || session.getRoleId() == 9 || session.getRoleId() == 5 ? 10 : null, "Обследования", "/view/plan/index.s", "fa fa-flask fa-fw", false));
     } else {
       m.add(new Menu("Обследования", "/view/plan/index.s", "fa fa-flask fa-fw", false));
     }
     if(user.isNeedleDoc())
-      m.add(new Menu("Иглотерапия", "/view/needle.s", "fa fa-th-list fa-fw", false));
-    m.add(new Menu("Консультация", "/view/consul.s", "fa fa-stethoscope fa-fw", false));
-    m.add(new Menu("Физиотерапия", "/view/fizio/index.s", "fa fa-asterisk fa-fw", false));
+      m.add(new Menu("Иглотерапия", "/view/needle.s", "fa fa-thumb-tack fa-fw", false));
+    m.add(new Menu("Консультация", "/view/consul.s", "fa fa-comments fa-fw", false));
+    m.add(new Menu("Физиотерапия", "/view/fizio/index.s", "fa fa-bolt fa-fw", false));
     m.add(new Menu("Дневник", "/view/dairy.s", "fa fa-calendar fa-fw", false));
-    m.add(new Menu("Обоснование", "/view/obos.s", "fa fa-retweet fa-fw", false));
-    m.add(new Menu("Выписка", "/view/vypiska.s", "fa fa-check fa-fw", false));
-    m.add(new Menu("Переводной эпикриз", "/view/epic.s", "fa fa-random fa-fw", false));
-    m.add(new Menu("Дополнительные данные", "/view/extra.s", "fa fa-plus-square fa-fw", false));
-    m.add(new Menu("История", "/lv/history.s", "fa fa-users fa-fw", false));
+    m.add(new Menu("Обоснование", "/view/obos.s", "fa fa-file-text-o fa-fw", false));
+    m.add(new Menu("Выписка", "/view/vypiska.s", "fa fa-sign-out fa-fw", false));
+    m.add(new Menu("Переводной эпикриз", "/view/epic.s", "fa fa-exchange fa-fw", false));
+    m.add(new Menu("Дополнительные данные", "/view/extra.s", "fa fa-info-circle fa-fw", false));
+    m.add(new Menu("История", "/lv/history.s", "fa fa-history fa-fw", false));
+    m.add(new Menu("Вся история", "/view/all.s", "fa fa-book fa-fw", false));
     model.addAttribute("menuList", m);
     model.addAttribute("id", id);
     model.addAttribute("p", dPatient.get(session.getCurPat()));
     model.addAttribute("formUrl", session.getCurSubUrl());
     model.addAttribute("backUrl", session.getBackUrl());
     model.addAttribute("roleId", session.getRoleId());
+    model.addAttribute("tgEnabled", ckb.utils.tg.TgPatientBot.isEnabled());
     return "/med/lv/index";
+  }
+
+  /** Вся история болезни одной страницей: печатные версии разделов подряд, с оглавлением */
+  @RequestMapping("/all.s")
+  protected String all(HttpServletRequest request, Model model) {
+    Session session = SessionUtil.getUser(request);
+    if(Req.isNull(request, "print"))
+      session.setCurSubUrl("/view/all.s");
+    model.addAttribute("pat", dPatient.get(session.getCurPat()));
+    model.addAttribute("withDrug", !dLvDrug.getPatientDrugs(session.getCurPat()).isEmpty());
+    return "/med/lv/print/all";
   }
 
   @RequestMapping("/reg.s")
@@ -132,13 +145,39 @@ public class CView {
     return "/med/lv/reg";
   }
 
+  // Пациент выписан (в архиве): физиотерапию, консультации и иглотерапию у него менять нельзя
+  private static final String ARCH_MSG = "Пациент в архиве: изменения запрещены";
+  private boolean isArch(Integer patientId) {
+    if(patientId == null) return false;
+    Patients p = dPatient.get(patientId);
+    return p != null && "ARCH".equals(p.getState());
+  }
+  private String archJson() throws JSONException {
+    JSONObject j = new JSONObject();
+    j.put("success", false);
+    j.put("msg", ARCH_MSG);
+    return j.toString();
+  }
+
+  // «История» в карточке: раздел прошлой госпитализации того же клиента (hist = id той госпитализации).
+  // Чужой или неверный id — показывается текущий пациент
+  private int histPat(HttpServletRequest request, Session session) {
+    int h = Req.getInt(request, "hist");
+    if(h <= 0 || h == session.getCurPat()) return session.getCurPat();
+    Patients cur = dPatient.get(session.getCurPat()), old = dPatient.get(h);
+    if(cur == null || old == null || cur.getClient() == null || old.getClient() == null || !cur.getClient().getId().equals(old.getClient().getId()))
+      return session.getCurPat();
+    return h;
+  }
+
   @RequestMapping("/osm.s")
   protected String osm(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
+    int pid = histPat(request, session);
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/osm.s");
     //
-    LvDocs f = dLvDoc.get(session.getCurPat(), "osm");
+    LvDocs f = dLvDoc.get(pid, "osm");
     if(f != null) {
       f.setC1(Util.nvl(f.getC1()).replaceAll("&nbsp;"," "));
       f.setC2(Util.nvl(f.getC2()).replaceAll("&nbsp;"," "));
@@ -162,16 +201,17 @@ public class CView {
       model.addAttribute("lvFio", dUser.get(f.getPatient().getLv_id()).getFio());
     }
     model.addAttribute("form", f);
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/osm";
+    return "/med/lv/print/osm";
   }
 
   @RequestMapping("/obos.s")
   protected String obos(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
+    int pid = histPat(request, session);
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/obos.s");
     //
-    LvDocs f = dLvDoc.get(session.getCurPat(), "obos");
+    LvDocs f = dLvDoc.get(pid, "obos");
     if(f != null) {
       f.setC1(f.getC1().replaceAll("&nbsp;"," "));
       f.setC2(f.getC2().replaceAll("&nbsp;"," "));
@@ -185,8 +225,8 @@ public class CView {
     }
     //
     model.addAttribute("form", f);
-    model.addAttribute("zavOtdel", beanUsers.getZavLvs(dPatient.get(session.getCurPat()).getDept().getId()));
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/obos";
+    model.addAttribute("zavOtdel", beanUsers.getZavLvs(dPatient.get(pid).getDept().getId()));
+    return "/med/lv/print/obos";
   }
 
   @RequestMapping("/dairy.s")
@@ -195,8 +235,9 @@ public class CView {
     List<ObjList> dairies = sPatient.getDairies(session.getCurPat());
     List<ObjList> list = dairies;
 
-    String dairyId = Util.nvl(SessionUtil.getSession(request, "dairyId"));
-    String dairyIds = Util.nvl(SessionUtil.getSession(request, "dairyIds"));
+    boolean printSel = !Req.isNull(request, "print") && Req.isNull(request, "all");
+    String dairyId = printSel ? Util.nvl(SessionUtil.getSession(request, "dairyId")) : "";
+    String dairyIds = printSel ? Util.nvl(SessionUtil.getSession(request, "dairyIds")) : "";
     if(!dairyId.isEmpty()) {
       list = new ArrayList<>();
       for(ObjList obj : dairies)
@@ -213,7 +254,7 @@ public class CView {
       session.setCurSubUrl("/view/dairy.s");
     model.addAttribute("pat", dPatient.get(session.getCurPat()));
     model.addAttribute("dairies", list);
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/dairy";
+    return "/med/lv/print/dairy";
   }
 
   @RequestMapping("/consul.s")
@@ -221,8 +262,10 @@ public class CView {
     Session session = SessionUtil.getUser(request);
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/consul.s");
+    boolean arch = isArch(session.getCurPat());
+    model.addAttribute("arch", arch);
     // Копируем консультацию
-    if(!Req.isNull(request, "copy")) {
+    if(!arch && !Req.isNull(request, "copy")) {
       LvConsuls c = dLvConsul.get(Req.getInt(request, "id"));
       c.setId(null);
       c.setDate(Util.getCurDate());
@@ -231,7 +274,7 @@ public class CView {
       dLvConsul.save(c);
     }
     // Удаляем консультацию
-    if(!Req.isNull(request, "del")) {
+    if(!arch && !Req.isNull(request, "del")) {
       if(dLvConsul.get(Req.getInt(request, "id")).getCopied().equals("Y"))
         dLvConsul.delete(Req.getInt(request, "id"));
     }
@@ -241,7 +284,7 @@ public class CView {
     List<LvConsuls> list = new ArrayList<>();
     String consulId = SessionUtil.getSession(request, "consulId");
 
-    if (!Req.isNull(request, "print") && !consulId.isEmpty()) {
+    if (!Req.isNull(request, "print") && Req.isNull(request, "all") && !consulId.isEmpty()) {
       for (LvConsuls consul : consuls) {
         if (consul.getId().toString().equals(consulId)) {
           list.add(consul);
@@ -274,10 +317,11 @@ public class CView {
   @RequestMapping("/vypiska.s")
   protected String vypiska(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
+    int pid = histPat(request, session);
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/vypiska.s");
     //
-    LvDocs f = dLvDoc.get(session.getCurPat(), "vypiska");
+    LvDocs f = dLvDoc.get(pid, "vypiska");
     //
     if(f != null) {
       //
@@ -302,19 +346,20 @@ public class CView {
     }
     model.addAttribute("zamGlb", beanSession.getParam("GLB_NEXT"));
     if(Util.get(request, "diagnoz") != null)
-      return "/med/lv/view/diagnoz";
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/vypiska";
+      return "/med/lv/print/diagnoz";
+    return "/med/lv/print/vypiska";
   }
 
   @RequestMapping("/plan/index.s")
   protected String planIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
+    int pid = histPat(request, session);
     if(Req.isNull(request, "print"))
       session.setCurSubUrl("/view/plan/index.s");
-    model.addAttribute("pat", dPatient.get(session.getCurPat()));
-    model.addAttribute("plans", sPatient.getPlans(session.getCurPat()));
+    model.addAttribute("pat", dPatient.get(pid));
+    model.addAttribute("plans", sPatient.getPlans(pid));
     List<LvConsuls> list = new ArrayList<>();
-    List<LvConsuls> cons = dLvConsul.getByPat(session.getCurPat());
+    List<LvConsuls> cons = dLvConsul.getByPat(pid);
     for(LvConsuls con : cons) {
       if(con.getText() == null || con.getText().isEmpty()) {
         try {
@@ -360,7 +405,7 @@ public class CView {
     model.addAttribute("pat", pat);
     //
     end = dLvFizioDate.getPatientMaxDay(pat.getId());
-    if(action != null && end != null) {
+    if(action != null && end != null && !"ARCH".equals(pat.getState())) {
       if(action.equals("add")) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(end);
@@ -471,8 +516,9 @@ public class CView {
 
   @RequestMapping(value = "/fizio/set.s", method = RequestMethod.POST)
   @ResponseBody
-  protected String addFizio(HttpServletRequest request){
+  protected String addFizio(HttpServletRequest request) throws JSONException {
     Session session = SessionUtil.getUser(request);
+    if(isArch(session.getCurPat())) return archJson();
     String[] ids = request.getParameterValues("ids");
     Patients patient = dPatient.get(session.getCurPat());
     for(String id : ids) {
@@ -498,6 +544,7 @@ public class CView {
   protected String delFizio(HttpServletRequest request) throws JSONException {
     LvFizios fizio = dLvFizio.get(Util.getInt(request, "id"));
     Integer patId = fizio.getPatientId();
+    if(isArch(patId)) return archJson();
     dLvFizioDate.delFizio(fizio.getId());
     dLvFizio.delete(fizio.getId());
     JSONObject res = new JSONObject();
@@ -513,6 +560,7 @@ public class CView {
     String[] fizeis = request.getParameterValues("fizei");
     String[] oblast = request.getParameterValues("oblast");
     String[] comments = request.getParameterValues("comment");
+    if(ids != null && ids.length > 0 && isArch(dLvFizio.get(Integer.parseInt(ids[0])).getPatientId())) return archJson();
     for(int i = 0;i<ids.length;i++) {
       LvFizios fizios = dLvFizio.get(Integer.parseInt(ids[i]));
       fizios.setOblast(oblast[i]);
@@ -548,33 +596,35 @@ public class CView {
   @RequestMapping("/drugs.s")
   protected String drugs(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
-    model.addAttribute("tabs", sPatient.getDrugsByType(session.getCurPat(), 15));
-    model.addAttribute("ines", sPatient.getDrugsByType(session.getCurPat(), 16));
-    Date minDate = dPatientDrugDate.minDate(session.getCurPat());
-    Date maxDate = dPatientDrugDate.maxDate(session.getCurPat());
+    int pid = histPat(request, session);
+    model.addAttribute("tabs", sPatient.getDrugsByType(pid, 15));
+    model.addAttribute("ines", sPatient.getDrugsByType(pid, 16));
+    Date minDate = dPatientDrugDate.minDate(pid);
+    Date maxDate = dPatientDrugDate.maxDate(pid);
     if(minDate != null) {
       long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
       long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
       model.addAttribute("dates", Util.getDateList(minDate, (int) (diff)));
     }
-    Patients pat = dPatient.get(session.getCurPat());
+    Patients pat = dPatient.get(pid);
     model.addAttribute("pat", pat);
     model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
     model.addAttribute("tableNum", dPatientEat.minTable(pat.getId()));
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/drugs";
+    return "/med/lv/print/drugs";
   }
   // Назначение
   @RequestMapping("/drug/index.s")
   protected String naznachIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
-    List<LvDrugs> list = dLvDrug.getPatientTabs(session.getCurPat());
+    int pid = histPat(request, session);
+    List<LvDrugs> list = dLvDrug.getPatientTabs(pid);
     List<LvDrugs> drugs = new ArrayList<>();
     for(LvDrugs drug : list) {
       drug.setCat("Таблетка");
       drugs.add(drug);
     }
     model.addAttribute("tabs", drugs);
-    list = dLvDrug.getPatientInes(session.getCurPat());
+    list = dLvDrug.getPatientInes(pid);
     drugs = new ArrayList<>();
     for(LvDrugs drug : list) {
       if(drug.getCat().equals("ine-ven")) drug.setCat("Вена ичига");
@@ -586,13 +636,13 @@ public class CView {
       drugs.add(drug);
     }
     model.addAttribute("ines", drugs);
-    Date minDate = dLvDrug.minDate(session.getCurPat());
+    Date minDate = dLvDrug.minDate(pid);
     if(minDate != null)
       model.addAttribute("dates", Util.getDateList(minDate, 12));
-    Patients pat = dPatient.get(session.getCurPat());
+    Patients pat = dPatient.get(pid);
     model.addAttribute("pat", pat);
     model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print" + (session.isParamEqual("CLINIC_CODE", "fm") ? "/fm" : "")) + "/drug";
+    return "/med/lv/print/drug";
   }
   // Назначение
   @RequestMapping("/drug/obos.s")
@@ -614,45 +664,158 @@ public class CView {
       session.setCurSubUrl("/view/epic.s");
     model.addAttribute("epics", sPatient.getEpicGrid(session.getCurPat()));
     model.addAttribute("patient", dPatient.get(session.getCurPat()));
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") + "/epic";
+    return "/med/lv/print/epic";
   }
 
+  /**
+   * Статистика лечащего врача: текущие пациенты, сегодня, выбранный месяц по типам палат и динамика за 12 месяцев.
+   * Всё четырьмя запросами (раньше было 27 отдельных, а «прошлый месяц» в январе считался как месяц 0).
+   */
   @RequestMapping("/stat.s")
   protected String stat(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/view/stat.s");
     session.setCurSubUrl("");
-    model.addAttribute("c1", dPatient.getCount("From Patients Where state = 'LV' And lv_id = " + session.getUserId()));
-    model.addAttribute("c2", dPatient.getCount("From Patients Where YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c3", dPatient.getCount("From Patients Where YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c4", dPatient.getCount("From Patients Where YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c5", dPatient.getCount("From Patients Where YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c6", dPatient.getCount("From Patients Where DATE(dateEnd) = DATE(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c7", dPatient.getCount("From Patients Where DATE(dateBegin) = DATE(current_date()) And lv_id = " + session.getUserId()));
+    int lv = session.getUserId();
+    // выбранный месяц yyyy-MM, по умолчанию текущий
+    Calendar cal = Calendar.getInstance();
+    String ym = Util.get(request, "ym", "");
+    if (ym.matches("\\d{4}-\\d{2}")) {
+      cal.set(Calendar.YEAR, Integer.parseInt(ym.substring(0, 4)));
+      cal.set(Calendar.MONTH, Integer.parseInt(ym.substring(5, 7)) - 1);
+    }
+    cal.set(Calendar.DAY_OF_MONTH, 1);
+    java.text.SimpleDateFormat ymf = new java.text.SimpleDateFormat("yyyy-MM");
+    String sel = ymf.format(cal.getTime());
+    Calendar from = (Calendar) cal.clone();
+    from.add(Calendar.MONTH, -11);
+    Calendar to = (Calendar) cal.clone();
+    to.add(Calendar.MONTH, 1);
+    Calendar prev = (Calendar) cal.clone();
+    prev.add(Calendar.MONTH, -1);
+    java.text.SimpleDateFormat dbf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+    String[] mNames = {"Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"};
+    String[] mFull = {"Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"};
 
-    model.addAttribute("c8", dPatient.getCount("From Patients Where room.roomType.id = 5 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c9", dPatient.getCount("From Patients Where room.roomType.id = 6 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c10", dPatient.getCount("From Patients Where room.roomType.id = 7 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-
-    model.addAttribute("c11", dPatient.getKoykoCount("From Patients Where room.roomType.id = 5 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c12", dPatient.getKoykoCount("From Patients Where room.roomType.id = 6 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c13", dPatient.getKoykoCount("From Patients Where room.roomType.id = 7 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-
-    model.addAttribute("c11_UZB", dPatient.getKoykoCount("From Patients Where counteryId = 199 And room.roomType.id = 5 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c12_UZB", dPatient.getKoykoCount("From Patients Where counteryId = 199 And room.roomType.id = 6 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-    model.addAttribute("c13_UZB", dPatient.getKoykoCount("From Patients Where counteryId = 199 And room.roomType.id = 7 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) And lv_id = " + session.getUserId()));
-
-    model.addAttribute("c28", dPatient.getCount("From Patients Where room.roomType.id = 5 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c29", dPatient.getCount("From Patients Where room.roomType.id = 6 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c30", dPatient.getCount("From Patients Where room.roomType.id = 7 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-
-    model.addAttribute("c31", dPatient.getKoykoCount("From Patients Where room.roomType.id = 5 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c32", dPatient.getKoykoCount("From Patients Where room.roomType.id = 6 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c33", dPatient.getKoykoCount("From Patients Where room.roomType.id = 7 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-
-    model.addAttribute("c31_UZB", dPatient.getKoykoCount("From Patients Where counteryId = 199 And room.roomType.id = 5 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c32_UZB", dPatient.getKoykoCount("From Patients Where counteryId = 199 And room.roomType.id = 6 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
-    model.addAttribute("c33_UZB", dPatient.getKoykoCount("From Patients Where counteryId = 199 And room.roomType.id = 7 And YEAR(dateEnd) = YEAR(CURRENT_TIMESTAMP()) And MONTH(dateEnd) = MONTH(CURRENT_TIMESTAMP()) - 1 And lv_id = " + session.getUserId()));
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    // месяцы: ym -> {выписано, койко-дней}
+    LinkedHashMap<String, long[]> months = new LinkedHashMap<String, long[]>();
+    Calendar c = (Calendar) from.clone();
+    for (int i = 0; i < 12; i++) { months.put(ymf.format(c.getTime()), new long[]{0, 0}); c.add(Calendar.MONTH, 1); }
+    List<Map<String, Object>> types = new ArrayList<Map<String, Object>>();
+    List<Map<String, Object>> current = new ArrayList<Map<String, Object>>();
+    long selCount = 0, selDays = 0, selRes = 0, selResDays = 0, prevCount = 0;
+    long admToday = 0, disToday = 0, yearCount = 0, lastYearCount = 0;
+    try {
+      conn = DB.getConnection();
+      // 1. выписанные за 12 месяцев по месяцам и типам палат
+      ps = conn.prepareStatement(
+        "Select Date_Format(p.Date_End, '%Y-%m') ym, ifnull(d.name, 'Без палаты') room_type, Count(*) cnt, Sum(ifnull(p.day_count, 0)) days, " +
+        "       Sum(p.counteryId = 199) res, Sum(Case When p.counteryId = 199 Then ifnull(p.day_count, 0) Else 0 End) res_days " +
+        "  From Patients p Left Join Rooms r On r.id = p.Room_Id Left Join Dicts d On d.id = r.roomType " +
+        " Where p.lv_id = ? And p.Date_End >= ? And p.Date_End < ? " +
+        " Group By ym, room_type Order By ym, room_type");
+      ps.setInt(1, lv);
+      ps.setString(2, dbf.format(from.getTime()));
+      ps.setString(3, dbf.format(to.getTime()));
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        String m = rs.getString("ym");
+        long cnt = rs.getLong("cnt"), days = rs.getLong("days");
+        if (months.containsKey(m)) { months.get(m)[0] += cnt; months.get(m)[1] += days; }
+        if (m.equals(ymf.format(prev.getTime()))) prevCount += cnt;
+        if (m.equals(sel)) {
+          Map<String, Object> t = new HashMap<String, Object>();
+          t.put("name", rs.getString("room_type"));
+          t.put("cnt", cnt);
+          t.put("days", days);
+          t.put("res", rs.getLong("res"));
+          t.put("resDays", rs.getLong("res_days"));
+          t.put("nonRes", cnt - rs.getLong("res"));
+          t.put("nonResDays", days - rs.getLong("res_days"));
+          types.add(t);
+          selCount += cnt; selDays += days; selRes += rs.getLong("res"); selResDays += rs.getLong("res_days");
+        }
+      }
+      DB.done(rs);
+      DB.done(ps);
+      // 2. сегодня и годы
+      ps = conn.prepareStatement(
+        "Select Sum(Date_Begin >= CurDate() And Date_Begin < CurDate() + Interval 1 Day) adm_today, " +
+        "       Sum(Date_End >= CurDate() And Date_End < CurDate() + Interval 1 Day) dis_today, " +
+        "       Sum(Date_End >= MakeDate(Year(CurDate()), 1) And Date_End < MakeDate(Year(CurDate()) + 1, 1)) this_year, " +
+        "       Sum(Date_End >= MakeDate(Year(CurDate()) - 1, 1) And Date_End < MakeDate(Year(CurDate()), 1)) last_year " +
+        "  From Patients Where lv_id = ? And (Date_Begin >= MakeDate(Year(CurDate()) - 1, 1) Or Date_End >= MakeDate(Year(CurDate()) - 1, 1))");
+      ps.setInt(1, lv);
+      rs = ps.executeQuery();
+      if (rs.next()) { admToday = rs.getLong(1); disToday = rs.getLong(2); yearCount = rs.getLong(3); lastYearCount = rs.getLong(4); }
+      DB.done(rs);
+      DB.done(ps);
+      // 3. мои текущие пациенты
+      ps = conn.prepareStatement(
+        "Select p.id, p.yearNum, Concat(p.surname, ' ', p.name, ' ', ifnull(p.middlename, '')) fio, p.Date_Begin, p.day_count, " +
+        "       (Select dp.name From Depts dp Where dp.id = p.Dept_Id) dept, r.name room, d.name room_type " +
+        "  From Patients p Left Join Rooms r On r.id = p.Room_Id Left Join Dicts d On d.id = r.roomType " +
+        " Where p.lv_id = ? And p.state = 'LV' Order By p.Date_Begin");
+      ps.setInt(1, lv);
+      rs = ps.executeQuery();
+      long now = System.currentTimeMillis();
+      while (rs.next()) {
+        Map<String, Object> o = new HashMap<String, Object>();
+        o.put("id", rs.getInt("id"));
+        o.put("ib", rs.getString("yearNum"));
+        o.put("fio", rs.getString("fio"));
+        o.put("begin", Util.dateToString(rs.getDate("Date_Begin")));
+        long day = rs.getDate("Date_Begin") == null ? 0 : (now - rs.getDate("Date_Begin").getTime()) / 86400000L + 1;
+        o.put("day", day);
+        o.put("plan", rs.getInt("day_count"));
+        o.put("over", rs.getInt("day_count") > 0 && day > rs.getInt("day_count"));
+        o.put("room", Util.nvl(rs.getString("dept")) + (rs.getString("room") == null ? "" : " / " + rs.getString("room") + (rs.getString("room_type") == null ? "" : "-" + rs.getString("room_type"))));
+        current.add(o);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    // динамика по месяцам для графика
+    List<Map<String, Object>> chart = new ArrayList<Map<String, Object>>();
+    long max = 1;
+    for (long[] v : months.values()) max = Math.max(max, v[0]);
+    for (Map.Entry<String, long[]> e : months.entrySet()) {
+      Map<String, Object> o = new HashMap<String, Object>();
+      int mm = Integer.parseInt(e.getKey().substring(5, 7));
+      o.put("ym", e.getKey());
+      o.put("label", mNames[mm - 1] + (mm == 1 ? " " + e.getKey().substring(2, 4) : ""));
+      o.put("cnt", e.getValue()[0]);
+      o.put("days", e.getValue()[1]);
+      o.put("pct", Math.round(e.getValue()[0] * 100.0 / max));
+      o.put("sel", e.getKey().equals(sel));
+      chart.add(o);
+    }
+    Calendar next = (Calendar) cal.clone();
+    next.add(Calendar.MONTH, 1);
+    model.addAttribute("sel", sel);
+    model.addAttribute("selName", mFull[cal.get(Calendar.MONTH)] + " " + cal.get(Calendar.YEAR));
+    model.addAttribute("prevYm", ymf.format(prev.getTime()));
+    model.addAttribute("nextYm", next.getTimeInMillis() > System.currentTimeMillis() ? "" : ymf.format(next.getTime()));
+    model.addAttribute("chart", chart);
+    model.addAttribute("types", types);
+    model.addAttribute("selCount", selCount);
+    model.addAttribute("selDays", selDays);
+    model.addAttribute("selRes", selRes);
+    model.addAttribute("selResDays", selResDays);
+    model.addAttribute("selAvg", selCount == 0 ? 0 : Math.round(selDays * 10.0 / selCount) / 10.0);
+    model.addAttribute("prevCount", prevCount);
+    model.addAttribute("current", current);
+    model.addAttribute("admToday", admToday);
+    model.addAttribute("disToday", disToday);
+    model.addAttribute("yearCount", yearCount);
+    model.addAttribute("lastYearCount", lastYearCount);
     return "/med/lv/stat";
   }
 
@@ -1160,7 +1323,7 @@ public class CView {
     model.addAttribute("vyp", dLvDoc.get(session.getCurPat(), "vypiska"));
     model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
     model.addAttribute("zavOtdel", beanUsers.getZavLvs(pat.getLv_dept_id()).getFio());
-    return "/med/lv/" + (Req.isNull(request, "print") ? "view" : "print") +"/extra";
+    return "/med/lv/print/extra";
   }
 
   @RequestMapping("/needle.s")
@@ -1180,6 +1343,7 @@ public class CView {
     JSONObject json = new JSONObject();
     try {
       LvPlans p = dLvPlan.get(Util.getInt(req, "p"));
+      if(isArch(p.getPatientId())) return Util.err(json, ARCH_MSG);
       p.setCounter(Util.getDouble(req, "v"));
       dLvPlan.save(p);
       return Util.success(json);

@@ -3,223 +3,300 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<script src="/res/datepicker/datetimepicker_css.js"></script>
+<script src="/res/js/fms-calendar.js" type="text/javascript"></script>
 <style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
+  .bk { --brand:#D7182E; --text:#1F2430; --muted:#6B7280; --border:#E6E8EC; --bg:#F5F6F8;
+    height:100%; box-sizing:border-box; display:flex; flex-direction:column; padding:16px 20px;
+    color:var(--text); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+  .bk * { box-sizing:border-box; }
+  .bk-card { flex:1; min-height:0; display:flex; flex-direction:column; background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+
+  /* ---------- Панель ---------- */
+  .bk-bar { flex:none; display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .bk-bar h3 { margin:0 6px 0 0; font-size:17px; font-weight:700; display:flex; align-items:center; gap:9px; }
+  .bk-bar h3 .ic { width:32px; height:32px; border-radius:9px; background:var(--bg); color:var(--muted); display:inline-flex; align-items:center; justify-content:center; font-size:15px; }
+  .bk-bar .sp { flex:1; }
+  .bk-chip { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border-radius:14px; background:#F1F2F4; color:var(--muted); font-size:12.5px; font-weight:600; white-space:nowrap; }
+  .bk-chip b { color:var(--text); font-variant-numeric:tabular-nums; }
+  .bk-chip.soon { background:#FEF3E2; color:#B45309; }
+  .bk-chip.soon b { color:#B45309; }
+  .bk .in { height:36px; padding:0 10px; border:1px solid var(--border); border-radius:9px; font-size:14px; font-family:inherit; color:var(--text);
+    background-color:#fff; outline:none; box-shadow:none; transition:border-color .15s, box-shadow .15s; }
+  .bk .in:focus { border-color:#4B5563; box-shadow:0 0 0 3px rgba(75,85,99,.12); }
+  .bk-search { position:relative; }
+  .bk-search i { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:#9AA1AC; font-size:13px; }
+  .bk-search .in { width:240px; padding-left:32px; }
+  .bk .ab { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 14px; border-radius:9px; border:1px solid var(--border);
+    background:#fff; color:var(--text); font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; white-space:nowrap; }
+  .bk .ab:hover { background:var(--bg); }
+  .bk .ab.primary { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .bk .ab.primary:hover { background:#A50F22; border-color:#A50F22; }
+
+  /* ---------- Таблица ---------- */
+  .bk-scroll { flex:1; min-height:0; overflow:auto; }
+  .bk-t { width:100%; border-collapse:separate; border-spacing:0; font-size:14px; }
+  .bk-t th { position:sticky; top:0; z-index:1; padding:10px 12px; background:#F8F9FA; border-bottom:1px solid var(--border); color:var(--muted);
+    font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; text-align:left; white-space:nowrap; }
+  .bk-t td { padding:9px 12px; border-bottom:1px solid #F0F1F4; vertical-align:middle; }
+  .bk-t th.c, .bk-t td.c { text-align:center; }
+  .bk-t tbody tr.it { cursor:pointer; }
+  .bk-t tbody tr.it:hover td { background:#F7F8FA; }
+  .bk-t tbody tr.soon td:first-child { box-shadow:inset 3px 0 0 #D97706; }
+  .bk-t td.num { color:#9AA1AC; width:44px; }
+  .bk-t td.muted { color:var(--muted); white-space:nowrap; }
+  .bk-who { display:flex; align-items:center; gap:11px; min-width:220px; }
+  .bk-who .fio { font-weight:600; color:var(--text); text-decoration:none; }
+  .bk-who .fio:hover { text-decoration:underline; }
+  .bk-av { flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700; text-transform:uppercase; }
+  .bk-av.a0 { background:#EAF1FE; color:#2563EB; } .bk-av.a1 { background:#E8F7EE; color:#15803D; } .bk-av.a2 { background:#FEF3E2; color:#B45309; }
+  .bk-av.a3 { background:#F3EEFE; color:#7C3AED; } .bk-av.a4 { background:#E6F6FA; color:#0E7490; } .bk-av.a5 { background:#FDEDF3; color:#BE185D; }
+  .bk-room { display:inline-flex; flex-direction:column; gap:2px; }
+  .bk-room .d { font-weight:600; font-size:13px; }
+  .bk-room .r { font-size:12.5px; color:var(--muted); }
+  .bk-beds { display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:24px; padding:0 8px; border-radius:12px; background:#F1F2F4; color:#4B5563; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .bk-beds.many { background:#FEF3E2; color:#B45309; }
+  .bk-ux { display:block; margin-top:2px; font-size:11px; color:#9AA1AC; white-space:nowrap; }
+  .bk-t .bd { display:inline-block; padding:2px 9px; border-radius:10px; font-size:12px; font-weight:600; background:#EAF1FE; color:#2563EB; }
+  .bk-t .grp td { padding:8px 12px; background:#FCFCFD; border-bottom:1px solid var(--border);
+    font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; color:var(--muted); cursor:default; }
+  .bk-t .grp.soon td { background:#FFFAF2; color:#B45309; }
+  .bk-t .grp .n { margin-left:6px; font-weight:600; opacity:.75; }
+  .bk-del { width:30px; height:30px; border:0; border-radius:8px; background:none; color:#9AA1AC; cursor:pointer; font-size:14px; }
+  .bk-del:hover { background:#FDECEE; color:var(--brand); }
+  .bk-del.bk-arch:hover { background:#F1F2F4; color:var(--text); }
+  .bk-empty td { padding:48px 12px; text-align:center; color:#9AA1AC; cursor:default; }
+  .bk-empty .fa { display:block; font-size:28px; margin-bottom:10px; color:#C3C7CE; }
+  .bk-msg:empty { display:none; }
+  .bk-msg { padding:10px 16px 0; }
+
+  /* ---------- Модалка ---------- */
+  .bk-modal .modal-dialog { width:100%; max-width:820px; }
+  .bk-modal .modal-content { border:0; border-radius:16px; box-shadow:0 24px 60px rgba(20,25,40,.25); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color:#1F2430; }
+  .bk-modal .modal-header { padding:16px 20px; border-bottom:1px solid #E6E8EC; }
+  .bk-modal .modal-title { font-size:17px; font-weight:700; }
+  .bk-modal .modal-title .fa { color:#6B7280; margin-right:6px; }
+  .bk-modal .modal-body { padding:18px 20px 20px; }
+  .bk-modal .modal-footer { padding:14px 20px; border-top:1px solid #E6E8EC; display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .bk-modal .modal-footer .author { flex:1; text-align:left; font-size:12.5px; color:#9AA1AC; }
+  .bk-modal .modal-footer .author:empty { display:none; }
+  .bk-modal .sec { margin:0 0 8px; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:#9AA1AC; }
+  .bk-modal .sec + .fg { margin-bottom:18px; }
+  .bk-modal .fg { display:grid; grid-template-columns:repeat(6, 1fr); gap:12px 14px; }
+  .bk-modal .fg .f { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .bk-modal .fg .s2 { grid-column:span 2; } .bk-modal .fg .s3 { grid-column:span 3; } .bk-modal .fg .s6 { grid-column:span 6; }
+  .bk-modal .fg label { margin:0; font-size:12.5px; font-weight:600; color:#6B7280; }
+  .bk-modal .fg label i { font-style:normal; color:#D7182E; }
+  .bk-modal .form-control { height:38px; border:1px solid #E6E8EC; border-radius:9px; box-shadow:none; font-size:14px; color:#1F2430; background-color:#fff; }
+  .bk-modal .form-control:focus { border-color:#4B5563; box-shadow:0 0 0 3px rgba(75,85,99,.12); }
+  .bk-modal .form-control.up { text-transform:uppercase; }
+  .bk-modal .form-control.fms-cal { min-width:160px; }
+  .bk-modal .ab { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 14px; border-radius:9px; border:1px solid #E6E8EC;
+    background:#fff; color:#1F2430; font-size:13.5px; font-weight:600; cursor:pointer; }
+  .bk-modal .ab:hover { background:#F5F6F8; }
+  .bk-modal .ab.primary { background:#D7182E; border-color:#D7182E; color:#fff; }
+  .bk-modal .ab.primary:hover { background:#A50F22; border-color:#A50F22; }
+  @media (max-width: 700px) { .bk-modal .fg .s2, .bk-modal .fg .s3 { grid-column:span 6; } }
 </style>
-<div class="panel panel-primary" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    <table style="margin:0;width:100%">
-      <tr>
-        <td style="font-weight:bold; vertical-align: middle">Бронирование койки</td>
-        <td style="width:220px; padding-right:5px">
-          <input type="text" style="height:30px" class="form-control" placeholder="Поиск..." id="filter_box" value="${filter == null ? '' : filter}">
-        </td>
-        <td style="width:56px">
-          <button class="btn btn-success btn-sm" onclick="setFilter()">Поиск</button>
-        </td>
-        <td style="width:95px; text-align: right">
-          <button  class="btn btn-sm btn-success" onclick="addBooking()" style=""><i class="fa fa-plus"></i> Добавить</button>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+
+<div class="bk" id="bookingList">
+  <div class="bk-card">
+    <div class="bk-bar">
+      <h3><span class="ic"><i class="fa fa-h-square"></i></span>Бронирование койки</h3>
+      <c:if test="${fn:length(others) > 0}">
+        <span class="bk-chip soon" title="Дата регистрации в ближайшие 5 дней"><i class="fa fa-clock-o"></i> Скоро <b>${fn:length(others)}</b></span>
+      </c:if>
+      <span class="bk-chip">Всего <b>${fn:length(others) + fn:length(list)}</b></span>
+      <span class="sp"></span>
+      <div class="bk-search">
+        <i class="fa fa-search"></i>
+        <input type="text" class="in" placeholder="Поиск..." id="filter_box" value="${filter == null ? '' : filter}">
+      </div>
+      <button type="button" class="ab" onclick="setFilter()">Найти</button>
+      <button type="button" class="ab primary" onclick="addBooking()"><i class="fa fa-plus"></i> Добавить</button>
+    </div>
+
+    <div class="bk-msg"><%@include file="/incs/msgs/successError.jsp"%></div>
+
+    <div class="bk-scroll">
+      <table class="bk-t">
         <thead>
         <tr>
-          <th>&nbsp;</th>
-          <th>№</th>
+          <th style="width:44px">№</th>
           <th>ФИО</th>
-          <th>Год рождения</th>
-          <th>Дата рег</th>
-          <th>Отд./Пал.</th>
-          <th>ФИО ЛВ</th>
-          <th>Состояние</th>
-          <th>Удалить</th>
+          <th class="c" style="width:110px">Год рожд.</th>
+          <th class="c" style="width:120px">Дата рег.</th>
+          <th style="width:240px">Отд. / Палата</th>
+          <th class="c" style="width:110px" title="Сколько коек занимает бронь, включая ухаживающего">Коек</th>
+          <th>Лечащий врач</th>
+          <th class="c" style="width:110px">Состояние</th>
+          <th class="c" style="width:90px"></th>
         </tr>
         </thead>
         <tbody>
         <c:if test="${fn:length(others) > 0}">
-          <tr>
-            <td colspan="9" style="vertical-align: middle;text-align: center; font-weight: bold">Срок приближается (+5 дней)</td>
-          </tr>
+          <tr class="grp soon"><td colspan="9"><i class="fa fa-clock-o"></i> Срок приближается (+5 дней)<span class="n">${fn:length(others)}</span></td></tr>
         </c:if>
         <c:forEach items="${others}" var="obj" varStatus="loop">
-          <tr >
-            <td>&nbsp;</td>
-            <td align="center">${loop.index + 1}</td>
+          <tr class="it soon" onclick="editBooking(${obj.id})">
+            <td class="num">${loop.index + 1}</td>
             <td>
-              <a href="#" onclick="editBooking(${obj.id})">${obj.surname} ${obj.name} ${obj.middlename}</a>
+              <div class="bk-who">
+                <span class="bk-av a${obj.id % 6}">${fn:substring(obj.surname, 0, 1)}${fn:substring(obj.name, 0, 1)}</span>
+                <a href="#" class="fio" onclick="return false">${obj.surname} ${obj.name} ${obj.middlename}</a>
+              </div>
             </td>
-            <td align="center">${obj.birthyear}</td>
-            <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateBegin}" /></td>
-            <td align="center">${obj.dept.name} /  ${obj.room.name} - ${obj.room.roomType.name}</td>
-            <td align="center">${obj.lv.fio}</td>
-            <td align="center">
-              <c:if test="${obj.state == 'ENT'}">Введен</c:if>
-            </td>
-            <td align="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="removeBooking(${obj.id})"><span class="fa fa-minus"></span></button>
-            </td>
+            <td class="c muted">${obj.birthyear}</td>
+            <td class="c muted"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateBegin}" /></td>
+            <td><span class="bk-room"><span class="d">${obj.dept.name}</span><span class="r">${obj.room.name} - ${obj.room.roomType.name}</span></span></td>
+            <c:set var="bc" value="${obj.bedCount != null && obj.bedCount > 0 ? obj.bedCount : 1}"/>
+            <td class="c"><span class="bk-beds<c:if test="${bc > 1 || obj.bron != null}"> many</c:if>" title="Коек: ${bc}<c:if test="${obj.bron != null}"> + 1 (${obj.bron.name})</c:if>">${bc + (obj.bron != null ? 1 : 0)}</span><c:if test="${obj.bron != null}"><span class="bk-ux">вкл. ${fn:toLowerCase(obj.bron.name)}</span></c:if></td>
+            <td class="muted">${obj.lv.fio}</td>
+            <td class="c"><c:if test="${obj.state == 'ENT'}"><span class="bd">Введен</span></c:if></td>
+            <td class="c" style="white-space:nowrap"><button type="button" class="bk-del bk-arch" title="В архив" onclick="event.stopPropagation(); archiveBooking(${obj.id})"><i class="fa fa-archive"></i></button><button type="button" class="bk-del" title="Удалить" onclick="event.stopPropagation(); removeBooking(${obj.id})"><i class="fa fa-trash-o"></i></button></td>
           </tr>
         </c:forEach>
         <c:if test="${fn:length(others) > 0}">
-          <tr>
-            <td colspan="9" style="vertical-align: middle;text-align: center; font-weight: bold">Остальные</td>
-          </tr>
+          <tr class="grp"><td colspan="9">Остальные<span class="n">${fn:length(list)}</span></td></tr>
         </c:if>
         <c:forEach items="${list}" var="obj" varStatus="loop">
-          <tr>
-            <td>&nbsp;</td>
-            <td align="center">${loop.index + 1}</td>
+          <tr class="it" onclick="editBooking(${obj.id})">
+            <td class="num">${loop.index + 1}</td>
             <td>
-              <a href="#" onclick="editBooking(${obj.id})">${obj.surname} ${obj.name} ${obj.middlename}</a>
+              <div class="bk-who">
+                <span class="bk-av a${obj.id % 6}">${fn:substring(obj.surname, 0, 1)}${fn:substring(obj.name, 0, 1)}</span>
+                <a href="#" class="fio" onclick="return false">${obj.surname} ${obj.name} ${obj.middlename}</a>
+              </div>
             </td>
-            <td align="center">${obj.birthyear}</td>
-            <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateBegin}" /></td>
-            <td align="center">${obj.dept.name} /  ${obj.room.name} - ${obj.room.roomType.name}</td>
-            <td align="center">${obj.lv.fio}</td>
-            <td align="center">
-              <c:if test="${obj.state == 'ENT'}">Введен</c:if>
-            </td>
-            <td align="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="removeBooking(${obj.id})"><span class="fa fa-minus"></span></button>
-            </td>
+            <td class="c muted">${obj.birthyear}</td>
+            <td class="c muted"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateBegin}" /></td>
+            <td><span class="bk-room"><span class="d">${obj.dept.name}</span><span class="r">${obj.room.name} - ${obj.room.roomType.name}</span></span></td>
+            <c:set var="bc" value="${obj.bedCount != null && obj.bedCount > 0 ? obj.bedCount : 1}"/>
+            <td class="c"><span class="bk-beds<c:if test="${bc > 1 || obj.bron != null}"> many</c:if>" title="Коек: ${bc}<c:if test="${obj.bron != null}"> + 1 (${obj.bron.name})</c:if>">${bc + (obj.bron != null ? 1 : 0)}</span><c:if test="${obj.bron != null}"><span class="bk-ux">вкл. ${fn:toLowerCase(obj.bron.name)}</span></c:if></td>
+            <td class="muted">${obj.lv.fio}</td>
+            <td class="c"><c:if test="${obj.state == 'ENT'}"><span class="bd">Введен</span></c:if></td>
+            <td class="c" style="white-space:nowrap"><button type="button" class="bk-del bk-arch" title="В архив" onclick="event.stopPropagation(); archiveBooking(${obj.id})"><i class="fa fa-archive"></i></button><button type="button" class="bk-del" title="Удалить" onclick="event.stopPropagation(); removeBooking(${obj.id})"><i class="fa fa-trash-o"></i></button></td>
           </tr>
         </c:forEach>
+        <c:if test="${empty others && empty list}">
+          <tr class="bk-empty"><td colspan="9"><i class="fa fa-h-square"></i>Броней нет<c:if test="${not empty filter}"> по запросу «${filter}»</c:if></td></tr>
+        </c:if>
         </tbody>
       </table>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
 </div>
+
 <!-- AddEdit Form -->
 <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+<div class="modal fade bk-modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
   <div class="modal-dialog">
-    <div class="modal-content" style="width:900px">
+    <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Пациент маълумотлари</h4>
+        <h4 class="modal-title" id="myModalLabel"><i class="fa fa-h-square"></i> Пациент маълумотлари</h4>
       </div>
       <div class="modal-body">
         <form id="addEditForm" name="addEditForm">
           <input type="hidden" name="id" value="" />
           <input type="hidden" name="history" value="" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">ФИШ*:</td>
-              <td colspan="3">
-                <div class="row">
-                  <div class="col-lg-4">
-                    <input type="text" autocomplete="off" placeholder="Фамилия" style="text-transform: uppercase;" class="form-control" name="surname" value="" required/>
-                  </div>
-                  <div class="col-lg-4">
-                    <input type="text" autocomplete="off" placeholder="Исм" style="text-transform: uppercase;" class="form-control" name="name" value="" required/>
-                  </div>
-                  <div class="col-lg-4">
-                    <input type="text" autocomplete="off" placeholder="Шариф" style="text-transform: uppercase;" class="form-control" name="middlename" value=""/>
-                  </div>
-                </div>
 
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold" nowrap>Тугилган йили*:</td>
-              <td>
-                <input type="number" autocomplete="off" placeholder="xxxx" class="form-control center" name="birthyear" value="" required/>
-              </td>
-              <td class="right bold" nowrap>Жинси*:</td>
-              <td>
-                <select name="sex" class="form-control" required>
-                  <c:forEach items="${sex}" var="ss">
-                    <option value="${ss.id}">${ss.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold" nowrap>Дата рег*:</td>
-              <td>
-                <input type="text" autocomplete="off" class="form-control datepicker" id="date_begin" name="date_begin" value="" required/>
-              </td>
-              <td class="right bold" nowrap>Резидентлиги*:</td>
-              <td>
-                <select name="country" class="form-control" required>
-                  <c:forEach items="${countries}" var="ss">
-                    <option value="${ss.id}">${ss.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Булим*:</td>
-              <td>
-                <select name="dept" class="form-control" required>
-                  <c:forEach items="${depts}" var="ss">
-                    <option value="${ss.id}">${ss.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-              <td class="right bold">№ хона*:</td>
-              <td>
-                <select name="room" class="form-control" required>
-                  <c:forEach items="${rooms}" var="ss">
-                    <option value="${ss.id}">${ss.name} - ${ss.roomType.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold" nowrap>Шифокор:</td>
-              <td colspan="3">
-                <select name="lv" class="form-control">
-                  <option></option>
-                  <c:forEach items="${lvs}" var="ss">
-                    <option value="${ss.id}">${ss.profil} - ${ss.fio}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold" nowrap>Телефон*:</td>
-              <td colspan="3">
-                <input type="text" autocomplete="off" class="form-control" name="tel" value="" required/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold" nowrap>Паспорт маълумотлари:</td>
-              <td colspan="3">
-                <input type="text" autocomplete="off" class="form-control" name="passport" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="bold right">Брон</td>
-              <td colspan="3">
-                <select name="bron" class="form-control">
-                  <c:forEach items="${watcherTypes}" var="type">
-                    <option value="${type.id}">${type.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Автор</td>
-              <td colspan="3">
-                <span id="row_author"></span>
-              </td>
-            </tr>
-          </table>
+          <div class="sec">Пациент</div>
+          <div class="fg">
+            <div class="f s2">
+              <label>Фамилия <i>*</i></label>
+              <input type="text" autocomplete="off" placeholder="Фамилия" class="form-control up" name="surname" value="" required/>
+            </div>
+            <div class="f s2">
+              <label>Исм <i>*</i></label>
+              <input type="text" autocomplete="off" placeholder="Исм" class="form-control up" name="name" value="" required/>
+            </div>
+            <div class="f s2">
+              <label>Шариф</label>
+              <input type="text" autocomplete="off" placeholder="Шариф" class="form-control up" name="middlename" value=""/>
+            </div>
+            <div class="f s2">
+              <label>Тугилган йили <i>*</i></label>
+              <input type="number" autocomplete="off" placeholder="xxxx" class="form-control center" name="birthyear" value="" required/>
+            </div>
+            <div class="f s2">
+              <label>Жинси <i>*</i></label>
+              <select name="sex" class="form-control" required>
+                <c:forEach items="${sex}" var="ss">
+                  <option value="${ss.id}">${ss.name}</option>
+                </c:forEach>
+              </select>
+            </div>
+            <div class="f s2">
+              <label>Резидентлиги <i>*</i></label>
+              <select name="country" class="form-control" required>
+                <c:forEach items="${countries}" var="ss">
+                  <option value="${ss.id}">${ss.name}</option>
+                </c:forEach>
+              </select>
+            </div>
+            <div class="f s3">
+              <label>Телефон <i>*</i></label>
+              <input type="text" autocomplete="off" class="form-control" name="tel" value="" required/>
+            </div>
+            <div class="f s3">
+              <label>Паспорт маълумотлари</label>
+              <input type="text" autocomplete="off" class="form-control" name="passport" value=""/>
+            </div>
+          </div>
+
+          <div class="sec">Бронь</div>
+          <div class="fg">
+            <div class="f s2">
+              <label>Дата рег <i>*</i></label>
+              <input type="text" autocomplete="off" placeholder="дд.мм.гггг" class="form-control fms-cal" id="date_begin" name="date_begin" value="" required/>
+            </div>
+            <div class="f s2">
+              <label>Булим <i>*</i></label>
+              <select name="dept" class="form-control" required>
+                <c:forEach items="${depts}" var="ss">
+                  <option value="${ss.id}">${ss.name}</option>
+                </c:forEach>
+              </select>
+            </div>
+            <div class="f s2">
+              <label>№ хона <i>*</i></label>
+              <select name="room" class="form-control" required>
+                <c:forEach items="${rooms}" var="ss">
+                  <option value="${ss.id}">${ss.name} - ${ss.roomType.name}</option>
+                </c:forEach>
+              </select>
+            </div>
+            <div class="f s2">
+              <label>Кол-во коек <i>*</i></label>
+              <input type="number" min="1" max="20" autocomplete="off" class="form-control" name="bed_count" value="1" required/>
+            </div>
+            <div class="f s2">
+              <label>Шифокор</label>
+              <select name="lv" class="form-control">
+                <option></option>
+                <c:forEach items="${lvs}" var="ss">
+                  <option value="${ss.id}">${ss.profil} - ${ss.fio}</option>
+                </c:forEach>
+              </select>
+            </div>
+            <div class="f s2">
+              <label title="Бронь или ухаживающий рядом с пациентом: +1 койка">Бронь</label>
+              <select name="bron" class="form-control" title="Бронь или ухаживающий рядом с пациентом: +1 койка">
+                <option value="0">Нет</option>
+                <c:forEach items="${watcherTypes}" var="type">
+                  <option value="${type.id}">${type.name} (+1 койка)</option>
+                </c:forEach>
+              </select>
+            </div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveBooking()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
+        <span class="author" id="row_author"></span>
+        <button type="button" class="ab" id="archive-btn" style="display:none" onclick="archiveBooking($('#addEditForm input[name=id]').val())"><i class="fa fa-archive"></i> В архив</button>
+        <button type="button" class="ab" id="close-modal" data-dismiss="modal">Закрыть</button>
+        <button type="button" class="ab primary" onclick="saveBooking()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
     <!-- /.modal-content -->
@@ -228,37 +305,39 @@
 </div>
 <script>
   <c:if test="${history > 0}">
-    addBooking();
+  addBooking();
   </c:if>
   function setFilter() {
     var word = document.getElementById("filter_box");
-    setPage('/booking/index.s?word=' + decodeURIComponent(word.value));
+    setPage('/booking/index.s?word=' + encodeURIComponent(word.value));
   }
   function addBooking(){
     addEditForm.reset();
+    $('#row_author').html('');
+    $('#archive-btn').hide();
     <c:if test="${history > 0}">
-      $.ajax({
-        url: '/booking/get.s',
-        method: 'post',
-        data: 'history=${history}',
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            document.getElementById("modal_window").click();
-            var data = res.data;
-            for (var e in data) {
-              try {
-                document.getElementsByName(e)[0].value = data[e];
-              } catch (e) {}
-            }
-          } else {
-            alert(res.msg);
+    $.ajax({
+      url: '/booking/get.s',
+      method: 'post',
+      data: 'history=${history}',
+      dataType: 'json',
+      success: function (res) {
+        if (res.success) {
+          document.getElementById("modal_window").click();
+          var data = res.data;
+          for (var e in data) {
+            try {
+              document.getElementsByName(e)[0].value = data[e];
+            } catch (e) {}
           }
+        } else {
+          openMedMsg(res.msg, false);
         }
-      });
+      }
+    });
     </c:if>
     <c:if test="${history == 0}">
-      document.getElementById("modal_window").click();
+    document.getElementById("modal_window").click();
     </c:if>
   }
   function editBooking(id) {
@@ -276,14 +355,45 @@
               document.getElementsByName(e)[0].value = data[e];
             } catch (e) {}
           }
-          $('#row_author').html(data.author);
+          $('#row_author').html(data.author ? 'Автор: ' + data.author : '');
+          $('#archive-btn').toggle(data.id > 0);
         } else {
-          alert(res.msg);
+          openMedMsg(res.msg, false);
         }
       }
     });
   }
+  // закрыть окно брони и только потом перезагрузить страницу (иначе остаётся тёмный фон окна)
+  function closeModalThen(url) {
+    var m = $('#myModal');
+    var go = function () {
+      $('.modal-backdrop').remove();
+      $('body').removeClass('modal-open').css('padding-right', '');
+      setPage(url);
+    };
+    if (m.hasClass('in')) m.one('hidden.bs.modal', go).modal('hide'); else go();
+  }
+  function archiveBooking(id) {
+    if (!id) return;
+    FmsConfirm('Перенести бронь в архив? Она пропадёт из списка и из расчёта коек.', function () {
+    $.ajax({
+      url: '/booking/archive.s',
+      method: 'post',
+      data: 'id=' + id,
+      dataType: 'json',
+      success: function (res) {
+        if (res.success) {
+          openMedMsg('Бронь перенесена в архив', true);
+          closeModalThen('/booking/index.s');
+        } else {
+          openMedMsg(res.msg, false);
+        }
+      }
+    });
+  });
+  }
   function removeBooking(id){
+    FmsConfirm('Действительно хотите удалить бронь?', function () {
     $.ajax({
       url: '/booking/remove.s',
       method: 'post',
@@ -291,13 +401,14 @@
       dataType: 'json',
       success: function (res) {
         if (res.success) {
-          alert("<ui:message code="successSave"/>");
+          openMedMsg("<ui:message code="successSave"/>", true);
           setPage('/booking/index.s');
         } else {
-          alert(res.msg);
+          openMedMsg(res.msg, false);
         }
       }
     });
+  });
   }
   function saveBooking() {
     if (checkForm($('#addEditForm'))) {
@@ -308,11 +419,10 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            $('#close-modal').click();
-            alert("<ui:message code="successSave"/>");
-            setPage('/booking/index.s');
+            openMedMsg("<ui:message code="successSave"/>", true);
+            closeModalThen('/booking/index.s');
           } else {
-            alert(res.msg);
+            openMedMsg(res.msg, false);
           }
         }
       });
@@ -320,7 +430,7 @@
   }
 
   function delBooking(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
+    FmsConfirm('Дейтвительно хотите удалить?', function () {
       $.ajax({
         url: '/drugs/dict/delete.s',
         method: 'post',
@@ -330,10 +440,29 @@
           if (res.success) {
             setPage('/drugs/dicts.s');
           } else {
-            alert(res.msg);
+            openMedMsg(res.msg, false);
           }
         }
       });
-    }
+    });
   }
+
+  (function () {
+    // Enter в поиске запускает поиск
+    var box = document.getElementById('filter_box');
+    if (box) box.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); setFilter(); } });
+
+    // Bootstrap-модалка забирает фокус у элементов вне себя — тогда в календаре не открываются списки месяца и года
+    $('#myModal').on('shown.bs.modal', function () { $(document).off('focusin.bs.modal'); });
+
+    // Высота по окну: если обёртка не задаёт высоту, прокручивается только таблица
+    var page = document.getElementById('bookingList');
+    function fit() {
+      if (!page) return;
+      page.style.height = '';
+      var avail = window.innerHeight - page.getBoundingClientRect().top - 8;
+      if (avail > 300 && page.offsetHeight > avail) page.style.height = avail + 'px';
+    }
+    fit(); window.addEventListener('resize', fit);
+  })();
 </script>

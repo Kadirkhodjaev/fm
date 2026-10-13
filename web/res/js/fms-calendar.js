@@ -2,7 +2,7 @@
  * Новый календарь MedOnline для полей <input class="fms-cal">.
  * Подключается постранично (не через main.jsp), чтобы не пересекаться со старым datepicker:
  *   <script src="/res/js/fms-calendar.js"></script>
- * У поля не должно быть класса datepicker, иначе откроются оба календаря.
+ * Поля со старым классом datepicker тоже обслуживаются этим календарём (старый datetimepicker_css.js теперь только подключает этот файл).
  * Свой выпадающий календарь в стиле системы (вместо встроенного в браузер):
  * русские месяцы, неделя с понедельника, быстрый выбор месяца и года, «Сегодня» и «Очистить».
  * Дату пишет в формате дд.мм.гггг (или гггг-мм-дд, если поле уже было в таком формате / задан data-format="iso"),
@@ -20,7 +20,8 @@
   var css = document.createElement('style');
   css.textContent = [
     // иконка календаря в поле
-    'input.fms-cal{text-align:center !important;padding-left:34px !important;padding-right:34px !important;background-repeat:no-repeat;background-position:right 10px center;',
+    // ширина не меньше 140px: дата дд.мм.гггг всегда видна целиком, даже если странице задана узкая ширина поля
+    'input.fms-cal,input.datepicker{text-align:left !important;padding-left:12px !important;padding-right:34px !important;min-width:140px !important;box-sizing:border-box;background-repeat:no-repeat;background-position:right 10px center;',
     'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%239AA1AC\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Crect x=\'3\' y=\'4\' width=\'18\' height=\'18\' rx=\'2\'/%3E%3Cpath d=\'M16 2v4M8 2v4M3 10h18\'/%3E%3C/svg%3E")}',
     // окно календаря
     '.fms-dp{position:fixed;z-index:3000;width:272px;padding:12px;background:#fff;border:1px solid #E6E8EC;border-radius:14px;',
@@ -122,7 +123,8 @@
   }
 
   function open(el) {
-    if (el.readOnly || el.disabled) return;
+    // old .datepicker fields could be readonly and were still picked from the calendar
+    if ((el.readOnly && !$(el).hasClass('datepicker')) || el.disabled) return;
     if (!box) build();
     inp = el;
     iso = $(el).attr('data-format') == 'iso' || /^\d{4}-\d{2}-\d{2}/.test(el.value);
@@ -142,14 +144,14 @@
     close();
   }
 
-  $(document).on('focus click', 'input.fms-cal', function () { if (inp !== this || !box || !box.classList.contains('open')) open(this); });
+  $(document).on('focus click', 'input.fms-cal, input.datepicker', function () { if (inp !== this || !box || !box.classList.contains('open')) open(this); });
   // ввод с клавиатуры: календарь подстраивается под набранную дату
-  $(document).on('input', 'input.fms-cal', function () {
+  $(document).on('input', 'input.fms-cal, input.datepicker', function () {
     if (inp !== this) return;
     var d = parse(this.value);
     if (d) { selected = d; view = new Date(d.getFullYear(), d.getMonth(), 1); draw(); }
   });
-  $(document).on('keydown', 'input.fms-cal', function (e) {
+  $(document).on('keydown', 'input.fms-cal, input.datepicker', function (e) {
     if (e.key === 'Escape' || e.key === 'Tab') close();
     if (e.key === 'Enter' && inp === this) { close(); }
   });

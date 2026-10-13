@@ -23,6 +23,7 @@ import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.DB;
 import ckb.utils.Util;
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +34,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -57,6 +60,14 @@ public class CBooking {
   @Autowired private BeanUsers beanUsers;
   @Autowired private BeanSession beanSession;
 
+  // bookings whose registration date is 3 or more days ago are hidden everywhere and not counted
+  private static final int BOOKING_STALE_DAYS = 3;
+
+  // first registration date that is still shown, yyyy-MM-dd
+  private static String bookingMinDate() {
+    return Util.dateDB(Util.dateAddDay(new Date(), 1 - BOOKING_STALE_DAYS));
+  }
+
   @RequestMapping("index.s")
   protected String serviceList(HttpServletRequest req, Model m) {
     Session session = SessionUtil.getUser(req);
@@ -73,9 +84,9 @@ public class CBooking {
       calendar.add(Calendar.DATE, 5);
       List<RoomBookings> others = dRoomBooking.getList("From RoomBookings Where dateBegin Between '" + Util.dateDB(new Date()) + "' And '" + Util.dateDB(calendar.getTime()) + "' And state = 'ENT' Order By dateBegin");
       m.addAttribute("others", others);
-      list = dRoomBooking.getList("From RoomBookings Where dateBegin Not Between '" + Util.dateDB(new Date()) + "' And '" + Util.dateDB(calendar.getTime()) + "' And state = 'ENT' Order By Id Desc");
+      list = dRoomBooking.getList("From RoomBookings Where dateBegin >= '" + bookingMinDate() + "' And dateBegin <= CURRENT_DATE() And dateBegin Not Between '" + Util.dateDB(new Date()) + "' And '" + Util.dateDB(calendar.getTime()) + "' And state = 'ENT' Order By Id Desc");
     } else {
-      list = dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' Order By Id Desc");
+      list = dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' And dateBegin >= '" + bookingMinDate() + "' Order By Id Desc");
     }
     m.addAttribute("list", list);
     m.addAttribute("rooms", beanSession.getRooms());
@@ -111,6 +122,7 @@ public class CBooking {
         bb.put("dept", 0);
         bb.put("room", 0);
         bb.put("history", history);
+        bb.put("bed_count", 1);
       } else {
         RoomBookings book = dRoomBooking.get(Util.getInt(req, "id"));
         bb.put("id", book.getId());
@@ -128,6 +140,7 @@ public class CBooking {
         bb.put("room", book.getRoom().getId());
         bb.put("author", book.getCrBy() > 0 ? dUser.get(book.getCrBy()).getFio() : "");
         bb.put("bron", book.getBron() != null ? book.getBron().getId() : 0);
+        bb.put("bed_count", book.getBedCount() != null && book.getBedCount() > 0 ? book.getBedCount() : 1);
       }
       json.put("data", bb);
       json.put("success", true);
@@ -159,7 +172,7 @@ public class CBooking {
       book.setName(Util.get(req, "name").toUpperCase());
       book.setMiddlename(Util.get(req, "middlename", "").toUpperCase());
       book.setBirthyear(Util.getInt(req, "birthyear"));
-      book.setTel(Util.get(req, "tel"));
+      book.setTel(ckb.utils.Phone.format(Util.get(req, "tel")));
       book.setPassportInfo(Util.get(req, "passport"));
       book.setCountry(dCountry.get(Util.getInt(req, "country")));
       book.setSex(dOpt.get(Util.getInt(req, "sex")));
@@ -168,6 +181,8 @@ public class CBooking {
       book.setDateBegin(Util.stringToDate(Util.get(req, "date_begin")));
       book.setDept(beanSession.getDept(Util.getInt(req, "dept")));
       book.setRoom(dRoom.get(Util.getInt(req, "room")));
+      if(req.getParameter("bed_count") != null)
+        book.setBedCount(Util.isNotNull(req, "bed_count") && Util.getInt(req, "bed_count") > 1 ? Util.getInt(req, "bed_count") : 1);
       book.setBron(Util.isNotNull(req, "bron") && !Util.get(req, "bron").equals("0") && Util.getInt(req, "bron") > 0 ? dDict.get(Util.getInt(req, "bron")) : null);
       if(id == 0) {
         book.setState("ENT");
@@ -221,7 +236,8 @@ public class CBooking {
           rr.setStage(room.getFloor().getName());
           rr.setType(room.getRoomType().getName());
           rr.setState(room.getState());
-          ps = conn.prepareStatement("Select * From Patients t Where t.date_begin is not null And t.state != 'ARCH' And room_id = " + room.getId());
+          rr.setLimit(room.getKoykoLimit() == null ? "0" : room.getKoykoLimit().toString());
+          ps = conn.prepareStatement("Select * From Patients t Where t.date_begin is not null And t.state Not In ('ARCH', 'ZGV') And room_id = " + room.getId());
           rs = ps.executeQuery();
           List<ObjList> list = new ArrayList<>();
           while (rs.next()) {
@@ -261,14 +277,10 @@ public class CBooking {
               }
             }
           }
-          ps = conn.prepareStatement("Select * From Room_Bookings t Where t.state != 'ARCH' And room_id = " + room.getId());
+          ps = conn.prepareStatement("Select * From Room_Bookings t Where t.state != 'ARCH' And t.date_begin >= '" + bookingMinDate() + "' And room_id = " + room.getId());
           rs = ps.executeQuery();
           while (rs.next()) {
-            if(Util.isNotNull(req,"emptyDate")) {
-              Date vypiska = Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count"));
-              if(vypiska.before(Util.stringToDate(emptyDate)) || vypiska.equals(Util.stringToDate(emptyDate)))
-                continue;
-            }
+            // Room_Bookings has no day_count column (reading it threw and emptied the page): a booking keeps its bed on any "free on" date
             if(Util.isNotNull(req, "vypDate"))
               continue;
             ObjList obj = new ObjList();
@@ -277,6 +289,9 @@ public class CBooking {
             obj.setDate(Util.dateToString(rs.getDate("date_begin")));
             obj.setC1("");
             obj.setC2("bk");
+            // booked beds + 1 bed for the companion chosen in the "bron" field
+            obj.setC3("" + (Math.max(1, rs.getInt("bed_count")) + (rs.getInt("bron_id") > 0 ? 1 : 0)));
+            obj.setC4(rs.getInt("bron_id") > 0 ? "Y" : "");
             obj.setC10(room.getName() + " - " + room.getRoomType().getName());
             list.add(obj);
           }
@@ -299,8 +314,9 @@ public class CBooking {
       Long emptyKoyko = 0L;
       //
       List<Rooms> rooms = beanSession.getRooms();
+      java.util.Map<Integer, Long> roomCounts = ckb.utils.Counts.patientsByRoom("state != 'ARCH' And state != 'ZGV'");
       for(Rooms room: rooms) {
-        Long roomPatientCount = dPatient.getCount("From Patients Where state != 'ARCH' And state != 'ZGV' And room.id = " + room.getId());
+        Long roomPatientCount = ckb.utils.Counts.get(roomCounts, room.getId());
         if(roomPatientCount < room.getKoykoLimit() && room.getState().equals("A"))
           emptyKoyko += room.getKoykoLimit() - roomPatientCount;
       }
@@ -314,6 +330,7 @@ public class CBooking {
       model.addAttribute("lvs", beanUsers.getLvs());
       model.addAttribute("depts", beanSession.getDepts());
       model.addAttribute("countries", dCountry.getCounteries());
+      model.addAttribute("watcherTypes", dDict.getByTypeList("WATCHER_TYPE"));
       sForm.setSelectOptionModel(model, 1, "sex");
       //
     } catch (Exception e) {
@@ -333,13 +350,14 @@ public class CBooking {
     //region Услуги
     List<Rooms> list = beanSession.getRooms();
     List<Room> rooms = new ArrayList<>();
+    java.util.Map<Integer, Long> roomCounts = ckb.utils.Counts.patientsByRoom("state != 'ARCH' And state != 'ZGV'");
     for(Rooms room: list) {
       Room rr = new Room();
       rr.setId(room.getId());
       rr.setType(room.getRoomType().getName());
       rr.setStage(room.getFloor().getName());
       rr.setNum(room.getName());
-      Long count = dPatient.getCount("From Patients Where state != 'ARCH' And state != 'ZGV' And room.id = " + room.getId());
+      Long count = ckb.utils.Counts.get(roomCounts, room.getId());
       rr.setNext_tr(count + "");
       rr.setAccess(room.getAccess());
       rr.setLimit("" + room.getKoykoLimit());
@@ -388,16 +406,123 @@ public class CBooking {
     return json.toString();
   }
 
-  @RequestMapping("nurse.s")
-  protected String nurse(HttpServletRequest req, Model m) {
+  @RequestMapping(value = "archive.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String archiveBooking(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
     Session session = SessionUtil.getUser(req);
-    String filter = Util.get(req, "word");
-    session.setCurUrl("/booking/nurse.s?word=" + filter);
-    m.addAttribute("filter", filter);
-    //region Услуги
-    m.addAttribute("list", dRoomBooking.getList("From RoomBookings Where " + (filter != null ? " (lower(surname) like lower('%" + filter + "%') Or lower(name) like lower('%" + filter + "%')) And" : "") + " state = 'ENT' Order By date_begin"));
-    //endregion
-    return "med/booking/nurse";
+    try {
+      RoomBookings book = dRoomBooking.get(Util.getInt(req, "id"));
+      // same rule as for delete: only the author or the administrators
+      if(session.getUserId() != book.getCrBy() && session.getUserId() != 1 && session.getUserId() != 94) {
+        json.put("success", false);
+        json.put("msg", "\u0414\u0430\u043d\u043d\u0430\u044f\u0020\u0437\u0430\u043f\u0438\u0441\u044c\u0020\u0441\u043e\u0437\u0434\u0430\u043d\u0430\u0020\u0434\u0440\u0443\u0433\u0438\u043c\u0020\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c");
+        return json.toString();
+      }
+      book.setState("ARCH");
+      dRoomBooking.save(book);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  // Data for the "Forecast" and "Bed chart" tabs of koyki.s: rooms, patients (until the planned discharge) and bookings.
+  // Bookings have no length: a booking is counted for BOOKING_DEFAULT_DAYS days.
+  private static final int BOOKING_DEFAULT_DAYS = 10;
+
+  @RequestMapping("forecast.s")
+  @ResponseBody
+  protected String forecast(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    res.setContentType("application/json;charset=UTF-8");
+    JSONObject json = new JSONObject();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd");
+    try {
+      Date today = Util.stringToDate(Util.getCurDate());
+      JSONArray rooms = new JSONArray();
+      for(Rooms room: beanSession.getRooms()) {
+        JSONObject r = new JSONObject();
+        r.put("id", room.getId());
+        r.put("num", room.getName());
+        r.put("type", room.getRoomType() != null ? room.getRoomType().getName() : "");
+        r.put("floor", room.getFloor() != null ? room.getFloor().getName() : "");
+        r.put("dept", room.getDept() != null ? room.getDept().getId() : 0);
+        r.put("deptName", room.getDept() != null ? room.getDept().getName() : "");
+        r.put("limit", room.getKoykoLimit() == null ? 0 : room.getKoykoLimit());
+        r.put("state", room.getState());
+        rooms.put(r);
+      }
+      JSONArray items = new JSONArray();
+      conn = DB.getConnection();
+      ps = conn.prepareStatement("Select id, surname, name, yearnum, date_begin, day_count, room_id From Patients Where date_begin is not null And state != 'ARCH' And room_id is not null");
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Date from = rs.getDate("date_begin");
+        Date to = Util.dateAddDay(from, rs.getInt("day_count"));
+        // planned discharge has passed but the patient is still here: the bed is taken today
+        boolean over = !to.after(today);
+        if(over) to = Util.dateAddDay(today, 1);
+        JSONObject o = new JSONObject();
+        o.put("t", "cr");
+        o.put("id", rs.getInt("id"));
+        o.put("room", rs.getInt("room_id"));
+        o.put("fio", Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")));
+        o.put("ib", Util.nvl(rs.getString("yearnum")));
+        o.put("from", iso.format(from));
+        o.put("to", iso.format(to));
+        o.put("over", over);
+        items.put(o);
+        for(PatientWatchers w: dPatientWatcher.byPatient(rs.getInt("id"))) {
+          if(w.getCrOn() == null || w.getDayCount() == null) continue;
+          Date wTo = Util.dateAddDay(w.getCrOn(), w.getDayCount());
+          if(!wTo.after(today)) continue;
+          JSONObject x = new JSONObject();
+          x.put("t", "ux");
+          x.put("id", w.getId());
+          x.put("room", rs.getInt("room_id"));
+          x.put("fio", Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")));
+          x.put("from", iso.format(w.getCrOn()));
+          x.put("to", iso.format(wTo));
+          items.put(x);
+        }
+      }
+      DB.done(rs);
+      DB.done(ps);
+      ps = conn.prepareStatement("Select id, surname, name, date_begin, bed_count, bron_id, room_id From Room_Bookings Where state != 'ARCH' And date_begin >= '" + bookingMinDate() + "' And room_id is not null");
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Date from = rs.getDate("date_begin");
+        JSONObject o = new JSONObject();
+        o.put("t", "bk");
+        o.put("id", rs.getInt("id"));
+        o.put("room", rs.getInt("room_id"));
+        o.put("fio", Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")));
+        o.put("from", iso.format(from));
+        o.put("to", iso.format(Util.dateAddDay(from, BOOKING_DEFAULT_DAYS)));
+        o.put("beds", Math.max(1, rs.getInt("bed_count")) + (rs.getInt("bron_id") > 0 ? 1 : 0));
+        o.put("extra", rs.getInt("bron_id") > 0);
+        items.put(o);
+      }
+      json.put("today", iso.format(today));
+      json.put("defDays", BOOKING_DEFAULT_DAYS);
+      json.put("rooms", rooms);
+      json.put("items", items);
+      json.put("success", true);
+    } catch (Exception e) {
+      e.printStackTrace();
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    return json.toString();
   }
 
 

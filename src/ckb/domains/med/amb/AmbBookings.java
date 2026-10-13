@@ -167,4 +167,12 @@ public class AmbBookings extends GenId {
   public void setText(String text) {
     this.text = text;
   }
+
+  // ФИО без лишних пробелов при любом сохранении (регистрация, клиенты, бронь)
+  @PrePersist @PreUpdate
+  private void trimFio() {
+    surname = ckb.utils.Util.fioPart(surname);
+    name = ckb.utils.Util.fioPart(name);
+    middlename = ckb.utils.Util.fioPart(middlename);
+  }
 }

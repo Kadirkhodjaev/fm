@@ -20,7 +20,7 @@
 <script src="/res/bs/metisMenu/metisMenu.min.js"></script>
 <script src="/res/bs/morrisjs/morris.min.js"></script>
 <script src="/res/bs/sb_admin/js/sb-admin-2.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <script src="/res/editor/nicEdit.js" type="text/javascript"></script>
 <script src="/res/tinymce/jquery-te-1.4.0.js" type="text/javascript"></script>
 
@@ -65,7 +65,7 @@
     ${patient.surname} ${patient.name} ${patient.middlename}
     <ul class="pagination" style="float:right; margin-top:-5px">
       <c:if test="${curUser == service.worker.id}">
-        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="serviceSave()"><i title="Сохранить" class="fa fa-save"></i> Сохранить</a></li>
+        <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="serviceSave()"><i title="Сохранить" class="fa fa-floppy-o"></i> Сохранить</a></li>
       </c:if>
       <c:if test="${service.result > 0}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="setPrintPage()"><i title="Печать" class="fa fa-print"></i> Печать</a></li>
@@ -73,7 +73,7 @@
       <c:if test="${service.result > 0 && service.state == 'PAID'}">
         <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="confirmResult()"><i title="Подтвердить" class="fa fa-check"></i> Подтвердить</a></li>
       </c:if>
-      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="parent.openMainPage('/amb/home.s', true)"><i title="Назад" class="fa fa-backward"></i> Назад</a></li>
+      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="parent.openMainPage('/amb/home.s', true)"><i title="Назад" class="fa fa-arrow-left"></i> Назад</a></li>
     </ul>
   </div>
   <div class="panel-body">

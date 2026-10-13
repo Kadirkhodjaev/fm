@@ -6,7 +6,7 @@
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <script src="/res/datepicker/datetimepicker_css.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <link href="/res/choosen/chosen.min.css" rel="stylesheet">
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 <script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
@@ -268,8 +268,7 @@
     });
   });
   $('#btn-del').click(() => {
-    if(confirm('Вы действительно хотите удалить запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить запись?', function () { $.ajax({
         url: '/ambs/del.s',
         method: 'post',
         data: '',
@@ -279,11 +278,10 @@
           if(res.success)
             setPage('/ambs/reg.s');
         }
-      });
+      }); });
   });
   $('#btn-fizio').click(() => {
-    if(confirm('Вы действительно хотите отправить на физиотерапию?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите отправить на физиотерапию?', function () { $.ajax({
         url: '/ambs/fizio.s',
         method: 'post',
         data: '',
@@ -293,11 +291,10 @@
           if(res.success)
             setPage('/ambs/reg.s?id=${patient.id}');
         }
-      });
+      }); });
   });
   $('#btn-treatment').click(() => {
-    if(confirm('Вы действительно хотите назначить Амбулатовное лечение?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите назначить Амбулатовное лечение?', function () { $.ajax({
         url: '/ambs/treatment.s',
         method: 'post',
         data: '',
@@ -307,10 +304,10 @@
           if(res.success)
             setPage('/ambs/reg.s?id=${patient.id}');
         }
-      });
+      }); });
   });
   function patientConfirm(isConfirm) {
-    if (confirm(isConfirm ? 'Вы действительно хотите отправить пациента к оплате?' : 'Вы действительно хотите архивировать данные?')) {
+    FmsConfirm(isConfirm ? 'Вы действительно хотите отправить пациента к оплате?' : 'Вы действительно хотите архивировать данные?', function () {
       $.ajax({
         url: '/ambs/confirm.s',
         method: 'post',
@@ -320,7 +317,7 @@
           if (res.success) setPage('/ambs/reg.s');
         }
       });
-    }
+    });
   }
   //region Client Block
   $('input[name=client_name]').keyup( () => {

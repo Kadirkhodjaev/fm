@@ -17,17 +17,15 @@
         <cron-expression>0 0 0 ? * *</cron-expression>
       </cron>
     </trigger>
-  </schedule>
-  <schedule>
     <job>
-      <name>ApiSchedule</name>
-      <job-class>ckb.utils.ApiSchedule</job-class>
+      <name>TgJob</name>
+      <job-class>ckb.utils.tg.TgJob</job-class>
     </job>
     <trigger>
       <cron>
-        <name>ApiSchedule</name>
-        <job-name>ApiSchedule</job-name>
-        <cron-expression>0/10 * * 1/1 * ? *</cron-expression>
+        <name>TgJob</name>
+        <job-name>TgJob</job-name>
+        <cron-expression>0/30 * * ? * *</cron-expression>
       </cron>
     </trigger>
   </schedule>

@@ -6,7 +6,7 @@
   <div style="padding:10px; font-weight: bold; text-align: center">
       ${main.id} - ${main.drug.name}
   </div>
-  <table class="table table-striped table-bordered table-hover grid dataTable hand">
+  <table class="fm-grid">
     <tr>
       <td class="center bold">Приход</td>
       <td class="center bold">Расход</td>
@@ -21,7 +21,7 @@
     </tr>
   </table>
   <div>Детализация по документам</div>
-  <table class="table table-striped table-bordered table-hover grid dataTable hand">
+  <table class="fm-grid">
     <tr>
       <td class="center bold">#</td>
       <td class="center bold">Документ</td>
@@ -46,7 +46,7 @@
   <div style="padding:10px; font-weight: bold; text-align: center">
       ${main.drug.name} (Приход: №${main.outRow.doc.regNum} от <fmt:formatDate pattern = "dd.MM.yyyy" value = "${main.outRow.doc.regDate}" />)
   </div>
-  <table class="table table-striped table-bordered table-hover grid dataTable hand">
+  <table class="fm-grid">
     <tr>
       <td class="center bold">Приход</td>
       <td class="center bold">Расход</td>
@@ -62,7 +62,7 @@
   </table>
   <c:if test="${fn:length(dateRows) > 0}">
     <div>Расход</div>
-    <table class="table table-striped table-bordered table-hover grid dataTable hand">
+    <table class="fm-grid">
       <tr>
         <td class="center bold">#</td>
         <td class="center bold">ID</td>
@@ -78,7 +78,7 @@
           <td class="center">${drug.id}</td>
           <td class="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${drug.doc.date}" /></td>
           <td class="center">${drug.rasxod}</td>
-          <td class="center"><button class="btn btn-danger btn-sm" onclick="deleteRow('date', ${drug.id}, ${main.id})"><b class="fa fa-minus"></b></button></td>
+          <td class="center"><button type="button" class="fm-act danger" title="Удалить" onclick="deleteRow('date', ${drug.id}, ${main.id})"><i class="fa fa-trash-o"></i></button></td>
         </tr>
       </c:forEach>
       <tr>
@@ -89,7 +89,7 @@
   </c:if>
   <c:if test="${fn:length(transfers) > 0}">
     <div>Перевод</div>
-    <table class="table table-striped table-bordered table-hover grid dataTable hand">
+    <table class="fm-grid">
       <tr>
         <td class="center bold">#</td>
         <td class="center bold">ID</td>
@@ -114,7 +114,7 @@
   </c:if>
   <c:if test="${fn:length(datePatientRows) > 0}">
     <div>Стационар</div>
-    <table class="table table-striped table-bordered table-hover grid dataTable hand">
+    <table class="fm-grid">
       <tr>
         <td class="center bold">#</td>
         <td class="center bold">ID</td>
@@ -132,7 +132,7 @@
           <td class="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${drug.doc.date}" /></td>
           <td>${drug.patient.surname} ${drug.patient.name} ${drug.patient.middlename}</td>
           <td class="center">${drug.rasxod}</td>
-          <td class="center"><button class="btn btn-danger btn-sm" onclick="deleteRow('patient', ${drug.id}, ${main.id})"><b class="fa fa-minus"></b></button></td>
+          <td class="center"><button type="button" class="fm-act danger" title="Удалить" onclick="deleteRow('patient', ${drug.id}, ${main.id})"><i class="fa fa-trash-o"></i></button></td>
         </tr>
       </c:forEach>
       <tr>

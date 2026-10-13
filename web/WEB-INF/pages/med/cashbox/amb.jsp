@@ -4,13 +4,11 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<link href="/res/css/styles.css" rel="stylesheet">
 <script>
   var totalSum = +Number(${ndsTotal});
   function delService(id, state) {
     if (state == 'PAID') {
-      if (confirm('Возврат денег?')) {
-        var msg = prompt('Причина возврата денег');
+      FmsPrompt('Возврат денег за услугу. Укажите причину возврата:', function (msg) {
         if (msg != null && msg.length > 0) {
           $.ajax({
             url: '/amb/delSer.s',
@@ -20,13 +18,13 @@
             success: function (res) {
               if (res.success) {
                 setPage('/cashbox/amb.s?id=${patient.id}');
-              }
+              } else FmsToast.show(res.msg || 'Не удалось выполнить', 'err');
             }
           });
         }
-      }
+      }, {input: 'Причина возврата', ok: 'Вернуть деньги', danger: true});
     } else {
-      if (confirm('Вы действительно хотите удалить?')) {
+      FmsConfirm('Вы действительно хотите удалить?', function () {
         $.ajax({
           url: '/amb/delSer.s',
           method: 'post',
@@ -35,10 +33,10 @@
           success: function (res) {
             if (res.success) {
               setPage('/cashbox/amb.s?id=${patient.id}');
-            }
+            } else FmsToast.show(res.msg || 'Не удалось выполнить', 'err');
           }
         });
-      }
+      });
     }
   }
   function printCheck(id) {
@@ -424,7 +422,7 @@
           <li class="${serviceTotalSum > 0 ? '' : 'active'}"><a href="#pager" onclick="setPayType('ret')" data-toggle="tab" aria-expanded="false"><i class="fa fa-undo"></i>&nbsp; Возврат</a></li>
         </c:if>
         <c:if test="${serviceTotalSum > 0}">
-          <li class=""><a href="#discount" onclick="setPayType('discount')" data-toggle="tab" aria-expanded="false"><i class="fa fa-percent"></i>&nbsp; Скидки</a></li>
+          <li class=""><a href="#discount" onclick="setPayType('discount')" data-toggle="tab" aria-expanded="false"><i class="fa fa-tags"></i>&nbsp; Скидки</a></li>
         </c:if>
       </ul>
 
@@ -497,7 +495,7 @@
           <span class="hint">Отметьте способы оплаты и введите суммы. «Рассчитать» заполнит оставшийся способ автоматически.</span>
           <button type="button" class="ab" id="discount_add" style="display:none" onclick="addEditDiscount(0); return false"><i class="fa fa-plus"></i> Добавить скидку</button>
           <button type="button" class="ab" onclick="calcTotal(); return false;"><i class="fa fa-calculator"></i> Рассчитать</button>
-          <button type="button" class="ab primary" onclick="saveForm(); return false;"><i class="fa fa-save"></i> Провести</button>
+          <button type="button" class="ab primary" onclick="saveForm(); return false;"><i class="fa fa-check"></i> Провести</button>
         </div>
       </c:if>
     </div>
@@ -511,7 +509,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel"><i class="fa fa-percent"></i> Скидка</h4>
+        <h4 class="modal-title" id="myModalLabel"><i class="fa fa-tags"></i> Скидка</h4>
       </div>
       <div class="modal-body">
         <form id="addEditForm" name="addEditForm">
@@ -528,7 +526,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="ab" id="close-modal" data-dismiss="modal">Закрыть</button>
-        <button type="button" class="ab primary" onclick="saveDiscount()"><i class="fa fa-save"></i> Сохранить</button>
+        <button type="button" class="ab primary" onclick="saveDiscount()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
   </div>
@@ -578,7 +576,7 @@
     if (cOnline.checked) checkedCount++;
     if (cCash.checked) checkedCount++;
     if (valueCount + 1 !== checkedCount) {
-      alert('Есть не заполненные поля');
+      FmsToast.show('Есть не заполненные поля', 'err');
       return;
     }
     if (cCard.checked && card.value === '') card.value = totalSum - sum;
@@ -607,7 +605,7 @@
       if(payType !== 'pay') {
         if(sum > paidSum) {
           if (elem != null) elem.value = 0;
-          alert('Итоговая сумма возврата не может быть больше оплаченной!');
+          FmsToast.show('Итоговая сумма возврата не может быть больше оплаченной!', 'err');
           return;
         }
       }
@@ -616,14 +614,14 @@
         if (elem != null) {
           elem.value = 0;
         }
-        alert('ИТОГО не может быть больше суммы к оплате');
+        FmsToast.show('ИТОГО не может быть больше суммы к оплате', 'err');
         total.style.borderColor = '#D7182E';
         total.style.color = '#D7182E';
         total.title = 'Сумма оплаты больше ожидаемого';
       }
       document.getElementById("totalInput").value = sum;
     } catch (e) {
-      alert('Проверьте правильность ввода цифр');
+      FmsToast.show('Проверьте правильность ввода цифр', 'err');
       document.getElementById("totalInput").value = '0';
     }
   }
@@ -639,7 +637,7 @@
     if (transfer.value !== '') {sum += parseFloat(transfer.value); params += 'transfer=' + transfer.value + '&';}
     if (online.value !== '') {sum += parseFloat(online.value); params += 'online=' + online.value + '&';}
     if (payType === 'pay' && totalSum !== sum) {
-      alert('Сумма неверна. Проверьте итоговую сумму');
+      FmsToast.show('Сумма неверна. Проверьте итоговую сумму', 'err');
       return;
     }
     $.ajax({
@@ -649,14 +647,14 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/amb.s?id=${patient.id}');
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
@@ -682,7 +680,7 @@
             $('#addEditForm *[name=summ]').val(res.summ);
             $('#addEditForm *[name=text]').val(res.text);
           } else {
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
           }
         }
       });
@@ -692,7 +690,7 @@
     try {
       var discountSum = parseFloat($('#addEditForm *[name=summ]').val());
       if(discountSum + discountSumm > totalSum) {
-        alert('Сумма скидки не может превышать сумму к оплате');
+        FmsToast.show('Сумма скидки не может превышать сумму к оплате', 'err');
         return;
       }
       $.ajax({
@@ -703,22 +701,22 @@
         success: function (json) {
           if (json.success) {
             $('#close-modal').click();
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/cashbox/amb.s?id=${patient.id}');
           } else {
-            alert(json.msg)
+            FmsToast.show(json.msg, 'err')
           }
         },
         error: function (data, err) {
-          alert(err);
+          FmsToast.show('Ошибка: ' + err, 'err');
         }
       });
     } catch (e) {
-      alert('Проверьте правильность ввода');
+      FmsToast.show('Проверьте правильность ввода', 'err');
     }
   }
   function delDiscount(id) {
-    if (!confirm('Удалить скидку?')) return;
+    FmsConfirm('Удалить скидку?', function () {
     $.ajax({
       url: '/cashbox/delDiscount.s',
       method: "post",
@@ -726,16 +724,17 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/amb.s?id=${patient.id}');
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
+  });
   }
   function setServicePayState(code, id) {
     $.ajax({
@@ -745,35 +744,34 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/amb.s?id=${patient.id}');
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
   function delCashOper(id) {
-    if(confirm('Вы действительно хотите удалить оплату?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить оплату?', function () { $.ajax({
         url: '/cashbox/amb/delPay.s',
         method: "post",
         data: 'id=' + id,
         dataType: 'json',
         success: function (json) {
           if (json.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/cashbox/amb.s?id=${patient.id}');
           } else {
-            alert(json.msg)
+            FmsToast.show(json.msg, 'err')
           }
         },
         error: function (data, err) {
-          alert(err);
+          FmsToast.show('Ошибка: ' + err, 'err');
         }
-      });
+      }); });
   }
 </script>

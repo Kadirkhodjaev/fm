@@ -2,7 +2,7 @@
  * Шаблоны текста врача: окно выбора шаблона и окно сохранения (Bootstrap 3 modal).
  *   fmsTpl.pick('osm_c1', 'c1')  - выбрать шаблон поля osm_c1 и вставить в редактор c1
  *   fmsTpl.save('osm_c1', 'c1')  - сохранить текст редактора c1 как шаблон поля osm_c1
- * Нужны: jQuery, Bootstrap 3 (modal), редактор Quill (window.quills) и common.js (getEditorHtml / setEditorHtml).
+ * Нужны: jQuery, Bootstrap 3 (modal) и common.js. Поле — редактор Quill (window.quills, getEditorHtml / setEditorHtml) или обычный textarea/input (шаблон как простой текст).
  * Сервер: /templates/lv/list.s, /templates/lv/store.s, /templates/delete.s
  */
 (function ($) {
@@ -36,6 +36,9 @@
   }
   function fieldTitle(editorId) {
     try {
+      // новая сетка полей: подпись в <label> внутри блока .f
+      var lbl = $('#' + editorId).closest('.f').find('label').first();
+      if (lbl.length) return lbl.text().replace(/\s+/g, ' ').trim().replace(/:$/, '');
       var td = $('#' + editorId).closest('tr').prev().find('td').first().clone();
       td.find('a, div, input, button, ul').remove();
       var t = td.text().replace(/\s+/g, ' ').trim();
@@ -46,6 +49,27 @@
     if (typeof showMsg === 'function') showMsg(msg, ok); else alert(msg);
   }
   function editor(id) { return window.quills && window.quills[id]; }
+
+  // обычное поле (textarea / input) вместо редактора Quill: шаблон хранится и вставляется простым текстом
+  function plainField(id) {
+    var el = document.getElementById(id);
+    return !editor(id) && el && /^(TEXTAREA|INPUT)$/.test(el.tagName) ? el : null;
+  }
+  function isHtml(s) { return /<[a-z][\s\S]*>/i.test(s || ''); }
+  function toText(tpl) {
+    if (!isHtml(tpl)) return tpl || '';
+    var html = clean(tpl).replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '$&\n');
+    return $('<div/>').html(html).text().replace(/\n+$/, '');
+  }
+  function getValue(id) {
+    var el = plainField(id);
+    return el ? $.trim(el.value) ? el.value : '' : getEditorHtml(id);
+  }
+  function previewHtml(tpl) {
+    return isHtml(tpl) ? clean(tpl) : '<div style="white-space:pre-line">' + $('<div/>').text(tpl || '').html() + '</div>';
+  }
+  // запоминаем поля, в которых врач ставил курсор: туда шаблон вставляется в место курсора, иначе в конец
+  $(document).on('focusin.fmsTpl', 'textarea, input[type=text]', function () { $(this).data('fmsTplTouched', 1); });
 
   var css = [
     '#fmsTplPick .modal-body{padding:0}',
@@ -73,9 +97,9 @@
     '<div class="fts-left"><div class="fts-search"><input type="text" class="form-control" id="ftsSearch" placeholder="\u041f\u043e\u0438\u0441\u043a \u043f\u043e \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044e \u0438 \u0442\u0435\u043a\u0441\u0442\u0443" autocomplete="off"></div><div class="fts-list" id="ftsList"></div></div>' +
     '<div class="fts-right"><div id="ftsPreview" class="fts-empty">\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0448\u0430\u0431\u043b\u043e\u043d \u0441\u043b\u0435\u0432\u0430</div></div>' +
     '</div></div>' +
-    '<div class="modal-footer"><span class="hint">\u0414\u0432\u043e\u0439\u043d\u043e\u0439 \u043a\u043b\u0438\u043a \u043f\u043e \u0448\u0430\u0431\u043b\u043e\u043d\u0443 \u0432\u0441\u0442\u0430\u0432\u043b\u044f\u0435\u0442 \u0435\u0433\u043e \u0432 \u043c\u0435\u0441\u0442\u043e \u043a\u0443\u0440\u0441\u043e\u0440\u0430</span>' +
+    '<div class="modal-footer"><span class="hint">\u0414\u0432\u043e\u0439\u043d\u043e\u0439 \u043a\u043b\u0438\u043a: \u0448\u0430\u0431\u043b\u043e\u043d \u0437\u0430\u043c\u0435\u043d\u044f\u0435\u0442 \u0442\u0435\u043a\u0441\u0442 \u043f\u043e\u043b\u044f</span>' +
     '<button type="button" class="btn btn-default" data-dismiss="modal">\u0417\u0430\u043a\u0440\u044b\u0442\u044c</button> ' +
-    '<button type="button" class="btn btn-default" id="ftsReplace" disabled>\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0432\u0435\u0441\u044c \u0442\u0435\u043a\u0441\u0442</button> ' +
+    '<button type="button" class="btn btn-default" id="ftsReplace" disabled>\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a \u0442\u0435\u043a\u0441\u0442\u0443</button> ' +
     '<button type="button" class="btn btn-primary" id="ftsInsert" disabled><i class="fa fa-download"></i> \u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c</button></div>' +
     '</div></div></div>' +
     '<div class="modal fade" id="fmsTplSave" tabindex="-1" role="dialog"><div class="modal-dialog"><div class="modal-content">' +
@@ -97,10 +121,10 @@
     $('body').append(html);
     $('#ftsSearch').on('input', renderList);
     $('#ftsList').on('click', '.fts-item', function () { select($(this).data('id')); });
-    $('#ftsList').on('dblclick', '.fts-item', function () { select($(this).data('id')); insert(false); });
+    $('#ftsList').on('dblclick', '.fts-item', function () { select($(this).data('id')); insert(true); });
     $('#ftsList').on('click', '.del', function (e) { e.stopPropagation(); remove($(this).closest('.fts-item').data('id')); });
-    $('#ftsInsert').on('click', function () { insert(false); });
-    $('#ftsReplace').on('click', function () { insert(true); });
+    $('#ftsInsert').on('click', function () { insert(true); });
+    $('#ftsReplace').on('click', function () { insert(false); });
     $('#ftsSaveBtn').on('click', function () { store(false); });
     $('#ftsName').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); store(false); } });
     $('#fmsTplSave').on('shown.bs.modal', function () { $('#ftsName').focus().select(); });
@@ -112,7 +136,7 @@
     $.each(st.items, function (i, t) { if (t.id === id) st.sel = t; });
     $('#ftsList .fts-item').removeClass('sel').filter(function () { return $(this).data('id') === id; }).addClass('sel');
     if (st.sel) {
-      $('#ftsPreview').removeClass('fts-empty').html('<div style="font-weight:700;margin-bottom:8px">' + $('<div/>').text(st.sel.name).html() + '</div><div class="fts-preview">' + clean(st.sel.template) + '</div>');
+      $('#ftsPreview').removeClass('fts-empty').html('<div style="font-weight:700;margin-bottom:8px">' + $('<div/>').text(st.sel.name).html() + '</div><div class="fts-preview">' + previewHtml(st.sel.template) + '</div>');
     } else {
       $('#ftsPreview').addClass('fts-empty').text('\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0448\u0430\u0431\u043b\u043e\u043d \u0441\u043b\u0435\u0432\u0430');
     }
@@ -155,6 +179,24 @@
 
   function insert(replace) {
     if (!st.sel) return;
+    var el = plainField(st.editorId);
+    if (el) {
+      var text = toText(st.sel.template), v = el.value;
+      if (replace || !$.trim(v)) { el.value = text; }
+      else {
+        var touched = $(el).data('fmsTplTouched');
+        var s = touched ? el.selectionStart : v.length, e = touched ? el.selectionEnd : v.length;
+        var pre = v.substring(0, s);
+        if (s === v.length && pre && !/\s$/.test(pre)) pre += el.tagName === 'TEXTAREA' ? '\n' : ' ';
+        el.value = pre + text + v.substring(e);
+        try { el.selectionStart = el.selectionEnd = pre.length + text.length; } catch (ex) {}
+      }
+      if (el.maxLength > 0 && el.value.length > el.maxLength) toast('Текст длиннее ' + el.maxLength + ' символов, проверьте поле', false);
+      $(el).trigger('input').trigger('change');
+      $('#fmsTplPick').modal('hide');
+      el.focus();
+      return;
+    }
     var q = editor(st.editorId), html = clean(st.sel.template || '');
     if (!q) { setEditorHtml(st.editorId, html); }
     else if (replace) { q.setContents(q.clipboard.convert({html: html})); }
@@ -171,7 +213,8 @@
   function remove(id) {
     var t = null;
     $.each(st.items, function (i, x) { if (x.id === id) t = x; });
-    if (!t || !confirm('\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0448\u0430\u0431\u043b\u043e\u043d \u00ab' + (t.name || '') + '\u00bb?')) return;
+    if (!t) return;
+    FmsConfirm('\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0448\u0430\u0431\u043b\u043e\u043d \u00ab' + (t.name || '') + '\u00bb?', function () {
     var code = prompt('\u041a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f');
     if (code === null || code === '') return;
     $.ajax({
@@ -179,6 +222,7 @@
       data: {id: id, pas: code},
       success: function (res) { toast(res.msg, res.msg && res.msg.indexOf('\u0443\u0434\u0430\u043b\u0435\u043d') !== -1); load(); }
     });
+  });
   }
 
   function store(overwrite) {
@@ -188,11 +232,11 @@
     $('#ftsSaveBtn').prop('disabled', true);
     $.ajax({
       url: '/templates/lv/store.s', method: 'post', dataType: 'json',
-      data: {field: st.field, name: name, template: getEditorHtml(st.editorId), overwrite: overwrite ? 'Y' : 'N'},
+      data: {field: st.field, name: name, template: getValue(st.editorId), overwrite: overwrite ? 'Y' : 'N'},
       success: function (res) {
         if (res.success) { $('#fmsTplSave').modal('hide'); toast(res.msg, true); }
         else if (res.exists) {
-          if (confirm('\u0428\u0430\u0431\u043b\u043e\u043d \u00ab' + name + '\u00bb \u0443\u0436\u0435 \u0435\u0441\u0442\u044c. \u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0435\u0433\u043e \u0442\u0435\u043a\u0441\u0442\u043e\u043c \u0438\u0437 \u043f\u043e\u043b\u044f?')) store(true);
+          FmsConfirm('\u0428\u0430\u0431\u043b\u043e\u043d \u00ab' + name + '\u00bb \u0443\u0436\u0435 \u0435\u0441\u0442\u044c. \u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0435\u0433\u043e \u0442\u0435\u043a\u0441\u0442\u043e\u043c \u0438\u0437 \u043f\u043e\u043b\u044f?', function () { store(true); });
         } else err.text(res.msg || '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c').show();
       },
       error: function () { err.text('\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0432\u044f\u0437\u0438 \u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c').show(); },
@@ -213,12 +257,12 @@
     },
     save: function (field, editorId) {
       build();
-      var html = getEditorHtml(editorId);
+      var html = getValue(editorId);
       st = {field: field, editorId: editorId, items: [], sel: null, range: null};
       if (!html) { toast('\u041f\u043e\u043b\u0435 \u043f\u0443\u0441\u0442\u043e\u0435: \u043d\u0435\u0447\u0435\u0433\u043e \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u0442\u044c', false); return; }
       var text = plain(html);
       $('#ftsName').val(text.substring(0, 50));
-      $('#ftsSavePreview').html(clean(html));
+      $('#ftsSavePreview').html(previewHtml(html));
       $('#ftsSaveErr').hide();
       $('#fmsTplSave .modal-title').text('\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043a\u0430\u043a \u0448\u0430\u0431\u043b\u043e\u043d' + (fieldTitle(editorId) ? ': ' + fieldTitle(editorId) : ''));
       $('#fmsTplSave').modal('show');

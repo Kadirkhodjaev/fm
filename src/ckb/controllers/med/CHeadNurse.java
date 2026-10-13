@@ -71,6 +71,12 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/head_nurse/")
 public class CHeadNurse {
 
+  /** Идентификатор из запроса только цифрами: подставляется в запрос, поэтому другие символы отбрасываются */
+  private static String idOr0(String v) {
+    String d = v == null ? "" : v.replaceAll("\\D", "");
+    return d.isEmpty() ? "0" : d;
+  }
+
   //region AUTOWIREDS
   @Autowired private DDrug dDrug;
   @Autowired private DHNPatient dhnPatient;
@@ -117,7 +123,7 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/out/patient.s");
     //
     String s_dr = session.getFilters("out_patient_direction", "0");
-    String dr = Util.get(req, "dr", s_dr);
+    String dr = idOr0(Util.get(req, "dr", s_dr));
     session.setFilters("out_patient_direction", dr);
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
@@ -173,10 +179,32 @@ public class CHeadNurse {
       if(Util.getInt(req, "id") > 0)
         model.addAttribute("drugs", dhnDrug.getList("From HNDrugs t Where t.drugCount - ifnull(t.rasxod, 0) > 0 And t.direction.id = " + obj.getDirection().getId() + " Order BY t.drug.name"));
       model.addAttribute("directions", dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId()));
-      model.addAttribute("rows", dhnDateRow.getList("From HNDatePatientRows Where doc.id = " + obj.getId()));
       List<PatientList> patients = new ArrayList<>();
       if(obj.getId() != 0) {
         List<HNDatePatients> list = dhnDatePatient.getList("From HNDatePatients Where date.id= " + obj.getId() + " Order By patient.surname");
+        // пациенты, по которым уже есть списание за день, и закрытые карточки: два запроса вместо двух на каждого пациента
+        Set<Integer> withRows = new HashSet<Integer>();
+        Map<Integer, String> closed = new HashMap<Integer, String>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+          conn = DB.getConnection();
+          ps = conn.prepareStatement("Select Distinct patient_id From HN_Date_Patient_Rows Where doc_id = ?");
+          ps.setInt(1, obj.getId());
+          rs = ps.executeQuery();
+          while (rs.next()) withRows.add(rs.getInt(1));
+          DB.done(rs);
+          DB.done(ps);
+          ps = conn.prepareStatement("Select c.patient_id, c.closed From HN_Patients c, HN_Date_Patients d Where d.date_id = ? And c.patient_id = d.patient_id");
+          ps.setInt(1, obj.getId());
+          rs = ps.executeQuery();
+          while (rs.next()) closed.put(rs.getInt(1), rs.getString(2));
+        } finally {
+          DB.done(rs);
+          DB.done(ps);
+          DB.done(conn);
+        }
         for(HNDatePatients pp: list) {
           Patients p = pp.getPatient();
           PatientList o = new PatientList();
@@ -186,7 +214,7 @@ public class CHeadNurse {
           o.setFio(p.getSurname() + " " + p.getName() + " " + p.getMiddlename());
           o.setDateBegin(Util.dateToString(p.getDateBegin()));
           o.setDateEnd(Util.dateToString(p.getDateEnd()));
-          o.setShowCheckbox(dhnDatePatientRow.getCount("From HNDatePatientRows Where patient.id = " + p.getId() + " And doc.id = " + obj.getId()) > 0);
+          o.setShowCheckbox(withRows.contains(p.getId()));
           if(p.getPalata() == null) {
             if(p.getDept() != null) {
               o.setOtdPal(p.getDept().getName());
@@ -198,11 +226,7 @@ public class CHeadNurse {
           } else {
             o.setOtdPal(p.getDept() != null ? p.getDept().getName() + "/" + p.getPalata() : "");
           }
-          try {
-            o.setMetka(dhnPatient.getObj("From HNPatients Where patient.id = " + p.getId()).getClosed());
-          } catch (Exception e) {
-            o.setMetka("N");
-          }
+          o.setMetka(closed.containsKey(p.getId()) && closed.get(p.getId()) != null ? closed.get(p.getId()) : "N");
           patients.add(o);
         }
       }
@@ -266,6 +290,11 @@ public class CHeadNurse {
     return json.toString();
   }
 
+  /** Свободный остаток партии на складе */
+  private static double hnFree(HNDrugs d) {
+    return (d.getDrugCount() == null ? 0 : d.getDrugCount()) - (d.getRasxod() == null ? 0 : d.getRasxod());
+  }
+
   @RequestMapping("out/patient/drugs.s")
   protected String outPatientDrugs(HttpServletRequest req, Model m) {
     Date minDate = dPatientDrugDate.minDate(Util.getInt(req, "id"));
@@ -286,11 +315,14 @@ public class CHeadNurse {
     Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     try {
-      double rasxod = Double.parseDouble(Util.get(req, "rasxod"));
+      double rasxod = Double.parseDouble(Util.get(req, "rasxod").replace(',', '.'));
       if(Util.isNull(req, "edit")) {
         HNDatePatientRows row = new HNDatePatientRows();
         row.setDrug(dhnDrug.get(Util.getInt(req, "id")));
         row.setDoc(dhnDate.get(Util.getInt(req, "doc")));
+        if(!"ENT".equals(row.getDoc().getState())) return Util.err(json, "Документ уже подтверждён");
+        if(rasxod <= 0) return Util.err(json, "Количество должно быть больше нуля");
+        if(rasxod > hnFree(row.getDrug()) + 0.000001) return Util.err(json, "Нельзя списать больше остатка (" + hnFree(row.getDrug()) + ")");
         row.setRasxod(rasxod);
         row.setDate(row.getDoc().getDate());
         row.setPatient(dPatient.get(Util.getInt(req, "patient")));
@@ -301,6 +333,8 @@ public class CHeadNurse {
         dhnDatePatientRow.save(row);
       } else {
         HNDatePatientRows row = dhnDatePatientRow.get(Util.getInt(req, "id"));
+        if(rasxod < 0) return Util.err(json, "Количество не может быть отрицательным");
+        if(rasxod - row.getRasxod() > hnFree(row.getDrug()) + 0.000001) return Util.err(json, "Нельзя списать больше остатка");
         sDrug.hndrug_rasxod(row.getDrug().getId(), rasxod - row.getRasxod());
         if(rasxod == 0) {
           dhnDatePatientRow.delete(row.getId());
@@ -325,7 +359,23 @@ public class CHeadNurse {
     try {
       //
       String[] ids = req.getParameterValues("ids");
+      HNDates doc = dhnDate.get(Util.getInt(req, "doc"));
+      if(!"ENT".equals(doc.getState())) return Util.err(json, "Документ уже подтверждён");
       if(ids != null) {
+        Map<Integer, Double> need = new HashMap<Integer, Double>();
+        for (String id : ids) {
+          String hid = Util.get(req, "drug_" + id);
+          String rasxod = Util.get(req, "drug_count_" + id);
+          if (hid == null || rasxod == null || hid.isEmpty() || rasxod.isEmpty()) continue;
+          double r = Double.parseDouble(rasxod.replace(',', '.'));
+          if (r < 0) return Util.err(json, "Количество не может быть отрицательным");
+          Integer h = Integer.parseInt(hid);
+          need.put(h, (need.containsKey(h) ? need.get(h) : 0) + r);
+        }
+        for (Integer h : need.keySet()) {
+          HNDrugs d = dhnDrug.get(h);
+          if (need.get(h) > hnFree(d) + 0.000001) return Util.err(json, "Нельзя списать больше остатка: " + d.getDrug().getName());
+        }
         for (String id : ids) {
           String hid = Util.get(req, "drug_" + id);
           String rasxod = Util.get(req, "drug_count_" + id);
@@ -451,7 +501,8 @@ public class CHeadNurse {
     PreparedStatement ps = null;
     ResultSet rs = null;
     try {
-      String dept = Util.get(req, "dept", "0");
+      String dept = Util.get(req, "dept", "0").replaceAll("[^0-9]", "");
+      if(dept.isEmpty()) dept = "0";
       conn = DB.getConnection();
       List<DrugDirectionDeps> deps = dDrugDirectionDep.getList("From DrugDirectionDeps Where direction.id = " + date.getDirection().getId());
       String depIds = "0,";
@@ -560,7 +611,11 @@ public class CHeadNurse {
     try {
       conn = DB.getConnection();
       ps = conn.prepareStatement(
-        "Select d.name, m.name measure, Sum(c.drugCount - c.rasxod) saldo, Sum(t.rasxod) summ From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And t.doc_id = ? Group By d.Name Order By d.name, m.name"
+        "Select d.name, m.name measure, Sum(t.rasxod) summ, " +
+          "       (Select Sum(c2.drugCount - ifnull(c2.rasxod, 0)) From HN_Drugs c2 Where c2.drug_id = d.id And c2.direction_id = h.direction_id) saldo " +
+          "  From Hn_Date_Patient_Rows t, HN_Drugs c, Drug_s_Names d, Drug_s_Measures m, HN_Dates h " +
+          " Where m.id = t.measure_id And t.drug_id = c.id And c.drug_id = d.id And h.id = t.doc_id And t.doc_id = ? " +
+          " Group By d.id, d.name, m.name, h.direction_id Order By d.name, m.name"
       );
       ps.setInt(1, Util.getInt(req, "id"));
       rs = ps.executeQuery();
@@ -627,7 +682,7 @@ public class CHeadNurse {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/out.s");
     String s_dr = session.getFilters("hn_out_direction", "0");
-    String dr = Util.get(req, "dr", s_dr);
+    String dr = idOr0(Util.get(req, "dr", s_dr));
     session.setFilters("hn_out_direction", dr);
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
     StringBuilder arr = new StringBuilder("(");
@@ -884,9 +939,8 @@ public class CHeadNurse {
     }
     arr.append("0)");
     //
-    List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.isEmpty() ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
+    List<Map<String, Object>> drugs = saldoRows(arr.toString(), filter, page_code.equals("saldo"));
     m.addAttribute("rows", drugs);
-    m.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
     m.addAttribute("receivers", lines);
     m.addAttribute("filter_direction", direction);
     m.addAttribute("filter_word", filter);
@@ -913,10 +967,62 @@ public class CHeadNurse {
     }
     arr.append("0)");
     //
-    List<HNDrugs> drugs = dhnDrug.getList("From HNDrugs Where " + (filter.isEmpty() ? "" : " Upper(drug.name) like '%" + filter.toUpperCase() + "%' And ") + " drugCount != 0 " + (page_code.equals("saldo") ? " And drugCount - ifnull(rasxod, 0) > 0" :"") + " And direction.id in " + arr + " Order By direction.id, drug.name");
+    List<Map<String, Object>> drugs = saldoRows(arr.toString(), filter, page_code.equals("saldo"));
     m.addAttribute("rows", drugs);
     m.addAttribute("header_title", "Остаток на " + Util.getCurDate() + " " + Util.getCurTime());
     return "/med/head_nurse/saldo/excel";
+  }
+
+  /**
+   * Остатки склада одним запросом (раньше Hibernate догружал склад, препарат, акт и партию отдельными запросами на каждую строку).
+   * dirs - "(1,2,0)" из идентификаторов складов пользователя; filter - часть названия препарата; onlySaldo - только с остатком
+   */
+  private List<Map<String, Object>> saldoRows(String dirs, String filter, boolean onlySaldo) {
+    List<Map<String, Object>> list = new ArrayList<>();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select h.id, d.id drug_id, dd.name direction, d.name drug, m.name measure, o.regNum, o.regDate, a.endDate, " +
+        "       IfNull(h.drugCount, 0) drugCount, IfNull(h.rasxod, 0) rasxod " +
+        "  From HN_Drugs h " +
+        "  Join Drug_s_Names d On d.id = h.drug_Id " +
+        "  Left Join Drug_s_Measures m On m.id = d.measure_Id " +
+        "  Left Join Drug_s_Directions dd On dd.id = h.direction_Id " +
+        "  Left Join Drug_Out_Rows r On r.id = h.outRow_Id " +
+        "  Left Join Drug_Outs o On o.id = r.doc_Id " +
+        "  Left Join Drug_Act_Drugs a On a.id = r.income_Id " +
+        " Where h.drugCount != 0 And h.direction_Id In " + dirs.replaceAll("[^0-9,()]", "") +
+        (onlySaldo ? " And h.drugCount - IfNull(h.rasxod, 0) > 0" : "") +
+        (filter == null || filter.isEmpty() ? "" : " And Upper(d.name) Like ?") +
+        " Order By h.direction_Id, d.name");
+      if(filter != null && !filter.isEmpty()) ps.setString(1, "%" + filter.toUpperCase() + "%");
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Map<String, Object> r = new HashMap<>();
+        r.put("id", rs.getInt("id"));
+        r.put("drugId", rs.getInt("drug_id"));
+        r.put("direction", rs.getString("direction"));
+        r.put("drug", rs.getString("drug"));
+        r.put("measure", rs.getString("measure"));
+        r.put("regNum", rs.getString("regNum"));
+        r.put("regDate", rs.getTimestamp("regDate"));
+        r.put("endDate", rs.getTimestamp("endDate"));
+        r.put("drugCount", rs.getDouble("drugCount"));
+        r.put("rasxod", rs.getDouble("rasxod"));
+        r.put("saldo", rs.getDouble("drugCount") - rs.getDouble("rasxod"));
+        list.add(r);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    return list;
   }
   //endregion
 
@@ -927,11 +1033,12 @@ public class CHeadNurse {
     session.setCurUrl("/head_nurse/incomes.s");
     //
     String s_dr = session.getFilters("income_direction", "0");
-    String dr = Util.get(req, "dr", s_dr);
+    String dr = idOr0(Util.get(req, "dr", s_dr));
     session.setFilters("income_direction", dr);
     //
     String s_ins_flag = session.getFilters("income_ins_flag", "0");
     String ins_flag = Util.get(req, "ins_flag", s_ins_flag);
+    if(!"Y".equals(ins_flag) && !"N".equals(ins_flag)) ins_flag = "0";
     session.setFilters("income_ins_flag", ins_flag);
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
@@ -959,17 +1066,15 @@ public class CHeadNurse {
     List<DrugOuts> acts = dDrugOut.getList("From DrugOuts Where direction.id in " + arr + " And date(regDate) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "' " + (!ins_flag.equals("0") ? " And insFlag = '" + ins_flag + "'" : "") + " Order By id Desc");
     List<ObjList> list = new ArrayList<>();
     //
+    // количество строк и сумма по всем заявкам одним запросом (раньше - два запроса на каждую заявку)
+    Map<Integer, double[]> totals = actTotals(acts);
     for(DrugOuts act : acts) {
       ObjList obj = new ObjList();
       obj.setIb(act.getId().toString());
       obj.setC1("№" + act.getRegNum() + " от " + Util.dateToString(act.getRegDate()));
-      obj.setC2(dDrugOutRow.getCount("From DrugOutRows Where doc.id = " + act.getId()).toString());
-      if(act.getId() != null) {
-        Double sum = dDrugOutRow.getActSum(act.getId());
-        obj.setC3("" + (sum == null ? 0 : sum));
-      } else {
-        obj.setC3("0");
-      }
+      double[] tt = totals.get(act.getId());
+      obj.setC2(tt == null ? "0" : String.valueOf((long) tt[0]));
+      obj.setC3("" + (tt == null ? 0 : tt[1]));
       obj.setC5(act.getState());
       if(act.getDirection() != null)
         obj.setC6(act.getDirection().getName());
@@ -992,6 +1097,30 @@ public class CHeadNurse {
     m.addAttribute("period_end", endDate);
     //
     return "/med/head_nurse/incomes/index";
+  }
+
+  /** Для списка заявок прихода: id заявки -> {строк, сумма} */
+  private Map<Integer, double[]> actTotals(List<DrugOuts> acts) {
+    Map<Integer, double[]> map = new HashMap<>();
+    if(acts == null || acts.isEmpty()) return map;
+    StringBuilder ids = new StringBuilder("0");
+    for(DrugOuts a : acts) if(a.getId() != null) ids.append(",").append(a.getId());
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement("Select doc_Id, Count(*), Sum(price * IfNull(drugCount, 0)) From Drug_Out_Rows Where doc_Id In (" + ids + ") Group By doc_Id");
+      rs = ps.executeQuery();
+      while (rs.next()) map.put(rs.getInt(1), new double[]{rs.getLong(2), rs.getDouble(3)});
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    return map;
   }
 
   @RequestMapping("incomes/save.s")
@@ -1187,7 +1316,7 @@ public class CHeadNurse {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/head_nurse/transfer.s");
     String s_dr = session.getFilters("trasfer_direction", "0");
-    String dr = Util.get(req, "dr", s_dr);
+    String dr = idOr0(Util.get(req, "dr", s_dr));
     session.setFilters("trasfer_direction", dr);
     //
     List<UserDrugLines> lines = dUserDrugLine.getList("From UserDrugLines Where user.id = " + session.getUserId() + (dr.equals("0") ? "" : " And direction.id = " + dr));
@@ -1379,6 +1508,7 @@ public class CHeadNurse {
     String setFilter = Util.get(req, "set");
     String filter = session.getFilters().get("hn_patient_filter");
     if(setFilter != null || filter == null || filter.equals("")) filter = Util.get(req, "filter", "").toUpperCase();
+    filter = filter.replaceAll("[^\\p{L}\\p{N} /-]", ""); // подставляется в запрос: только буквы, цифры, пробел, / и -
     HashMap<String, String> fl = session.getFilters();
     fl.put("hn_patient_filter", filter);
     session.setFilters(fl);
@@ -1532,6 +1662,9 @@ public class CHeadNurse {
   protected String totalPatientConfirm(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     try {
+      // повторное нажатие не создаёт второй итог по пациенту
+      if(dhnPatient.getCount("From HNPatients Where patient.id = " + Util.getInt(req, "id")) > 0)
+        return Util.err(json, "Итог по пациенту уже подтверждён");
       HNPatients hnPatient = new HNPatients();
       hnPatient.setPatient(dPatient.get(Util.getInt(req, "id")));
       hnPatient.setDateEnd(hnPatient.getPatient().getDateEnd());
@@ -1697,18 +1830,21 @@ public class CHeadNurse {
     session.setDateEnd(dh);
     List<NurseEats> list;
     if(session.getUserId() == 1)
-      list = dNurseEat.getList("From NurseEats Where date(actDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By Id Desc");
+      list = dNurseEat.getList("From NurseEats Where actDate >= '" + Util.dateDB(startDate) + "' And actDate < '" + dayAfterDB(endDate) + "' Order By Id Desc");
     else
-      list = dNurseEat.getList("From NurseEats Where date(actDate) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' And crBy.id = " + session.getUserId() + " Order By Id Desc");
+      list = dNurseEat.getList("From NurseEats Where actDate >= '" + Util.dateDB(startDate) + "' And actDate < '" + dayAfterDB(endDate) + "' And crBy.id = " + session.getUserId() + " Order By Id Desc");
     List<ObjList> objLists = new ArrayList<>();
+    // число пациентов и прочих порций по всем заявкам одним запросом (раньше - два запроса на каждую заявку)
+    Map<Integer, long[]> eatCounts = eatCounts(list);
     for(NurseEats l : list) {
       ObjList obj = new ObjList();
       obj.setIb(l.getId().toString());
       obj.setDate(Util.dateToString(l.getActDate()));
       obj.setFio(l.getMenuType().getName());
       obj.setC1(l.getState());
-      obj.setC2(dNurseEatPatient.getCount("From NurseEatPatients Where nurseEat.id = " + l.getId() + " And patient != null And patient.id > 0").toString());
-      obj.setC3(dNurseEatPatient.getCount("From NurseEatPatients Where nurseEat.id = " + l.getId() + " And patient = null").toString());
+      long[] ec = eatCounts.get(l.getId());
+      obj.setC2(String.valueOf(ec == null ? 0 : ec[0]));
+      obj.setC3(String.valueOf(ec == null ? 0 : ec[1]));
       obj.setC4(l.getDept() != null ? l.getDept().getName() : "");
       objLists.add(obj);
     }
@@ -1716,6 +1852,40 @@ public class CHeadNurse {
     model.addAttribute("period_start", startDate);
     model.addAttribute("period_end", endDate);
     return "med/head_nurse/eat/eat";
+  }
+
+  /** Для списка заявок питания: id заявки -> {порций пациентам, прочих порций} */
+  private Map<Integer, long[]> eatCounts(List<NurseEats> list) {
+    Map<Integer, long[]> map = new HashMap<>();
+    if(list == null || list.isEmpty()) return map;
+    StringBuilder ids = new StringBuilder("0");
+    for(NurseEats l : list) ids.append(",").append(l.getId());
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select nurse_eat_id, Sum(patient_id Is Not Null And patient_id > 0), Sum(patient_id Is Null) " +
+        "  From Nurse_Eat_Patients Where nurse_eat_id In (" + ids + ") Group By nurse_eat_id");
+      rs = ps.executeQuery();
+      while (rs.next()) map.put(rs.getInt(1), new long[]{rs.getLong(2), rs.getLong(3)});
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    return map;
+  }
+
+  /** Следующий день после даты dd.MM.yyyy в формате yyyy-MM-dd: для условий "дата < следующего дня" вместо date(поле) */
+  private static String dayAfterDB(String date) {
+    Calendar c = Calendar.getInstance();
+    c.setTime(Util.stringToDate(date));
+    c.add(Calendar.DATE, 1);
+    return new java.text.SimpleDateFormat("yyyy-MM-dd").format(c.getTime());
   }
 
   @RequestMapping(value = "eat/save.s", method = RequestMethod.POST)
@@ -2013,80 +2183,35 @@ public class CHeadNurse {
   }
   //endregion
 
-  //region PATIENT
-  @RequestMapping("patients.s")
-  protected String patients(HttpServletRequest req, Model m) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/head_nurse/patients.s");
-    String setFilter = Util.get(req, "set");
-    String filter = session.getFilters().get("hn_patient_filter");
-    if(setFilter != null || filter == null || filter.isEmpty()) filter = Util.get(req, "filter", "").toUpperCase();
-    Calendar start = Calendar.getInstance();
-    start.setTime(new Date());
-    start.add(Calendar.DATE, -4);
-    Calendar end = Calendar.getInstance();
-    end.setTime(new Date());
-    end.add(Calendar.DATE, 2);
-    //
-    String db = session.getDateBegin().get("hn_pat");
-    if(db == null) db = Util.dateToString(start.getTime());
-    String de = session.getDateEnd().get("hn_pat");
-    if(de == null) de = Util.dateToString(end.getTime());
-    //
-    String startDate = Util.get(req, "period_start", db);
-    String endDate = Util.get(req, "period_end", de);
-    //
-    HashMap<String, String> dh = session.getDateBegin();
-    dh.put("hn_pat", startDate);
-    session.setDateBegin(dh);
-    dh = session.getDateEnd();
-    dh.put("hn_pat", endDate);
-    session.setDateEnd(dh);
-    HashMap<String, String> fl = session.getFilters();
-    fl.put("hn_patient_filter", filter);
-    session.setFilters(fl);
-    String where = "";
-    if(!filter.isEmpty()) {
-      where = " (Upper(patient.surname) like '%" + filter + "%' Or Upper(patient.name) like '%" + filter + "%' Or Upper(patient.middlename) like '%" + filter + "%' Or Upper(patient.yearNum) like '%" + filter + "%') And ";
-    }
-    //
-    m.addAttribute("list", dhnPatient.getList("From HNPatients t Where " + where + " (t.dateEnd = null Or t.dateEnd = '' Or date(t.dateEnd) Between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "') Order By t.id Desc"));
-    m.addAttribute("period_start", startDate);
-    m.addAttribute("period_end", endDate);
-    m.addAttribute("filter_word", filter);
-    //
-    return "/med/head_nurse/patients/index";
-  }
-
-  @RequestMapping("patient/info.s")
-  protected String addPatients(HttpServletRequest req, Model m) {
-    Session session = SessionUtil.getUser(req);
-    String id = Util.get(req, "id");
-    session.setCurUrl("/head_nurse/patient/info.s?id=" + id);
-    //
-    m.addAttribute("drugs", dDrug.getList("From Drugs Order By name"));
-    m.addAttribute("rows", dhnPatientDrug.getList("From HNPatientDrugs Where parent.id = " + id));
-    m.addAttribute("obj", dhnPatient.get(Integer.parseInt(id)));
-    //
-    return "/med/head_nurse/patients/addEdit";
-  }
-
   @RequestMapping(value = "patient/filter.s", method = RequestMethod.POST)
   @ResponseBody
   protected String patientFilter(HttpServletRequest req) throws JSONException {
     JSONObject json = new JSONObject();
     JSONArray list = new JSONArray();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
     try {
-      String fio = Util.get(req, "fio");
-      List<Patients> patients = dPatient.getList("From Patients Where lower(surname) like '%" + fio + "%' Or lower(name) like '%" + fio + "%' Or lower(middlename) like '%" + fio + "%'");
-      for(Patients pat: patients) {
+      // one query with only the needed columns, at most 100 rows, text passed as a parameter
+      String fio = "%" + Util.nvl(Util.get(req, "fio")).toLowerCase() + "%";
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select t.id, t.surname, t.name, t.middlename, t.Date_Begin, t.Date_End, t.birthyear, r.name room_name " +
+        "  From Patients t Left Join Rooms r On r.id = t.Room_Id " +
+        " Where lower(t.surname) Like ? Or lower(t.name) Like ? Or lower(t.middlename) Like ? " +
+        " Order By t.id Desc Limit 100");
+      ps.setString(1, fio);
+      ps.setString(2, fio);
+      ps.setString(3, fio);
+      rs = ps.executeQuery();
+      while (rs.next()) {
         JSONObject obj = new JSONObject();
-        obj.put("id", pat.getId());
-        obj.put("fio", pat.getSurname() + " " + pat.getName() + " " + pat.getMiddlename());
-        obj.put("start_date", Util.dateToString(pat.getDateBegin()));
-        obj.put("end_date", Util.dateToString(pat.getDateEnd()));
-        obj.put("birth_year", pat.getBirthyear());
-        obj.put("palata", pat.getRoom().getName());
+        obj.put("id", rs.getInt("id"));
+        obj.put("fio", rs.getString("surname") + " " + rs.getString("name") + " " + rs.getString("middlename"));
+        obj.put("start_date", Util.dateToString(rs.getDate("Date_Begin")));
+        obj.put("end_date", Util.dateToString(rs.getDate("Date_End")));
+        obj.put("birth_year", rs.getObject("birthyear") == null ? null : rs.getInt("birthyear"));
+        obj.put("palata", Util.nvl(rs.getString("room_name")));
         //
         list.put(obj);
       }
@@ -2094,6 +2219,10 @@ public class CHeadNurse {
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
     }
     json.put("patients", list);
     return json.toString();
@@ -2217,12 +2346,8 @@ public class CHeadNurse {
     Calendar cal = Calendar.getInstance();
     cal.setTime(new Date());
     cal.add(Calendar.DATE, -7);
-    List<DrugActs> acts = dDrugAct.list("From DrugActs Where regDate > '" + Util.dateDB(cal.getTime()) + "' Order By regDate Desc");
-    List<DrugActDrugs> drugs = new ArrayList<>();
-    for(DrugActs act: acts) {
-      List<DrugActDrugs> ds = dDrugActDrug.list("From DrugActDrugs Where act.id = " + act.getId());
-      drugs.addAll(ds);
-    }
+    // one query instead of a query per act
+    List<DrugActDrugs> drugs = dDrugActDrug.list("From DrugActDrugs Where act.regDate > '" + Util.dateDB(cal.getTime()) + "' Order By act.regDate Desc, act.id Desc");
     model.addAttribute("drugs", drugs);
     return "/med/head_nurse/new_income_drugs";
   }

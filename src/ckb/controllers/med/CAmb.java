@@ -27,6 +27,7 @@ import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.*;
+import ckb.utils.tg.TgAmbConsul;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,11 +126,11 @@ public class CAmb {
         if (session.getFilterFio().isEmpty())
           session.setFiltered(false);
         sql += " And ( " +
-          " Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
-          " Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          " Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          " Upper(concat(t.surname, ' ', t.name, ' ', t.middlename)) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          " t.id Like Upper('%" + session.getFilterFio() + "%') " +
+          " Upper(t.surname) like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " Upper(t.name) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " Upper(t.middlename) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " Upper(concat(t.surname, ' ', t.name, ' ', t.middlename)) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " t.id Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') " +
           ")";
       }
       sql += session.getAmbFilterSql();
@@ -213,11 +214,11 @@ public class CAmb {
         if (session.getFilterFio().isEmpty())
           session.setFiltered(false);
         sql += " And ( " +
-          " Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
-          " Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          " Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          " Upper(concat(t.surname, ' ', t.name, ' ', t.middlename)) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          " t.id Like Upper('%" + session.getFilterFio() + "%') " +
+          " Upper(t.surname) like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " Upper(t.name) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " Upper(t.middlename) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " Upper(concat(t.surname, ' ', t.name, ' ', t.middlename)) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          " t.id Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') " +
           ")";
       }
       sql += session.getAmbFilterSql();
@@ -355,6 +356,8 @@ public class CAmb {
     m.addAttribute("regId", Util.get(req, "reg"));
     m.addAttribute("done", isDone && session.getRoleId() == 15 && session.getCurPat() > 0 && !ss.isEmpty() && !p.getState().equals("ARCH"));
     m.addAttribute("drug_exist", dAmbDrug.getCount("From AmbDrugs Where patient.id = " + session.getCurPat()) > 0);
+    // отправлены ли пациенту результаты визита (PDF в Telegram, файл в приложении)
+    if(session.getCurPat() > 0) m.addAttribute("resSent", ckb.utils.tg.TgClientBot.resultSentInfo(session.getCurPat()));
     if(Util.isNotNull(req, "stat"))
       m.addAttribute("pat", dPatient.get(Util.getInt(req, "stat")));
     Util.makeMsg(req, m);
@@ -491,6 +494,7 @@ public class CAmb {
     try {
       AmbPatients pat = dAmbPatients.get(session.getCurPat());
       String[] ids = req.getParameterValues("ids");
+      List<AmbPatientServices> paidNow = new ArrayList<AmbPatientServices>();
       for(String id: ids) {
         AmbPatientServices ser = new AmbPatientServices();
         AmbServices s = dAmbServices.get(Integer.parseInt(id));
@@ -520,7 +524,10 @@ public class CAmb {
         ser.setAmb_repeat("N");
         ser.setWorker(dAmbServiceUsers.getFirstUser(Integer.parseInt(id)));
         dAmbPatientServices.save(ser);
+        if("PAID".equals(ser.getState())) paidNow.add(ser);
       }
+      // employees get services already paid: the consultant is notified right away
+      TgAmbConsul.send(pat, paidNow);
       if(pat.getEmp() != null) {
         if(pat.getState().equals("PRN")) {
           pat.setState("WORK");
@@ -623,17 +630,19 @@ public class CAmb {
     return "med/amb/patientServices";
   }
 
+  // услуга врача: нова€ страница (CAmbEntry.svc), старый бланк во фрейме больше не открываетс€
   @RequestMapping("/work.s")
   protected String patientService(HttpServletRequest req, Model m){
-    m.addAttribute("id", Util.getInt(req, "id"));
-    return "med/amb/workFrame";
+    return "redirect:/amb/svc.s?id=" + Util.getInt(req, "id");
   }
 
   @RequestMapping("/doWork.s")
   protected String doWork(HttpServletRequest req, Model m){
     Session session = SessionUtil.getUser(req);
     AmbPatientServices service = dAmbPatientServices.get(Util.getInt(req, "id"));
-    session.setCurUrl("/amb/work.s?id=" + service.getId());
+    // frag: бланк дл€ встраивани€ (страница услуги, пакетный ввод) Ч текуща€ страница и пациент сессии не мен€ютс€
+    boolean frag = !Req.isNull(req, "frag");
+    if(!frag) session.setCurUrl("/amb/work.s?id=" + service.getId());
     AmbPatients pat = dAmbPatients.get(service.getPatient());
     m.addAttribute("patient", pat);
     if(pat.getCounteryId() != null)
@@ -650,7 +659,7 @@ public class CAmb {
         results.setC1(dTemplate.getObj("From Templates where userId = " + session.getUserId() + " And field='" + service.getService().getId() + "_c1'").getTemplate());
         m.addAttribute("result", results);
       }
-    session.setCurPat(service.getPatient());
+    if(!frag) session.setCurPat(service.getPatient());
     m.addAttribute("curUser", session.getUserId());
     if(service.getService().getForm_id() != null && service.getService().getForm_id() > 0) {
       Forms form = dForm.get(service.getService().getForm_id());
@@ -659,8 +668,8 @@ public class CAmb {
       m.addAttribute("fields", sForm.createFields(service.getService().getForm_id(), service.getService().getId()));
       return "med/amb/forms/" + (form.getJsp() != null && !form.getJsp().isEmpty()  ? service.getService().getForm_id() : "standart");
     } else {
-      sAmb.setFields(m, service.getService().getId());
-      return "med/amb/work";
+      // текстовые услуги ввод€тс€ на странице услуги (стара€ страница work.jsp удалена)
+      return "redirect:/amb/svc.s?id=" + service.getId();
     }
   }
 
@@ -759,35 +768,53 @@ public class CAmb {
     return json.toString();
   }
 
+  // –езультаты пациента дл€ консультанта: готовые услуги по пор€дку подтверждени€ (название, дата, текст результата)
   @RequestMapping("/results.s")
   protected String ambResults(HttpServletRequest req, Model model) {
     AmbPatients pat = dAmbPatients.get(Util.getInt(req, "id"));
-    List<String> list = new ArrayList<>();
-    List<AmbPatientServices> rows = dAmbPatientServices.list("From AmbPatientServices t Where t.patient = " + pat.getId() + " And t.state = 'DONE' And service.form_id in (777, 888)");
+    int cur = Util.getInt(req, "cur", 0);
+    List<Map<String, Object>> list = new ArrayList<>();
+    List<AmbPatientServices> rows = dAmbPatientServices.list("From AmbPatientServices t Where t.patient = " + pat.getId() + " And t.state = 'DONE' Order By t.confDate, t.id");
     for(AmbPatientServices r : rows) {
-      if(r.getConfDate() != null && r.getResult() != null && r.getResult() > 0) {
-        AmbResults res = dAmbResults.get(r.getResult());
-        list.add("<b>" + r.getService().getName() + "</b>:" + res.getC1() + (r.getService().getForm_id() == 777 ? " " + r.getService().getEi() : "") + "; ");
-      }
-    }
-    rows = dAmbPatientServices.list("From AmbPatientServices t Where t.patient = " + pat.getId() + " And t.state = 'DONE' And service.form_id not in (777, 888)");
-    for(AmbPatientServices r : rows) {
-      if(r.getConfDate() != null && r.getResult() != null && r.getResult() > 0) {
-        //
-        AmbResults res = dAmbResults.get(r.getResult());
-        //
-        if(r.getService().getForm_id() == 999) {
-          list.add("<b>" + r.getService().getName()  + "</b>:" + res.getC1() + ";<br/>");
-        } else {
-          List<FormFields> fields = dFormField.getDescFiledsByForm(r.getService().getForm_id());
-          list.add("<b>" + r.getService().getName() + "</b>:" + getDFResult(res, fields) + "<br/>");
-        }
-      }
+      if(r.getId() == cur || r.getConfDate() == null || r.getResult() == null || r.getResult() <= 0) continue;
+      AmbResults res = dAmbResults.get(r.getResult());
+      if(res == null) continue;
+      Integer form = r.getService().getForm_id();
+      String text;
+      if(form != null && (form == 777 || form == 888))
+        text = Util.nvl(res.getC1()) + (form == 777 && !Util.nvl(r.getService().getEi()).isEmpty() ? " " + r.getService().getEi() : "");
+      else if(form != null && (form == 999 || form == 889))
+        text = Util.nvl(res.getC2()).isEmpty() ? Util.nvl(res.getC1()) : res.getC2();
+      else if(form == null || form == 0)
+        text = textResult(res, r.getService().getId());
+      else
+        text = getDFResult(res, dFormField.getDescFiledsByForm(form));
+      if(text.trim().isEmpty() || text.trim().equals("<br>")) continue;
+      Map<String, Object> m = new HashMap<>();
+      m.put("id", r.getId());
+      m.put("name", r.getService().getName());
+      m.put("date", r.getConfDate());
+      m.put("text", text);
+      m.put("lab", form != null && (form == 777 || form == 888));
+      list.add(m);
     }
     model.addAttribute("list", list);
     model.addAttribute("pat", pat);
-    //
     return "med/amb/results";
+  }
+
+  // текстова€ услуга: значени€ c1..c10 с названи€ми полей услуги
+  private String textResult(AmbResults res, int serviceId) {
+    List<AmbServiceFields> names = dAmbServiceFields.byService(serviceId);
+    String[] vals = {res.getC1(), res.getC2(), res.getC3(), res.getC4(), res.getC5(), res.getC6(), res.getC7(), res.getC8(), res.getC9(), res.getC10()};
+    StringBuilder sb = new StringBuilder();
+    for(int i = 0; i < vals.length; i++) {
+      String v = Util.nvl(vals[i]).trim();
+      if(v.isEmpty() || v.equals("undefined") || v.equals("<br>") || v.equals("<p><br></p>")) continue;
+      String n = i < names.size() ? Util.nvl(names.get(i).getName()).trim().replaceAll(":+$", "").trim() : "";
+      sb.append("<div>").append(n.isEmpty() || names.size() == 1 ? "" : "<i>" + n + "</i>: ").append(v).append("</div>");
+    }
+    return sb.toString();
   }
 
   private String makeCell(List<FormFields> cols, Integer pos, String val){

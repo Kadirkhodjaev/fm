@@ -4,19 +4,17 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/datepicker/datetimepicker_css.js"></script>
-<script src="/res/js/common.js"></script>
-<link href="/res/choosen/chosen.min.css" rel="stylesheet">
-<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
-<script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
-<link href="/res/css/styles.css" rel="stylesheet">
+<%-- jQuery, bootstrap и common.js уже подключены на главной странице: повторное подключение сбрасывало плагины и общие уведомления --%>
 <script>
-  $(".chzn-select").chosen();
-  $("#birthdate").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
+  // маска даты: плагин подгружается один раз
+  function arMask() { if ($.fn.mask) $(".date-format").mask("99.99.9999", {placeholder: "_"}); }
+  if ($.fn.mask) arMask(); else $.getScript('/res/js/jquery.maskedinput.js', arMask);
+  var arSaving = false;
   function doSave() {
+    if (arSaving) return;
+    if (!$.trim($('input[name=client_id]').val()) && !$('#bf input[name=id]').val()) { FmsToast.show('Выберите или добавьте клиента', 'err'); return; }
     if (checkForm($('#bf'))) {
+      arSaving = true;
       $.ajax({
         url: '/amb/reg.s',
         method: 'post',
@@ -24,15 +22,16 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            alert('Данные успешно сохранены');
+            openMsg(res);
             setPage('/amb/reg.s?id=' + res.id);
-          }
-        }
+          } else FmsToast.show(res.msg || 'Не удалось сохранить', 'err');
+        },
+        complete: function () { arSaving = false; }
       });
     }
   }
   function delPatient(){
-    if (confirm('Вы действительно хотите удалить данного пациента?')) {
+    FmsConfirm('Вы действительно хотите удалить данного пациента?', function () {
       $.ajax({
         url: '/amb/del.s',
         method: 'post',
@@ -44,14 +43,14 @@
           }
         }
       });
-    }
+    });
   }
   function setCountery(dom) {
     $('#regionId').toggle(dom.value == '199').val('');
     $('#region_id').toggle(dom.value == '199').val('');
   }
   function delService(id) {
-    if (confirm('Вы действительно хотите удалить?')) {
+    FmsConfirm('Вы действительно хотите удалить?', function () {
       $.ajax({
         url: '/amb/delSer.s',
         method: 'post',
@@ -63,10 +62,10 @@
           }
         }
       });
-    }
+    });
   }
   function patientConfirm() {
-    if (confirm('Отправить к оплате?')) {
+    FmsConfirm('Отправить к оплате?', function () {
       $.ajax({
         url: '/amb/confirm.s',
         method: 'post',
@@ -77,10 +76,10 @@
           }
         }
       });
-    }
+    });
   }
   function archiveIt() {
-    if (confirm('Отправить в архив?')) {
+    FmsConfirm('Отправить в архив?', function () {
       $.ajax({
         url: '/amb/confirm.s',
         method: 'post',
@@ -88,10 +87,10 @@
         success: function (res) {
           if (res.success) {
             setPage('/amb/home.s');
-          } else alert(res.msg);
+          } else FmsToast.show(res.msg, 'err');
         }
       });
-    }
+    });
   }
   function printService(id) {
     var ids='';
@@ -101,7 +100,7 @@
       }
     });
     if (ids.length == 0) {
-      alert('Выберите услугу для печати');
+      FmsToast.show('Выберите выполненные услуги для печати', 'info');
       return;
     }
     window.open('/amb/print.s?ids=' + ids);
@@ -116,7 +115,7 @@
     }
   }
   function fizioterapia() {
-    if (confirm('Назначить физиотерапию?')) {
+    FmsConfirm('Назначить физиотерапию?', function () {
       $.ajax({
         url: '/amb/fizio.s',
         method: 'post',
@@ -127,13 +126,13 @@
           }
         }
       });
-    }
+    });
   }
   function fizioterapiaPrint() {
     window.open('/amb/print.s?fizio=Y');
   }
   function reiterativeConsul(id) {
-    if (confirm('Повторная консультация в течение 5 дней?')) {
+    FmsConfirm('Повторная консультация в течение 5 дней?', function () {
       $.ajax({
         url: '/amb/reiterativeConsul.s',
         data: 'id=' + id,
@@ -145,7 +144,7 @@
           }
         }
       });
-    }
+    });
   }
   function openDrug() {
     $('#amb_drug').load('/amb/drug/view.s', () => {
@@ -207,9 +206,9 @@
       let tr = $('<tr cid="' + client.id + '"></tr>');
       tr.click(()=> {
         $('#client_filter').hide();
-        $('#client_buttons .btn-success').hide();
-        $('#client_buttons .btn-info').show();
-        $('#client_buttons .btn-danger').show();
+        $('#client_buttons .cb-add').hide();
+        $('#client_buttons .cb-view').show();
+        $('#client_buttons .cb-reset').show();
         setClient(tr.attr('cid'));
       });
       let fio = $('<td>' + client.name + '</td>');
@@ -230,10 +229,10 @@
     $('input[name=address]').val(client.address);
     $('input[name=tel]').val(client.tel);
   }
-  $('#client_buttons .btn-danger').click(()=> {
-    $('#client_buttons .btn-success').show();
-    $('#client_buttons .btn-info').hide();
-    $('#client_buttons .btn-danger').hide();
+  $('#client_buttons .cb-reset').click(()=> {
+    $('#client_buttons .cb-add').show();
+    $('#client_buttons .cb-view').hide();
+    $('#client_buttons .cb-reset').hide();
     clients = [];
     setClient(0);
   });
@@ -320,7 +319,6 @@
     $('#btn_client_view').click();
   }
   //endregion
-  $(".date-format").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
   function addArchClient(id) {
     $.ajax({
       url: '/amb/patient/get.s',
@@ -411,13 +409,16 @@
   .ab-ico.rep:hover { background:#EAF1FE; color:#2563EB; }
 
   /* Шапка пациента */
-  .ar-head { display:flex; align-items:center; gap:14px; padding:16px 18px; }
+  .ar-head { display:flex; align-items:center; gap:14px; padding:16px 18px; flex-wrap:wrap; }
   .ar-avatar { flex:none; width:48px; height:48px; border-radius:14px; background:var(--brand-soft); color:var(--brand);
     display:flex; align-items:center; justify-content:center; font-size:20px; }
-  .ar-title { min-width:0; }
+  .ar-title { min-width:0; flex:1 1 360px; }
   .ar-title h2 { margin:0 0 4px; font-size:20px; font-weight:700; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .ar-meta { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); }
-  .ar-actions { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .ar-meta { display:flex; align-items:center; gap:6px 10px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+  .ar-meta > * { white-space:nowrap; }
+  .st.ni::before { display:none; }
+  .ar-actions { margin-left:auto; display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .ar-actions .ab { height:34px; padding:0 11px; gap:6px; font-size:13px; white-space:nowrap; }
 
   .st { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
   .st::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; }
@@ -445,7 +446,7 @@
   .client-field { position:relative; display:flex; gap:8px; }
   .client-field .inp { flex:1; position:relative; }
   #client_buttons { display:flex; gap:6px; }
-  #client_buttons .btn { width:38px; height:38px; padding:0; border-radius:9px; }
+  #client_buttons .ab { height:38px; }
   #client_filter { top:calc(100% + 4px); left:0; z-index:50; max-height:280px; overflow-y:auto;
     border:1px solid var(--border); border-radius:10px; box-shadow:0 12px 30px rgba(20,25,40,.14); }
   #client_filter table { width:100%; border:0; }
@@ -553,7 +554,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="ab" id="close_client_info" data-dismiss="modal" aria-hidden="true">Закрыть</button>
-        <button type="button" class="ab primary" onclick="saveClient()"><i class="fa fa-save"></i> Сохранить</button>
+        <button type="button" class="ab primary" onclick="saveClient()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
   </div>
@@ -599,6 +600,9 @@
             <c:otherwise><span class="st st-gry">${patient.state}</span></c:otherwise>
           </c:choose>
           <c:if test="${patient.id != null}"><span>ID ${patient.id}</span></c:if>
+          <%-- результаты отправлены пациенту: PDF в Telegram и/или открыты в приложении --%>
+          <c:if test="${not empty resSent.sent}"><span class="st st-grn ni" title="PDF результатов отправлен в Telegram, раз: ${resSent.sentCount}${resSent.byRegistry ? ' (в том числе регистратурой)' : ''}"><i class="fa fa-paper-plane"></i> Результаты отправлены ${resSent.sent}</span></c:if>
+          <c:if test="${not empty resSent.opened}"><span class="st st-grn ni" title="Пациент открыл файл результатов в приложении (раз: ${resSent.openCount})"><i class="fa fa-mobile"></i> Открыты в приложении ${resSent.opened}</span></c:if>
         </div>
       </div>
 
@@ -606,13 +610,53 @@
         <c:if test="${pat != null}">
           <a href="#" class="ab" onclick="openMainPage('/${pat.state == 'ARCH' ? 'view' : 'lv'}/index.s?id=${pat.id}', false); return false"><i class="fa fa-folder-open-o"></i> ИБ №${pat.yearNum}</a>
         </c:if>
+        <c:if test="${patient.id != null && not empty patient.client}">
+          <%-- Telegram: кнопка появляется после проверки, зарегистрирован ли клиент в боте с номером из карточки --%>
+          <span id="tgAmbBtn" style="display:none"></span>
+          <script>
+            (function () {
+              var done = ${patient.state == 'DONE' || patient.state == 'ARCH'};
+              $.ajax({
+                url: '/clients/tg/status.s', method: 'post', dataType: 'json', data: {id: ${patient.client.id}, amb: ${patient.id}},
+                success: function (st) {
+                  if (!st.success || !st.enabled) return;
+                  var a = $('<a href="#" class="ab"></a>');
+                  if (st.linked) {
+                    a.html('<i class="fa fa-paper-plane" style="color:#229ED9"></i> Отправить результаты')
+                      .attr('title', 'Клиент зарегистрирован в Telegram (' + st.phone + '). Отправить PDF результатов этого визита');
+                    if (!done) a.css('opacity', .5).attr('title', 'Результаты можно отправить, когда услуги оказаны');
+                    a.on('click', function () {
+                      if (!done) return false;
+                      FmsConfirm('Отправить клиенту PDF результатов этого визита в Telegram?', function () {
+                        $.post('/clients/tg/result.s', {amb: ${patient.id}}, function (r) { openMedMsg(r.msg || (r.success ? 'Отправлено' : 'Не удалось отправить'), !!r.success); }, 'json');
+                      });
+                      return false;
+                    });
+                  } else if (st.invite) {
+                    a.html('<i class="fa fa-paper-plane" style="color:#229ED9"></i> Отправить ссылку в Telegram')
+                      .attr('title', st.noPhone ? 'В карточке неполный номер телефона' : 'Клиент ещё не зарегистрирован в боте: отправить ему ссылку с номера клиники');
+                    if (st.noPhone) a.css('opacity', .5);
+                    a.on('click', function () {
+                      if (st.noPhone) { FmsToast.show('В карточке неполный номер телефона. Исправьте номер и сохраните.', 'err'); return false; }
+                      FmsConfirm('Отправить клиенту ссылку на бот клиники в Telegram?', function () {
+                        $.post('/clients/tg/invite.s', {id: ${patient.client.id}}, function (r) { openMedMsg(r.msg || (r.success ? 'Отправлено' : 'Не удалось отправить'), !!r.success); }, 'json');
+                      });
+                      return false;
+                    });
+                  } else return;
+                  $('#tgAmbBtn').append(a).show();
+                }
+              });
+            })();
+          </script>
+        </c:if>
         <c:if test="${patient.id != null && patient.state != 'ENT' && sessionScope.ENV.roleId == 15}">
           <a href="#" class="ab" onclick="loadPdf(); return false;" title="Генерация PDF файла"><i class="fa fa-file-pdf-o"></i> Результаты PDF</a>
           <iframe name="pdffile" id="pdffile" src="about:blank" style="display: none"></iframe>
         </c:if>
         <c:if test="${patient.state != 'ARCH'}">
           <c:if test="${patient.fizio != 'Y' && patient.id != null}">
-            <a href="#" class="ab" onclick="fizioterapia(); return false;"><i class="fa fa-heartbeat"></i> Физиотерапия</a>
+            <a href="#" class="ab" onclick="fizioterapia(); return false;"><i class="fa fa-medkit"></i> Физиотерапия</a>
           </c:if>
           <c:if test="${patient.fizio == 'Y' && patient.id != null && fizio_user}">
             <a href="#" class="ab" onclick="fizioterapiaPrint(); return false;"><i class="fa fa-print"></i> Физиотерапия</a>
@@ -634,7 +678,7 @@
           <a href="#" class="ab" onclick="patientConfirm(); return false;"><i class="fa fa-check"></i> К оплате</a>
         </c:if>
         <c:if test="${patient.state != 'ARCH'}">
-          <a href="#" class="ab primary" onclick="doSave(); return false;"><i class="fa fa-save"></i> Сохранить</a>
+          <a href="#" class="ab primary" onclick="doSave(); return false;"><i class="fa fa-floppy-o"></i> Сохранить</a>
         </c:if>
       </div>
     </div>
@@ -665,12 +709,12 @@
               <c:if test="${patient.id == null || (patient.id > 0 && patient.state == 'ARCH' && patient.client == null)}">
                 <div id="client_buttons">
                   <c:if test="${patient.id == null}">
-                    <button type="button" class="btn btn-success btn-icon" onclick="addClient()" title="Новый клиент"><i class="fa fa-plus"></i></button>
-                    <button type="button" class="btn btn-info btn-icon display-none" onclick="clientView()" title="Реквизиты клиента"><i class="fa fa-user"></i></button>
-                    <button type="button" class="btn btn-danger btn-icon display-none" title="Сбросить клиента"><i class="fa fa-times"></i></button>
+                    <button type="button" class="ab cb-add" onclick="addClient()" title="Новый клиент"><i class="fa fa-plus"></i> Новый</button>
+                    <button type="button" class="ab cb-view" style="display:none" onclick="clientView()" title="Реквизиты клиента"><i class="fa fa-user"></i></button>
+                    <button type="button" class="ab danger cb-reset" style="display:none" title="Сбросить клиента"><i class="fa fa-times"></i></button>
                   </c:if>
                   <c:if test="${patient.id > 0 && patient.state == 'ARCH' && patient.client == null}">
-                    <button type="button" class="btn btn-success btn-icon" id="add_arch_client" onclick="addArchClient(${patient.id})" title="Привязать клиента"><i class="fa fa-save"></i></button>
+                    <button type="button" class="ab" id="add_arch_client" onclick="addArchClient(${patient.id})" title="Привязать клиента"><i class="fa fa-link"></i> Привязать клиента</button>
                   </c:if>
                 </div>
               </c:if>
@@ -727,11 +771,8 @@
               </c:if>
             </div>
           </c:if>
-          <div class="f s2">
-            <label>Мобильный (Telegram и SMS)</label>
-            <f:input path="tgNumber" type="number" class="form-control" maxlength="15" placeholder="998901234567"/>
-            <span class="hint">С кодом страны, без «+» и пробелов</span>
-          </div>
+          <%-- Поле "Мобильный (Telegram и SMS)" скрыто: Telegram теперь работает по полю "Телефон". Значение сохраняется как было --%>
+          <f:hidden path="tgNumber"/>
           <div class="f s2">
             <label>Тип скидки</label>
             <select class="form-control" name="discount_type">

@@ -43,8 +43,8 @@ public class CCoreAmb {
   @RequestMapping("index.s")
   protected String index(HttpServletRequest req) {
     Session session = SessionUtil.getUser(req);
-    session.setCurUrl("core/amb/index.s");
-    if(session.getCurSubUrl().isEmpty() || !session.getCurSubUrl().contains("core/amb")) session.setCurSubUrl("/core/amb/services.s");
+    session.setCurUrl("/core/amb/index.s");
+    if(session.getCurSubUrl().isEmpty() || !session.getCurSubUrl().contains("core/amb/")) session.setCurSubUrl("/core/amb/services.s");
     if(session.getCurSubUrl().contains("core/amb/service")) session.setCurSubUrl("core/amb/services.s");
     if(session.getCurSubUrl().contains("core/amb/group")) session.setCurSubUrl("core/amb/groups.s");
     if(session.getCurSubUrl().contains("core/amb/services")) {
@@ -63,13 +63,14 @@ public class CCoreAmb {
       fl.put("amb_service_word", page);
       session.setFilters(fl);
     }
-    return "admin/ambv2/index";
+    return "/core/amb/hub";
   }
 
   @RequestMapping("/services.s")
   protected String amb(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
-    session.setCurUrl("/core/amb/services.s");
+    session.setCurUrl("/core/amb/index.s");
+    session.setCurSubUrl("/core/amb/services.s");
     //
     String page = Util.get(request, "page");
     if(page == null) page = session.getDateBegin().get("admin_amb_index");
@@ -100,23 +101,22 @@ public class CCoreAmb {
     return "/core/amb/index";
   }
 
-  @RequestMapping("/service/save.s")
-  protected String addAmb(HttpServletRequest req, Model model) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/core/amb/service/save.s?id=" + Util.nvl(req, "id"));
+  /** Содержимое окна «Услуга» для списка услуг (core/amb/index.jsp) */
+  @RequestMapping("/service/modal.s")
+  protected String serviceModal(HttpServletRequest req, Model model) {
     model.addAttribute("groups", dAmbGroups.getAll());
     model.addAttribute("forms", dForm.getList("From Forms Where amb = 'Y'"));
     if(Util.isNotNull(req, "id")) {
       model.addAttribute("ser", dAmbServices.get(Util.getInt(req, "id")));
       model.addAttribute("rows", dAmbServiceFields.byService(Util.getInt(req, "id")));
       StringBuilder users = new StringBuilder();
-      for(AmbServiceUsers rw: dAmbServiceUsers.getList("From AmbServiceUsers Where service = " + Util.get(req, "id"))) {
+      for(AmbServiceUsers rw: dAmbServiceUsers.getList("From AmbServiceUsers Where service = " + Util.getInt(req, "id"))) {
         Users u = dUser.get(rw.getUser());
         users.append(u.getFio()).append("; ");
       }
       model.addAttribute("users", users.toString());
     }
-    return "/core/amb/add";
+    return "/core/amb/service_modal";
   }
 
   @RequestMapping(value = "/service/save.s", method = RequestMethod.POST)
@@ -167,18 +167,10 @@ public class CCoreAmb {
   @RequestMapping("/groups.s")
   protected String amb_groups(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
-    session.setCurUrl("/core/amb/groups.s");
+    session.setCurUrl("/core/amb/index.s");
+    session.setCurSubUrl("/core/amb/groups.s");
     model.addAttribute("groups", dAmbGroups.getAll());
     return "/core/amb/groups";
-  }
-
-  @RequestMapping("/group/save.s")
-  protected String addGroup(HttpServletRequest req, Model model) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/core/amb/group/save.s?id=" + Util.nvl(req, "id"));
-    if(Util.isNotNull(req, "id"))
-      model.addAttribute("ser", dAmbGroups.get(Util.getInt(req, "id")));
-    return "/core/amb/addGroup";
   }
 
   @RequestMapping(value = "/group/save.s", method = RequestMethod.POST)

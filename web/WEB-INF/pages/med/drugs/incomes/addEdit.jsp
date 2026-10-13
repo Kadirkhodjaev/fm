@@ -89,7 +89,6 @@
     <c:if test="${obj.state == 'O'}"><span class="ph-badge ok">Подтверждён</span></c:if>
     <c:if test="${obj.state == 'C'}"><span class="ph-badge ok">Закрыт</span></c:if>
     <span class="sp"></span>
-    <button class="ab" type="button" onclick="setPage('/drugs/acts.s')"><i class="fa fa-backward"></i> К списку</button>
     <c:if test="${obj.state == 'E' || obj.state == null}">
       <button class="ab" type="button" onclick="PH.saveAct()"><i class="fa fa-save"></i> Сохранить реквизиты</button>
     </c:if>
@@ -97,6 +96,7 @@
       <button class="ab danger" type="button" onclick="PH.act('delete')"><i class="fa fa-trash-o"></i> Удалить акт</button>
       <button class="ab primary" type="button" onclick="PH.confirmAct()"><i class="fa fa-check"></i> Подтвердить акт</button>
     </c:if>
+    <button class="ab" type="button" onclick="setPage('/drugs/acts.s')"><i class="fa fa-arrow-left"></i> Назад</button>
   </div>
 
   <%-- ===== Реквизиты акта ===== --%>
@@ -187,7 +187,8 @@
     </div>
 
     <%-- ===== Новый препарат / производитель в справочник ===== --%>
-    <div class="modal fade" id="phNewDrug" tabindex="-1" role="dialog" style="display:none">
+    <%@include file="/WEB-INF/pages/core/forms/modal_style.jsp"%>
+    <div class="modal fade mdn" id="phNewDrug" tabindex="-1" role="dialog" style="display:none">
       <div class="modal-dialog" style="width:460px; max-width:96vw">
         <div class="modal-content">
           <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">Новый препарат в справочник</h4></div>
@@ -213,13 +214,13 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-            <button type="button" class="btn btn-primary" onclick="PH.saveNewDrug()">Сохранить</button>
+            <button type="button" class="mdn-btn" id="close-modal" data-dismiss="modal">Закрыть</button>
+            <button type="button" class="mdn-btn primary" onclick="PH.saveNewDrug()">Сохранить</button>
           </div>
         </div>
       </div>
     </div>
-    <div class="modal fade" id="phNewMan" tabindex="-1" role="dialog" style="display:none">
+    <div class="modal fade mdn" id="phNewMan" tabindex="-1" role="dialog" style="display:none">
       <div class="modal-dialog" style="width:460px; max-width:96vw">
         <div class="modal-content">
           <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">Новый производитель</h4></div>
@@ -234,8 +235,8 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" id="close-modal1" data-dismiss="modal">Закрыть</button>
-            <button type="button" class="btn btn-primary" onclick="PH.saveNewMan()">Сохранить</button>
+            <button type="button" class="mdn-btn" id="close-modal1" data-dismiss="modal">Закрыть</button>
+            <button type="button" class="mdn-btn primary" onclick="PH.saveNewMan()">Сохранить</button>
           </div>
         </div>
       </div>
@@ -314,7 +315,8 @@
   </c:if>
 
   <%-- Редактирование цены и количества существующей позиции --%>
-  <div class="modal fade" tabindex="-1" id="editDrugModal" role="dialog" style="display: none;">
+  <%@include file="/WEB-INF/pages/core/forms/modal_style.jsp"%>
+  <div class="modal fade mdn" tabindex="-1" id="editDrugModal" role="dialog" style="display: none;">
     <div class="modal-dialog" style="width:480px; max-width:96vw">
       <div class="modal-content">
         <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -334,8 +336,8 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" id="edit-drug-close" data-dismiss="modal">Закрыть</button>
-          <button type="button" class="btn btn-primary" onclick="PH.saveEdit()">Сохранить</button>
+          <button type="button" class="mdn-btn" id="edit-drug-close" data-dismiss="modal">Закрыть</button>
+          <button type="button" class="mdn-btn primary" onclick="PH.saveEdit()"><i class="fa fa-check"></i> Сохранить</button>
         </div>
       </div>
     </div>
@@ -358,7 +360,7 @@
     function r2(n) { return Math.round(n * 100) / 100; }
     function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
     function fmt2(n) { return n.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
-    function msg(t, ok) { if (typeof showMsg === 'function') showMsg(t, ok); else alert(t); }
+    function msg(t, ok) { if (typeof showMsg === 'function') showMsg(t, ok); else FmsToast.show(t, 'err'); }
     function isoToRu(iso) { var a = iso.split('-'); return a[2] + '.' + a[1] + '.' + a[0]; }
     function parseRu(s) {
       var m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec($.trim(s));
@@ -512,13 +514,14 @@
     }
     function del(id) {
       var tr = $('#ph-grid tbody tr[data-id=' + id + ']');
-      if (!confirm('Удалить позицию «' + $.trim(tr.find('.t').first().text()) + '» из акта?')) return;
+      FmsConfirm('Удалить позицию «' + $.trim(tr.find('.t').first().text()) + '» из акта?', function () {
       $.ajax({
         url: '/drugs/act/drug/delete.s', method: 'post', data: 'id=' + id, dataType: 'json',
         success: function (res) {
           if (res.success) { tr.remove(); totals(); msg('Позиция удалена', true); } else msg(res.msg, false);
         }
       });
+    });
     }
 
     /* ---------- действия с актом ---------- */
@@ -533,7 +536,7 @@
       });
     }
     function act(action) {
-      if (!confirm(action === 'delete' ? 'Удалить акт целиком вместе со всеми позициями?' : 'Подтверждаете данное действие?')) return;
+      FmsConfirm(action === 'delete' ? 'Удалить акт целиком вместе со всеми позициями?' : 'Подтверждаете данное действие?', function () {
       $.ajax({
         url: '/drugs/act/action.s', method: 'post', data: 'code=' + action + '&id=' + actId, dataType: 'json',
         success: function (res) {
@@ -542,6 +545,7 @@
           } else msg(res.msg, false);
         }
       });
+    });
     }
     function confirmAct() {
       var gross = totals(), v = $('#recon-in').val();
@@ -549,16 +553,17 @@
       if (!n) { msg('В акте нет ни одной позиции', false); return; }
       var txt = 'Подтвердить акт? Позиций: ' + n + ', итого с НДС: ' + fmt2(gross) + '.\nПосле подтверждения препараты поступят на склад.';
       if ($.trim(v) !== '' && Math.abs(num(v) - gross) >= 1) txt = 'ВНИМАНИЕ: сумма по накладной (' + fmt2(num(v)) + ') не совпадает с итогом акта (' + fmt2(gross) + ').\n\n' + txt;
-      if (!confirm(txt)) return;
+      FmsConfirm(txt, function () {
       $.ajax({
         url: '/drugs/act/action.s', method: 'post', data: 'code=confirm&id=' + actId, dataType: 'json',
         success: function (res) { if (res.success) setPage('/drugs/act/addEdit.s?id=' + res.id); else msg(res.msg, false); }
       });
+    });
     }
 
     /* ---------- новый препарат / производитель ---------- */
     function saveNewDrug() {
-      if ($.trim($('#drug-name').val()) === '') { alert('Наименование не может быть пустым'); return; }
+      if ($.trim($('#drug-name').val()) === '') { FmsToast.show('Наименование не может быть пустым', 'err'); return; }
       $.ajax({
         url: '/drugs/dict/save.s', method: 'post', data: $('#new-drug-form').serialize(), dataType: 'json',
         success: function (res) {
@@ -566,12 +571,12 @@
             var item = {id: res.id, name: res.name, counter: 0, measure: '', hint: ''};
             drugs.push(item); pickDrug.setItems(drugs); pickDrug._pick(item);
             $('#close-modal').click(); $('#new-drug-form')[0].reset();
-          } else alert(res.msg);
+          } else FmsToast.show(res.msg, 'err');
         }
       });
     }
     function saveNewMan() {
-      if ($.trim($('#man-name').val()) === '') { alert('Наименование не может быть пустым'); return; }
+      if ($.trim($('#man-name').val()) === '') { FmsToast.show('Наименование не может быть пустым', 'err'); return; }
       $.ajax({
         url: '/drugs/dict/save.s', method: 'post', data: $('#new-man-form').serialize(), dataType: 'json',
         success: function (res) {
@@ -579,7 +584,7 @@
             var item = {id: res.id, name: res.name};
             mans.push(item); pickMan.setItems(mans); pickMan._pick(item);
             $('#close-modal1').click(); $('#new-man-form')[0].reset();
-          } else alert(res.msg);
+          } else FmsToast.show(res.msg, 'err');
         }
       });
     }

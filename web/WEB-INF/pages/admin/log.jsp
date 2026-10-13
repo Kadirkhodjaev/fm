@@ -1,92 +1,68 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<style>
-  table tr.selected {background: #eee}
-</style>
-<div class="panel panel-info">
-  <div class="panel-heading">
-    <table style="margin:0;width:100%">
-      <tr>
-        <td style="width:70px; font-weight:bold; vertical-align: middle">Протокол</td>
-        <td style="width:140px;padding:5px">
-          <input name="period_start" id="period_start" type="text" class="form-control datepicker" value="${period_start}"/>
-        </td>
-        <td style="width:10px;vertical-align: middle">
-          -
-        </td>
-        <td style="width:140px;padding:5px">
-          <input name="period_end" id="period_end" type="text" class="form-control datepicker" value="${period_end}"/>
-        </td>
-        <td style="vertical-align: middle">
-          <button onclick="setCashStat()" class="btn btn-success btn-sm">Поиск</button>
-        </td>
-        <td style="width:200px; vertical-align: middle; padding-right:10px">
-          <input type="text" class="form-control" value="${filterWord}" onkeyup="setIPFilter(this)" placeholder="Поиск по IP">
-        </td>
-        <td style="width:200px">
-          <select class="form-control" id="user_filter" onchange="setUserFilter()">
-            <option value="0">Все</option>
+<%-- Администрирование → Протокол входов пользователей --%>
+<%@include file="/WEB-INF/pages/med/mn/mn_style.jsp"%>
+<div class="fm-page fm-admin">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-history"></i></span>
+        <div>
+          <h2>Протокол</h2>
+          <span class="fm-count"><b id="lgShown">${fn:length(rows)}</b> из <b>${fn:length(rows)}</b> · входы за период</span>
+        </div>
+      </div>
+      <div class="mn-flt">
+        <input id="period_start" type="text" class="fm-in datepicker" value="${period_start}" autocomplete="off"/>
+        <span class="dash">—</span>
+        <input id="period_end" type="text" class="fm-in datepicker" value="${period_end}" autocomplete="off"/>
+        <div style="width:240px">
+          <select class="fm-in" id="lgUser" onchange="lgGo()">
+            <option value="0">Все пользователи</option>
             <c:forEach items="${users}" var="u">
               <option <c:if test="${u.id == user_id}">selected</c:if> value="${u.id}">${u.fio}</option>
             </c:forEach>
           </select>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <form id="room-form">
-    <div class="panel-body">
-      <div class="table-responsive">
-        <table class="miniGrid table table-striped table-bordered">
-          <thead>
-          <tr>
-            <th style="width:40px">#</th>
-            <th>Пользователь</th>
-            <th style="width:200px">IP</th>
-            <th style="width:200px">Дата и время</th>
-          </thead>
-          <tbody>
-          <c:forEach items="${rows}" var="s" varStatus="loop">
-            <tr>
-              <td class="center">${loop.index + 1}</td>
-              <td>${s.user.fio}</td>
-              <td class="center">${s.ip}</td>
-              <td class="center"><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${s.dateTime}"/></td>
-            </tr>
-          </c:forEach>
-          </tbody>
-        </table>
+        </div>
+        <input id="lgIp" type="text" class="fm-in" style="width:150px" value="${fn:escapeXml(filterWord)}" placeholder="IP адрес" autocomplete="off" onkeydown="if (event.keyCode == 13) lgGo()"/>
+        <button type="button" class="fm-btn" onclick="lgGo()"><i class="fa fa-search"></i>Показать</button>
       </div>
-      <!-- /.table-responsive -->
+      <span class="fm-spacer"></span>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="lgSearch" placeholder="Пользователь или IP" oninput="mnFilter('lg')" autocomplete="off"/>
+      </div>
+      <button type="button" class="fm-btn" onclick="mnExcel('lgTable', 'protokol')"><i class="fa fa-file-excel-o"></i>Excel</button>
     </div>
-  </form>
-  <!-- /.panel-body -->
+    <div class="fm-table-wrap">
+      <table class="mn" id="lgTable">
+        <thead>
+        <tr>
+          <th style="width:60px">#</th>
+          <th class="l">Пользователь</th>
+          <th style="width:200px">IP</th>
+          <th style="width:180px">Дата и время</th>
+        </tr>
+        </thead>
+        <tbody id="lgRows">
+        <c:forEach items="${rows}" var="s" varStatus="loop">
+          <tr data-s="${fn:escapeXml(s.user.fio)} ${fn:escapeXml(s.ip)}" onclick="mnSel(this)">
+            <td>${loop.index + 1}</td>
+            <td class="l">${s.user.fio}</td>
+            <td>${fn:escapeXml(s.ip)}</td>
+            <td><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${s.dateTime}"/></td>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
+      <div class="fm-empty" id="lgEmpty" style="display:${empty rows ? 'block' : 'none'}"><i class="fa fa-history"></i>Записей нет</div>
+    </div>
+  </div>
 </div>
 <script>
-  function setCashStat(){
-    var start = document.getElementById("period_start");
-    var end = document.getElementById("period_end");
-    setPage('/admin/log.s?period_start=' + start.value + '&period_end='  + end.value);
-  }
-  function setUserFilter() {
-    let start = document.getElementById("period_start");
-    let end = document.getElementById("period_end");
-    let user = document.getElementById("user_filter");
-    setPage('/admin/log.s?period_start=' + start.value + '&period_end=' + end.value + '&user=' + user.value);
-  }
-  function setIPFilter(dom) {
-    if(event.keyCode == 13) {
-      let start = document.getElementById("period_start");
-      let end = document.getElementById("period_end");
-      let user = document.getElementById("user_filter");
-      setPage('/admin/log.s?period_start=' + start.value + '&period_end=' + end.value + '&user=' + user.value + '&ip=' + dom.value);
-    }
+  function lgGo() {
+    mnPeriod('/admin/log.s', '&user=' + $('#lgUser').val() + '&ip=' + encodeURIComponent($.trim($('#lgIp').val())));
   }
 </script>

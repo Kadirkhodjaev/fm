@@ -30,12 +30,24 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Objects;
 
 @Controller
 @RequestMapping("/mn/")
 public class CMn {
+
+  /** Следующий день после даты dd.MM.yyyy в формате yyyy-MM-dd: условие "дата < следующего дня" вместо date(поле) */
+  private static String dayAfterDB(String date) {
+    Calendar c = Calendar.getInstance();
+    c.setTime(Util.stringToDate(date));
+    c.add(Calendar.DATE, 1);
+    return new java.text.SimpleDateFormat("yyyy-MM-dd").format(c.getTime());
+  }
+
 
   @Autowired private DKdoTypes dKdoType;
   @Autowired private DAmbGroup dAmbGroup;
@@ -366,65 +378,73 @@ public class CMn {
     String endDate = Util.get(req, "period_end", Util.getCurDate());
     try {
       cn = DB.getConnection();
-      List<Obj> kdoTypes = new ArrayList<>();
-      List<KdoTypes> types = dKdoType.getList("From KdoTypes Where state = 'A'");
-      for(KdoTypes type: types) {
+      // Раньше: для каждой услуги два подзапроса по lv_plans / Amb_Patient_Services с date(...) и запрос на каждую группу.
+      // Теперь: один сгруппированный запрос по стационару и один по амбулатории, раскладка по группам в Java.
+      String dFrom = Util.dateDB(startDate), dTo = dayAfterDB(endDate);
+      Map<Integer, Obj> byType = new LinkedHashMap<>();
+      for (KdoTypes type : dKdoType.getList("From KdoTypes Where state = 'A'")) {
         Obj obj = new Obj();
         obj.setFio(type.getName());
         obj.setPrice(0D);
-        ps = cn.prepareStatement(
-          "Select c.id kdo_id, c.name, " +
-            "  (Select Count(*) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "') counter, " +
-            "  ifnull((Select sum(t.price) From lv_plans t Where t.done_flag = 'Y' And t.conf_user is not null And t.kdo_id = c.id And date(t.result_date) between '" + Util.dateDB(startDate) + "' And '" + Util.dateDB(endDate) + "'), 0) total " +
-            "  From kdos c " +
-            " Where c.kdo_type = ? " +
-            "   And c.state = 'A'");
-        ps.setInt(1, type.getId());
-        ps.execute();
-        rs = ps.getResultSet();
-        List<ObjList> stats = new ArrayList<>();
-        while (rs.next()) {
-          ObjList row = new ObjList();
-          row.setC1(rs.getString("kdo_id"));
-          row.setC2(rs.getString("name"));
-          row.setC3(rs.getString("counter"));
-          row.setC4(rs.getString("total"));
-          stats.add(row);
-          obj.setPrice(obj.getPrice() + rs.getDouble("total"));
-        }
-        obj.setList(stats);
-        kdoTypes.add(obj);
+        obj.setList(new ArrayList<ObjList>());
+        byType.put(type.getId(), obj);
       }
-      m.addAttribute("rows", kdoTypes);
-      List<Obj> ambGroups = new ArrayList<>();
-      List<AmbGroups> groups = dAmbGroup.getAll();
-      for(AmbGroups group: groups) {
+      ps = cn.prepareStatement(
+        "Select c.kdo_type, c.id kdo_id, c.name, IfNull(a.cnt, 0) counter, IfNull(a.total, 0) total " +
+        "  From kdos c Left Join ( " +
+        "    Select t.kdo_id, Count(*) cnt, Sum(t.price) total From lv_plans t " +
+        "     Where t.done_flag = 'Y' And t.conf_user Is Not Null And t.result_date >= ? And t.result_date < ? " +
+        "     Group By t.kdo_id) a On a.kdo_id = c.id " +
+        " Where c.state = 'A' Order By c.kdo_type, c.id");
+      ps.setString(1, dFrom);
+      ps.setString(2, dTo);
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Obj obj = byType.get(rs.getInt("kdo_type"));
+        if (obj == null) continue;
+        ObjList row = new ObjList();
+        row.setC1(rs.getString("kdo_id"));
+        row.setC2(rs.getString("name"));
+        row.setC3(rs.getString("counter"));
+        row.setC4(rs.getString("total"));
+        obj.getList().add(row);
+        obj.setPrice(obj.getPrice() + rs.getDouble("total"));
+      }
+      DB.done(rs);
+      DB.done(ps);
+      rs = null;
+      ps = null;
+      m.addAttribute("rows", new ArrayList<>(byType.values()));
+      Map<Integer, Obj> byGroup = new LinkedHashMap<>();
+      for (AmbGroups group : dAmbGroup.getAll()) {
         Obj obj = new Obj();
         obj.setFio(group.getName());
         obj.setPrice(0D);
-        ps = cn.prepareStatement(
-          "Select c.id service_Id, c.name, " +
-            " (Select count(*) From Amb_Patient_Services t Where t.state = 'DONE' And t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id) counter, " +
-            " ifnull((Select sum(t.price) From Amb_Patient_Services t Where t.state = 'DONE' And t.worker_Id is not null And date(t.crOn) between '" + Util.dateDBBegin(startDate) + "' and '" + Util.dateDBEnd(endDate) + "' And t.service_Id = c.Id), 0) total " +
-            "  From Amb_Services c " +
-            " Where c.group_id = ? " +
-            "   And c.state = 'A'");
-        ps.setInt(1, group.getId());
-        ps.execute();
-        rs = ps.getResultSet();
-        List<ObjList> amb = new ArrayList<>();
-        while (rs.next()) {
-          ObjList row = new ObjList();
-          row.setC1(rs.getString("service_Id"));
-          row.setC2(rs.getString("name"));
-          row.setC3(rs.getString("counter"));
-          row.setC4(rs.getString("total"));
-          amb.add(row);
-          obj.setPrice(obj.getPrice() + rs.getDouble("total"));
-        }
-        obj.setList(amb);
-        ambGroups.add(obj);
+        obj.setList(new ArrayList<ObjList>());
+        byGroup.put(group.getId(), obj);
       }
+      ps = cn.prepareStatement(
+        "Select c.group_id, c.id service_Id, c.name, IfNull(a.cnt, 0) counter, IfNull(a.total, 0) total " +
+        "  From Amb_Services c Left Join ( " +
+        "    Select t.service_Id, Count(*) cnt, Sum(t.price) total From Amb_Patient_Services t " +
+        "     Where t.state = 'DONE' And t.worker_Id Is Not Null And t.crOn >= ? And t.crOn < ? " +
+        "     Group By t.service_Id) a On a.service_Id = c.id " +
+        " Where c.state = 'A' Order By c.group_id, c.id");
+      ps.setString(1, dFrom);
+      ps.setString(2, dTo);
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Obj obj = byGroup.get(rs.getInt("group_id"));
+        if (obj == null) continue;
+        ObjList row = new ObjList();
+        row.setC1(rs.getString("service_Id"));
+        row.setC2(rs.getString("name"));
+        row.setC3(rs.getString("counter"));
+        row.setC4(rs.getString("total"));
+        obj.getList().add(row);
+        obj.setPrice(obj.getPrice() + rs.getDouble("total"));
+      }
+      List<Obj> ambGroups = new ArrayList<>(byGroup.values());
       m.addAttribute("amb", ambGroups);
       m.addAttribute("period_start", startDate);
       m.addAttribute("period_end", endDate);
@@ -575,41 +595,16 @@ public class CMn {
       //
       Double hnSaldoOut = DB.getSum(conn, "Select Sum((t.drugCount - t.rasxod) * c.price) From Hn_Drugs t, Drug_Out_Rows c Where c.id = t.outRow_Id And t.drugCount - t.rasxod > 0");
       Double hnDayOut = DB.getSum(conn, "Select sum(t.summ) From ( " +
-        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_Id And date(t.crOn) = CURRENT_DATE() " +
+        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_patient_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_Id And t.crOn >= CURRENT_DATE() And t.crOn < CURRENT_DATE() + Interval 1 Day " +
         " union all " +
-        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_id And date(t.crOn) = CURRENT_DATE() " +
+        " Select ifnull(sum(t.rasxod * f.price), 0) summ From hn_date_rows t, hn_drugs c, drug_out_rows f where c.id = t.drug_Id And f.id = c.outRow_id And t.crOn >= CURRENT_DATE() And t.crOn < CURRENT_DATE() + Interval 1 Day " +
         " ) t ");
-      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount) * f.price, 0) summ From hn_drugs c, drug_out_rows f where f.id = c.outRow_id And date(c.crOn) = CURRENT_DATE()");
+      Double hnDayIn = DB.getSum(conn, "Select ifnull(sum(c.drugCount * f.price), 0) summ From hn_drugs c, drug_out_rows f where f.id = c.outRow_id And c.crOn >= CURRENT_DATE() And c.crOn < CURRENT_DATE() + Interval 1 Day");
       model.addAttribute("hn_saldo_in", hnSaldoOut - hnDayIn + hnDayOut);
       model.addAttribute("hn_day_in", hnDayIn);
       model.addAttribute("hn_day_out", hnDayOut);
       model.addAttribute("hn_saldo_out", hnSaldoOut);
-      ps = conn.prepareStatement(
-        "Select t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear, Sum(t.rasxod * w.price) Summ, count(*) " +
-        "      From hn_date_patient_rows t, Patients c, hn_drugs d, drug_out_rows w " +
-        "     Where t.patient_id = c.id " +
-        "       and t.drug_Id = d.id " +
-        "       and w.Id = d.outRow_id " +
-        "       And c.paid != 'CLOSED' " +
-        "  Group By t.patient_id, c.surname, c.name, c.middlename, c.Date_Begin, c.Date_End, c.yearNum, c.birthyear"
-      );
-      ps.execute();
-      rs = ps.getResultSet();
-      List<ObjList> list = new ArrayList<>();
-      double summ = 0;
-      while (rs.next()) {
-        ObjList obj = new ObjList();
-        obj.setC1(rs.getString("surname") + " " + rs.getString("name") + " " + rs.getString("middlename"));
-        obj.setC2(Util.dateToString(rs.getDate("date_begin")));
-        obj.setC3(Util.dateToString(rs.getDate("date_end")));
-        obj.setC4(rs.getString("yearNum"));
-        obj.setC5(rs.getString("birthyear"));
-        obj.setC6(rs.getString("summ"));
-        summ += rs.getDouble("summ");
-        list.add(obj);
-      }
-      model.addAttribute("patients", list);
-      model.addAttribute("summ", summ);
+      // список неоплаченных пациентов на странице не выводится (блок закомментирован), поэтому тяжёлый запрос по hn_date_patient_rows убран
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
@@ -810,6 +805,8 @@ public class CMn {
       m.addAttribute("ins", rows);
       rows = new ArrayList<>();
       cont = 0D;
+      DB.done(rs);
+      DB.done(ps);
       ps = cn.prepareStatement(
         " Select ifnull(Sum(c.rasxod), 0) rasxod " +
           "   From patients ds, hn_date_patient_rows c, hn_drugs f, hn_dates d, drug_s_directions ff  " +
@@ -833,6 +830,8 @@ public class CMn {
           rows.add(r);
         }
       }
+      DB.done(rs);
+      DB.done(ps);
       ps = cn.prepareStatement(
         " Select concat(ds.surname, ' ', ds.name, ' ', ds.middlename) fio, " +
           "          ff.name, " +
@@ -864,6 +863,8 @@ public class CMn {
       m.addAttribute("pouts", rows);
       rows = new ArrayList<>();
       cont = 0D;
+      DB.done(rs);
+      DB.done(ps);
       ps = cn.prepareStatement(
         "Select ff.name receiver, dd.name direction, d.date, c.rasxod  " +
           "    From hn_date_rows c, hn_drugs f, hn_dates d, hn_s_directions ff, drug_s_directions dd  " +
@@ -889,6 +890,8 @@ public class CMn {
       m.addAttribute("outs", rows);
       rows = new ArrayList<>();
       cont = 0D;
+      DB.done(rs);
+      DB.done(ps);
       ps = cn.prepareStatement(
         "Select c.fio, t.crOn, t.drugCount, d.name  " +
           "    From hn_drugs t, users c, drug_s_directions d " +
@@ -914,6 +917,8 @@ public class CMn {
       m.addAttribute("sss", rows);
       rows = new ArrayList<>();
       cont = 0D;
+      DB.done(rs);
+      DB.done(ps);
       ps = cn.prepareStatement(
         "Select d.name, Sum(t.drugCount - t.rasxod) counter  " +
           "    From hn_drugs t, drug_s_directions d " +

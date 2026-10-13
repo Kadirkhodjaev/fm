@@ -78,6 +78,7 @@
   </div>
 </div>
 
+<%@include file="/WEB-INF/pages/core/forms/modal_style.jsp"%>
 <a href="#" data-toggle="modal" data-target="#dtModal" id="dt_modal_btn" class="hidden"></a>
 <div class="modal fade dt-modal" id="dtModal" tabindex="-1" role="dialog" aria-hidden="true" style="display:none">
   <div class="modal-dialog" style="width:760px; max-width:96vw">
@@ -97,7 +98,7 @@
           <tbody></tbody>
         </table>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button></div>
+      <div class="modal-footer"><button type="button" class="mdn-btn" id="close-modal" data-dismiss="modal">Закрыть</button></div>
     </div>
   </div>
 </div>
@@ -225,7 +226,7 @@
       $.ajax({
         url: '/drugs/details.s', data: 'id=' + id, method: 'post', dataType: 'json',
         success: function (res) {
-          if (!res.success) { alert(res.msg); return; }
+          if (!res.success) { FmsToast.show(res.msg, 'err'); return; }
           $('#m-name').text(res.name);
           $('#m-price').text(fmt2(Number(res.price) || 0));
           $('#m-in').text(fmt2(Number(res.drug_count) || 0));

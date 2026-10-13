@@ -73,11 +73,10 @@ public class CAmbBooking {
       while (rs.next()) {
         Obj obj = new Obj();
         obj.setName(Util.dateToString(rs.getDate(1)));
-        List<AmbBookings> rows = dAmbBooking.list("From AmbBookings Where date(regDate) = '" + Util.dateDB(rs.getDate(1)) + "' Order By regDate");
-        for(AmbBookings row : rows){
-          List<AmbBookingServices> r = dAmbBookingService.list("From AmbBookingServices Where booking.id = " + row.getId());
-          if(!r.isEmpty()) services.put(row.getId(), r.get(0).getService().getName());
-        }
+        String day = Util.dateDB(rs.getDate(1));
+        List<AmbBookings> rows = dAmbBooking.list("From AmbBookings Where date(regDate) = '" + day + "' Order By regDate");
+        // услуги всех броней дня одним запросом, через запятую
+        addServices(services, dAmbBookingService.list("From AmbBookingServices Where date(booking.regDate) = '" + day + "' Order By id"));
         obj.setBookings(rows);
         objs.add(obj);
       }
@@ -96,6 +95,14 @@ public class CAmbBooking {
     return "med/amb/booking/index";
   }
 
+  private void addServices(HashMap<Integer, String> services, List<AmbBookingServices> list) {
+    for(AmbBookingServices r : list) {
+      int id = r.getBooking().getId();
+      String name = r.getService().getName();
+      services.put(id, services.containsKey(id) ? services.get(id) + ", " + name : name);
+    }
+  }
+
   @RequestMapping("booking/lvs.s")
   protected String booking_lvs(HttpServletRequest req, Model m) {
     Session session = SessionUtil.getUser(req);
@@ -103,10 +110,7 @@ public class CAmbBooking {
     ///
     HashMap<Integer, String> services = new HashMap<>();
     List<AmbBookings> rows = dAmbBooking.list("From AmbBookings t Where exists (Select 1 From AmbBookingServices c Where c.booking.id = t.id And c.worker.id = " +  session.getUserId() + ") And date(t.regDate) >= '" + Util.dateDB(Util.getCurDate()) + "' Order By t.regDate");
-    for(AmbBookings row : rows){
-      List<AmbBookingServices> r = dAmbBookingService.list("From AmbBookingServices Where booking.id = " + row.getId());
-      if(!r.isEmpty()) services.put(row.getId(), r.get(0).getService().getName());
-    }
+    addServices(services, dAmbBookingService.list("From AmbBookingServices t Where t.booking.id In (Select c.booking.id From AmbBookingServices c Where c.worker.id = " + session.getUserId() + ") And date(t.booking.regDate) >= '" + Util.dateDB(Util.getCurDate()) + "' Order By t.id"));
     //
     m.addAttribute("rows", rows);
     m.addAttribute("services", services);
@@ -248,6 +252,7 @@ public class CAmbBooking {
     try {
       AmbBookings booking = dAmbBooking.get(Util.getInt(req, "id"));
       String[] ids = req.getParameterValues("ids");
+      if(ids == null || ids.length == 0) return Util.err(json, "Отметьте хотя бы одну услугу");
       for(int i = 0; i < ids.length; i++) {
         AmbServices a = dAmbService.get(Integer.parseInt(ids[i]));
         AmbBookingServices s = new AmbBookingServices();

@@ -1,105 +1,114 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%-- Склады → Сальдо: остатки по складам и партиям, срок годности --%>
+<%@include file="/WEB-INF/pages/med/head_nurse/hn_style.jsp"%>
+<jsp:useBean id="now" class="java.util.Date"/>
 <style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-  .miniGrid {margin-bottom:0!important;}
+  tr.exp td .nm { color:#C0182B; }
+  tr.soon td .nm { color:#1F5FBF; }
+  .sl-exp { display:inline-block; padding:0 7px; border-radius:6px; font-size:11.5px; font-weight:600; line-height:18px; }
+  .sl-exp.bad { background:#FDECEE; color:#A50F22; }
+  .sl-exp.soon { background:#E8F1FD; color:#1F5FBF; }
 </style>
-<link href="/res/choosen/chosen.min.css" rel="stylesheet">
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
-<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/js/common.js" type="text/javascript"></script>
-<jsp:useBean id="now" class="java.util.Date" />
+<c:set var="cntExp" value="0"/><c:set var="cntSoon" value="0"/>
+<c:forEach items="${rows}" var="r">
+  <c:if test="${r.endDate != null && r.endDate < now}"><c:set var="cntExp" value="${cntExp + 1}"/></c:if>
+  <c:if test="${r.endDate != null && r.endDate >= now && r.endDate < month3}"><c:set var="cntSoon" value="${cntSoon + 1}"/></c:if>
+</c:forEach>
 
-<iframe name="saldo_excel" class="hidden" src=""></iframe>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    Детализация
-    <button class="btn btn-info btn-sm" onclick="printSaldo()" style="width:100px; float:right; margin-left:5px; margin-top:-5px"><b class="fa fa-file-excel-o"></b> Excel</button>
-    <button class="btn <c:if test="${page_code == 'saldo'}">btn-success</c:if> btn-sm" onclick="setPageCode('saldo')" style="width:120px; float:right; margin-left:5px; margin-top:-5px">Остаток</button>
-    <button class="btn <c:if test="${page_code == 'all'}">btn-success</c:if> btn-sm" onclick="setPageCode('all')" style="width:120px; float:right;margin-left:5px; margin-top:-5px">Все</button>
-    <input type="hidden" id="page_code" value="${page_code}">
-    <div style="float:right; width:200px">
-      <select class="form-control" id="saldo_direction" onchange="reloadPage()">
-        <option value="">Все</option>
+<iframe name="saldo_excel" style="display:none" src=""></iframe>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-cubes"></i></span>
+        <div>
+          <h2>Сальдо</h2>
+          <span class="fm-count"><b id="sdShown">${fn:length(rows)}</b> из <b>${fn:length(rows)}</b> партий</span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg">
+        <button type="button" class="${page_code == 'saldo' ? 'on' : ''}" onclick="sdLoad('saldo')">С остатком</button>
+        <button type="button" class="${page_code == 'all' ? 'on' : ''}" onclick="sdLoad('all')">Все</button>
+      </div>
+      <select class="fm-in fms-select" id="saldo_direction" style="width:220px" onchange="sdLoad()">
+        <option value="">Все склады</option>
         <c:forEach items="${receivers}" var="cc">
           <option <c:if test="${filter_direction == cc.direction.id}">selected</c:if> value="${cc.direction.id}">${cc.direction.name}</option>
         </c:forEach>
       </select>
+      <button type="button" class="fm-btn" onclick="printSaldo()"><i class="fa fa-file-excel-o"></i>Excel</button>
     </div>
-    <div style="float:right; width:200px; margin-right:5px">
-      <input class="form-control" type="text" id="filter_word" placeholder="Поиск..." value="${filter_word}" onkeydown="setSaldoFilter()">
+    <div class="fm-toolbar" style="padding-top:0">
+      <div class="fm-seg" id="sdSeg">
+        <button type="button" data-f="" class="on" onclick="hnSeg('sd', this)">Все сроки</button>
+        <button type="button" data-f="exp" onclick="hnSeg('sd', this)">Просрочено · ${cntExp}</button>
+        <button type="button" data-f="soon" onclick="hnSeg('sd', this)">Истекает за 3 месяца · ${cntSoon}</button>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="sdSearch" placeholder="Препарат или склад" value="${fn:escapeXml(filter_word)}" oninput="hnFilter('sd')" autocomplete="off"/>
+      </div>
     </div>
-    <%--<input type="text" placeholder="Поиск..." class="form-control" style="float:right; padding:5px; width:300px; margin-top:-5px" onkeydown="setSearch(event, this)">--%>
-  </div>
-  <div class="panel-body">
-    <table class="miniGrid table table-striped table-bordered" id="saldo_rows">
-      <thead>
-      <tr>
-        <th width="50px">#</th>
-        <th>Склад</th>
-        <th>Наименование</th>
-        <th>Документ</th>
-        <th>Срок</th>
-        <th>Приход</th>
-        <th>Расход</th>
-        <th>Остаток</th>
-        <th>Ед.изм.</th>
-      </tr>
-      </thead>
-      <tbody>
-      <c:forEach items="${rows}" var="row" varStatus="loop">
-        <tr id="row_${row.id}" style="<c:if test="${row.outRow.income.endDate < now}">color:red;font-weight:bold;</c:if><c:if test="${row.outRow.income.endDate >= now && row.outRow.income.endDate < month3}">color:blue;font-weight:bold;</c:if>" class="hover" title="ID: ${row.id} DRUG:${row.drug.id} Direction: ${row.direction.id}">
-          <td align="center">${loop.index + 1}</td>
-          <td>${row.direction.name}</td>
-          <td>${row.drug.name}</td>
-          <td class="center" style="width:250px">
-            Акт №${row.outRow.doc.regNum} от <fmt:formatDate pattern="dd.MM.yyyy" value="${row.outRow.doc.regDate}"/>
-          </td>
-          <td class="center">
-            <fmt:formatDate pattern="dd.MM.yyyy" value="${row.outRow.income.endDate}"/>
-          </td>
-          <td class="right" style="width:150px">
-            <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.drugCount}"/>
-          </td>
-          <td class="right" style="width:150px">
-            <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.rasxod}"/>
-          </td>
-          <td class="right" style="width:150px">
-            <fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.drugCount - row.rasxod}"/>
-          </td>
-          <td>
-            ${row.drug.measure.name}
-          </td>
+
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
+        <thead>
+        <tr>
+          <th style="width:50px">№</th>
+          <th style="width:170px">Склад</th>
+          <th>Препарат</th>
+          <th style="width:190px" class="nw">Документ</th>
+          <th style="width:120px" class="nw">Срок годности</th>
+          <th style="width:110px" class="r">Приход</th>
+          <th style="width:110px" class="r">Расход</th>
+          <th style="width:110px" class="r">Остаток</th>
+          <th style="width:90px">Ед. изм.</th>
         </tr>
-      </c:forEach>
-      </tbody>
-    </table>
+        </thead>
+        <tbody id="sdRows">
+        <c:forEach items="${rows}" var="row" varStatus="loop">
+          <c:set var="ek" value="${row.endDate == null ? '' : row.endDate < now ? 'exp' : row.endDate < month3 ? 'soon' : ''}"/>
+          <tr class="${ek}" data-f="${ek}" data-s="${fn:escapeXml(row.drug)} ${fn:escapeXml(row.direction)} ${row.regNum}" title="ID ${row.id}, препарат ${row.drugId}">
+            <td class="mut">${loop.index + 1}</td>
+            <td><span class="hn-tag">${row.direction}</span></td>
+            <td><span class="nm">${row.drug}</span></td>
+            <td class="mut nw">Акт №${row.regNum} от <fmt:formatDate pattern="dd.MM.yyyy" value="${row.regDate}"/></td>
+            <td class="nw">
+              <c:choose>
+                <c:when test="${ek == 'exp'}"><span class="sl-exp bad"><fmt:formatDate pattern="dd.MM.yyyy" value="${row.endDate}"/></span></c:when>
+                <c:when test="${ek == 'soon'}"><span class="sl-exp soon"><fmt:formatDate pattern="dd.MM.yyyy" value="${row.endDate}"/></span></c:when>
+                <c:otherwise><fmt:formatDate pattern="dd.MM.yyyy" value="${row.endDate}"/></c:otherwise>
+              </c:choose>
+            </td>
+            <td class="r"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.drugCount}"/></td>
+            <td class="r mut"><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.rasxod}"/></td>
+            <td class="r"><b><fmt:formatNumber minFractionDigits="2" maxFractionDigits="2" type="number" value="${row.saldo}"/></b></td>
+            <td class="mut">${row.measure}</td>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
+      <div class="fm-empty" id="sdEmpty" style="display:none"><i class="fa fa-cubes"></i>Ничего не найдено</div>
+    </div>
   </div>
 </div>
-
 <script>
-  function reloadPage() {
-    setPage("head_nurse/saldo.s?code=" + $('#page_code').val() + "&direction=" + $('#saldo_direction').val() + '&filter=' + encodeURIComponent($('#filter_word').val()) + "&direction=" + $('#saldo_direction').val());
+  hnFilter('sd');
+  var sdCode = '${page_code}';
+  function sdQuery() {
+    return 'code=' + sdCode + '&direction=' + ($('#saldo_direction').val() || '');
   }
-  function setPageCode(code) {
-    $('#page_code').val(code);
-    reloadPage();
-  }
-  function setSaldoFilter() {
-    if(event.keyCode == 13) {
-      reloadPage();
-    }
+  function sdLoad(code) {
+    if (code) sdCode = code;
+    setPage('/head_nurse/saldo.s?' + sdQuery());
   }
   function printSaldo() {
-    saldo_excel.location = "head_nurse/saldo/excel.s?code=" + $('#page_code').val() + "&direction=" + $('#saldo_direction').val() + '&filter=' + encodeURIComponent($('#filter_word').val()) + "&direction=" + $('#saldo_direction').val();
+    saldo_excel.location = '/head_nurse/saldo/excel.s?' + sdQuery() + '&filter=' + encodeURIComponent($.trim($('#sdSearch').val()));
   }
-  $(function() {
-    $('#filter_word').focus();
-  });
+  $('#sdSearch').focus();
 </script>

@@ -41,6 +41,12 @@ public class LvPlans extends GenId {
   @Column private String cashState = "ENT";
   @Column private Date crOn;
 
+  // дата и время создания назначения: проставляется автоматически при первой записи, где бы обследование ни создавалось
+  @PrePersist
+  protected void onCreate() {
+    if (crOn == null) crOn = new Date();
+  }
+
   public Date getCrOn() {
     return crOn;
   }

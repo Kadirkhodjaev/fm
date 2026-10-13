@@ -283,4 +283,12 @@ public class AmbPatients extends GenId {
   public void setDiscountType(SelOpts discountType) {
     this.discountType = discountType;
   }
+
+  // ФИО без лишних пробелов при любом сохранении (регистрация, клиенты, бронь)
+  @PrePersist @PreUpdate
+  private void trimFio() {
+    surname = ckb.utils.Util.fioPart(surname);
+    name = ckb.utils.Util.fioPart(name);
+    middlename = ckb.utils.Util.fioPart(middlename);
+  }
 }

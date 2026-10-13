@@ -339,7 +339,7 @@ public class CNurse {
     //
     Connection conn = null;
     PreparedStatement ps = null;
-    ResultSet rs = null,  rc = null, rg = null;
+    ResultSet rs = null;
     String status = Util.get(req, "status", "0");
     String room = Util.get(req, "room", "0");
     String dated = Util.get(req, "dated", Util.getCurDate());
@@ -347,83 +347,67 @@ public class CNurse {
     Integer kdoId = Integer.parseInt(Util.get(req, "kdo", "0"));
     LinkedHashMap<Integer, Kdos> kdos = new LinkedHashMap<Integer, Kdos>();
     List<Obj> rows = new ArrayList<>();
+    List<Obj> patients = new ArrayList<>();
     List<Obj> rooms = new ArrayList<>();
     try {
       conn = DB.getConnection();
-      ps = conn.prepareStatement("Select room From Kdos Where room is not null Group By room");
+      ps = conn.prepareStatement("Select room From Kdos Where room is not null And room != '' Group By room");
       rs = ps.executeQuery();
       while (rs.next()) {
         Obj r = new Obj();
         r.setName(rs.getString("room"));
         rooms.add(r);
       }
-      DB.done(ps);
       DB.done(rs);
+      DB.done(ps);
+      // Все процедуры дня одним запросом (раньше - отдельный запрос на каждого пациента).
+      // Диапазон по дате, а не date(d.date) = ?, чтобы работал индекс lv_fizio_dates_idx (date, fizio_Id).
       ps = conn.prepareStatement(
-        "Select c.id Patient,  " +
-          "         Concat(c.surname, ' ', c.name, ' ', c.middlename) Fio,  " +
-          "         r.name room  " +
-          "    From Patients c, Rooms r " +
-          "   Where Exists ( " +
-          "      Select 1 " +
-          "        From Lv_Fizios g, Lv_Fizio_Dates d " +
-          "       Where d.fizio_Id = g.id  " +
-          "         And date(d.date) = ? " +
-          "         And g.patientId = c.id " +
-          "         And d.state = 'Y')  " +
-          "    And c.room_id = r.id " +
-          "    And c.state != 'ARCH' " +
-          (patId > 0 ? " And c.id = " + patId : " " )
-      );
+        "Select c.id pid, Concat(c.surname, ' ', c.name, ' ', IfNull(c.middlename, '')) fio, r.name palata, " +
+        "       d.id, d.done, d.confDate, g.comment, f.id kdo_id, f.name kdo_name, f.room " +
+        "  From Lv_Fizio_Dates d " +
+        "  Join Lv_Fizios g On g.id = d.fizio_Id " +
+        "  Join Kdos f On f.id = g.Kdo_Id " +
+        "  Join Patients c On c.id = g.patientId " +
+        "  Join Rooms r On r.id = c.room_id " +
+        " Where d.date >= ? And d.date < Date_Add(?, Interval 1 Day) " +
+        "   And d.state = 'Y' And c.state != 'ARCH' " +
+        " Order By c.surname, c.name, c.id, f.name");
       ps.setString(1, Util.dateDB(dated));
+      ps.setString(2, Util.dateDB(dated));
       rs = ps.executeQuery();
       Map<Integer, Kdos> kdoMap = new HashMap<>();
       for (Kdos k : dKdo.getAll()) kdoMap.put(k.getId(), k);
-      while(rs.next()) {
-        Obj p = new Obj();
-        p.setId(rs.getInt("patient"));
-        p.setFio(rs.getString("fio"));
-        p.setName(rs.getString("room"));
-        List<ObjList> rws = new ArrayList<ObjList>();
-        String query = "Select f.name kdo_name, " +
-          "         c.comment, " +
-          "         d.done, " +
-          "         d.id, " +
-          "         f.id kdo_id, " +
-          "         d.fizio_id, " +
-          "         d.confDate, " +
-          "         f.room, " +
-          "         date(d.date) dated " +
-          "  From Lv_Fizios c, lv_fizio_dates d, Kdos f " +
-          " Where c.patientId = " + p.getId() +
-          "   And d.fizio_Id = c.id " +
-          "   And f.Id = c.Kdo_Id " +
-          (room.equals("0") ? "" : " And f.room = '" + room + "'") +
-          (kdoId > 0 ? " And f.id = " + kdoId : " " ) +
-          (status.equals("0") ? "" : (status.equals("0") ? "" : " And d.done = '" + status + "' ")) +
-          "  And d.state = 'Y' " +
-          "  And date(d.date) = ? ";
-        ps = conn.prepareStatement(query);
-        ps.setString(1, Util.dateDB(dated));
-        rc = ps.executeQuery();
-        while (rc.next()) {
-          ObjList row = new ObjList();
-          row.setId(rc.getInt("id"));
-          row.setC1(rc.getString("kdo_name"));
-          row.setC2(rc.getString("comment"));
-          row.setC3(rc.getString("done"));
-          row.setC4(Util.dateTimeToString(rc.getTimestamp("confDate")));
-          //
-          row.setC7(rc.getString("room"));
-          rws.add(row);
-          if(!kdos.containsKey(rc.getInt("kdo_id")))
-            kdos.put(rc.getInt("kdo_id"), kdoMap.get(rc.getInt("kdo_id")));
+      Obj p = null;
+      while (rs.next()) {
+        int pid = rs.getInt("pid");
+        int kid = rs.getInt("kdo_id");
+        String kRoom = Util.nvl(rs.getString("room"));
+        String done = rs.getString("done");
+        if (p == null || p.getId() != pid) {
+          p = new Obj();
+          p.setId(pid);
+          p.setFio(rs.getString("fio"));
+          p.setName(rs.getString("palata"));
+          p.setList(new ArrayList<ObjList>());
+          patients.add(p);
         }
-        DB.done(rc);
-        DB.done(ps);
-        p.setList(rws);
-        rows.add(p);
+        // выпадающий список процедур - все процедуры дня, а не только найденные фильтром
+        if (!kdos.containsKey(kid) && kdoMap.get(kid) != null) kdos.put(kid, kdoMap.get(kid));
+        if (patId > 0 && pid != patId) continue;
+        if (!room.equals("0") && !room.equals(kRoom)) continue;
+        if (kdoId > 0 && kid != kdoId) continue;
+        if (!status.equals("0") && !status.equals(done)) continue;
+        ObjList row = new ObjList();
+        row.setId(rs.getInt("id"));
+        row.setC1(rs.getString("kdo_name"));
+        row.setC2(rs.getString("comment"));
+        row.setC3(done);
+        row.setC4(Util.dateTimeToString(rs.getTimestamp("confDate")));
+        row.setC7(kRoom);
+        p.getList().add(row);
       }
+      for (Obj o : patients) if (!o.getList().isEmpty()) rows.add(o);
       model.addAttribute("room", room);
       model.addAttribute("kdoId", kdoId);
       model.addAttribute("patId", patId);
@@ -432,11 +416,10 @@ public class CNurse {
       model.addAttribute("kdos", kdos);
       model.addAttribute("rooms", rooms);
       model.addAttribute("rows", rows);
+      model.addAttribute("patients", patients);
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      DB.done(rg);
-      DB.done(rc);
       DB.done(rs);
       DB.done(ps);
       DB.done(conn);
@@ -460,5 +443,85 @@ public class CNurse {
       json.put("msg", e.getMessage());
     }
     return json.toString();
+  }
+
+  // Больничные листы: пациенты, которым при регистрации указано "Больничный лист = Да"
+  @RequestMapping("/sicks.s")
+  protected String sicks(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/nurses/sicks.s");
+
+    String dep = Util.get(req, "dep", "");
+
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    List<ObjList> rows = new ArrayList<>();
+    try {
+      List<Depts> depts = beanSession.getDepts();
+      Users user = dUser.get(session.getUserId());
+      if (session.getUserId() == 1 || user.isGlb()) {
+        dep = dep.isEmpty() && !depts.isEmpty() ? depts.get(0).getId() + "" : dep;
+        model.addAttribute("depts", depts);
+      } else {
+        dep = user.getDept() == null ? "" : user.getDept().getId().toString();
+        model.addAttribute("depts", dep.isEmpty() ? new ArrayList<Depts>() : dDep.getList("From Depts Where id = " + dep));
+      }
+      // Один запрос: отделение, палата, врач и МКБ-10 из осмотра врача (без N+1)
+      String sql =
+        "Select t.id, t.surname, t.name, t.middlename, t.birthyear, t.yearNum, t.Date_Begin, t.Date_End, t.state, t.palata, " +
+        "       d.name dept_name, r.name room_name, rt.name room_type, u.fio lv_fio, " +
+        "       m.code mkb_code, m.name mkb_name, o.mkb mkb_text " +
+        "  From Patients t " +
+        "  Left Join Depts d On d.id = t.Dept_Id " +
+        "  Left Join Rooms r On r.id = t.Room_Id " +
+        "  Left Join Dicts rt On rt.id = r.roomType " +
+        "  Left Join Users u On u.id = t.lv_id " +
+        "  Left Join Lv_Docs o On o.id = (Select Max(x.id) From Lv_Docs x Where x.patient_id = t.id And x.docCode = 'osm') " +
+        "  Left Join Mkb m On m.id = o.mkb_id " +
+        " Where t.sick_leave = 'Y' " +
+        "   And t.state = 'LV' " +
+        (dep.isEmpty() ? "" : " And t.Dept_Id = ? ") +
+        " Order By t.Date_Begin Desc, t.id Desc";
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(sql);
+      if (!dep.isEmpty()) ps.setInt(1, Integer.parseInt(dep));
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        ObjList row = new ObjList();
+        row.setC1(rs.getString("id"));
+        row.setC2((Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")) + " " + Util.nvl(rs.getString("middlename"))).trim());
+        row.setC3(rs.getInt("yearNum") != 0 ? rs.getInt("yearNum") + "" : "");
+        row.setC4(Util.dateToString(rs.getTimestamp("Date_Begin")));
+        if (rs.getTimestamp("Date_Begin") != null) {
+          Calendar rc = Calendar.getInstance();
+          rc.setTime(rs.getTimestamp("Date_Begin"));
+          rc.add(Calendar.DAY_OF_MONTH, 4);
+          row.setC13(Util.dateToString(rc.getTime()));
+        }
+        row.setC5(Util.dateToString(rs.getTimestamp("Date_End")));
+        String room = rs.getString("palata");
+        if (room == null && rs.getString("room_name") != null)
+          room = rs.getString("room_name") + (rs.getString("room_type") != null ? "-" + rs.getString("room_type") : "");
+        row.setC6(Util.nvl(rs.getString("dept_name")));
+        row.setC7(Util.nvl(room));
+        row.setC8(Util.nvl(rs.getString("lv_fio")));
+        row.setC9(Util.nvl(rs.getString("mkb_code")));
+        row.setC10(rs.getString("mkb_name") != null ? rs.getString("mkb_name") : Util.nvl(rs.getString("mkb_text")));
+        row.setC11(rs.getString("state"));
+        row.setC12(rs.getInt("birthyear") != 0 ? rs.getInt("birthyear") + "" : "");
+        rows.add(row);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      model.addAttribute("loadErr", true);
+    } finally {
+      DB.done(rs);
+      DB.done(ps);
+      DB.done(conn);
+    }
+    model.addAttribute("rows", rows);
+    model.addAttribute("dep", dep);
+    return "med/nurse/sicks";
   }
 }

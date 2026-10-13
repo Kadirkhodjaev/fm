@@ -1,170 +1,116 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    Получатели (Расход)
-    <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-    <button  class="btn btn-sm btn-success" onclick="addDrugDict()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
-  </div>
-  <div class="panel-body">
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%-- Аптека → Справочники → Типы расходов и склады, где они доступны --%>
+<%@include file="/WEB-INF/pages/med/drugs/dicts/dict_kit.jsp"%>
+<c:set var="cntA" value="0"/>
+<c:forEach items="${list}" var="o"><c:if test="${o.state == 'A'}"><c:set var="cntA" value="${cntA + 1}"/></c:if></c:forEach>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-random"></i></span>
+        <div>
+          <h2>Типы расходов</h2>
+          <span class="fm-count"><b id="rtShown">${fn:length(list)}</b> из <b>${fn:length(list)}</b> · активных <b>${cntA}</b></span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg" id="rtSeg">
+        <button type="button" data-f="" class="on" onclick="DK.seg('rt', this)">Все</button>
+        <button type="button" data-f="A" onclick="DK.seg('rt', this)">Активные</button>
+        <button type="button" data-f="P" onclick="DK.seg('rt', this)">Пассивные</button>
+      </div>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="rtSearch" placeholder="Название или ID" oninput="DK.filter('rt')" autocomplete="off"/>
+      </div>
+      <button type="button" class="fm-btn primary" onclick="rtEdit(0)"><i class="fa fa-plus"></i>Добавить</button>
+    </div>
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>#</th>
+          <th style="width:70px">ID</th>
           <th>Наименование</th>
-          <th>Состояние</th>
-          <th style="width:40px">Удалить</th>
+          <th style="width:130px">Состояние</th>
+          <th style="width:50px"></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="rtRows">
         <c:forEach items="${list}" var="obj">
-          <tr>
-            <td align="center">${obj.id}</td>
-            <td>
-              <a href="#" onclick="editDrugDict(${obj.id});return false">${obj.name}</a>
-            </td>
-            <td align="center">
-              <c:if test="${obj.state == 'A'}">Активный</c:if>
-              <c:if test="${obj.state != 'A'}">Пассивный</c:if>
-            </td>
-            <td class="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.id})"><i class="fa fa-minus"></i></button>
+          <tr data-f="${obj.state == 'A' ? 'A' : 'P'}" data-s="${obj.id} ${fn:escapeXml(obj.name)}" data-name="${fn:escapeXml(obj.name)}" onclick="rtEdit(${obj.id})" title="Изменить">
+            <td class="mut"><b>${obj.id}</b></td>
+            <td><span class="nm">${obj.name}</span></td>
+            <td><span class="dk-st ${obj.state == 'A' ? 'A' : 'P'}">${obj.state == 'A' ? 'Активный' : 'Пассивный'}</span></td>
+            <td class="r" onclick="event.stopPropagation()">
+              <button type="button" class="fm-act danger" title="Удалить" onclick="DK.del('rasxodtype', ${obj.id}, $(this).closest('tr').attr('data-name'), 'rasxodtypes')"><i class="fa fa-trash-o"></i></button>
             </td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="rtEmpty" style="display:none"><i class="fa fa-random"></i>Ничего не найдено</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
 </div>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты получателя</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value="" />
-          <input type="hidden" name="code" value="rasxodtype" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Наименование*:</td>
-              <td>
-                <input type="text" id="direction-name" class="form-control" name="name" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Активный?:</td>
-              <td class="left">
-                <input type="checkbox" checked name="state" value="Y"/>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="4" class="center bold">Склады</td>
-            </tr>
-            <tr>
-              <td colspan="4">
-                <table style="width:100%" class="table table-bordered">
-                  <c:forEach items="${rows}" var="r">
-                    <tr>
-                      <td class="center">
-                        <input name="direction_${r.id}" type="checkbox" value="${r.id}">
-                      </td>
-                      <td>
-                          ${r.name}
-                      </td>
-                    </tr>
-                  </c:forEach>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveDrugForm()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
+
+<div class="fm-overlay" id="rtModal" onclick="if (event.target === this) DK.close('rt')">
+  <div class="fm-modal" style="width:620px">
+    <div class="fm-modal-head">
+      <h3 id="rtTitle"></h3>
+      <button type="button" class="fm-x" onclick="DK.close('rt')"><i class="fa fa-times"></i></button>
     </div>
-    <!-- /.modal-content -->
+    <form id="rtForm" onsubmit="rtSave(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="id"/>
+        <input type="hidden" name="code" value="rasxodtype"/>
+        <div class="fm-err" id="rtErr"></div>
+        <div>
+          <label class="fm-l">Наименование *</label>
+          <input type="text" class="fm-in" name="name" autocomplete="off"/>
+        </div>
+        <div class="fm-state" style="align-self:flex-start">
+          <label><input type="radio" class="a" name="state" value="Y" checked/><span>Активный</span></label>
+          <label><input type="radio" class="p" name="state" value=""/><span>Пассивный</span></label>
+        </div>
+        <div>
+          <label class="fm-l">Склады, где доступен</label>
+          <div class="dk-checks">
+            <c:forEach items="${rows}" var="r">
+              <label><input type="checkbox" class="rt_dir" name="direction_${r.id}" value="${r.id}"/> ${r.name}</label>
+            </c:forEach>
+          </div>
+        </div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="DK.close('rt')">Отмена</button>
+        <button type="submit" class="fm-btn primary"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      </div>
+    </form>
   </div>
-  <!-- /.modal-dialog -->
 </div>
 <script>
-  function addDrugDict(){
-    addEditForm.reset();
-    document.getElementById("modal_window").click();
-  }
-  function editDrugDict(id) {
-    document.getElementById("modal_window").click();
-    $.ajax({
-      url: '/drugs/dict/get.s',
-      method: 'post',
-      data: 'code=rasxodtype&id=' + id,
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          for (var e in res) {
-            try {
-              if(document.getElementsByName(e)[0].type === 'checkbox')
-                document.getElementsByName(e)[0].checked = res[e];
-              else
-                document.getElementsByName(e)[0].value = res[e];
-            } catch (e) {}
-          }
-        } else {
-          alert(res.msg);
-        }
-      }
+  DK.filter('rt');
+  function rtEdit(id) {
+    var f = document.getElementById('rtForm');
+    f.reset();
+    f.elements['id'].value = '';
+    $('.rt_dir').prop('checked', false);
+    DK.open('rt', id ? 'Изменить тип расхода' : 'Новый тип расхода');
+    f.elements['name'].focus();
+    if (!id) return;
+    DK.get('rt', 'rasxodtype', id, function (res) {
+      f.elements['id'].value = res.id;
+      f.elements['name'].value = res.name || '';
+      DK.setState(f, !!res.state);
+      $.each(res, function (k, v) { if (k.indexOf('direction_') === 0 && f.elements[k]) f.elements[k].checked = !!v; });
     });
   }
-  function saveDrugForm() {
-    if($('#direction-name').val() == '') {
-      alert('Наименование не может быть пустым');
-      return;
-    }
-    $.ajax({
-      url: '/drugs/dict/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          $('#close-modal').click();
-          setPage('/drugs/dicts.s');
-        } else {
-          alert(res.msg);
-        }
-      }
-    });
-  }
-  function delDrugRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
-      $.ajax({
-        url: '/drugs/dict/delete.s',
-        method: 'post',
-        data: 'code=rasxodtype&id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            setPage('/drugs/dicts.s');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
+  function rtSave() {
+    var f = document.getElementById('rtForm');
+    if (!$.trim(f.elements['name'].value)) { DK.err('rt', 'Укажите наименование'); return; }
+    DK.save('rt', f, 'rasxodtypes');
   }
 </script>

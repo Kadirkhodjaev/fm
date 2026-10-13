@@ -50,7 +50,7 @@
   <!-- ================= Плитки ================= -->
   <div class="sd-tiles">
     <div class="sd-card sd-tile cur">
-      <div class="t-h"><span class="ico"><i class="fa fa-bed"></i></span>Текущие пациенты</div>
+      <div class="t-h"><span class="ico"><i class="fa fa-hospital-o"></i></span>Текущие пациенты</div>
       <div class="val">${cur}</div>
     </div>
     <div class="sd-card sd-tile vyp">

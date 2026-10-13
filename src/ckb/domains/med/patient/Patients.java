@@ -321,6 +321,10 @@ public class Patients extends GenId {
 
   @OneToOne @JoinColumn private Clients client;
 
+  // Больничный лист предоставить: Y - да, N - нет
+  @Column(name = "sick_leave", length = 1)
+  private String sickLeave = "N";
+
   public Clients getClient() {
     return client;
   }
@@ -945,6 +949,14 @@ public class Patients extends GenId {
     this.paid = paid;
   }
 
+  public String getSickLeave() {
+    return sickLeave;
+  }
+
+  public void setSickLeave(String sickLeave) {
+    this.sickLeave = sickLeave;
+  }
+
   public boolean isFizio() {
     return fizio;
   }
@@ -1019,5 +1031,13 @@ public class Patients extends GenId {
 
   public double getRoomPrice() {
     return counteryId == 199 ? room.getPrice() : room.getFor_price();
+  }
+
+  // ФИО без лишних пробелов при любом сохранении (регистрация, клиенты, бронь)
+  @PrePersist @PreUpdate
+  private void trimFio() {
+    surname = ckb.utils.Util.fioPart(surname);
+    name = ckb.utils.Util.fioPart(name);
+    middlename = ckb.utils.Util.fioPart(middlename);
   }
 }

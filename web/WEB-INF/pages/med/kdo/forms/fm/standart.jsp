@@ -2,6 +2,9 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@include file="../../header.jsp"%>
 <tr>
+  <c:if test="${form.codeFlag == 'Y'}">
+    <td style="text-align:center; padding:5px; border:1px solid #e8e8e8; font-weight: bold">Код</td>
+  </c:if>
   <td style="text-align:center; padding:5px; border:1px solid #e8e8e8; font-weight: bold">Показатель</td>
   <td style="text-align:center; padding:5px; border:1px solid #e8e8e8; font-weight: bold">Результат</td>
   <c:if test="${form.normaFlag == null || form.normaFlag == 'Y'}">
@@ -10,6 +13,9 @@
 </tr>
 <c:forEach items="${fields}" var="field">
   <tr>
+    <c:if test="${form.codeFlag == 'Y'}">
+      <td style="padding:5px; border:1px solid #e8e8e8; text-align: center">${field.code}</td>
+    </c:if>
     <td style="padding:5px; border:1px solid #e8e8e8; text-align: right">${field.name}</td>
     <td style="padding:5px;border:1px solid #e8e8e8;">${field.html}</td>
     <c:if test="${form.normaFlag == null || form.normaFlag == 'Y'}">

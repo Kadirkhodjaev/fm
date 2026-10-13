@@ -223,7 +223,7 @@
         </a>
       </div>
       <c:if test="${hasDis && dAll > 0}">
-        <span class="cs-chip"><i class="fa fa-percent"></i> Скидки: <fmt:formatNumber value="${dAll}" type="number"/> сум</span>
+        <span class="cs-chip"><i class="fa fa-tags"></i> Скидки: <fmt:formatNumber value="${dAll}" type="number"/> сум</span>
       </c:if>
       <span class="sp"></span>
       <div class="cs-legend">
@@ -273,7 +273,7 @@
   <!-- ================= Скидки ================= -->
   <c:if test="${hasDis}">
     <div class="cs-card cs-dis">
-      <span class="ic"><i class="fa fa-percent"></i></span>
+      <span class="ic"><i class="fa fa-tags"></i></span>
       <div>
         <div class="lbl">Скидки за период</div>
         <div class="val cs-num"><fmt:formatNumber value="${dAll}" type="number"/><small>сум</small></div>

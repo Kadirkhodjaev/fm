@@ -47,6 +47,8 @@ import ckb.services.med.results.SRkdo;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.*;
+import ckb.utils.tg.TgPatientBot;
+import ckb.utils.tg.TgLvConsul;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -111,6 +113,37 @@ public class CLv {
   @Autowired private BeanSession beanSession;
   //endregion
 
+  // свои текущие пациенты лечащего врача (он назначен лечащим врачом), состояние LV/ZGV; заведующему — тоже только свои
+  private List<Map<String, Object>> myPatients(Session session) {
+    List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(
+        "Select p.id, p.surname, p.name, p.middlename, p.yearNum, IfNull(r.name, p.Palata) room " +
+        "  From Patients p Left Join Rooms r On r.id = p.Room_Id " +
+        " Where p.state In ('LV', 'ZGV') And p.lv_id = ?" +
+        " Order By p.surname, p.name");
+      ps.setInt(1, session.getUserId());
+      rs = ps.executeQuery();
+      while (rs.next()) {
+        Map<String, Object> m = new HashMap<String, Object>();
+        m.put("id", rs.getInt("id"));
+        m.put("fio", (Util.nvl(rs.getString("surname")) + " " + Util.nvl(rs.getString("name")) + " " + Util.nvl(rs.getString("middlename"))).trim());
+        m.put("ib", rs.getObject("yearNum") == null ? "" : rs.getString("yearNum"));
+        m.put("room", Util.nvl(rs.getString("room")));
+        list.add(m);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn, ps, rs);
+    }
+    return list;
+  }
+
   @RequestMapping("/index.s")
   protected String mains(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
@@ -120,28 +153,45 @@ public class CLv {
     //
     List<Menu> m = new ArrayList<>();
     session.setCurSubUrl(session.getCurSubUrl().contains("/lv/") ? (session.getCurSubUrl().contains("reg") ? "/view/reg.s" : session.getCurSubUrl()) : "/view/reg.s");
-    m.add(new Menu(1,"Регистрация", "/view/reg.s", "fa fa-medkit fa-fw", false));
+    m.add(new Menu(1,"Регистрация", "/view/reg.s", "fa fa-user fa-fw", false));
     m.add(new Menu(18,"Оплата", "/view/cashbox.s", "fa fa-money fa-fw", false));
     m.add(new Menu(2,"Питание", "/lv/eat.s", "fa fa-cutlery fa-fw", false));
     m.add(new Menu(4,"Осмотр врача", "/lv/doc.s?doc_code=osm", "fa fa-stethoscope fa-fw", false));
-    m.add(new Menu(20,"Назначение", "/lv/drugs.s", "fa fa-th-list fa-fw", false));
+    m.add(new Menu(20,"Назначение", "/lv/drugs.s", "fa fa-medkit fa-fw", false));
     if(session.getRoleId() == 8)
-      m.add(new Menu(21,"Экстренный", "/lv/shock.s", "fa fa-bars fa-fw", false));
+      m.add(new Menu(21,"Экстренный", "/lv/shock.s", "fa fa-ambulance fa-fw", false));
     m.add(new Menu(10,"Обследования", "/lv/plan/index.s", "fa fa-flask fa-fw", false));
-    m.add(new Menu(8,"Консультация", "/lv/consul.s", "fa fa-stethoscope fa-fw", false));
-    m.add(new Menu(17,"Физиотерапия", "/lv/fizio/index.s", "fa fa-asterisk fa-fw", false));
+    m.add(new Menu(8,"Консультация", "/lv/consul.s", "fa fa-comments fa-fw", false));
+    m.add(new Menu(17,"Физиотерапия", "/lv/fizio/index.s", "fa fa-bolt fa-fw", false));
     m.add(new Menu(6,"Дневник", "/lv/dairy.s", "fa fa-calendar fa-fw", false));
-    m.add(new Menu(5,"Обоснование", "/lv/doc.s?doc_code=obos", "fa fa-retweet fa-fw", false));
-    m.add(new Menu(9,"Выписка", "/lv/doc.s?doc_code=vypiska", "fa fa-check fa-fw", false));
-    m.add(new Menu(14,"Доп. данные", "/lv/extra.s", "fa fa-plus-square fa-fw", false));
-    m.add(new Menu(13,"Перевод", "/lv/epic.s", "fa fa-random fa-fw", false));
-    m.add(new Menu(15,"История", "/lv/history.s", "fa fa-users fa-fw", false));
+    m.add(new Menu(5,"Обоснование", "/lv/doc.s?doc_code=obos", "fa fa-file-text-o fa-fw", false));
+    m.add(new Menu(9,"Выписка", "/lv/doc.s?doc_code=vypiska", "fa fa-sign-out fa-fw", false));
+    m.add(new Menu(14,"Доп. данные", "/lv/extra.s", "fa fa-info-circle fa-fw", false));
+    m.add(new Menu(13,"Перевод", "/lv/epic.s", "fa fa-exchange fa-fw", false));
+    m.add(new Menu(15,"История", "/lv/history.s", "fa fa-history fa-fw", false));
     model.addAttribute("menuList", m);
     model.addAttribute("id", id);
     model.addAttribute("p", dPatient.get(session.getCurPat()));
     model.addAttribute("formUrl", session.getCurSubUrl());
     model.addAttribute("backUrl", session.getBackUrl());
     model.addAttribute("table", dPatientEat.getPatientTable(session.getCurPat()));
+    model.addAttribute("tgEnabled", TgPatientBot.isEnabled());
+    // переключатель между своими пациентами в шапке карточки (показывается, если их больше двух)
+    if(session.getRoleId() == 5) model.addAttribute("myPats", myPatients(session));
+    // «История» разделов: прошлые госпитализации того же клиента, новые сверху
+    Patients cur = dPatient.get(session.getCurPat());
+    if(cur != null && cur.getClient() != null)
+    {
+      List<Patients> hs = dPatient.list("From Patients Where client.id = " + cur.getClient().getId() + " And id != " + cur.getId() + " Order By dateBegin Desc");
+      HashMap<Integer, String> lvs = new HashMap<Integer, String>(); // ФИО лечащих врачей тех госпитализаций
+      for(Patients h : hs)
+        if(h.getLv_id() != null && !lvs.containsKey(h.getLv_id())) {
+          ckb.domains.admin.Users u = dUser.get(h.getLv_id());
+          lvs.put(h.getLv_id(), u == null ? "" : u.getFio());
+        }
+      model.addAttribute("histStays", hs);
+      model.addAttribute("histLv", lvs);
+    }
     return "/med/lv/index";
   }
 
@@ -168,6 +218,8 @@ public class CLv {
         doc.setC5(p.getStartDiagnoz());
         doc.setC18(p.getSopustDBolez());
         doc.setC19(p.getOslojn());
+        doc.setMkb(p.getMkb());
+        doc.setMkb_id(p.getMkb_id());
       }
       if(docCode.equals("obos")) {
         LvDocs osm = dLvDoc.get(session.getCurPat(), "osm");
@@ -225,7 +277,7 @@ public class CLv {
         if(obos == null)
           return Util.err(json, "По данному пациенту не заполнен документ 'Обоснование'");
       }
-      if(!docCode.equals("osm") && Util.isNull(req, "mkb_id")) {
+      if(Util.isNull(req, "mkb_id")) {
         return Util.err(json, "МКБ 10 не выбрана");
       }
       LvDocs doc = dLvDoc.get(session.getCurPat(), docCode);
@@ -355,6 +407,71 @@ public class CLv {
   //endregion
 
   //region Консультация
+  // Telegram пациента: ссылка на бота сообщением с номера клиники (для тех, кто не смог подключиться по QR)
+  @RequestMapping(value = "/tg/invite.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String tgInvite(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Session session = SessionUtil.getUser(req);
+      Patients p = dPatient.get(session.getCurPat());
+      String phone = ckb.utils.tg.TgInvite.phone(p.getTel());
+      if (phone == null) return Util.err(json, "В карточке пациента неполный номер телефона. Исправьте номер в регистрации.");
+      String name = (Util.nvl(p.getName()) + " " + Util.nvl(p.getMiddlename())).trim();
+      String clinic = beanSession.getParam("CLINIC_NAME");
+      String text = "Здравствуйте" + (name.isEmpty() ? "" : ", " + name) + "!\n\n" +
+        "Это клиника «" + clinic + "». В Telegram вы можете видеть свои назначения на день, процедуры и обследования, " +
+        "получать напоминания о приёме лекарств и выписку после лечения.\n\n" +
+        "Чтобы подключиться, откройте ссылку и нажмите «Start»:\n" + TgPatientBot.link(TgPatientBot.code(p.getId(), false));
+      JSONObject res = ckb.utils.tg.TgInvite.send(phone, name, text);
+      if (res.optBoolean("ok")) {
+        json.put("success", true);
+        json.put("msg", "Ссылка отправлена на +" + phone + ". Попросите пациента открыть сообщение от клиники в Telegram.");
+      } else {
+        return Util.err(json, ckb.utils.tg.TgInvite.errorText(res.optString("error"), res.optString("detail")));
+      }
+    } catch (java.net.ConnectException e) {
+      return Util.err(json, "Программа отправки (tg-sender) не запущена на сервере.");
+    } catch (Exception e) {
+      e.printStackTrace();
+      return Util.err(json, "Ошибка: " + e.getMessage());
+    }
+    return json.toString();
+  }
+
+  // Telegram пациента: QR-код для подключения к боту пациентов и статус подключения
+  @RequestMapping("/tg.s")
+  protected String tg(HttpServletRequest req, Model model) {
+    Session session = SessionUtil.getUser(req);
+    // ?id= - страница открыта в окне (палаты постовой, кнопка Telegram в карточке): пункт меню карточки не меняем
+    boolean modal = Util.isNotNull(req, "id");
+    if (modal) session.setCurPat(Util.getInt(req, "id"));
+    else session.setCurSubUrl("/lv/tg.s");
+    Patients p = dPatient.get(session.getCurPat());
+    model.addAttribute("pat", p);
+    model.addAttribute("modal", modal);
+    model.addAttribute("enabled", TgPatientBot.isEnabled());
+    model.addAttribute("inviteEnabled", ckb.utils.tg.TgInvite.isEnabled());
+    model.addAttribute("invitePhone", ckb.utils.tg.TgInvite.phone(p.getTel()));
+    try {
+      if (TgPatientBot.isEnabled() && "Y".equals(Util.get(req, "reset"))) {
+        TgPatientBot.code(p.getId(), true);
+        return "redirect:/lv/tg.s" + (modal ? "?id=" + p.getId() : "");
+      }
+      if (TgPatientBot.isEnabled()) {
+        String code = TgPatientBot.code(p.getId(), false);
+        String link = TgPatientBot.link(code);
+        model.addAttribute("link", link);
+        model.addAttribute("linkEnc", java.net.URLEncoder.encode(link, "UTF-8"));
+        model.addAttribute("st", TgPatientBot.status(p.getId()));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      model.addAttribute("err", e.getMessage());
+    }
+    return "/med/lv/tg";
+  }
+
   @RequestMapping("/consul.s")
   protected String konsulIndex(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
@@ -404,6 +521,9 @@ public class CLv {
     if(!"".equals(con.getLvName())) {
       con.setCrOn(new Date());
       dLvConsul.save(con);
+      // консультант внутри клиники получает уведомление в Telegram
+      if("REQ".equals(con.getState()))
+        TgLvConsul.send(con, dPatient.get(session.getCurPat()), session.getUserName());
     }
     //
     return "redirect:/lv/consul.s?msgState=1&msgCode=successSave";
@@ -417,6 +537,9 @@ public class CLv {
     String[] reqs = request.getParameterValues("reqs");
     for(int i=0;i<ids.length;i++) {
       LvConsuls con = dLvConsul.get(Integer.parseInt(ids[i]));
+      // пациент в архиве: консультацию не меняем
+      Patients cp = dPatient.get(con.getPatientId());
+      if(cp != null && "ARCH".equals(cp.getState())) continue;
       if(!"DONE".equals(con.getState()))
         con.setSaveDate(new Date());
       con.setState("DONE");
@@ -512,8 +635,12 @@ public class CLv {
     Patients pat = dPatient.get(session.getCurPat());
     epic.setPrice(pat.getRoomPrice());
     //
+    if(epic.getDateEnd() == null)
+      return "redirect:/lv/epic.s?msgState=0&msgCode=epicDateEndErr";
+    if(Util.isNull(request, "room_id"))
+      return "redirect:/lv/epic.s?msgState=0&msgCode=epicRoomErr";
     if(epic.getDateBegin() == null)
-      epic.setDateBegin(dPatient.get(session.getCurPat()).getDateBegin());
+      epic.setDateBegin(pat.getDateBegin() != null ? pat.getDateBegin() : epic.getDateEnd());
     long diffInMillies = Math.abs(epic.getDateEnd().getTime() - epic.getDateBegin().getTime());
     long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
     epic.setKoyko((int) diff);
@@ -925,8 +1052,26 @@ public class CLv {
     try {
       String[] ids = req.getParameterValues("id");
       String[] tables = req.getParameterValues("table");
+      // для уведомления постовым: первая изменённая дата начиная с сегодня, старый и новый стол
+      Date today = Util.stringToDate(Util.getCurDate());
+      Patients changedPat = null;
+      Date changedFrom = null;
+      String oldName = null, newName = null;
+      int changedMeals = 0;
       for(int i=0;i<ids.length;i++) {
         PatientEats eat = dPatientEat.get(Integer.parseInt(ids[i]));
+        Integer before = eat.getTable() == null ? null : eat.getTable().getId();
+        String beforeName = eat.getTable() == null ? null : eat.getTable().getName();
+        Integer after = tables[i].isEmpty() || tables[i].equals("-1") ? null : Integer.parseInt(tables[i]);
+        if(after != null && !after.equals(before) && eat.getActDate() != null && !eat.getActDate().before(today)) {
+          changedMeals++;
+          if(changedFrom == null || eat.getActDate().before(changedFrom)) {
+            changedFrom = eat.getActDate();
+            oldName = beforeName;
+            newName = dEatTable.get(after).getName();
+          }
+          changedPat = eat.getPatient();
+        }
         if(!tables[i].isEmpty()) {
           if(tables[i].equals("-1")) {
             eat.setTable(null);
@@ -938,6 +1083,9 @@ public class CLv {
         }
         dPatientEat.save(eat);
       }
+      if(changedPat != null)
+        ckb.utils.tg.TgNurseNotify.dietChanged(changedPat, oldName, newName, Util.dateToString(changedFrom), changedMeals,
+          SessionUtil.getUser(req).getUserName());
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -1251,6 +1399,8 @@ public class CLv {
     Session session = SessionUtil.getUser(req);
     JSONObject json = new JSONObject();
     Integer id = Util.getNullInt(req, "id");
+    Integer notifyDrug = null;
+    boolean notifyNew = false;
     List<PatientDrugRows> rows = new ArrayList<PatientDrugRows>();
     try {
       //
@@ -1333,6 +1483,10 @@ public class CLv {
         drug.setCrOn(new Date());
         //
         dPatientDrug.saveAndReturn(drug);
+        if(Util.getInt(req, "drug_type") != 16) {
+          notifyDrug = drug.getId();
+          notifyNew = true;
+        }
         for (String date : dates) {
           PatientDrugDates drugDate = new PatientDrugDates();
           drugDate.setPatientDrug(drug);
@@ -1419,7 +1573,11 @@ public class CLv {
           }
         }
         dPatientDrug.save(drug);
+        if(Util.getInt(req, "drug_type") != 16) notifyDrug = drug.getId();
       }
+      // постовые отделения: добавлено или изменено назначение таблеток (тип 15, не инъекции)
+      if(notifyDrug != null)
+        ckb.utils.tg.TgNurseNotify.tabletsChanged(dPatient.get(session.getCurPat()), notifyDrug, notifyNew, session.getUserName());
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);

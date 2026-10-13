@@ -29,12 +29,18 @@
   .kdo .st::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; }
   .kdo .st-todo { background:#FDECEE; color:#D7182E; }
   .kdo .st-done { background:#E8F7EE; color:#15803D; }
+  .kdo-batch { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 13px; border:1px solid #1F2430; border-radius:9px; background:#1F2430;
+    color:#fff; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; }
+  .kdo-batch:hover { background:#353B4A; }
+  .kdo-batch b { padding:0 7px; border-radius:8px; background:rgba(255,255,255,.18); font-weight:600; }
   .kdo-empty { padding:30px; text-align:center; color:#9AA1AC; }
 </style>
 
 <c:set var="myTodo" value="0"/>
+<c:set var="myAll" value="0"/>
 <c:forEach items="${services}" var="p">
   <c:if test="${p.state == 'PAID' && p.worker.id == curUser}"><c:set var="myTodo" value="${myTodo + 1}"/></c:if>
+  <c:if test="${p.worker.id == curUser}"><c:set var="myAll" value="${myAll + 1}"/></c:if>
 </c:forEach>
 
 <div class="kdo">
@@ -46,6 +52,11 @@
     </div>
     <span class="sp"></span>
     <span class="cnt">Услуг: <b>${fn:length(services)}</b><c:if test="${myTodo > 0}"> · ждут вас: <b style="color:#D7182E">${myTodo}</b></c:if></span>
+    <c:if test="${myAll > 0}">
+      <button type="button" class="kdo-batch" onclick="setPage('/amb/batch.s?id=${patient.id}')" title="Ввести результаты всех ваших услуг пациента на одной странице">
+        <i class="fa fa-list-ol"></i> Пакетный ввод <b>${myAll}</b>
+      </button>
+    </c:if>
   </div>
 
   <c:choose>
@@ -66,12 +77,12 @@
         <tbody>
         <c:forEach items="${services}" var="p">
           <c:set var="isMine" value="${p.worker.id == curUser}"/>
-          <tr class="${isMine ? 'mine' : 'other'}" onclick="setPage('/amb/work.s?id=${p.id}')">
+          <tr class="${isMine ? 'mine' : 'other'}" onclick="setPage('/amb/svc.s?id=${p.id}')">
             <td>
               <c:if test="${isMine && p.state == 'PAID'}"><span class="st st-todo">К выполнению</span></c:if>
               <c:if test="${isMine && p.state == 'DONE'}"><span class="st st-done">Выполнено</span></c:if>
             </td>
-            <td><a href="#" class="sname" onclick="event.stopPropagation(); setPage('/amb/work.s?id=${p.id}'); return false;">${p.service.name}</a></td>
+            <td><a href="#" class="sname" onclick="event.stopPropagation(); setPage('/amb/svc.s?id=${p.id}'); return false;">${p.service.name}</a></td>
             <td class="muted"><fmt:formatDate pattern="dd.MM.yyyy" value="${patient.regDate}"/></td>
             <td class="muted"><fmt:formatDate pattern="dd.MM.yyyy HH:mm" value="${p.confDate}"/></td>
             <td>${p.worker.fio}</td>

@@ -5,7 +5,7 @@
 <link href="/res/suneditor/suneditor.min.css" rel="stylesheet">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
 <script src="/res/js/jquery.mask.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <script src="/res/suneditor/suneditor.min.js"></script>
 <div class="w-100 text-center border-bottom-1">
   <table class="w-100">
@@ -188,8 +188,7 @@
     });
   }
   function confirmPatientService() {
-    if(confirm('Вы действительно хотите подтвердить услугу?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите подтвердить услугу?', function () { $.ajax({
         url: '/ambs/work/confirm.s',
         method: 'post',
         data: 'id=${service.id}',
@@ -198,6 +197,6 @@
           openMsg(res);
           setPage('/ambs/doctor/service.s?patient=${service.patient}&id=${service.id}');
         }
-      });
+      }); });
   }
 </script>

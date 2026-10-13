@@ -11,7 +11,7 @@
 <link href="/res/choosen/chosen.min.css" rel="stylesheet">
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="/res/js/common.js" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 
 <style>
@@ -178,7 +178,7 @@
     <div class="dr-card-h">
       <h3><c:choose><c:when test="${drug.id != null}">Редактирование назначения</c:when><c:otherwise>Новое назначение</c:otherwise></c:choose></h3>
       <span class="sp"></span>
-      <button type="button" class="ab sm" onclick="fromTemplate()"><i class="fa fa-list"></i> Шаблоны</button>
+      <button type="button" class="ab sm" onclick="fromTemplate()"><i class="fa fa-file-text-o"></i> Шаблоны</button>
       <c:if test="${drug.id != null}">
         <button type="button" class="ab sm" onclick="saveTemplate()"><i class="fa fa-bookmark-o"></i> Сохранить как шаблон</button>
       </c:if>
@@ -353,7 +353,7 @@
       </form>
 
       <div class="form-foot">
-        <button class="ab primary" type="button" onclick="save()"><i class="fa fa-save"></i> Сохранить</button>
+        <button class="ab primary" type="button" onclick="save()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
   </div>
@@ -812,8 +812,7 @@
     $('input[name=eveningTimeAfter]').attr('disabled', !eveningStatus || deveningStatus);
   }
   function removeDrug(idx, id) {
-    if(confirm('Вы действительно хотите удалить выбранную запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить выбранную запись?', function () { $.ajax({
         url: '/lv/drugs/removeDrug.s',
         data: 'id=' + id,
         method: 'post',
@@ -825,11 +824,10 @@
           } else
             alert(res.msg);
         }
-      });
+      }); });
   }
   function removePatientDrug(id) {
-    if(confirm('Вы действительно хотите удалить выбранную запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить выбранную запись?', function () { $.ajax({
         url: '/lv/drugs/removePatientDrug.s',
         data: 'id=' + id,
         method: 'post',
@@ -842,7 +840,7 @@
           } else
             alert(res.msg);
         }
-      });
+      }); });
   }
   function setCheckbox() {
     if(event.target.tagName == 'TD') {
@@ -894,8 +892,7 @@
     }
   }
   function removeDrugTemp(id) {
-    if(confirm('Вы действительно хотите удалить запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить запись?', function () { $.ajax({
         url: '/lv/drug/temp/delete.s',
         data: 'id=' + id,
         method: 'post',
@@ -907,7 +904,7 @@
           } else
             alert(res.msg);
         }
-      });
+      }); });
   }
   /*endregion*/
 </script>

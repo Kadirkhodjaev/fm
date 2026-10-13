@@ -21,7 +21,7 @@
 .center {text-align: center;}
 .bold {font-weight: bold}
 .formTable input[type=text], .formTable input[type=password], .formTable input[type=number], .formTable select {height: 24px !important;}
-.datepicker {width: 100px !important; text-align: center; padding: 5px}
+.datepicker {width: 115px !important; text-align: center; padding: 5px}
 .dateImg {width: 20px; height: 20px; margin:5px 0 0 4px; float:left; cursor:pointer; background: red; background:url(../datepicker/images/cal.gif) no-repeat}
 
 /* Грид стили */
@@ -44,23 +44,39 @@
   user-select: none;
 }
 
+/* message after saving: white card in the bottom right corner, so it does not cover page headers and buttons */
 .med-msg {
-  font-weight:bold;
-  color:white;
-  position:absolute;
-  text-align: center;
-  right:10px;
-  min-width: 300px;
-  background: #4cae4c;
+  font-weight:600;
+  color:#1F2430;
+  position:fixed;
+  text-align:left;
+  right:24px;
+  bottom:24px;
+  min-width:320px;
+  max-width:520px;
+  background:#fff;
+  border:1px solid #E6E8EC;
+  border-left:4px solid #2E9E5B;
   z-index: 9999999999;
-  border-radius: 5px;
-  top:5px
+  border-radius:12px;
+  box-shadow:0 16px 40px rgba(20,25,40,.16);
 }
 .med-msg table tr td {
-  padding:10px
+  padding:12px 14px
+}
+.med-msg #med-msg-text {
+  color:#1F2430 !important;
+}
+.med-msg td + td {
+  color:#6B7280 !important;
+  border-left:0 !important;
 }
 .med-msg.error {
-  background: #d43f3a;
+  background:#fff;
+  border-left-color:#D7182E;
+}
+.med-msg.error #med-msg-text {
+  color:#A50F22 !important;
 }
 .med-msg .close-msg {
   font-weight:normal;

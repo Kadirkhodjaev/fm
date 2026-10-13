@@ -115,4 +115,15 @@ public class Forms extends GenId {
   public void setResult(String result) {
     this.result = result;
   }
+
+  // Y - in the input and print forms a column "Code" is shown (FormFields.codes)
+  @Column(name = "code_flag", length = 1) private String codeFlag;
+
+  public String getCodeFlag() {
+    return codeFlag;
+  }
+
+  public void setCodeFlag(String codeFlag) {
+    this.codeFlag = codeFlag;
+  }
 }

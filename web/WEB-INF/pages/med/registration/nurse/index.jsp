@@ -45,7 +45,7 @@
     window.open("/lv/print.s");
   }
   function delPatient(){
-    if(confirm('Вы действительно хотите удалить данного пациента?')) {
+    FmsConfirm('Вы действительно хотите удалить данного пациента?', function () {
       $.ajax({
         url: "/reg/nurse/del.s",
         method: "post",
@@ -56,7 +56,7 @@
           if (res.success)
             setPage('/reg/nurse/index.s');
         }});
-    }
+    });
   }
   function setCountery(dom) {
     $('#regionId').toggle(dom.value == '199').val('');
@@ -407,7 +407,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="ab" id="close_client_info" data-dismiss="modal" aria-hidden="true">Закрыть</button>
-        <button type="button" class="ab primary" onclick="saveClient()"><i class="fa fa-save"></i> Сохранить</button>
+        <button type="button" class="ab primary" onclick="saveClient()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
   </div>
@@ -418,7 +418,7 @@
   <!-- ================= Шапка ================= -->
   <div class="ar-card">
     <div class="ar-head">
-      <div class="ar-avatar"><i class="fa fa-bed"></i></div>
+      <div class="ar-avatar"><i class="fa fa-hospital-o"></i></div>
       <div class="ar-title">
         <h2 <c:if test="${patient.id != null}">title="ID ${patient.id}"</c:if>>
           <c:choose>
@@ -444,7 +444,7 @@
           <a href="#" class="ab danger" onclick="delPatient(); return false;"><i class="fa fa-trash-o"></i> Удалить</a>
           <a href="#" class="ab" onclick="confPatient(); return false;"><i class="fa fa-check"></i> Подтвердить</a>
         </c:if>
-        <a href="#" class="ab primary" onclick="saveForm(); return false;"><i class="fa fa-save"></i> Сохранить</a>
+        <a href="#" class="ab primary" onclick="saveForm(); return false;"><i class="fa fa-floppy-o"></i> Сохранить</a>
       </div>
     </div>
   </div>
@@ -619,7 +619,7 @@
               </td>
               <td class="c">
                 <c:if test="${watcher.state == 'ENT'}">
-                  <button type="button" class="ab-ico del" onclick="if(confirm('Удалить запись?')) removeRow('watcher', ${watcher.id})" title="Удалить"><i class="fa fa-trash-o"></i></button>
+                  <button type="button" class="ab-ico del" onclick="FmsConfirm('Удалить запись?', function () { removeRow('watcher', ${watcher.id}); })" title="Удалить"><i class="fa fa-trash-o"></i></button>
                 </c:if>
               </td>
             </tr>
@@ -651,7 +651,7 @@
         <span class="sp"></span>
         <span class="kdo-total">Выбрано: <b id="kdoCnt">0</b> · Сумма: <b id="kdoSum">0</b></span>
         <c:if test="${patient.state == 'PRN' || patient.state == 'PRD'}">
-          <button type="button" class="ab sm primary" onclick="saveNecKdo()"><i class="fa fa-save"></i> Сохранить</button>
+          <button type="button" class="ab sm primary" onclick="saveNecKdo()"><i class="fa fa-floppy-o"></i> Сохранить</button>
         </c:if>
       </div>
       <form id="kdoForm">

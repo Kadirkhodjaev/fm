@@ -8,6 +8,7 @@ import javax.persistence.*;
 
 // Справочник комнаты
 @Entity
+@org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "Rooms")
 public class Rooms extends GenId {
 

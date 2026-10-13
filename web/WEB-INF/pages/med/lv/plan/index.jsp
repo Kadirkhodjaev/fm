@@ -6,7 +6,7 @@
 <script src="/res/bs/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
 <link href="/res/css/styles.css" rel="stylesheet">
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<script src="/res/js/common.js" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
 <script src="/res/js/fms-calendar.js" type="text/javascript"></script>
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <style>
@@ -40,8 +40,7 @@
 </style>
 <script type="text/javascript">
   function delPlan(id){
-    if(confirm('Вы действительно хотите удалить?'))
-      setLocation('?delPlan=Y&id='+id);
+    FmsConfirm('Вы действительно хотите удалить?', function () { setLocation('?delPlan=Y&id='+id); });
   }
   function printPlan(id){
     window.open('/kdo/print.s?id=' + id);
@@ -79,8 +78,7 @@
       window.open('/kdo/printPlans.s?' + params);
   }
   function setConfUser(plan, user) {
-    if(confirm('Вы действительно хотите изменить данные?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите изменить данные?', function () { $.ajax({
         url: '/lv/plan/change/confuser.s',
         method: 'post',
         data: 'plan=' + plan + '&user=' + user,
@@ -88,7 +86,7 @@
         success: function (res) {
           openMsg(res);
         }
-      });
+      }); });
   }
 </script>
 <iframe src="about:blank" id="frmDiv" name="frm" style="display: none"></iframe>
@@ -104,7 +102,7 @@
     <div>
       <button class="hidden" id="planResult" type="button" onclick="setLocation('/lv/plan.s')" title="Результаты всех обследования"><i class="fa fa-flask"></i> Результаты</button>
       <button class="hidden" type="button" onclick="setLocation('/lv/plan/kdos.s')" title="Добавить новое обследование"><i class="fa fa-plus"></i> Добавить</button>
-      <button class="hidden" id="saveBtn" type="submit"><i class="fa fa-check"></i> Сохранить</button>
+      <button class="hidden" id="saveBtn" type="submit"><i class="fa fa-floppy-o"></i> Сохранить</button>
     </div>
 
     <div class="pl-card">

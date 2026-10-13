@@ -35,7 +35,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/core/user")
@@ -74,12 +76,13 @@ public class CCoreUser {
     model.addAttribute("deptList", dDept.getAll());
     model.addAttribute("user", user);
     List<ObjList> list = new ArrayList<>();
-    List<DrugDirections> directions = dDrugDirection.getAll();
-    for(DrugDirections direction: directions) {
+    Set<Integer> myDirections = new HashSet<Integer>();
+    for(UserDrugLines line: dUserDrugLine.getList("From UserDrugLines Where user.id = " + id)) myDirections.add(line.getDirection().getId());
+    for(DrugDirections direction: dDrugDirection.getAll()) {
       ObjList obj = new ObjList();
       obj.setC1(direction.getId().toString());
       obj.setC2(direction.getName());
-      obj.setC3(dUserDrugLine.getCount("From UserDrugLines Where user.id = " + Req.getInt(req, "id") + " And direction.id = " + direction.getId()).toString());
+      obj.setC3(myDirections.contains(direction.getId()) ? "1" : "0");
       list.add(obj);
     }
     if(Util.isNotNull(req, "id"))
@@ -235,16 +238,31 @@ public class CCoreUser {
     for(KdoTypes kdo : dKdoType.getList("From KdoTypes Where state = 'A'"))
       kdos.add(new Obj(kdo.getId(), kdo.getName(), kdoTypes.contains(kdo.getId())));
     model.addAttribute("kdos", kdos);
-    List<Obj> services = new ArrayList<>();
-    List<AmbServices> ss = dAmbServices.getList("From AmbServices Where group.isGroup = 0 And state = 'A'");
-    // Группируем данные
-    List<AmbGroups> groups = dAmbGroups.getAll();
-    for(AmbGroups group: groups) {
-      if(group.isGroup())
-        services.add(new Obj(-1 * group.getId(), group.getName(), dAmbServiceUsers.getCount("From AmbServiceUsers t, AmbServices c Where c.group.id = " + group.getId() + " And t.service = c.id And user = " + user.getId()) > 0));
+    // амбулаторные услуги пользователя читаются одним запросом
+    Set<Integer> myServices = new HashSet<Integer>();
+    for(AmbServiceUsers su: dAmbServiceUsers.getList("From AmbServiceUsers Where user = " + user.getId())) myServices.add(su.getService());
+    Set<Integer> myGroups = new HashSet<Integer>();
+    for(AmbServices s: dAmbServices.getList("From AmbServices Where group.isGroup = 1"))
+      if(myServices.contains(s.getId())) myGroups.add(s.getGroup().getId());
+    // c1 - id (у групп отрицательный: выбирается вся группа), c2 - наименование, c3 - группа, c4 - Y выбрано
+    List<ObjList> services = new ArrayList<>();
+    for(AmbGroups group: dAmbGroups.getAll()) {
+      if(!group.isGroup()) continue;
+      ObjList o = new ObjList();
+      o.setC1(String.valueOf(-1 * group.getId()));
+      o.setC2(group.getName());
+      o.setC3("Группы");
+      o.setC4(myGroups.contains(group.getId()) ? "Y" : "N");
+      services.add(o);
     }
-    for(AmbServices s: ss)
-      services.add(new Obj(s.getId(), s.getName(), dAmbServiceUsers.getCount("From AmbServiceUsers Where service = " + s.getId() + " And user = " + user.getId()) > 0));
+    for(AmbServices s: dAmbServices.getList("From AmbServices Where group.isGroup = 0 And state = 'A' Order By group.id, name")) {
+      ObjList o = new ObjList();
+      o.setC1(String.valueOf(s.getId()));
+      o.setC2(s.getName());
+      o.setC3(s.getGroup() == null ? "" : s.getGroup().getName());
+      o.setC4(myServices.contains(s.getId()) ? "Y" : "N");
+      services.add(o);
+    }
     model.addAttribute("services", services);
     model.addAttribute("reports", list);
     model.addAttribute("user", user);

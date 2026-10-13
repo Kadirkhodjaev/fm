@@ -16,7 +16,7 @@
           <c:forEach items="${eat.list}" var="ee">
             <tr>
               <td class="center" style="width:60px">
-                <button class="btn btn-success btn-sm" onclick="addTableEat(${ee.c1}, '${ee.c2}')" style="height:20px;padding:1px 10px">
+                <button type="button" class="fm-act" onclick="addTableEat(${ee.c1}, '${ee.c2}')" >
                   <i class="fa fa-check"></i>
                 </button>
               </td>

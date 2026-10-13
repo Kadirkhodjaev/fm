@@ -12,6 +12,11 @@
     <listener-class>org.quartz.ee.servlet.QuartzInitializerListener</listener-class>
   </listener>
 
+  <!-- stops the Telegram bot threads when the application stops -->
+  <listener>
+    <listener-class>ckb.utils.tg.TgShutdownListener</listener-class>
+  </listener>
+
   <context-param>
     <param-name>contextConfigLocation</param-name>
     <param-value>/WEB-INF/applicationContext.xml</param-value>
@@ -26,6 +31,17 @@
   <servlet-mapping>
     <servlet-name>med</servlet-name>
     <url-pattern>*.s</url-pattern>
+  </servlet-mapping>
+
+  <!-- API of the patient mobile app (JSON, token auth; only /api/m/ is exposed to the internet through the proxy) -->
+  <servlet>
+    <servlet-name>mobileApi</servlet-name>
+    <servlet-class>ckb.mobile.CMobileApi</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>mobileApi</servlet-name>
+    <url-pattern>/api/m/*</url-pattern>
   </servlet-mapping>
   
   <welcome-file-list>

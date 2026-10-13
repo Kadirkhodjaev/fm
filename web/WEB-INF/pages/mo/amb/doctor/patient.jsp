@@ -5,7 +5,7 @@
 
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 
 <div class="panel panel-info wpx-1400 margin-auto">
   <div class="panel-heading">

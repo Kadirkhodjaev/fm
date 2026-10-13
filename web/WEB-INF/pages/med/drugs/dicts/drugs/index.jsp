@@ -1,239 +1,168 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%-- Аптека → Справочники → Препараты (реестр) --%>
+<%@include file="/WEB-INF/pages/med/drugs/dicts/dict_kit.jsp"%>
 <style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-  .miniGrid tr.activeRow {background: #D0D3D4}
+  .dg-warn { display:inline-block; margin-left:8px; padding:0 7px; border-radius:6px; background:#FDECEE; color:#A50F22; font-size:11.5px; font-weight:600; line-height:18px; }
+  table.fm-grid tr.cur td { background:#EEF3FB; }
 </style>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script>
-</script>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    <table style="width:100%">
-      <tr>
-        <td>Реестр препаратов</td>
-        <td class="right">Категория: </td>
-        <td style="width:200px">
-          <select class="form-control" onchange="setPageCat(this)">
-            <option <c:if test="${ct == 'A'}">selected</c:if> value="A">Активный</option>
-            <option <c:if test="${ct == 'P'}">selected</c:if> value="P">Пассивный</option>
-          </select>
-        </td>
-        <td style="width:110px">
-          <button  class="btn btn-sm btn-success" onclick="addDrugDict()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div class="panel-body">
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<c:set var="cntBad" value="0"/>
+<c:forEach items="${drugs}" var="d"><c:if test="${d.counter == null || d.counter == 0}"><c:set var="cntBad" value="${cntBad + 1}"/></c:if></c:forEach>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-medkit"></i></span>
+        <div>
+          <h2>Препараты</h2>
+          <span class="fm-count"><b id="dgShown">${fn:length(drugs)}</b> из <b>${fn:length(drugs)}</b></span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg">
+        <button type="button" class="${ct != 'P' ? 'on' : ''}" onclick="setPage('/drugs/dicts.s?cat=A')">Активные</button>
+        <button type="button" class="${ct == 'P' ? 'on' : ''}" onclick="setPage('/drugs/dicts.s?cat=P')">Пассивные</button>
+      </div>
+      <div class="fm-seg" id="dgSeg">
+        <button type="button" data-f="" class="on" onclick="DK.seg('dg', this)">Все</button>
+        <button type="button" data-f="bad" onclick="DK.seg('dg', this)">Без кол-ва учёта · ${cntBad}</button>
+      </div>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="dgSearch" placeholder="Название или ID" oninput="DK.filter('dg')" autocomplete="off"/>
+      </div>
+      <button type="button" class="fm-btn primary" onclick="dgEdit(0)"><i class="fa fa-plus"></i>Добавить</button>
+    </div>
+    <div class="fm-table-wrap" id="dgWrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>#</th>
+          <th style="width:70px">ID</th>
           <th>Наименование</th>
-          <th>Состояние</th>
-          <th>Детализация</th>
-          <th style="width:40px">Удалить</th>
+          <th style="width:130px">Состояние</th>
+          <th style="width:90px"></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="dgRows">
         <c:forEach items="${drugs}" var="d">
-          <tr class="" <c:if test="${d.counter == null || d.counter == 0}">title="Не корректная настройка кол-во учета" style="color:red"</c:if> id="row_${d.id}" ondblclick="editDrugDict(${d.id})" onclick="setRow(${d.id})">
-            <td align="center">${d.id}</td>
-            <td id="row_drug_name_${d.id}">${d.name}</td>
-            <td align="center">
-              <c:if test="${d.state == 'A'}">Активный</c:if>
-              <c:if test="${d.state != 'A'}">Пассивный</c:if>
-            </td>
-            <td class="center" width="100px">
-              <button class="btn btn-success btn-sm" style="height:20px;padding:1px 10px" title="Детализация по приходам" onclick="viewDrug(${d.id})"><i class="fa fa-list"></i></button>
-            </td>
-            <td class="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${d.id})"><i class="fa fa-minus"></i></button>
+          <c:set var="bad" value="${d.counter == null || d.counter == 0}"/>
+          <tr id="row_${d.id}" data-f="${bad ? 'bad' : 'ok'}" data-s="${d.id} ${fn:escapeXml(d.name)}" data-name="${fn:escapeXml(d.name)}" onclick="dgEdit(${d.id})" title="Изменить">
+            <td class="mut"><b>${d.id}</b></td>
+            <td><span class="nm">${d.name}</span><c:if test="${bad}"><span class="dg-warn" title="Не настроено количество для учёта">нет кол-ва учёта</span></c:if></td>
+            <td><span class="dk-st ${d.state == 'A' ? 'A' : 'P'}">${d.state == 'A' ? 'Активный' : 'Пассивный'}</span></td>
+            <td class="r" onclick="event.stopPropagation()">
+              <button type="button" class="fm-act" title="Детализация по приходам" onclick="viewDrug(${d.id})"><i class="fa fa-list"></i></button>
+              <button type="button" class="fm-act danger" title="Удалить" onclick="DK.del('drug', ${d.id}, $(this).closest('tr').attr('data-name'), 'drugs')"><i class="fa fa-trash-o"></i></button>
             </td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="dgEmpty" style="display:none"><i class="fa fa-medkit"></i>Ничего не найдено</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
-</div>
-<a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты препарата</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value="" />
-          <input type="hidden" name="code" value="drug" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Наименование*:</td>
-              <td>
-                <input type="text" id="drug-name" class="form-control" name="name" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2" class="bold center">Категории</td>
-            </tr>
-            <c:forEach items="${categories}" var="category">
-              <tr>
-                <td class="right">
-                  <input type="checkbox" class="cat_checkbox" value="${category.id}" id="cat_${category.id}" name="cats"/>
-                </td>
-                <td>${category.name}</td>
-              </tr>
-            </c:forEach>
-            <tr>
-              <td class="right bold">Активный?:</td>
-              <td class="left">
-                <input type="checkbox" checked name="state" value="Y"/>
-              </td>
-            </tr>
-            <tr>
-              <td>Кол-во учет: </td>
-              <td>
-                <input type="number" class="form-control center" name="counter" value="">
-              </td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>Ед. изм.: </td>
-              <td>
-                <select class="form-control" name="measure">
-                  <c:forEach items="${measures}" var="measure">
-                    <option value="${measure.id}">${measure.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-              <td></td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveDrugForm()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
-    </div>
-    <!-- /.modal-content -->
-  </div>
-  <!-- /.modal-dialog -->
 </div>
 
-<a href="#" data-toggle="modal" data-target="#newModal" id="new_modal_window" class="hidden"></a>
-<div class="modal fade" id="newModal" tabindex="-1" role="dialog" aria-labelledby="newModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog" style="width:1200px">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="newModalLabel">Препарат: <span id="modal_drug_name"></span></h4>
-      </div>
-      <div class="modal-body" id="drug_details"></div>
+<div class="fm-overlay" id="dgModal" onclick="if (event.target === this) DK.close('dg')">
+  <div class="fm-modal" style="width:640px">
+    <div class="fm-modal-head">
+      <h3 id="dgTitle"></h3>
+      <button type="button" class="fm-x" onclick="DK.close('dg')"><i class="fa fa-times"></i></button>
     </div>
-    <!-- /.modal-content -->
+    <form id="dgForm" onsubmit="dgSave(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="id"/>
+        <input type="hidden" name="code" value="drug"/>
+        <div class="fm-err" id="dgErr"></div>
+        <div>
+          <label class="fm-l">Наименование *</label>
+          <input type="text" class="fm-in" name="name" autocomplete="off"/>
+        </div>
+        <div class="fm-row" style="grid-template-columns:140px 1fr">
+          <div><label class="fm-l">Кол-во для учёта *</label><input type="number" step="any" min="0" class="fm-in" name="counter" style="text-align:center"/></div>
+          <div>
+            <label class="fm-l">Ед. измерения</label>
+            <select class="fm-in fms-select" name="measure">
+              <c:forEach items="${measures}" var="m">
+                <option value="${m.id}">${m.name}</option>
+              </c:forEach>
+            </select>
+          </div>
+        </div>
+        <div class="fm-state" style="align-self:flex-start">
+          <label><input type="radio" class="a" name="state" value="Y" checked/><span>Активный</span></label>
+          <label><input type="radio" class="p" name="state" value=""/><span>Пассивный</span></label>
+        </div>
+        <div>
+          <label class="fm-l">Категории</label>
+          <div class="dk-checks">
+            <c:forEach items="${categories}" var="category">
+              <label><input type="checkbox" class="cat_checkbox" value="${category.id}" id="cat_${category.id}" name="cats"/> ${category.name}</label>
+            </c:forEach>
+          </div>
+        </div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="DK.close('dg')">Отмена</button>
+        <button type="submit" class="fm-btn primary"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      </div>
+    </form>
   </div>
-  <!-- /.modal-dialog -->
+</div>
+
+<div class="fm-overlay" id="dgInModal" onclick="if (event.target === this) DK.close('dgIn')">
+  <div class="fm-modal" style="width:860px">
+    <div class="fm-modal-head">
+      <h3>Приходы · <span id="dgInTitle"></span></h3>
+      <button type="button" class="fm-x" onclick="DK.close('dgIn')"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="fm-modal-body" id="drug_details" style="padding:0"></div>
+  </div>
 </div>
 <script>
-  function addDrugDict(){
-    addEditForm.reset();
-    document.getElementById("modal_window").click();
+  DK.filter('dg');
+  function dgMark(id) {
+    $('#dgRows tr.cur').removeClass('cur');
+    $('#row_' + id).addClass('cur');
+    try { localStorage.setItem('drug_idx', id); } catch (e) {}
   }
-  function editDrugDict(id) {
-    document.getElementById("modal_window").click();
-    $.ajax({
-      url: '/drugs/dict/get.s',
-      method: 'post',
-      data: 'code=drug&id=' + id,
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('#table_counter').find('tbody').html('');
-          $('*[name=id]').val(res.id);
-          $('*[name=category]').val(res.category);
-          $('*[name=name]').val(res.name);
-          $('*[name=counter]').val(res.counter);
-          $('*[name=measure]').val(res.measure);
-          $('*[name=state]').prop('checked', res.state == 'A');
-          var elems = document.getElementsByClassName("cat_checkbox");
-          for(var elem of elems) elem.checked = false;
-          for(var obj of res.cats) document.getElementById("cat_" + obj).checked = true;
-        } else {
-          alert(res.msg);
-        }
-      }
+  function dgEdit(id) {
+    var f = document.getElementById('dgForm');
+    f.reset();
+    f.elements['id'].value = '';
+    $('.cat_checkbox').prop('checked', false);
+    DK.open('dg', id ? 'Изменить препарат' : 'Новый препарат');
+    if (!id) { f.elements['name'].focus(); return; }
+    dgMark(id);
+    DK.get('dg', 'drug', id, function (res) {
+      f.elements['id'].value = res.id;
+      f.elements['name'].value = res.name || '';
+      f.elements['counter'].value = res.counter == null ? '' : res.counter;
+      $(f.elements['measure']).val(res.measure).trigger('change');
+      DK.setState(f, res.state == 'A');
+      $.each(res.cats || [], function (i, c) { $('#cat_' + c).prop('checked', true); });
     });
   }
-  function saveDrugForm() {
-    if($('#drug-name').val() == '') {
-      alert('Наименование не может быть пустым');
-      return;
-    }
-    if($('#default_count').val() == '') {
-      alert('Кол-во не может быть пустым');
-      return;
-    }
-    $.ajax({
-      url: '/drugs/dict/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          $('#close-modal').click();
-          setPage('/drugs/dicts.s');
-        } else {
-          alert(res.msg);
-        }
-      }
-    });
-  }
-  function delDrugRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
-      $.ajax({
-        url: '/drugs/dict/delete.s',
-        method: 'post',
-        data: 'code=drug&id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            setPage('/drugs/dicts.s');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
+  function dgSave() {
+    var f = document.getElementById('dgForm');
+    if (!$.trim(f.elements['name'].value)) { DK.err('dg', 'Укажите наименование'); return; }
+    if (!(parseFloat(f.elements['counter'].value) > 0)) { DK.err('dg', 'Укажите количество для учёта больше нуля'); return; }
+    DK.save('dg', f, 'drugs');
   }
   function viewDrug(id) {
-    $('#modal_drug_name').html($('#row_drug_name_' + id).html());
-    $('#drug_details').load('/drugs/dict/drug/incomes.s?id=' + id, () => {
-      document.getElementById('new_modal_window').click();
-    });
+    dgMark(id);
+    $('#dgInTitle').text($('#row_' + id).attr('data-name'));
+    $('#drug_details').html('<div class="fm-hint" style="padding:16px">Загрузка…</div>').load('/drugs/dict/drug/incomes.s?id=' + id);
+    $('#dgInModal').addClass('open');
   }
-  function setRow(id) {
-    $('tr.activeRow').removeClass('activeRow');
-    $('#row_' + id).addClass('activeRow');
-    localStorage.setItem('drug_idx', id);
-
-  }
-  function setPageCat(dom) {
-    setPage('/drugs/dicts.s?cat=' + dom.value);
-  }
-  $(function() {
-    var curRow = localStorage.getItem('drug_idx') > 0 ? localStorage.getItem('drug_idx') : 1;
-    $('#mainWindow').animate({ scrollTop: $('#row_' + curRow).offset().top - 450}, 300);
-    setRow(curRow);
-  });
+  // вернуться к препарату, с которым работали в прошлый раз
+  (function () {
+    var id = null;
+    try { id = localStorage.getItem('drug_idx'); } catch (e) {}
+    var row = id ? document.getElementById('row_' + id) : null;
+    if (row) { $(row).addClass('cur'); row.scrollIntoView({block: 'center'}); }
+  })();
 </script>

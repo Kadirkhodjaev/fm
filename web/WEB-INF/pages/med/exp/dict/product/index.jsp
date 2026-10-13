@@ -154,7 +154,7 @@
     });
   }
   function delExpRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
+    FmsConfirm('Дейтвительно хотите удалить?', function () {
       $.ajax({
         url: '/exp/dict/delete.s',
         method: 'post',
@@ -168,6 +168,6 @@
           }
         }
       });
-    }
+    });
   }
 </script>

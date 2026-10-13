@@ -5,6 +5,7 @@ import ckb.domains.GenId;
 import javax.persistence.*;
 
 @Entity
+@org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "Depts")
 public class Depts extends GenId {
   // Наименование

@@ -8,6 +8,7 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
+@org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "Drug_s_Directions")
 public class DrugDirections extends GenId {
 

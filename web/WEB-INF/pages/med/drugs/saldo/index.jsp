@@ -155,7 +155,7 @@
 
 <script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <script>
   function addDrugDict(){
     addEditForm.reset();
@@ -198,7 +198,7 @@
     });
   }
   function delDrugRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
+    FmsConfirm('Дейтвительно хотите удалить?', function () {
       $.ajax({
         url: '/drugs/saldo/delete.s',
         method: 'post',
@@ -212,7 +212,7 @@
           }
         }
       });
-    }
+    });
   }
   function saveDrugFormNew() {
     if($('#drug-name').val() == '') {

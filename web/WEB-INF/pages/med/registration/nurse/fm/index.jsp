@@ -5,21 +5,19 @@
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <script src="/res/datepicker/datetimepicker_css.js"></script>
-<link href="/res/choosen/chosen.min.css" rel="stylesheet">
-<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
-<script src="/res/js/jquery.maskedinput.js" type="text/javascript"></script>
-<link href="/res/css/styles.css" rel="stylesheet">
 <script>
-  $(".chzn-select").chosen();
-  $("#birthdate").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
-  $("#birthdayString").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
-  $('printButton').html("<button title='Печать' type='button' onclick='printPage()' class='btn btn-outline btn-primary print-button'><i class='fa fa-print'></i></button>");
+  // маска даты: плагин подгружается один раз (jQuery и общие скрипты уже на главной странице)
+  function arMask() { if ($.fn.mask) $(".date-format").mask("99.99.9999", {placeholder: "_"}); }
+  if ($.fn.mask) arMask(); else $.getScript('/res/js/jquery.maskedinput.js', arMask);
   let rooms = [];
   <c:forEach items="${rooms}" var="rr">
   rooms.push({id:${rr.id}, dept:'${rr.dept.id}', name:'${rr.floor.name} ${rr.name}-${rr.roomType.name}'})
   </c:forEach>
   function saveForm() {
+    if (!$('#patient input[name=id]').val() && !$('input[name=client_id]').val()) { FmsToast.show('Выберите или добавьте клиента', 'err'); return; }
+    if (arSaving) return;
     if (checkForm($('#patient'))) {
+      arSaving = true;
       $.ajax({
         url: "/reg/nurse/index.s",
         method: "post",
@@ -27,25 +25,27 @@
         dataType: 'json',
         success: function (json) {
           if (json.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/reg/nurse/index.s?id=' + json.id);
           } else {
-            alert(json.msg)
+            FmsToast.show(json.msg, 'err')
           }
         },
         error: function (data, err) {
-          alert(err);
-        }
+          FmsToast.show('Ошибка: ' + err, 'err');
+        },
+        complete: function () { arSaving = false; }
       });
     } else {
-      alert('Не заполнены обязательные поля');
+      FmsToast.show('Не заполнены обязательные поля', 'err');
     }
   }
+  var arSaving = false;
   function printPage(){
     window.open("/lv/print.s");
   }
   function delPatient(){
-    if(confirm('Вы действительно хотите удалить данного пациента?')) {
+    FmsConfirm('Вы действительно хотите удалить данного пациента?', function () {
       $.ajax({
         url: "/reg/nurse/del.s",
         method: "post",
@@ -56,7 +56,7 @@
           if (res.success)
             setPage('/reg/nurse/index.s');
         }});
-    }
+    });
   }
   function setCountery(dom) {
     $('#regionId').toggle(dom.value == '199').val('');
@@ -114,9 +114,9 @@
       let tr = $('<tr cid="' + client.id + '"></tr>');
       tr.click(()=> {
         $('#client_filter').hide();
-        $('#client_buttons .btn-success').hide();
-        $('#client_buttons .btn-info').show();
-        $('#client_buttons .btn-danger').show();
+        $('#client_buttons .cb-add').hide();
+        $('#client_buttons .cb-view').show();
+        $('#client_buttons .cb-reset').show();
         setClient(tr.attr('cid'));
       });
       let fio = $('<td>' + client.name + '</td>');
@@ -137,10 +137,10 @@
     $('input[name=address]').val(client.address);
     $('input[name=tel]').val(client.tel);
   }
-  $('#client_buttons .btn-danger').click(()=> {
-    $('#client_buttons .btn-success').show();
-    $('#client_buttons .btn-info').hide();
-    $('#client_buttons .btn-danger').hide();
+  $('#client_buttons .cb-reset').click(()=> {
+    $('#client_buttons .cb-add').show();
+    $('#client_buttons .cb-view').hide();
+    $('#client_buttons .cb-reset').hide();
     clients = [];
     setClient(0);
   });
@@ -283,7 +283,7 @@
   .client-field { position:relative; display:flex; gap:8px; }
   .client-field .inp { flex:1; position:relative; }
   #client_buttons { display:flex; gap:6px; }
-  #client_buttons .btn { width:38px; height:38px; padding:0; border-radius:9px; }
+  #client_buttons .ab { height:38px; }
   #client_filter { top:calc(100% + 4px); left:0; z-index:50; max-height:280px; overflow-y:auto;
     border:1px solid var(--border); border-radius:10px; box-shadow:0 12px 30px rgba(20,25,40,.14); }
   #client_filter table { width:100%; border:0; }
@@ -407,7 +407,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="ab" id="close_client_info" data-dismiss="modal" aria-hidden="true">Закрыть</button>
-        <button type="button" class="ab primary" onclick="saveClient()"><i class="fa fa-save"></i> Сохранить</button>
+        <button type="button" class="ab primary" onclick="saveClient()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
   </div>
@@ -418,7 +418,7 @@
   <!-- ================= Шапка ================= -->
   <div class="ar-card">
     <div class="ar-head">
-      <div class="ar-avatar"><i class="fa fa-bed"></i></div>
+      <div class="ar-avatar"><i class="fa fa-hospital-o"></i></div>
       <div class="ar-title">
         <h2 <c:if test="${patient.id != null}">title="ID ${patient.id}"</c:if>>
           <c:choose>
@@ -444,7 +444,7 @@
           <a href="#" class="ab danger" onclick="delPatient(); return false;"><i class="fa fa-trash-o"></i> Удалить</a>
           <a href="#" class="ab" onclick="confPatient(); return false;"><i class="fa fa-check"></i> Подтвердить</a>
         </c:if>
-        <a href="#" class="ab primary" onclick="saveForm(); return false;"><i class="fa fa-save"></i> Сохранить</a>
+        <a href="#" class="ab primary" onclick="saveForm(); return false;"><i class="fa fa-floppy-o"></i> Сохранить</a>
       </div>
     </div>
   </div>
@@ -477,9 +477,9 @@
               </div>
               <c:if test="${patient.id == null}">
                 <div id="client_buttons">
-                  <button type="button" class="btn btn-success btn-icon" onclick="addClient()" title="Новый клиент"><i class="fa fa-plus"></i></button>
-                  <button type="button" class="btn btn-info btn-icon display-none" onclick="clientView()" title="Реквизиты клиента"><i class="fa fa-user"></i></button>
-                  <button type="button" class="btn btn-danger btn-icon display-none" title="Сбросить клиента"><i class="fa fa-times"></i></button>
+                  <button type="button" class="ab cb-add" onclick="addClient()" title="Новый клиент"><i class="fa fa-plus"></i> Новый</button>
+                  <button type="button" class="ab cb-view" style="display:none" onclick="clientView()" title="Реквизиты клиента"><i class="fa fa-user"></i></button>
+                  <button type="button" class="ab danger cb-reset" style="display:none" title="Сбросить клиента"><i class="fa fa-times"></i></button>
                 </div>
               </c:if>
             </div>
@@ -569,7 +569,12 @@
 
           <div class="f s2"><label>Тениаринхоз санаси</label>
             <f:input path="tarDate" class="form-control datepicker" type="text"/></div>
-          <div class="f s4"></div>
+          <div class="f s2"><label>Больничный лист предоставить</label>
+            <f:select path="sickLeave" class="form-control">
+              <f:option value="N">Нет</f:option>
+              <f:option value="Y">Да</f:option>
+            </f:select></div>
+          <div class="f s2"></div>
 
           <div class="f s6"><label>Дориларнинг ножуя тасири</label>
             <f:textarea path="drugEffect" class="form-control" rows="2"/></div>
@@ -619,7 +624,7 @@
               </td>
               <td class="c">
                 <c:if test="${watcher.state == 'ENT'}">
-                  <button type="button" class="ab-ico del" onclick="if(confirm('Удалить запись?')) removeRow('watcher', ${watcher.id})" title="Удалить"><i class="fa fa-trash-o"></i></button>
+                  <button type="button" class="ab-ico del" onclick="FmsConfirm('Удалить запись?', function () { removeRow('watcher', ${watcher.id}); })" title="Удалить"><i class="fa fa-trash-o"></i></button>
                 </c:if>
               </td>
             </tr>
@@ -651,7 +656,7 @@
         <span class="sp"></span>
         <span class="kdo-total">Выбрано: <b id="kdoCnt">0</b> · Сумма: <b id="kdoSum">0</b></span>
         <c:if test="${patient.state == 'PRN' || patient.state == 'PRD'}">
-          <button type="button" class="ab sm primary" onclick="saveNecKdo()"><i class="fa fa-save"></i> Сохранить</button>
+          <button type="button" class="ab sm primary" onclick="saveNecKdo()"><i class="fa fa-floppy-o"></i> Сохранить</button>
         </c:if>
       </div>
       <form id="kdoForm">
@@ -690,13 +695,13 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
         } else {
-          alert(json.msg);
+          FmsToast.show(json.msg, 'err');
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
@@ -705,19 +710,13 @@
     return nm.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
   }
   function setWatcherTotal(dom) {
-    try {
-      if(parseInt('${patient.dayCount}') < parseInt(dom.value)) {
-        alert('Кол-во дней не может превышать кол-во койко-дней пациента');
-        dom.value = '';
-      }
-    } catch (e) {
-      dom.value = '';
-      alert('Проверьте правильность ввода данных');
-    }
+    var v = parseInt(dom.value, 10), max = parseInt('${patient.dayCount}', 10);
+    if (isNaN(v) || v < 1) { dom.value = ''; return; }
+    if (!isNaN(max) && v > max) { FmsToast.show('Кол-во дней не может превышать кол-во койко-дней пациента (' + max + ')', 'err'); dom.value = ''; }
   }
   function saveWatcher() {
     if(!document.getElementById("watcher-day-count").value) {
-      alert('Укажите количество дней');
+      FmsToast.show('Укажите количество дней', 'err');
       document.getElementById("watcher-day-count").focus();
       return;
     }
@@ -729,14 +728,14 @@
         dataType: 'json',
         success: function (json) {
           if (json.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/reg/nurse/index.s?id=${patient.id}');
           } else {
-            alert(json.msg);
+            FmsToast.show(json.msg, 'err');
           }
         },
         error: function (data, err) {
-          alert(err);
+          FmsToast.show('Ошибка: ' + err, 'err');
         }
       });
     }
@@ -749,14 +748,14 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/reg/nurse/index.s?id=${patient.id}');
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
@@ -768,9 +767,9 @@
       dataType: 'json',
       success: function (res) {
         if (res.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
         } else {
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
         }
       }
     });
@@ -797,5 +796,4 @@
   kdoRecalc();
 
   $('d').html('*');
-  $(".date-format").mask("99.99.9999",{placeholder:"dd.mm.yyyy"});
 </script>

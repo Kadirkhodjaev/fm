@@ -3,7 +3,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<script src="/res/js/common.js" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
@@ -226,7 +226,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="rv-btn" id="close_client_info" data-dismiss="modal" aria-hidden="true">Закрыть</button>
-        <button type="button" class="rv-btn primary" onclick="saveClient()"><i class="fa fa-save"></i> Сохранить</button>
+        <button type="button" class="rv-btn primary" onclick="saveClient()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
   </div>
@@ -287,7 +287,7 @@
 
   <!-- ================= Госпитализация ================= -->
   <div class="rv-card">
-    <div class="rv-card-h"><i class="fa fa-bed"></i> Госпитализация</div>
+    <div class="rv-card-h"><i class="fa fa-hospital-o"></i> Госпитализация</div>
     <dl class="rv-dl">
       <div><dt>Булим</dt><dd>${pat.dept.name}</dd></div>
       <div class="hl"><dt>№ Хона</dt><dd>${pat.room.name}<c:if test="${not empty pat.room.roomType.name}"> · ${pat.room.roomType.name}</c:if></dd></div>
@@ -352,7 +352,7 @@
 
   <!-- ================= Медицинские данные ================= -->
   <div class="rv-card">
-    <div class="rv-card-h"><i class="fa fa-heartbeat"></i> Медицинские данные</div>
+    <div class="rv-card-h"><i class="fa fa-medkit"></i> Медицинские данные</div>
     <dl class="rv-dl">
       <div><dt>Буйи</dt><dd>${pat.rost}<c:if test="${not empty pat.rost}"> см</c:if></dd></div>
       <div><dt>Огирлиги</dt><dd>${pat.ves}<c:if test="${not empty pat.ves}"> кг</c:if></dd></div>

@@ -6,7 +6,7 @@
 
 <script>
   function closeIB(){
-    if(confirm('Осторожно!!! Вы действительно хотите закрыть ИБ? Все действия закроются!')) {
+    FmsConfirm('Осторожно!!! Вы действительно хотите закрыть ИБ? Все действия закроются!', function () {
       $.ajax({
         url: '/cashbox/closeib.s',
         method: 'post',
@@ -14,14 +14,14 @@
         dataType: 'json',
         success: function (res) {
           if (res.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/cashbox/stat.s?id=${pat.id}');
           } else {
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
           }
         }
       });
-    }
+    });
   }
   function saveKoyko(){
     $.ajax({
@@ -31,10 +31,10 @@
       dataType: 'json',
       success: function (res) {
         if (res.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/stat.s?id=${pat.id}');
         } else {
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
         }
       }
     });
@@ -47,10 +47,10 @@
       dataType: 'json',
       success: function (res) {
         if (res.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/stat.s?id=${pat.id}');
         } else {
-          alert(res.msg);
+          FmsToast.show(res.msg, 'err');
         }
       }
     });
@@ -244,7 +244,7 @@
         <c:if test="${pat.paid != 'CLOSED' && due <= 1}">
           <button type="button" class="ab" onclick="closeIB()" title="Закрыть историю болезни"><i class="fa fa-lock"></i> Закрыть ИБ</button>
         </c:if>
-        <button type="button" class="ab" onclick="setPage('/patients/list.s')"><i class="fa fa-close"></i> Закрыть</button>
+        <button type="button" class="ab" onclick="setPage('/patients/list.s')"><i class="fa fa-times"></i> Закрыть</button>
       </div>
     </div>
     <div class="ca-info">
@@ -556,41 +556,31 @@
 <!-- Add Edit Discount -->
 <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div class="modal-dialog" style="width:460px">
+    <div class="modal-content ca" style="border:0; border-radius:16px; padding:0">
+      <div style="display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid #E6E8EC">
+        <h4 id="myModalLabel" style="margin:0; flex:1; font-size:15px; font-weight:700">Скидка</h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты скидки</h4>
       </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value="" />
-          <input type="hidden" name="code" value="STAT" />
-          <input type="hidden" name="patient" value="${pat.id}" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Сумма скидки*:</td>
-              <td>
-                <input type="number" class="form-control right" maxlength="20" name="summ"/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Описание:</td>
-              <td>
-                <textarea class="form-control" name="text" maxlength="200"></textarea>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveDiscount()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
+      <form id="addEditForm" name="addEditForm" onsubmit="saveDiscount(); return false" style="padding:16px 18px; display:flex; flex-direction:column; gap:12px">
+        <input type="hidden" name="id" value="" />
+        <input type="hidden" name="code" value="STAT" />
+        <input type="hidden" name="patient" value="${pat.id}" />
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:#6B7280; margin-bottom:5px">Сумма скидки *</label>
+          <input type="number" class="form-control" style="text-align:right; height:38px; border-radius:9px" maxlength="20" name="summ" min="0"/>
+        </div>
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:#6B7280; margin-bottom:5px">Описание</label>
+          <textarea class="form-control" style="border-radius:9px" name="text" maxlength="200" rows="3"></textarea>
+        </div>
+      </form>
+      <div style="display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; border-top:1px solid #E6E8EC; background:#FAFBFC; border-radius:0 0 16px 16px">
+        <button type="button" class="ab" id="close-modal" data-dismiss="modal">Отмена</button>
+        <button type="button" class="ab main" onclick="saveDiscount()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
-    <!-- /.modal-content -->
   </div>
-  <!-- /.modal-dialog -->
 </div>
 
 <script>
@@ -627,7 +617,7 @@
     if (cOnline.checked) checkedCount++;
     if (cTransfer.checked) checkedCount++;
     if (valueCount + 1 !== checkedCount) {
-      alert('Есть не заполненные поля');
+      FmsToast.show('Есть не заполненные поля', 'err');
       return;
     }
     if (cCard.checked && card.value === '') card.value = totalSum - sum;
@@ -657,7 +647,7 @@
       if(payType !== 'pay') {
         if(sum > paidSum) {
           if (elem != null) elem.value = 0;
-          alert('Итоговая сумма возврата не может быть больше оплаченной!');
+          FmsToast.show('Итоговая сумма возврата не может быть больше оплаченной!', 'err');
           return;
         }
       }
@@ -666,14 +656,14 @@
         if (elem != null) {
           elem.value = 0;
         }
-        alert('ИТОГО не может быть больше суммы к оплате');
+        FmsToast.show('ИТОГО не может быть больше суммы к оплате', 'err');
         total.style.border = '1px solid red';
         total.style.color = 'red';
         total.title = 'Сумма оплаты больше ожидаемого';
       }
       document.getElementById("totalInput").value = sum;
     } catch (e) {
-      alert('Проверьте правильности ввода цифр');
+      FmsToast.show('Проверьте правильности ввода цифр', 'err');
       document.getElementById("totalInput").value = '0';
     }
   }
@@ -689,7 +679,7 @@
     if (online.value !== '') {sum += parseFloat(online.value); params += 'online=' + online.value + '&';}
     if (transfer.value !== '') {sum += parseFloat(transfer.value); params += 'transfer=' + transfer.value + '&';}
     if (payType === 'pay' && totalSum === 0) {
-      alert('Сумма не верна. Проверьте правильности итоговой суммы');
+      FmsToast.show('Сумма не верна. Проверьте правильности итоговой суммы', 'err');
       return;
     }
     $.ajax({
@@ -699,14 +689,14 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/stat.s?id=' + json.id);
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
@@ -718,14 +708,14 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/stat.s?id=${pat.id}');
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
@@ -737,14 +727,14 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/stat.s?id=${pat.id}');
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
@@ -771,7 +761,7 @@
             $('*[name=summ]').val(res.summ);
             $('*[name=text]').val(res.text);
           } else {
-            alert(res.msg);
+            FmsToast.show(res.msg, 'err');
           }
         }
       });
@@ -781,7 +771,7 @@
     try {
       var discountSum = parseFloat($('*[name=summ]').val());
       if(discountSum + discountSumm > totalSum || discountSum === 0) {
-        alert('Сумма скидки не может превышать сумму к оплате');
+        FmsToast.show('Сумма скидки не может превышать сумму к оплате', 'err');
         return;
       }
       $.ajax({
@@ -792,18 +782,18 @@
         success: function (json) {
           if (json.success) {
             $('#close-modal').click();
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/cashbox/stat.s?id=${pat.id}');
           } else {
-            alert(json.msg)
+            FmsToast.show(json.msg, 'err')
           }
         },
         error: function (data, err) {
-          alert(err);
+          FmsToast.show('Ошибка: ' + err, 'err');
         }
       });
     } catch (e) {
-      alert('Проверьте правильности ввода');
+      FmsToast.show('Проверьте правильности ввода', 'err');
     }
   }
   function delDiscount(id) {
@@ -814,55 +804,53 @@
       dataType: 'json',
       success: function (json) {
         if (json.success) {
-          alert("<ui:message code="successSave"/>");
+          FmsToast.show('Данные сохранены', 'ok');
           setPage('/cashbox/stat.s?id=${pat.id}');
         } else {
-          alert(json.msg)
+          FmsToast.show(json.msg, 'err')
         }
       },
       error: function (data, err) {
-        alert(err);
+        FmsToast.show('Ошибка: ' + err, 'err');
       }
     });
   }
   function delCashOper(id) {
-    if(confirm('Вы действительно хотите удалить оплату?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить оплату?', function () { $.ajax({
         url: '/cashbox/stat/delPay.s',
         method: "post",
         data: 'id=' + id,
         dataType: 'json',
         success: function (json) {
           if (json.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/cashbox/stat.s?id=${pat.id}');
           } else {
-            alert(json.msg)
+            FmsToast.show(json.msg, 'err')
           }
         },
         error: function (data, err) {
-          alert(err);
+          FmsToast.show('Ошибка: ' + err, 'err');
         }
-      });
+      }); });
   }
   function delWatcher(id) {
-    if(confirm('Вы действительно хотите удалить?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить?', function () { $.ajax({
         url: '/cashbox/stat/delWatcher.s',
         method: "post",
         data: 'id=' + id,
         dataType: 'json',
         success: function (json) {
           if (json.success) {
-            alert("<ui:message code="successSave"/>");
+            FmsToast.show('Данные сохранены', 'ok');
             setPage('/cashbox/stat.s?id=${pat.id}');
           } else {
-            alert(json.msg)
+            FmsToast.show(json.msg, 'err')
           }
         },
         error: function (data, err) {
-          alert(err);
+          FmsToast.show('Ошибка: ' + err, 'err');
         }
-      });
+      }); });
   }
 </script>

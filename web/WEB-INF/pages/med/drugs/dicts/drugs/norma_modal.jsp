@@ -1,7 +1,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<div class="modal-dialog" style="width:500px">
+<%@include file="/WEB-INF/pages/core/forms/modal_style.jsp"%>
+<div class="modal-dialog mdn" style="width:500px">
   <div class="modal-content">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
@@ -54,8 +55,8 @@
       </form>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-primary" onclick="saveNorma()">Сохранить</button>
-      <button type="button" class="btn btn-default" id="close_modal_norma" data-dismiss="modal">Закрыть</button>
+      <button type="button" class="mdn-btn" id="close_modal_norma" data-dismiss="modal">Закрыть</button>
+      <button type="button" class="mdn-btn primary" onclick="saveNorma()"><i class="fa fa-check"></i> Сохранить</button>
     </div>
   </div>
 </div>

@@ -1,81 +1,55 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<link href="/res/css/styles.css" rel="stylesheet">
-<link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%-- Карточка пациента → История: прежние госпитализации и амбулаторные визиты этого клиента --%>
+<%@include file="/WEB-INF/pages/med/lv/frame_style.jsp"%>
 <style>
-  .grid {font-size: 12px}
-  .grid tr {cursor: hand}
-  .grid thead {background:#d1d1d1}
-  .grid thead tr th {text-align: center; border:1px solid #ddd !important;}
-  .grid tbody tr td, .grid thead tr th {padding: 4px !important;}
+  .hs-row { cursor:pointer; }
+  .hs-row:hover td { background:#F8F9FB; }
+  .hs-row .nm { color:#1F2430; font-weight:600; }
 </style>
-<c:if test="${fn:length(stats) > 0}">
-  <div class="panel panel-info table-responsive" style="width: 900px !important; margin: auto">
-    <div class="panel-heading">Стационар</div>
-    <table class="table table-striped table-bordered table-hover grid dataTable hand" width="100%">
+<div class="ld-sheet" style="max-width:960px">
+  <div class="ld-title"><i class="fa fa-hospital-o" style="color:#9AA1AC"></i> Стационар <span class="sub">${fn:length(stats)}</span></div>
+  <c:if test="${empty stats}"><div class="ld-empty">Госпитализаций нет</div></c:if>
+  <c:if test="${not empty stats}">
+    <table class="fm-grid">
       <thead>
-      <tr>
-        <th>ФИО</th>
-        <th>Дата рег.</th>
-        <th>Дата вып.</th>
-        <th>№ ИБ</th>
-        <th>Отд. / Палата</th>
-        <th>Состояние</th>
-      </tr>
+      <tr><th>ФИО</th><th style="width:110px">Поступил</th><th style="width:110px">Выписан</th><th style="width:80px">№ ИБ</th><th>Отд. / палата</th><th style="width:110px">Состояние</th></tr>
       </thead>
       <tbody>
       <c:forEach items="${stats}" var="p">
-        <tr>
-          <td align="center"><a href="#" onclick="parent.openMainPage('/${p.state == 'ARCH' ? 'view' : 'lv'}/index.s?id=${p.id}', false); return false">${p.fio}</a></td>
-          <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${p.dateBegin}" /></td>
-          <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${p.dateEnd}" /></td>
-          <td align="center">${p.yearNum}</td>
-          <td align="center">${p.dept.name} / ${p.room.name}</td>
-          <td align="center">
-            <c:if test="${p.state == 'ARCH'}">
-              Архив
-            </c:if>
-            <c:if test="${p.state != 'ARCH'}">
-              Текущий
-            </c:if>
-          </td>
+        <tr class="hs-row" onclick="parent.openMainPage('/${p.state == 'ARCH' ? 'view' : 'lv'}/index.s?id=${p.id}', false)" title="Открыть карточку">
+          <td class="nm">${p.fio}</td>
+          <td><fmt:formatDate pattern="dd.MM.yyyy" value="${p.dateBegin}"/></td>
+          <td><fmt:formatDate pattern="dd.MM.yyyy" value="${p.dateEnd}"/></td>
+          <td>${p.yearNum}</td>
+          <td class="mut">${p.dept.name}<c:if test="${not empty p.room}"> / ${p.room.name}</c:if></td>
+          <td><span class="ld-tag ${p.state == 'ARCH' ? '' : 'ok'}">${p.state == 'ARCH' ? 'Архив' : 'Текущий'}</span></td>
         </tr>
       </c:forEach>
       </tbody>
     </table>
-  </div>
-</c:if>
-<c:if test="${fn:length(ambs) > 0}">
-  <div class="panel panel-info table-responsive" style="width: 900px !important; margin: auto">
-    <div class="panel-heading">Амбулатория</div>
-    <table class="table table-striped table-bordered table-hover grid dataTable hand" width="100%">
+  </c:if>
+</div>
+<div class="ld-sheet" style="max-width:960px">
+  <div class="ld-title"><i class="fa fa-stethoscope" style="color:#9AA1AC"></i> Амбулатория <span class="sub">${fn:length(ambs)}</span></div>
+  <c:if test="${empty ambs}"><div class="ld-empty">Амбулаторных визитов нет</div></c:if>
+  <c:if test="${not empty ambs}">
+    <table class="fm-grid">
       <thead>
-      <tr>
-        <th>ФИО</th>
-        <th>Год рождения</th>
-        <th>Дата рег.</th>
-        <th>Состояние</th>
-      </tr>
+      <tr><th>ФИО</th><th style="width:120px">Год рождения</th><th style="width:130px">Дата рег.</th><th style="width:110px">Состояние</th></tr>
       </thead>
       <tbody>
       <c:forEach items="${ambs}" var="p">
-        <tr>
-          <td align="center"><a href="#" onclick="parent.openMainPage('/amb/reg.s?id=${p.id}&stat=${pat.id}', false); return false">${p.fio}</a></td>
-          <td align="center">${p.birthyear}</td>
-          <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${p.crOn}" /></td>
-          <td align="center">
-            <c:if test="${p.state == 'ARCH'}">
-              Архив
-            </c:if>
-            <c:if test="${p.state != 'ARCH'}">
-              Текущий
-            </c:if>
-          </td>
+        <tr class="hs-row" onclick="parent.openMainPage('/amb/reg.s?id=${p.id}&stat=${pat.id}', false)" title="Открыть визит">
+          <td class="nm">${p.fio}</td>
+          <td>${p.birthyear}</td>
+          <td><fmt:formatDate pattern="dd.MM.yyyy" value="${p.crOn}"/></td>
+          <td><span class="ld-tag ${p.state == 'ARCH' ? '' : 'ok'}">${p.state == 'ARCH' ? 'Архив' : 'Текущий'}</span></td>
         </tr>
       </c:forEach>
       </tbody>
     </table>
-  </div>
-</c:if>
+  </c:if>
+</div>

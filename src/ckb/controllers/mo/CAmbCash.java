@@ -18,6 +18,7 @@ import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.BeanSession;
 import ckb.utils.Util;
+import ckb.utils.tg.TgAmbConsul;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,6 +181,7 @@ public class CAmbCash {
           service.setCashDate(new Date());
           dAmbPatientService.save(service);
         }
+        TgAmbConsul.send(patient, services);
       }
       if(cash_del_service > 0) {
         AmbPatientServices sr = dAmbPatientService.get(cash_del_service);

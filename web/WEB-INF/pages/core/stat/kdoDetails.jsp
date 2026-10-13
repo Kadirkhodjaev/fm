@@ -1,138 +1,142 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
+<%-- Администрирование → Детали лаб: цены показателей лабораторных исследований --%>
+<%@include file="/WEB-INF/pages/med/drugs/dicts/dict_kit.jsp"%>
 <style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
+  .kd-num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .kd-num.z { color:#C0C5CE; }
+  .kd-grp { display:inline-block; padding:2px 8px; border-radius:6px; background:#F1F2F4; color:#4B5563; font-size:12px; white-space:nowrap; }
+  .kd-pr { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .kd-pr .fm-in { text-align:right; font-variant-numeric:tabular-nums; }
+  .kd-sub { color:#9AA0AB; font-size:12px; margin-top:-6px; }
 </style>
-<script>
-  function addAmb() {
-    setPage('/admin/addAmb.s');
-  }
-</script>
-<style>
-  table tr.selected {background: #eee}
-</style>
-<div class="panel panel-info">
-  <div class="panel-heading">
-    Список стационарных услуг
-  </div>
-  <div class="panel-body">
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<div class="fm-page fm-admin">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-flask"></i></span>
+        <div>
+          <h2>Детали лаб</h2>
+          <span class="fm-count"><b id="kdShown">${fn:length(services)}</b> из <b>${fn:length(services)}</b> показателей</span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg" id="kdSeg">
+        <button type="button" data-f="" class="on" onclick="DK.seg('kd', this)">Все</button>
+        <c:set var="prevKdo" value=""/>
+        <c:forEach items="${services}" var="s">
+          <c:if test="${s.kdo.id != prevKdo}">
+            <button type="button" data-f="${s.kdo.id}" onclick="DK.seg('kd', this)">${s.kdo.name}</button>
+            <c:set var="prevKdo" value="${s.kdo.id}"/>
+          </c:if>
+        </c:forEach>
+      </div>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="kdSearch" placeholder="Показатель" oninput="DK.filter('kd')" autocomplete="off"/>
+      </div>
+    </div>
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>ID</th>
-          <th>Группировка</th>
-          <th>Наименование</th>
-          <th>Стоимость</th>
-          <th>Стоимость (Иностранцы)</th>
-          <th>Реальная стоимость</th>
-          <th>Реальная стоимость (Иностранцы)</th>
+          <th style="width:50px">#</th>
+          <th style="width:220px">Исследование</th>
+          <th>Показатель</th>
+          <th class="r" style="width:140px">Цена</th>
+          <th class="r" style="width:140px">Цена (нерез.)</th>
+          <th class="r" style="width:150px">Реальная стоимость</th>
+          <th class="r" style="width:150px">Реальная (нерез.)</th>
+          <th style="width:50px"></th>
+        </tr>
         </thead>
-        <tbody>
+        <tbody id="kdRows">
         <c:forEach items="${services}" var="s" varStatus="loop">
-          <tr>
-            <td style="vertical-align: middle" class="center">${loop.index + 1}</td>
-            <td style="vertical-align: middle">${s.kdo.name}</td>
-            <td style="vertical-align: middle">
-              <a href="#" onclick="editDict(${s.id}, '${s.name}', '${s.price}', '${s.for_price}', '${s.real_price}', '${s.for_real_price}');return false;">${s.name}</a>
-            </td>
-            <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.price}" type = "number"/></td>
-            <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.for_price}" type = "number"/></td>
-            <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.real_price}" type = "number"/></td>
-            <td style="vertical-align: middle" class="right"><fmt:formatNumber value = "${s.for_real_price}" type = "number"/></td>
+          <tr data-f="${s.kdo.id}" data-s="${fn:escapeXml(s.name)} ${fn:escapeXml(s.kdo.name)}" onclick="kdEdit(this)" title="Изменить цены"
+              data-id="${s.id}" data-nm="${fn:escapeXml(s.name)}" data-kdo="${fn:escapeXml(s.kdo.name)}"
+              data-p1="${s.price}" data-p2="${s.for_price}" data-p3="${s.real_price}" data-p4="${s.for_real_price}">
+            <td class="mut">${loop.index + 1}</td>
+            <td><span class="kd-grp">${s.kdo.name}</span></td>
+            <td><span class="nm">${s.name}</span></td>
+            <td class="kd-num${empty s.price || s.price == 0 ? ' z' : ''}"><fmt:formatNumber value="${s.price}" pattern="#,##0.##"/></td>
+            <td class="kd-num${empty s.for_price || s.for_price == 0 ? ' z' : ''}"><fmt:formatNumber value="${s.for_price}" pattern="#,##0.##"/></td>
+            <td class="kd-num${empty s.real_price || s.real_price == 0 ? ' z' : ''}"><fmt:formatNumber value="${s.real_price}" pattern="#,##0.##"/></td>
+            <td class="kd-num${empty s.for_real_price || s.for_real_price == 0 ? ' z' : ''}"><fmt:formatNumber value="${s.for_real_price}" pattern="#,##0.##"/></td>
+            <td class="r"><button type="button" class="fm-act" title="Изменить"><i class="fa fa-pencil"></i></button></td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="kdEmpty" style="display:none"><i class="fa fa-flask"></i>Ничего не найдено</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
 </div>
-<a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты услуги</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value="" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Наименование*:</td>
-              <td id="kdoName"></td>
-            </tr>
-            <tr>
-              <td class="right bold">Цена (Резиденты)*:</td>
-              <td>
-                <input type="text" id="kdo-price" class="form-control right" name="price" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Цена (Не резиденты)*:</td>
-              <td>
-                <input type="text" id="kdo-for-price" class="form-control right" name="for_price" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Реальная стоимость*:</td>
-              <td>
-                <input type="text" id="kdo-real-price" class="form-control right" name="real_price" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Реальная стоимость (Иностранцы)*:</td>
-              <td>
-                <input type="text" id="kdo-for-real-price" class="form-control right" name="for_real_price" value=""/>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveStatKdo()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
+
+<div class="fm-overlay fm-admin" id="kdModal" onclick="if (event.target === this) DK.close('kd')">
+  <div class="fm-modal" style="width:520px">
+    <div class="fm-modal-head">
+      <h3 id="kdTitle"></h3>
+      <button type="button" class="fm-x" onclick="DK.close('kd')"><i class="fa fa-times"></i></button>
     </div>
-    <!-- /.modal-content -->
+    <form id="kdForm" onsubmit="kdSave(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="id"/>
+        <div class="kd-sub" id="kdSub"></div>
+        <div class="fm-err" id="kdErr"></div>
+        <div class="kd-pr">
+          <div><label class="fm-l">Цена (резиденты) *</label><input type="text" class="fm-in" name="price" inputmode="decimal" autocomplete="off"/></div>
+          <div><label class="fm-l">Цена (нерезиденты) *</label><input type="text" class="fm-in" name="for_price" inputmode="decimal" autocomplete="off"/></div>
+          <div><label class="fm-l">Реальная стоимость *</label><input type="text" class="fm-in" name="real_price" inputmode="decimal" autocomplete="off"/></div>
+          <div><label class="fm-l">Реальная (нерезиденты) *</label><input type="text" class="fm-in" name="for_real_price" inputmode="decimal" autocomplete="off"/></div>
+        </div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="DK.close('kd')">Отмена</button>
+        <button type="submit" class="fm-btn primary" id="kdSaveBtn"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      </div>
+    </form>
   </div>
-  <!-- /.modal-dialog -->
 </div>
 <script>
-  function saveStatKdo() {
-    if($('#kdo-name').val() == '') {
-      alert('Наименование не может быть пустым');
-      return;
+  (function () {
+    var F = ['price', 'for_price', 'real_price', 'for_real_price'];
+    function raw(v) { return String(v == null ? '' : v).replace(/[\s ]/g, '').replace(',', '.'); }
+    function fmt(v) {
+      v = raw(v);
+      if (v === '' || isNaN(v)) return v;
+      var p = v.split('.'), d = p[1] && /[1-9]/.test(p[1]) ? '.' + p[1].replace(/0+$/, '') : '';
+      return p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + d;
     }
-    $.ajax({
-      url: '/core/stat/details.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('#close-modal').click();
-          alert("<ui:message code="successSave"/>");
-          setPage('/core/stat/details.s');
-        } else {
-          alert(res.msg);
-        }
+    window.kdEdit = function (tr) {
+      var f = document.getElementById('kdForm'), t = $(tr);
+      f.reset();
+      f.elements['id'].value = t.attr('data-id');
+      for (var i = 0; i < F.length; i++) f.elements[F[i]].value = fmt(t.attr('data-p' + (i + 1)));
+      $('#kdSub').text(t.attr('data-kdo'));
+      DK.open('kd', t.attr('data-nm'));
+      f.elements['price'].select();
+    };
+    window.kdSave = function () {
+      var f = document.getElementById('kdForm'), data = 'id=' + encodeURIComponent(f.elements['id'].value);
+      for (var i = 0; i < F.length; i++) {
+        var v = raw(f.elements[F[i]].value);
+        if (v === '' || isNaN(v) || Number(v) < 0) { DK.err('kd', 'Неверная сумма'); f.elements[F[i]].focus(); return; }
+        data += '&' + F[i] + '=' + encodeURIComponent(v);
       }
-    });
-  }
-  function editDict(id, name, price, for_price, real_price, for_real_price) {
-    document.getElementById("modal_window").click();
-    $('*[name=id]').val(id);
-    $('#kdoName').html(name);
-    $('*[name=price]').val(price);
-    $('*[name=for_price]').val(for_price);
-    $('*[name=real_price]').val(real_price);
-    $('*[name=for_real_price]').val(for_real_price);
-  }
+      $('#kdSaveBtn').prop('disabled', true);
+      $.ajax({
+        url: '/core/stat/details.s', method: 'post', data: data, dataType: 'json',
+        success: function (res) {
+          if (res.success) { openMsg(res); DK.close('kd'); setPage('/core/stat/details.s'); }
+          else DK.err('kd', res.msg);
+        },
+        complete: function () { $('#kdSaveBtn').prop('disabled', false); }
+      });
+    };
+    $('#kdForm .fm-in').on('blur', function () { this.value = fmt(this.value); });
+    DK.filter('kd');
+  })();
 </script>

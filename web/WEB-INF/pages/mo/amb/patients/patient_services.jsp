@@ -2,7 +2,7 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <div class="panel panel-info wpx-1400 margin-auto">
   <div class="panel-heading">
     <table class="w-100">
@@ -275,8 +275,7 @@
     });
   }
   function delService(id) {
-    if(confirm('Вы действительно хотите удалить запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить запись?', function () { $.ajax({
         url: '/ambs/patient/del-service.s',
         method: 'post',
         data: 'id=' + id,
@@ -285,11 +284,10 @@
           openMsg(res);
           if(res.success) $('#patient_services').load('/ambs/patient/services.s?id=${patient.id}');
         }
-      });
+      }); });
   }
   function setRepeat(id) {
-    if(confirm('Вы действительно хотите включить повторную консультацию?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите включить повторную консультацию?', function () { $.ajax({
         url: '/ambs/patient/repeat-service.s',
         method: 'post',
         data: 'id=' + id,
@@ -298,7 +296,7 @@
           openMsg(res);
           if(res.success) $('#patient_services').load('/ambs/patient/services.s?id=${patient.id}');
         }
-      });
+      }); });
   }
   function selectGroup(dom, id){
     $('.service-groups').removeClass('active');

@@ -197,4 +197,15 @@ public class FormFields extends GenId {
   public void setOrd(Integer ord) {
     this.ord = ord;
   }
+
+  // codes of the field shown in the "Code" column when Forms.code_flag = Y
+  @Column(length = 512) private String codes;
+
+  public String getCodes() {
+    return codes;
+  }
+
+  public void setCodes(String codes) {
+    this.codes = codes;
+  }
 }

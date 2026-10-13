@@ -35,21 +35,22 @@ public class CCoreStat {
   @Autowired private DKdos dKdo;
   @Autowired private DKdoChoosen dKdoChoosen;
 
+  /** Стационар: одна страница с вкладками «Услуги» и «Группы» (core/stat/hub.jsp) */
+  @RequestMapping("index.s")
+  protected String index(HttpServletRequest req) {
+    Session session = SessionUtil.getUser(req);
+    session.setCurUrl("/core/stat/index.s");
+    if(session.getCurSubUrl().isEmpty() || !session.getCurSubUrl().contains("core/stat/")) session.setCurSubUrl("/core/stat/services.s");
+    return "/core/stat/hub";
+  }
+
   @RequestMapping("/groups.s")
   protected String stat_groups(HttpServletRequest request, Model model) {
     Session session = SessionUtil.getUser(request);
-    session.setCurUrl("/core/stat/groups.s");
+    session.setCurUrl("/core/stat/index.s");
+    session.setCurSubUrl("/core/stat/groups.s");
     model.addAttribute("groups", dKdoType.getAll());
     return "/core/stat/groups";
-  }
-
-  @RequestMapping("/group/save.s")
-  protected String addStatGroup(HttpServletRequest req, Model model) {
-    Session session = SessionUtil.getUser(req);
-    session.setCurUrl("/core/stat/group/save.s?id=" + Util.nvl(req, "id"));
-    if(Util.isNotNull(req, "id"))
-      model.addAttribute("ser", dKdoType.get(Util.getInt(req, "id")));
-    return "/core/stat/addGroup";
   }
 
   @RequestMapping(value = "/group/save.s", method = RequestMethod.POST)
@@ -75,7 +76,8 @@ public class CCoreStat {
   protected String statServices(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     String group = Util.get(req, "group", "0");
-    session.setCurUrl("/core/stat/services.s?group=" + group);
+    session.setCurUrl("/core/stat/index.s");
+    session.setCurSubUrl("/core/stat/services.s");
     String stateCode = Util.get(req, "state");
     if(stateCode == null) stateCode = session.getFilters().get("admin_stat_state");
     if(stateCode == null) stateCode = "A";
@@ -105,7 +107,7 @@ public class CCoreStat {
   protected String kdoDetails(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/core/stat/details.s");
-    model.addAttribute("services", dKdoChoosen.getList("From KdoChoosens Where kdo.state = 'A' "));
+    model.addAttribute("services", dKdoChoosen.getList("From KdoChoosens Where kdo.state = 'A' Order By kdo.id, ord, id"));
     return "/core/stat/kdoDetails";
   }
 
@@ -115,12 +117,23 @@ public class CCoreStat {
     JSONObject json = new JSONObject();
     try {
       KdoChoosens kdo = dKdoChoosen.get(Util.getInt(req, "id"));
-      if(Util.isNotNull(req, "price")) kdo.setPrice(Double.parseDouble(Util.get(req, "price").replaceAll(",", ".")));
-      if(Util.isNotNull(req, "for_price")) kdo.setFor_price(Double.parseDouble(Util.get(req, "for_price").replaceAll(",", ".")));
-      if(Util.isNotNull(req, "real_price")) kdo.setReal_price(Double.parseDouble(Util.get(req, "real_price").replaceAll(",", ".")));
-      if(Util.isNotNull(req, "for_real_price")) kdo.setFor_real_price(Double.parseDouble(Util.get(req, "for_real_price").replaceAll(",", ".")));
+      Double[] v = new Double[4];
+      String[] names = {"price", "for_price", "real_price", "for_real_price"};
+      for(int i = 0; i < names.length; i++) {
+        if(Util.isNull(req, names[i])) continue;
+        // пробелы между разрядами и запятая допускаются
+        v[i] = Double.parseDouble(Util.get(req, names[i]).replaceAll("[\\s\u00A0]", "").replace(',', '.'));
+        if(v[i] < 0) throw new Exception("Сумма не может быть отрицательной");
+      }
+      if(v[0] != null) kdo.setPrice(v[0]);
+      if(v[1] != null) kdo.setFor_price(v[1]);
+      if(v[2] != null) kdo.setReal_price(v[2]);
+      if(v[3] != null) kdo.setFor_real_price(v[3]);
       dKdoChoosen.save(kdo);
       json.put("success", true);
+    } catch (NumberFormatException e) {
+      json.put("success", false);
+      json.put("msg", "Неверная сумма");
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());

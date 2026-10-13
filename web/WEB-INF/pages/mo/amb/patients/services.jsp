@@ -2,7 +2,7 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <div style="margin-top:10px"></div>
 <div class="shadow-block w-80 margin-auto" style="border:1px solid #ababab">
   <div style="padding:5px;">
@@ -205,8 +205,7 @@
 <script>
   let selected_services = []
   function delService(id) {
-    if(confirm('Вы действительно хотите удалить запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить запись?', function () { $.ajax({
         url: '/ambs/patient/del-service.s',
         method: 'post',
         data: 'id=' + id,
@@ -215,7 +214,7 @@
           openMsg(res);
           if(res.success) setPage('${sessionScope.ENV.curUrl}');
         }
-      });
+      }); });
   }
   function selectGroup(dom, id){
     $('.service-groups').removeClass('active');
@@ -293,8 +292,7 @@
     });
   }
   function confirmPatientService(id) {
-    if(confirm('Вы действительно хотите подтвердить выполнения данной услуги?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите подтвердить выполнения данной услуги?', function () { $.ajax({
         url: '/ambs/doctor/treatment/confirm.s',
         method: 'post',
         data: 'id=' + id,
@@ -303,7 +301,7 @@
           openMsg(res);
           if(res.success) $('#service_block').html('').load('/ambs/patient/services.s?grid=1&id=${patient.id}');
         }
-      });
+      }); });
   }
   $('#print_checked').click(() => {
     let p = 'patient=${patient.id}&';

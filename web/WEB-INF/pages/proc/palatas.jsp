@@ -1,48 +1,46 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<div id="page-wrapper" style="margin:0; border:0">
-  <div class="row" style="margin:0">
-    <div class="col-lg-12">
-      <h2 class="page-header text-danger" style="margin:20px 0 10px;">
-        <table style="width:100%">
-          <tr>
-            <td>Палаты отделений - ${dep_name}</td>
-            <td>
-              <select class="form-control" onchange="setPage('/proc/palatas.s?time=' + this.value)">
-                <option <c:if test="${time==1}">selected</c:if> value="1">Утром</option>
-                <option <c:if test="${time==2}">selected</c:if> value="2">Днем</option>
-                <option <c:if test="${time==3}">selected</c:if> value="3">Вечером</option>
-              </select>
-            </td>
-          </tr>
-        </table>
-      </h2>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@include file="nurse_style.jsp"%>
+<%-- Постовая: палаты отделения. Рассчитано на планшет: крупные плитки, нажатие открывает палату с выбором пациента. --%>
+<div class="np">
+  <div class="np-head">
+    <div class="np-title">
+      <span class="ic"><i class="fa fa-hospital-o"></i></span>
+      <div>
+        <h2>Палаты · ${fn:escapeXml(dep_name)}</h2>
+        <span class="sub"><b>${patientsAll}</b> пациентов<c:if test="${pendingAll > 0}"> · <span class="warn">${pendingAll} ждут процедур</span></c:if></span>
+      </div>
+    </div>
+    <span class="np-spacer"></span>
+    <div class="np-seg">
+      <button type="button" class="${time == '1' ? 'on' : ''}" onclick="setPage('/proc/palatas.s?time=1')"><i class="fa fa-sun-o"></i> Утро</button>
+      <button type="button" class="${time == '2' ? 'on' : ''}" onclick="setPage('/proc/palatas.s?time=2')"><i class="fa fa-cutlery"></i> День</button>
+      <button type="button" class="${time == '3' ? 'on' : ''}" onclick="setPage('/proc/palatas.s?time=3')"><i class="fa fa-moon-o"></i> Вечер</button>
     </div>
   </div>
-  <div class="row" style="margin:0">
-    <c:forEach items="${rooms}" var="r" varStatus="loop">
-      <div class="col-lg-3" style="padding-left: 5px; padding-right: 5px">
-        <a onclick="setPage('/proc/palata.s?id=${r.id}'); return false;" href="#">
-          <div class="col-lg-12">
-            <div class="panel panel-success">
-              <div class="panel-heading">
-                <div class="row">
-                  <div class="center">
-                    <c:forEach items="${r.list}" var="p">
-                      <i class="fa ${p.c1} ${p.c2} fa-2x"></i>
-                    </c:forEach>
-                  </div>
-                </div>
-              </div>
-              <div class="panel-footer">
-                <span class="pull-left">${r.name}</span>
-                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-                <div class="clearfix"></div>
-              </div>
-            </div>
-          </div>
-        </a>
-      </div>
+
+  <div class="np-rooms">
+    <c:forEach items="${rooms}" var="r">
+      <button type="button" class="np-room ${r.pending > 0 ? 'pending' : r.withMeds > 0 ? 'done' : ''}" onclick="setPage('/proc/palata.s?id=${r.id}')">
+        <span class="rn">${fn:escapeXml(r.name)}<c:if test="${not empty r.type}"><small>${fn:escapeXml(r.type)}</small></c:if></span>
+        <span class="people">
+          <c:forEach items="${r.patients}" var="p">
+            <i class="fa ${p.sex == 'F' ? 'fa-female' : p.sex == 'M' ? 'fa-male' : 'fa-user'} ${p.pending > 0 ? 'p-pend' : p.meds ? 'p-done' : 'p-none'}"
+               title="${fn:escapeXml(p.fio)}"></i>
+          </c:forEach>
+        </span>
+        <span class="st">
+          <c:choose>
+            <c:when test="${r.pending > 0}"><i class="fa fa-clock-o"></i> ждут: ${r.pending} из ${fn:length(r.patients)}</c:when>
+            <c:when test="${r.withMeds > 0}"><i class="fa fa-check"></i> всё сделано</c:when>
+            <c:otherwise>${fn:length(r.patients)} пац. · нет процедур</c:otherwise>
+          </c:choose>
+        </span>
+      </button>
     </c:forEach>
   </div>
+  <c:if test="${empty rooms}">
+    <div class="np-empty"><i class="fa fa-hospital-o"></i>В отделении нет пациентов на лечении</div>
+  </c:if>
 </div>

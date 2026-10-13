@@ -6,6 +6,7 @@ import ckb.domains.admin.Dicts;
 import javax.persistence.*;
 
 @Entity
+@org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "Eat_s_Measures")
 public class EatMeasures extends GenId {
 

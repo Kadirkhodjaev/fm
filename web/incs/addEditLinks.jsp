@@ -4,4 +4,4 @@
 <link href="/res/css/styles.css" rel="stylesheet">
 <script src="/res/bs/jquery/jquery.min.js"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>

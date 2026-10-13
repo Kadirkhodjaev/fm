@@ -8,6 +8,7 @@ import javax.persistence.Table;
 
 // Общий справочники
 @Entity
+@org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "Dicts")
 public class Dicts extends GenId {
 

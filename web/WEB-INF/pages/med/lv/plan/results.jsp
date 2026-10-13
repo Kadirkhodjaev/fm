@@ -1,42 +1,41 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<script src="/res/js/common.js"></script>
-<link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-<script>
-  function delPlan(id){
-    if(confirm('Вы действительно хотите удалить?'))
-      setLocation('?delPlan=Y&id='+id);
-  }
-  function printPlan(id){
-    window.open('/kdo/print.s?id=' + id);
-  }
-</script>
-<title>Результаты по пациенту ${fio}</title>
+<%-- Карточка пациента → Обследования → «Результаты»: все готовые результаты пациента одним списком.
+     Открывается во фрейме карточки или отдельным окном (newWindow) --%>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Результаты · ${fio}</title>
+  <%@include file="/WEB-INF/pages/med/lv/frame_style.jsp"%>
+  <style>
+    .rs-list { padding:14px 20px 22px; font-size:14px; line-height:1.55; }
+    .rs-list b { color:#1F2430; }
+    .rs-list i { color:#6B7280; font-style:normal; }
+    .rs-list > * { margin-bottom:2px; }
+  </style>
+</head>
 <body>
-<f:form method="post">
-  <div class="panel panel-info" style="width: 800px !important; margin: auto">
-    <div class="panel-heading">
-      План обследования
-      <div style="float:right">
-        <c:if test="${!newWindow}">
-          <button class="btn btn-sm" type="button" onclick="setLocation('/lv/plan/index.s')" title="Назад в список обследования" style="margin-top: -5px"><i class="fa fa-reply"></i> Назад</button>
-        </c:if>
-        <c:if test="${newWindow}">
-          <button class="btn btn-sm" type="button" onclick="window.close()" title="Закрыть" style="margin-top: -5px"><i class="fa fa-close"></i> Закрыть</button>
-        </c:if>
-      </div>
-    </div>
-    <div id="results" style="padding:10px; font-family:'Arial';">
-      <c:forEach items="${results}" var="r">
-        ${r}
-      </c:forEach>
-    </div>
+<div class="ld-sheet" style="max-width:960px">
+  <div class="ld-title">
+    <i class="fa fa-flask" style="color:#9AA1AC"></i> Результаты обследований <span class="sub">${fio}</span>
+    <span class="sp"></span>
+    <c:if test="${newWindow}">
+      <button type="button" class="fm-btn" onclick="window.print()"><i class="fa fa-print"></i>Печать</button>
+      <button type="button" class="fm-btn" onclick="window.close()"><i class="fa fa-times"></i>Закрыть</button>
+    </c:if>
+    <c:if test="${!newWindow}">
+      <button type="button" class="fm-btn" onclick="setLocation('/lv/plan/index.s')"><i class="fa fa-arrow-left"></i>Назад</button>
+    </c:if>
   </div>
-</f:form>
+  <div class="rs-list" id="results">
+    <c:forEach items="${results}" var="r">${r}</c:forEach>
+    <c:if test="${empty results}"><div class="ld-empty">Готовых результатов пока нет</div></c:if>
+  </div>
+</div>
+<script>
+  function delPlan(id) { FmsConfirm('Удалить обследование?', function () { setLocation('?delPlan=Y&id=' + id); }, null, {ok: 'Удалить', danger: true}); }
+  function printPlan(id) { window.open('/kdo/print.s?id=' + id); }
+</script>
 </body>
 </html>

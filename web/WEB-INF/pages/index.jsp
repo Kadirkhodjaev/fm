@@ -25,29 +25,51 @@
   <script src="/res/bs/metisMenu/metisMenu.min.js"></script>
   <script src="/res/bs/morrisjs/morris.min.js"></script>
   <script src="/res/bs/sb_admin/js/sb-admin-2.js"></script>
-  <script src="/res/js/common.js"></script>
+  <script src="/res/js/common.js?v=2026101309"></script>
+  <script src="/res/js/fms-select.js?v=2026101305"></script>
   <script src="/res/editor/nicEdit.js" type="text/javascript"></script>
   <script src="/res/tinymce/jquery-te-1.4.0.js" type="text/javascript"></script>
 
   <script>
     function exit(){
-      if(window.confirm('<ui:message code="confirmExit" />'))
-        document.location = 'out.s';
+      FmsConfirm('<ui:message code="confirmExit" />', function () { document.location = 'out.s'; });
     }
     function openPage(dom){
       $('.leftMenu li').removeClass('active');
       $(dom).addClass('active');
-      $('#mainWindow').load(dom.id);
+      loadMain(dom.id);
+    }
+    // page area dims while the page is loading (common.js FmsLoad)
+    var mainLoading = null;
+    function loadMain(url) {
+      if (mainLoading === url) return;
+      mainLoading = url;
+      if (window.FmsLoad) FmsLoad.page(true);
+      // индикатор загрузки снимается всегда, даже если скрипт на открытой странице упал с ошибкой
+      $.ajax({url: url, dataType: 'html',
+        success: function (html) {
+          // ответ на устаревший запрос (пользователь уже открыл другую страницу) не показываем
+          if (mainLoading !== url) return;
+          mainLoading = null;
+          try { $('#mainWindow').html(html); } finally { if (window.FmsLoad) FmsLoad.page(false); }
+        },
+        error: function () { if (mainLoading !== url) return; mainLoading = null; if (window.FmsLoad) FmsLoad.page(false); }
+      });
     }
     function setPage(url){
-      $('#mainWindow').load(url);
+      loadMain(url);
     }
     function openMainPage(url, isFull) {
-      $('#mainWindow').load(url);
-      $('#tdLeftMenu').toggle(isFull);
+      loadMain(url);
+      // пустое меню (роли без пунктов) не показываем, даже если страница просит полный вид
+      // #tdLeftMenu есть и в карточке пациента: берём меню главной страницы (первое по документу)
+      var sb = $(document.getElementById('tdLeftMenu'));
+      sb.toggle(!!isFull && sb.find('.leftMenu li').length > 0);
     }
     $(document).ready(function(){
       openMainPage('${openPage}', ${showMenu});
+      // автовыход: 15 минут без действий в любой вкладке системы, за минуту предупреждение
+      if (window.FmsIdle) FmsIdle.start({limit: 15 * 60 * 1000, warn: 60 * 1000, logout: '/out.s'});
     });
     function callKeyDown(evt){
       try {
@@ -60,23 +82,23 @@
       if((isInput && evt.keyCode == 13) || !isInput) {
         <c:if test="${fn:indexOf(session.curUrl, 'amb') == -1}">
         if ($('#filterInput').val() != '')
-          $('#mainWindow').load('patients/index.s?filter=Y&filterInput=' + val);
+          loadMain('patients/index.s?filter=Y&filterInput=' + val);
         else
-          $('#mainWindow').load('patients/index.s?filter=Y');
+          loadMain('patients/index.s?filter=Y');
         </c:if>
         <c:if test="${fn:indexOf(session.curUrl, 'amb') != -1}">
         if ($('#filterInput').val() != '')
-          $('#mainWindow').load('${session.curUrl}?filter=Y&filterInput=' + val);
+          loadMain('${session.curUrl}?filter=Y&filterInput=' + val);
         else
-          $('#mainWindow').load('${session.curUrl}?filter=Y');
+          loadMain('${session.curUrl}?filter=Y');
         </c:if>
       }
       </c:if>
       <c:if test="${!isEnterFilter}">
       if ($('#filterInput').val() != '')
-        $('#mainWindow').load('patients/index.s?filter=Y&filterInput=' + val);
+        loadMain('patients/index.s?filter=Y&filterInput=' + val);
       else
-        $('#mainWindow').load('patients/index.s?filter=Y');
+        loadMain('patients/index.s?filter=Y');
       </c:if>
     }
     function setChangePass(){
@@ -357,7 +379,7 @@
 
     /* ================= Всплывающее сообщение ================= */
     .med-msg {
-      position: fixed; top: 72px; right: 20px; z-index: 2000;
+      position: fixed; top: auto; bottom: 24px; right: 24px; z-index: 2000;
       min-width: 320px; max-width: 520px;
       background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--brand);
       border-radius: 12px; box-shadow: 0 16px 40px rgba(20,25,40,.16);
@@ -370,6 +392,25 @@
       border-radius: 8px; color: var(--muted); cursor: pointer;
     }
     .med-msg .close-msg:hover { background: var(--bg); color: var(--text); }
+    /* styles.css красит сообщение в белый текст на цветном фоне; здесь карточка белая, поэтому задаём цвета явно */
+    .med-msg, .med-msg.error { background: #fff; color: var(--text); font-weight: 600; text-align: left; border-left-color: #2E9E5B; }
+    .med-msg.error { border-left-color: var(--brand); }
+    .med-msg #med-msg-text { color: var(--text); }
+    .med-msg.error #med-msg-text { color: var(--brand-dark); }
+    /* окна bootstrap на старых страницах в общем стиле: скругления, кнопки как в новых формах */
+    .modal-content { border:0; border-radius:16px; box-shadow:0 24px 60px rgba(20,25,40,.25); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+    .modal-header { padding:14px 18px; border-bottom:1px solid #E6E8EC; }
+    .modal-title { font-size:15px; font-weight:700; color:#1F2430; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; border-top:1px solid #E6E8EC; background:#FAFBFC; border-radius:0 0 16px 16px; }
+    .modal-footer .btn { height:34px; margin:0 !important; padding:0 16px; border-radius:9px; font-size:13px; font-weight:600; box-shadow:none; }
+    .modal-footer .btn-default { background:#fff; border:1px solid #E6E8EC; color:#3C4250; }
+    .modal-footer .btn-default:hover { background:#F5F6F8; }
+    .modal-footer .btn-primary, .modal-footer .btn-success { background:#1F2430; border:1px solid #1F2430; color:#fff; }
+    .modal-footer .btn-primary:hover, .modal-footer .btn-success:hover { background:#353B4A; border-color:#353B4A; }
+    .modal .table-bordered > tbody > tr > td { border-color:#EEF0F3; vertical-align:middle; }
+    .modal .form-control { border-radius:8px; box-shadow:none; }
+    /* выбранная кнопка переключателя не нажимается повторно: страница не перезагружается зря */
+    .fm-seg button.on, .pl-seg button.on, .al-seg button.on, .np-seg button.on, .tg-seg button.on { pointer-events:none; cursor:default; }
   </style>
 </head>
 

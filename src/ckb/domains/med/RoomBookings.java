@@ -56,6 +56,17 @@ public class RoomBookings extends GenId {
 
   @Column(name = "history_patient_id") private Integer historyId;
 
+  // how many beds the client books in the room (null for old bookings = 1)
+  @Column(name = "bed_count") private Integer bedCount;
+
+  public Integer getBedCount() {
+    return bedCount;
+  }
+
+  public void setBedCount(Integer bedCount) {
+    this.bedCount = bedCount;
+  }
+
   public String getSurname() {
     return surname;
   }

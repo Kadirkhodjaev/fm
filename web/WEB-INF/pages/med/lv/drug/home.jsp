@@ -7,14 +7,14 @@
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
-<script src="/res/js/common.js" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
 <f:form method="post">
   <div class="panel panel-info" style="width: 1000px !important; margin: auto">
     <div class="panel-heading">
       Назначение
       <div style="float:right">
         <button class="btn btn-sm" type="button" onclick="setLocation('/lv/drug/home.s')" title="Добавить новые препараты" style="margin-top: -5px"><i class="fa fa-plus"></i> Добавить</button>
-        <button class="btn btn-sm btn-success" title="Сохранить" style="margin-top: -5px"><i class="fa fa-check"></i> Сохранить</button>
+        <button class="btn btn-sm btn-success" title="Сохранить" style="margin-top: -5px"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
     <table class="formTable" style="width:100%">

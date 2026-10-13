@@ -442,16 +442,16 @@
     }
     function print() {
       var gr = groups();
-      if (!gr.length) { alert('Отметьте позиции для заказа'); return; }
+      if (!gr.length) { FmsToast.show('Отметьте позиции для заказа', 'err'); return; }
       var t = tableHtml(gr), w = window.open('', '_blank');
-      if (!w) { alert('Разрешите всплывающие окна для печати'); return; }
+      if (!w) { FmsToast.show('Разрешите всплывающие окна для печати', 'err'); return; }
       w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Заявка поставщикам</title><style>body{font-family:Arial,sans-serif;font-size:13px;margin:20px}h3{margin:18px 0 4px}p{margin:0 0 8px}th,td{font-size:13px}@media print{h3{page-break-before:auto}}</style></head><body>' +
         t.html + '<p><b>Всего по всем заявкам: ' + fmt2(t.total) + ' с НДС</b></p><br><p>Подпись: ______________________</p></body></html>');
       w.document.close(); w.focus();
     }
     function excel() {
       var gr = groups();
-      if (!gr.length) { alert('Отметьте позиции для заказа'); return; }
+      if (!gr.length) { FmsToast.show('Отметьте позиции для заказа', 'err'); return; }
       var t = tableHtml(gr);
       var blob = new Blob(['﻿<html><head><meta charset="utf-8"></head><body>' + t.html + '</body></html>'], {type: 'application/vnd.ms-excel'});
       var a = document.createElement('a');

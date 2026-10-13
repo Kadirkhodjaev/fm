@@ -10,7 +10,7 @@
     );
   });
   function saveKdoTemplate(field, fieldId) {
-    if (confirm('Вы действительно хотите сохранить значения данного поля как шаблон')) {
+    FmsConfirm('Вы действительно хотите сохранить значения данного поля как шаблон', function () {
       var name = prompt('Наименование шаблона');
       if (name != '') {
         $.ajax({
@@ -23,7 +23,7 @@
           }
         });
       }
-    }
+    });
   }
 
   function getKdoTemplate(field, id) {

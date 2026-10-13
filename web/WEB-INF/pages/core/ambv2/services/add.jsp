@@ -2,19 +2,21 @@
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fn" uri = "http://java.sun.com/jsp/jstl/functions"%>
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<%@include file="/WEB-INF/pages/core/skin.jsp"%>
+<div class="fm-skin">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
 <script src="/res/js/jquery.mask.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <style>
   .table tr td {padding:10px !important;}
 </style>
 <div class="panel panel-info wpx-1400 margin-auto">
   <div class="panel-heading">
     Реквизиты услуги
-    <ul class="pagination" style="float:right; margin-top:-5px">
-      <li class="paginate_button"><a href="#" onclick="saveAmb()" title="Сохранить"><i class="fa fa-save"></i> Сохранить</a></li>
-      <li class="paginate_button"><a href="#" onclick="$('#pager').load('/core/ambv2/services.s')" title="Назад"><i class="fa fa-backward"></i> Назад</a></li>
-    </ul>
+    <div class="fm-hbtns">
+      <button type="button" class="fm-btn primary" onclick="saveAmb()"><i class="fa fa-save"></i>Сохранить</button>
+      <button type="button" class="fm-btn" onclick="$('#pager').load('/core/ambv2/services.s')"><i class="fa fa-arrow-left"></i>Назад</button>
+    </div>
   </div>
   <div class="panel-body">
     <form id="bf">
@@ -339,7 +341,7 @@
     }
   }
   function deleteField(id) {
-    if(confirm('Вы действительно хотите удалить выбранное поле?')) {
+    FmsConfirm('Вы действительно хотите удалить выбранное поле?', function () {
       $.ajax({
         url: '/core/ambv2/service/field/del.s',
         method: 'post',
@@ -350,7 +352,7 @@
           if(res.success) setForm(${form.id});
         }
       });
-    }
+    });
   }
   function addColumn() {
     $.ajax({
@@ -392,8 +394,7 @@
     });
   }
   function deleteColumn(col) {
-    if(confirm('Вы действительно хотите удалить колонку?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить колонку?', function () { $.ajax({
         url: '/core/ambv2/service/field/column/delete.s',
         method: 'post',
         data: 'form=${form.id}&col=' + col,
@@ -402,6 +403,7 @@
           openMsg(res);
           if(res.success) setForm(${form.id});
         }
-      });
+      }); });
   }
 </script>
+</div>

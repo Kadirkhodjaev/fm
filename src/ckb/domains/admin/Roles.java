@@ -8,6 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
+@org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "Roles")
 public class Roles extends GenId {
 
@@ -30,6 +31,30 @@ public class Roles extends GenId {
   // Состояние
   @Column(length = 1)
   private String state;
+
+  // Y - левое меню видно всегда, даже когда открыта карточка пациента; N - меню скрывается внутри карточки
+  @Column(length = 1)
+  private String showMenu;
+
+  // Y - поиск пациента в шапке
+  @Column(length = 1)
+  private String showSearch;
+
+  public String getShowMenu() {
+    return showMenu;
+  }
+
+  public void setShowMenu(String showMenu) {
+    this.showMenu = showMenu;
+  }
+
+  public String getShowSearch() {
+    return showSearch;
+  }
+
+  public void setShowSearch(String showSearch) {
+    this.showSearch = showSearch;
+  }
 
   public String getColor() {
     return color;

@@ -69,7 +69,6 @@
            onclick="return rpGo(this);">
           <span class="ic"><i class="${r.icon}"></i></span>
           <span class="nm">${r.name}<span class="last">Последняя</span></span>
-          <c:if test="${st.count <= 9}"><kbd>${st.count}</kbd></c:if>
           <i class="fa fa-chevron-right go"></i>
         </a>
       </c:forEach>

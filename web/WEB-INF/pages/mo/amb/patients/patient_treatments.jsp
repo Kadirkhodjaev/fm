@@ -259,8 +259,7 @@
   }
 
   function delTreatment(id) {
-    if(confirm('Вы действительно хотите удалить запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить запись?', function () { $.ajax({
         url: '/ambs/patient/del-treatment.s',
         method: 'post',
         data: 'id=' + id,
@@ -269,7 +268,7 @@
           openMsg(res);
           if(res.success) reloadTreatmentBlock();
         }
-      });
+      }); });
   }
 
   function selectTreatmentGroup(dom, id){

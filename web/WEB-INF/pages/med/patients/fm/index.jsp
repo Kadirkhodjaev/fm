@@ -6,39 +6,28 @@
 <style>
   /* ---------- Контейнер ---------- */
   .pl-page { --text:#1F2430; --muted:#6B7280; --border:#E6E8EC; --bg:#F5F6F8; --brand:#D7182E;
-    height:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px;
-    padding:16px 20px; background:var(--bg); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color:var(--text); }
+    height:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:8px;
+    padding:10px 14px; background:var(--bg); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color:var(--text); }
   .pl-page * { box-sizing:border-box; }
   .pl-page .panel-body.pl-box { display:flex; flex-direction:column; padding:0; background:#fff; border:1px solid var(--border); border-radius:16px;
     overflow:hidden; box-shadow:0 1px 2px rgba(20,25,40,.04), 0 8px 24px rgba(20,25,40,.06); }
 
   /* ---------- Шапка ---------- */
-  .pl-toolbar { flex:none; display:flex; align-items:center; gap:14px; padding:16px 18px 14px; }
+  .pl-toolbar { flex:none; display:flex; align-items:center; gap:12px; padding:8px 14px; }
   .pl-title { display:flex; align-items:center; gap:12px; }
-  .pl-title .ic { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;
-    background:#EEF1F6; color:#3C4A63; font-size:18px; }
-  .pl-title h2 { margin:0; font-size:19px; font-weight:700; line-height:1.2; }
-  .pl-count { display:block; margin-top:2px; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pl-title .ic { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    background:#EEF1F6; color:#3C4A63; font-size:14px; }
+  .pl-title h2 { margin:0; font-size:16px; font-weight:700; line-height:1.2; }
+  .pl-count { display:block; margin-top:0; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
   .pl-count b { color:var(--text); font-weight:600; }
   .pl-spacer { flex:1; }
 
-  /* ---------- Счётчики ---------- */
-  .pl-stats { flex:none; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; padding:0 18px 14px; }
-  .pl-stat { display:flex; align-items:center; gap:12px; padding:11px 14px; border:1px solid var(--border); border-radius:12px; background:#FBFBFC; }
-  .pl-stat .si { flex:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; }
-  .pl-stat .v { font-size:20px; font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums; }
-  .pl-stat .l { font-size:12px; color:var(--muted); font-weight:500; margin-top:1px; }
-  .pl-stat.s1 .si { background:#EAF1FE; color:#2563EB; }
-  .pl-stat.s2 .si { background:#E8F7EE; color:#15803D; }
-  .pl-stat.s3 .si { background:#FEF3E2; color:#B45309; }
-  .pl-stat.s4 .si { background:#F1F2F4; color:#4B5563; }
-
-  .pl-select { height:34px; padding:0 30px 0 12px; border:1px solid var(--border); border-radius:9px; background-color:#fff;
+  .pl-select { height:30px; padding:0 30px 0 12px; border:1px solid var(--border); border-radius:9px; background-color:#fff;
     font-size:13px; font-family:inherit; color:var(--text); cursor:pointer; }
   .pl-select:focus { outline:none; border-color:#4B5563; box-shadow:0 0 0 3px rgba(75,85,99,.12); }
 
   .pl-pager { display:flex; align-items:center; gap:4px; }
-  .pl-pager button { width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:9px;
+  .pl-pager button { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:9px;
     background:#fff; color:#3C4250; font-size:12px; cursor:pointer; transition:background .12s, border-color .12s; }
   .pl-pager button:hover:not(:disabled) { background:var(--bg); border-color:#D5D8DE; }
   .pl-pager button:disabled { opacity:.4; cursor:default; }
@@ -48,9 +37,9 @@
   /* ---------- Таблица ---------- */
   .pl-table-wrap { flex:1; min-height:0; overflow:auto; border-top:1px solid var(--border); }
   .pl-table-wrap .alert { margin:12px 16px; border-radius:10px; }
-  table.grid { width:100%; margin:0; border-collapse:separate; border-spacing:0; font-size:14px; }
-  table.grid thead th { position:sticky; top:0; z-index:2; height:40px; padding:0 12px; background:#F8F9FA; border-bottom:1px solid var(--border);
-    color:var(--muted); font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; text-align:left; white-space:nowrap; user-select:none; }
+  table.grid { width:100%; margin:0; border-collapse:separate; border-spacing:0; font-size:13px; }
+  table.grid thead th { position:sticky; top:0; z-index:2; height:32px; padding:0 8px; background:#F8F9FA; border-bottom:1px solid var(--border);
+    color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; text-align:left; white-space:nowrap; user-select:none; }
   table.grid thead th.c { text-align:center; }
   table.grid thead th[class*="sorting"] { cursor:pointer; }
   table.grid thead th[class*="sorting"]:hover { color:var(--text); background:#F0F1F4; }
@@ -59,51 +48,41 @@
   table.grid thead th.sorting_asc::after  { content:"\f0de"; opacity:1; }
   table.grid thead th.sorting_desc::after { content:"\f0dd"; opacity:1; }
 
-  table.grid tbody td { height:60px; padding:0 12px; border-bottom:1px solid #F0F1F4; vertical-align:middle; font-variant-numeric:tabular-nums; }
+  table.grid tbody td { height:32px; padding:0 8px; border-bottom:1px solid #F0F1F4; vertical-align:middle; font-variant-numeric:tabular-nums; white-space:nowrap; }
   table.grid tbody td.c { text-align:center; }
-  table.grid tbody td.num { color:#B0B5BD; font-size:12.5px; }
+  table.grid tbody td.num { color:#B0B5BD; font-size:12px; }
+  table.grid tbody td.mut { color:var(--muted); }
+  table.grid tbody td.mut b { color:var(--text); font-weight:600; }
   table.grid tbody tr { cursor:pointer; transition:background .08s; }
   table.grid tbody tr:hover td { background:#F8F9FB; }
   table.grid tbody tr.selected td { background:#F1F4F9; }
   table.grid tbody tr.selected td:first-child { box-shadow:inset 3px 0 0 #1F2430; }
 
-  /* Пациент: аватар + ФИО + подстрока */
-  .pl-pt { display:flex; align-items:center; gap:12px; min-width:0; }
-  .pl-av { flex:none; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-size:13.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
-  .pl-av.a0 { background:#EAF1FE; color:#2563EB; } .pl-av.a1 { background:#E8F7EE; color:#15803D; } .pl-av.a2 { background:#FEF3E2; color:#B45309; }
-  .pl-av.a3 { background:#F3EEFE; color:#7C3AED; } .pl-av.a4 { background:#E6F6FA; color:#0E7490; } .pl-av.a5 { background:#FDEDF3; color:#BE185D; }
-  .pl-pt .who { min-width:0; }
-  table.grid .fio { display:block; color:var(--text); font-weight:600; font-size:14.5px; text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* Пациент: всё в одну строку */
+  table.grid td.fio-td { max-width:0; width:34%; overflow:hidden; text-overflow:ellipsis; }
+  table.grid .fio { color:var(--text); font-weight:600; text-decoration:none; }
   table.grid .fio:hover { color:#000; text-decoration:underline; }
-  .pl-pt .sub { margin-top:2px; font-size:12.5px; color:var(--muted); white-space:nowrap; }
-  .pl-pt .sub b { color:#3C4250; font-weight:600; }
-  .pl-pt .sub .dot { display:inline-block; width:3px; height:3px; border-radius:50%; background:#C3C7CE; vertical-align:middle; margin:0 7px; }
-  table.grid .st-icon { width:18px; height:18px; vertical-align:middle; }
-
-  /* Даты */
-  .pl-dt .in { font-weight:600; white-space:nowrap; }
-  .pl-dt .out { margin-top:2px; font-size:12.5px; color:var(--muted); white-space:nowrap; }
-  .pl-dt .out.none { color:#C3C7CE; }
-  .pl-dt .today { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:#E8F7EE; color:#15803D; font-size:11px; font-weight:700; vertical-align:1px; }
-
-  table.grid .pill { display:inline-block; max-width:100%; padding:4px 10px; border-radius:8px; background:#F1F2F4; color:#3C4250;
-    font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .pl-doc { display:flex; align-items:center; gap:8px; color:#3C4250; white-space:nowrap; }
-  .pl-doc .fa { color:#B0B5BD; }
+  table.grid .st-icon { width:14px; height:14px; vertical-align:middle; }
+  table.grid .today { display:inline-block; margin-left:5px; padding:0 6px; border-radius:999px; background:#E8F7EE; color:#15803D; font-size:10.5px; font-weight:700; line-height:16px; vertical-align:1px; }
+  table.grid td.none { color:#C3C7CE; }
+  table.grid td.cut { max-width:0; overflow:hidden; text-overflow:ellipsis; }
+  table.grid .pill { display:inline-block; max-width:100%; padding:1px 7px; border-radius:6px; background:#F1F2F4; color:#3C4250;
+    font-size:12px; font-weight:600; line-height:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; vertical-align:middle; }
+  table.grid td.doc { color:#3C4250; }
+  table.grid td.doc .fa { color:#B0B5BD; margin-right:5px; }
 
   .pl-empty { padding:60px 20px; text-align:center; color:#9AA1AC; }
   .pl-empty .fa { display:block; font-size:36px; margin-bottom:10px; color:#D5D8DE; }
 
-  .pl-hint { flex:none; padding:9px 18px; border-top:1px solid var(--border); background:#FAFBFC; font-size:12px; color:#9AA1AC; }
+  .pl-hint { flex:none; padding:6px 14px; border-top:1px solid var(--border); background:#FAFBFC; font-size:12px; color:#9AA1AC; }
   .pl-hint kbd { display:inline-block; padding:1px 6px; margin:0 2px; background:#fff; border:1px solid #E0E3E8; border-bottom-width:2px; border-radius:5px;
     color:var(--muted); font-family:inherit; font-size:11px; box-shadow:none; }
   .pl-hint span { margin-right:14px; }
 
-  table.grid th.chk, table.grid td.chk { width:44px; text-align:center; padding:0 6px; }
-  table.grid input[type=checkbox] { width:16px; height:16px; margin:0; cursor:pointer; accent-color:#1F2430; vertical-align:middle; }
-  .pl-confirm { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px; border:0; border-radius:9px;
-    background:var(--brand); color:#fff; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; }
+  table.grid th.chk, table.grid td.chk { width:34px; text-align:center; padding:0 4px; }
+  table.grid input[type=checkbox] { width:14px; height:14px; margin:0; cursor:pointer; accent-color:#1F2430; vertical-align:middle; }
+  .pl-confirm { display:inline-flex; align-items:center; gap:8px; height:30px; padding:0 12px; border:0; border-radius:9px;
+    background:var(--brand); color:#fff; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; }
   .pl-confirm:hover { background:#A50F22; }
   .pl-confirm:disabled { background:#E9EBEF; color:#9AA1AC; cursor:default; }
   .pl-confirm .n { min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:rgba(255,255,255,.25); font-size:12px;
@@ -114,7 +93,6 @@
   .pl-page.split .panel-body.pl-box { flex:1 1 auto; min-height:0; height:auto !important; }
   #kdoList { flex:0 0 38%; min-height:180px; background:#fff; border:1px solid var(--border); border-radius:16px; overflow:auto;
     box-shadow:0 1px 2px rgba(20,25,40,.04), 0 8px 24px rgba(20,25,40,.06); }
-  @media (max-width:1100px) { .pl-stats { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
 </style>
 <script>
   $(document).ready(function(){
@@ -279,29 +257,39 @@
 <c:set var="showChk" value="${roleId != 7}"/>
 <c:set var="canConfirm" value="${((roleId == 3 || roleId == 4 || roleId == 5 || roleId == 6) && curUrl != '/patients/consul.s' && !isArchive) || (roleId == 6 && isArchive)}"/>
 
-<%-- Счётчики по текущей странице списка (сервер ничего нового не передаёт) --%>
 <jsp:useBean id="plNow" class="java.util.Date"/>
 <fmt:formatDate var="plToday" value="${plNow}" pattern="dd.MM.yyyy"/>
 <fmt:formatDate var="plYear" value="${plNow}" pattern="yyyy"/>
-<c:set var="cToday" value="${0}"/><c:set var="cOut" value="${0}"/><c:set var="cConf" value="${0}"/>
-<c:forEach items="${list}" var="p">
-  <c:if test="${fn:startsWith(p.dateBegin, plToday)}"><c:set var="cToday" value="${cToday + 1}"/></c:if>
-  <c:if test="${not empty p.dateEnd}"><c:set var="cOut" value="${cOut + 1}"/></c:if>
-  <c:if test="${p.showCheckbox}"><c:set var="cConf" value="${cConf + 1}"/></c:if>
-</c:forEach>
 
+<style>
+  .pl-seg { display:inline-flex; padding:2px; background:#F1F2F4; border-radius:9px; flex:none; }
+  .pl-seg button { height:28px; padding:0 12px; border:0; border-radius:7px; background:none; color:#6B7280; font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer; white-space:nowrap; }
+  .pl-seg button .fa { margin-right:4px; }
+  .pl-seg button:hover { color:#1F2430; }
+  .pl-seg button.on { background:#fff; color:#1F2430; box-shadow:0 1px 2px rgba(20,25,40,.08); }
+</style>
 <div class="pl-page<c:if test="${roleId == 7 && !isArchive}"> split</c:if>">
   <div class="panel-body pl-box">
 
     <!-- Шапка -->
     <div class="pl-toolbar">
       <div class="pl-title">
-        <span class="ic"><i class="fa <c:choose><c:when test="${isArchive}">fa-archive</c:when><c:when test="${curUrl == '/patients/consul.s'}">fa-stethoscope</c:when><c:otherwise>fa-bed</c:otherwise></c:choose>"></i></span>
+        <span class="ic"><i class="fa <c:choose><c:when test="${isArchive}">fa-archive</c:when><c:when test="${curUrl == '/patients/consul.s'}">fa-stethoscope</c:when><c:otherwise>fa-hospital-o</c:otherwise></c:choose>"></i></span>
         <div>
           <h2><c:choose><c:when test="${isArchive}">Архив</c:when><c:when test="${curUrl == '/patients/consul.s'}">Консультации</c:when><c:otherwise>Стационар</c:otherwise></c:choose></h2>
           <span class="pl-count"><b>${sessionScope.patientGrid.startPos}–${sessionScope.patientGrid.endPos}</b> из <b>${sessionScope.patientGrid.rowCount}</b> пациентов</span>
         </div>
       </div>
+
+      <%-- Текущие пациенты и архив на одной странице: переключатель вместо двух пунктов меню --%>
+      <c:if test="${curUrl != '/patients/consul.s' && roleId != 11}">
+        <div class="pl-seg">
+          <c:if test="${roleId != 9 && (roleId != 16 || docFizio)}">
+            <button type="button" class="${isArchive ? '' : 'on'}" onclick="setPage('/patients/list.s')"><i class="fa fa-hospital-o"></i> Текущие</button>
+          </c:if>
+          <button type="button" class="${isArchive ? 'on' : ''}" onclick="setPage('/patients/archive.s')"><i class="fa fa-archive"></i> Архив</button>
+        </div>
+      </c:if>
 
       <c:if test="${canConfirm}">
         <button type="button" class="pl-confirm" id="confirmBtn" onclick="setConfirmPatient()" title="Подтвердить отмеченных пациентов" disabled>
@@ -312,11 +300,11 @@
       <span class="pl-spacer"></span>
 
       <c:if test="${isArchive}">
-        <select class="pl-select" onchange="setPatientFlag(this.value)" title="Фильтр архива">
-          <option value="0">Все</option>
-          <option <c:if test="${flag == 'DONE'}">selected</c:if> value="DONE">С клиентом</option>
-          <option <c:if test="${flag == 'UNDONE'}">selected</c:if> value="UNDONE">Без клиента</option>
-        </select>
+        <div class="pl-seg" title="Фильтр архива">
+          <button type="button" class="${empty flag || flag == '0' ? 'on' : ''}" onclick="setPatientFlag('0')">Все</button>
+          <button type="button" class="${flag == 'DONE' ? 'on' : ''}" onclick="setPatientFlag('DONE')">С клиентом</button>
+          <button type="button" class="${flag == 'UNDONE' ? 'on' : ''}" onclick="setPatientFlag('UNDONE')">Без клиента</button>
+        </div>
       </c:if>
 
       <c:if test="${sessionScope.patientGrid.maxPage > 1}">
@@ -339,14 +327,6 @@
       </c:if>
     </div>
 
-    <!-- Счётчики -->
-    <div class="pl-stats">
-      <div class="pl-stat s1"><span class="si"><i class="fa fa-users"></i></span><div><div class="v">${sessionScope.patientGrid.rowCount}</div><div class="l">Всего в списке</div></div></div>
-      <div class="pl-stat s2"><span class="si"><i class="fa fa-sign-in"></i></span><div><div class="v">${cToday}</div><div class="l">Поступили сегодня</div></div></div>
-      <div class="pl-stat s3"><span class="si"><i class="fa fa-hourglass-half"></i></span><div><div class="v">${cConf}</div><div class="l">Ждут подтверждения</div></div></div>
-      <div class="pl-stat s4"><span class="si"><i class="fa fa-sign-out"></i></span><div><div class="v">${cOut}</div><div class="l">С датой выписки</div></div></div>
-    </div>
-
     <!-- Таблица -->
     <div class="pl-table-wrap">
       <%@include file="/incs/msgs/successError.jsp"%>
@@ -356,12 +336,15 @@
           <c:if test="${showChk}">
             <th class="chk"><input type="checkbox" id="checkAllBox" onclick="checkAll(this)" title="Отметить всех"/></th>
           </c:if>
-          <th class="c" style="width:48px">#</th>
-          <th class="c" style="width:40px"></th>
-          <th style="min-width:280px">Пациент</th>
-          <th style="width:150px">Поступил / выписка</th>
-          <th style="width:190px">Отделение / палата</th>
-          <th style="width:190px">Лечащий врач</th>
+          <th class="c" style="width:40px">#</th>
+          <th class="c" style="width:26px"></th>
+          <th class="sorting" id="thsurname" onclick="setSort('surname', null)">ФИО</th>
+          <th style="width:70px">И/Б</th>
+          <th class="sorting" id="thbirthyear" onclick="setSort('birthyear', null)" style="width:110px">Г.р.</th>
+          <th class="sorting" id="thregdate" onclick="setSort('Date_Begin', null)" style="width:150px">Поступил</th>
+          <th style="width:100px">Выписка</th>
+          <th style="width:20%">Отд. / палата</th>
+          <th class="sorting" id="thlv" onclick="setSort('lv_id', 'lv')" style="width:17%">Лечащий врач</th>
         </tr>
         </thead>
         <tbody>
@@ -372,25 +355,16 @@
             </c:if>
             <td class="c num">${sessionScope.patientGrid.startPos + loop.index}</td>
             <td class="c"><img class="st-icon" src="/res/imgs/${p.iconUrl}.gif" alt=""/></td>
-            <td>
-              <div class="pl-pt">
-                <c:set var="fw" value="${fn:split(fn:trim(p.fio), ' ')}"/>
-                <span class="pl-av a${p.id % 6}">${fn:substring(fw[0], 0, 1)}<c:if test="${fn:length(fw) > 1}">${fn:substring(fw[1], 0, 1)}</c:if></span>
-                <div class="who">
-                  <a href="#" class="fio" onclick="addEditPatient(${p.id}); return false;">${p.fio}</a>
-                  <div class="sub">И/Б <b>${p.ibNum}</b><c:if test="${not empty p.birthYear}"><span class="dot"></span>${p.birthYear} г.р.<c:if test="${p.birthYear > 1900}">, ${plYear - p.birthYear} лет</c:if></c:if></div>
-                </div>
-              </div>
-            </td>
-            <td class="pl-dt">
-              <div class="in">${p.dateBegin}<c:if test="${fn:startsWith(p.dateBegin, plToday)}"><span class="today">сегодня</span></c:if></div>
-              <c:choose>
-                <c:when test="${not empty p.dateEnd}"><div class="out"><i class="fa fa-sign-out"></i> ${p.dateEnd}</div></c:when>
-                <c:otherwise><div class="out none">выписка не указана</div></c:otherwise>
-              </c:choose>
-            </td>
-            <td><c:if test="${not empty p.otdPal}"><span class="pill" title="${p.otdPal}">${p.otdPal}</span></c:if></td>
-            <td><c:if test="${not empty p.lv}"><span class="pl-doc"><i class="fa fa-user-md"></i> ${p.lv}</span></c:if></td>
+            <td class="fio-td" title="${p.fio}"><a href="#" class="fio" onclick="addEditPatient(${p.id}); return false;">${p.fio}</a></td>
+            <td class="mut"><b>${p.ibNum}</b></td>
+            <td class="mut"><c:if test="${not empty p.birthYear}">${p.birthYear}<c:if test="${p.birthYear > 1900}"> · ${plYear - p.birthYear} л.</c:if></c:if></td>
+            <td>${p.dateBegin}<c:if test="${fn:startsWith(p.dateBegin, plToday)}"><span class="today">сегодня</span></c:if></td>
+            <c:choose>
+              <c:when test="${not empty p.dateEnd}"><td>${p.dateEnd}</td></c:when>
+              <c:otherwise><td class="none">—</td></c:otherwise>
+            </c:choose>
+            <td class="cut"><c:if test="${not empty p.otdPal}"><span class="pill" title="${p.otdPal}">${p.otdPal}</span></c:if></td>
+            <td class="cut doc" title="${p.lv}"><c:if test="${not empty p.lv}"><i class="fa fa-user-md"></i>${p.lv}</c:if></td>
           </tr>
         </c:forEach>
         </tbody>

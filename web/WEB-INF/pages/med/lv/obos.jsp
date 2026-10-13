@@ -9,8 +9,8 @@
 <link href="/res/css/styles.css" rel="stylesheet">
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet">
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<script src="/res/js/common.js" type="text/javascript"></script>
-<script src="/res/js/fms-templates.js" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
+<script src="/res/js/fms-templates.js?v=4" type="text/javascript" charset="UTF-8"></script>
 <script src="/res/js/fms-calendar.js" type="text/javascript"></script>
 <style>
   .osm-editor .ql-editor { min-height: 150px; max-height: 420px; overflow-y: auto; font-size: 14px; }
@@ -67,33 +67,26 @@
       data: $('#doc_form').serialize(),
       dataType: 'json',
       success: function (res) {
-        openMsg(res)
+        FmsToast.show(res.success ? 'Сохранено' : (res.msg || 'Не удалось сохранить'), res.success ? 'ok' : 'err');
         if(res.success && res.id)
           $('#lv_doc input[name=id]').val(res.id);
       }
     });
   }
 </script>
+<%@include file="/WEB-INF/pages/med/lv/doc_style.jsp"%>
 <form id="doc_form" action="#"></form>
-<div class="panel panel-info" style="width: 1100px !important; margin: auto">
-  <div class="panel-heading">
-    КЛИНИК ТАШХИСНИ АСОСЛАШ
-  </div>
+<div class="ld-sheet">
+  <div class="ld-title">КЛИНИК ТАШХИСНИ АСОСЛАШ</div>
   <form action='#' method="post" id="lv_doc">
     <input type="hidden" name="id" value="${doc.id}"/>
     <input type="hidden" name="doc_code" value="obos"/>
-    <div class="panel-body">
-      <table class="formTable" style="width:100%">
-        <tr>
-        </tr>
-        <tr>
-          <td><b>Бемор:</b> ${patient.fio}</td>
-          <td><b>Тугилган йили:</b> ${patient.birthyear}</td>
-          <td><b>Сана:</b></td>
-          <td class="wpx-200"><input id="Doc_Date" type="text" class="form-control fms-cal" autocomplete="off" placeholder="дд.мм.гггг" name="c8" value="${doc.c8}"/></td>
-        </tr>
-        <tr>
-          <td nowrap class="bold" colspan="4">
+    <div class="ld-body">
+
+        <div class="ld-head"></div>
+        <div class="ld-raw"><b>Бемор:</b> ${patient.fio}<b>Тугилган йили:</b> ${patient.birthyear}<b>Сана:</b><input id="Doc_Date" type="text" class="form-control fms-cal" autocomplete="off" placeholder="дд.мм.гггг" name="c8" value="${doc.c8}"/>
+        </div>
+        <div class="ld-l">
             Шикоятлар:
             <div class="btn-group pull-right" style="margin-left:6px">
               <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
@@ -102,13 +95,10 @@
                 <li><a href="#" onclick="fmsTpl.save('obos_c1', 'c1'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
               </ul>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="4"><textarea name="c1" id="c1" style="display:none" rows="8" cols="2">${doc.c1}</textarea></td>
-        </tr>
-        <tr>
-          <td nowrap class="bold" colspan="4">
+        </div>
+        <div class="ld-f"><textarea name="c1" id="c1" style="display:none" rows="8" cols="2">${doc.c1}</textarea>
+        </div>
+        <div class="ld-l">
             Anamnesis:
             <div class="btn-group pull-right" style="margin-left:6px">
               <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
@@ -117,13 +107,10 @@
                 <li><a href="#" onclick="fmsTpl.save('obos_c2', 'c2'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
               </ul>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="4"><textarea name="c2" id="c2" style="display:none" rows="8" cols="2">${doc.c2}</textarea></td>
-        </tr>
-        <tr>
-          <td nowrap class="bold" colspan="4">
+        </div>
+        <div class="ld-f"><textarea name="c2" id="c2" style="display:none" rows="8" cols="2">${doc.c2}</textarea>
+        </div>
+        <div class="ld-l">
             Status praesens:
             <div class="btn-group pull-right" style="margin-left:6px">
               <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
@@ -132,24 +119,19 @@
                 <li><a href="#" onclick="fmsTpl.save('obos_c3', 'c3'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
               </ul>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="4"><textarea name="c3" id="c3" style="display:none" rows="8" cols="2">${doc.c3}</textarea></td>
-        </tr>
-        <tr>
-          <td nowrap class="bold" colspan="4">Текширув ва тахлиллар:
+        </div>
+        <div class="ld-f"><textarea name="c3" id="c3" style="display:none" rows="8" cols="2">${doc.c3}</textarea>
+        </div>
+        <div class="ld-l">Текширув ва тахлиллар:
             <a title="Результаты" style="float: right; font-weight: bold" class="btn btn-xs btn-default" onclick="getResult (); return false;">
-              <span class="fa fa-flask"></span> Обновить
+              <span class="fa fa-refresh"></span> Обновить
             </a>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="4"><textarea name="c4" id="c4" style="display:none" rows="8" cols="2">${doc.c4}</textarea></td>
-        </tr>
-        <tr><td colspan="4" class="bold">Ташхис</td></tr>
-        <tr>
-          <td colspan="4">
+        </div>
+        <div class="ld-f"><textarea name="c4" id="c4" style="display:none" rows="8" cols="2">${doc.c4}</textarea>
+        </div>
+        <div class="ld-l">Ташхис
+        </div>
+        <div class="ld-raw">
             <table style="width:100%">
               <tr>
                 <td style="width:100px"><a href="#" onclick="window.open('/mkb/index.s', '_blank')">МКБ 10</a>:</td>
@@ -159,10 +141,8 @@
                 </td>
               </tr>
             </table>
-          </td>
-        </tr>
-        <tr>
-          <td nowrap class="bold" colspan="4">
+        </div>
+        <div class="ld-l">
             Асосий
             <div class="btn-group pull-right" style="margin-left:6px">
               <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
@@ -171,13 +151,10 @@
                 <li><a href="#" onclick="fmsTpl.save('obos_c5', 'c5'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
               </ul>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="4"><textarea name="c5" id="c5" style="display:none" rows="8" cols="2">${doc.c5}</textarea></td>
-        </tr>
-        <tr>
-          <td nowrap class="bold" colspan="4">
+        </div>
+        <div class="ld-f"><textarea name="c5" id="c5" style="display:none" rows="8" cols="2">${doc.c5}</textarea>
+        </div>
+        <div class="ld-l">
             Хамрох
             <div class="btn-group pull-right" style="margin-left:6px">
               <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
@@ -186,13 +163,10 @@
                 <li><a href="#" onclick="fmsTpl.save('obos_c6', 'c6'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
               </ul>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="4"><textarea name="c6" id="c6" style="display:none" rows="8" cols="2">${doc.c6}</textarea></td>
-        </tr>
-        <tr>
-          <td nowrap class="bold" colspan="4">
+        </div>
+        <div class="ld-f"><textarea name="c6" id="c6" style="display:none" rows="8" cols="2">${doc.c6}</textarea>
+        </div>
+        <div class="ld-l">
             Асорати
             <div class="btn-group pull-right" style="margin-left:6px">
               <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" title="Шаблоны текста для этого поля"><i class="fa fa-file-text-o"></i> Шаблоны <span class="caret"></span></button>
@@ -201,14 +175,12 @@
                 <li><a href="#" onclick="fmsTpl.save('obos_c7', 'c7'); return false;"><i class="fa fa-save fa-fw"></i> Сохранить как шаблон…</a></li>
               </ul>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="4"><textarea name="c7" id="c7" style="display:none" rows="8" cols="2">${doc.c7}</textarea></td>
-        </tr>
-      </table>
+        </div>
+        <div class="ld-f"><textarea name="c7" id="c7" style="display:none" rows="8" cols="2">${doc.c7}</textarea>
+        </div>
+      
     </div>
-    <div class="panel-footer" style="display: none">
+    <div style="display:none">
       <button id=saveBtn type="button" onclick="saveDoc()">Сохранить</button>
     </div>
   </form>

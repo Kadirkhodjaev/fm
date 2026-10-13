@@ -1,12 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<link href="/res/css/styles.css" rel="stylesheet">
-<link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-<html>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%-- Карточка пациента → печать раздела: панель (шрифт, Word, Печать, Закрыть) и лист во фрейме (${printPage}?print=Y) --%>
 <%
   String params = "";
   String consul = request.getParameter("consul");
@@ -20,53 +16,48 @@
   String obos = request.getParameter("obos");
   params += obos == null ? "" : "&obos=" + obos;
 %>
+<html>
 <head>
-  <title>Медицинская система</title>
-  <script>
-    function getWord(){
-      var url = '${printPage}';
-      frm.location = url + (url.indexOf('?') == -1 ? '?' : '&') + 'print=Y&word=Y';
-    }
-    function getPrint(){
-      frm.print();
-    }
-    function setFontSize(size){
-      document.location = '/lv/print.s?font=' + size + '<%=params%>';
-    }
-    $(document).ready(function(){
-      $('#printFontSize').val(${sessionScope.fontSize});
-    });
-  </script>
+  <meta charset="UTF-8">
+  <title>Печать · ${fn:escapeXml(patFio)}</title>
+  <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <%@include file="/WEB-INF/pages/med/kdo/print_style.jsp"%>
 </head>
 <body>
-<div class="banner" style="padding:1px; height:38px; border-top: 1px solid #eee; margin-top: -5px;">
-  <table width="100%">
-    <tr>
-      <td class="bold"><div style="font-size:20px; color: #337ab7">${patFio}</div></td>
-      <td width="500px" class="right">
-        <ul class="pagination" style="margin-top: 5px; float:right">
-          <li class="paginate_button" tabindex="0"><a href="#" onclick="getPrint()"><i title="Сохранить" class="fa fa-print"></i> Печать</a></li>
-          <li class="paginate_button" tabindex="0"><a href="#" onclick="getWord()"><i title="Word" class="fa fa-wordpress"></i> Word</a></li>
-          <li class="paginate_button" tabindex="0"><a href="#" onclick="self.close()"><i title="Закрыть" class="fa fa-close"></i> Закрыть</a></li>
-        </ul>
-        <div style="float:right; margin-top:10px; margin-right:2px">
-          Шрифт:
-          <select onchange="setFontSize(this.value)" id="printFontSize" class="form-control" style="width:50px; margin-top:-5px; float:right; height:28px">
-            <option value="10">10</option>
-            <option value="12">12</option>
-            <option value="14">14</option>
-            <option value="16">16</option>
-            <option value="18">18</option>
-            <option value="20">20</option>
-            <option value="22">22</option>
-            <option value="24">24</option>
-            <option value="26">26</option>
-          </select>
-        </div>
-      </td>
-    </tr>
-  </table>
+<div class="pv-bar">
+  <span class="ic"><i class="fa fa-file-text-o"></i></span>
+  <div class="ttl"><b>${fn:escapeXml(patFio)}</b><span>История болезни</span></div>
+  <span class="sp"></span>
+  <label class="fs">Шрифт
+    <select onchange="document.location = '/lv/print.s?font=' + this.value + '<%=params%>'">
+      <c:forEach begin="10" end="20" step="1" var="s"><option value="${s}" <c:if test="${sessionScope.fontSize == s}">selected</c:if>>${s}</option></c:forEach>
+    </select>
+  </label>
+  <button type="button" class="b" onclick="pvWord()"><i class="fa fa-file-word-o"></i>Word</button>
+  <button type="button" class="b main" onclick="pvPrint()"><i class="fa fa-print"></i>Печать</button>
+  <button type="button" class="b" onclick="window.close()"><i class="fa fa-times"></i>Закрыть</button>
 </div>
-<iframe style="margin-top:-10px; width: 100%; height:94% !important; position: absolute" name="frm" id="frm" src="${printPage}?print=Y"></iframe>
+<div class="pv-sheet">
+  <iframe name="frm" id="frm" src="${printPage}${fn:contains(printPage, '?') ? '&' : '?'}print=Y" style="min-height:900px"></iframe>
+</div>
+<script>
+  function pvPrint() { var w = document.getElementById('frm').contentWindow; w.focus(); w.print(); }
+  function pvWord() {
+    var url = '${printPage}';
+    document.getElementById('frm').src = url + (url.indexOf('?') == -1 ? '?' : '&') + 'print=Y&word=Y';
+  }
+  // высота листа по содержимому
+  (function fit(n) {
+    var f = document.getElementById('frm');
+    try {
+      var d = f.contentWindow.document, h = d.body.scrollHeight, w = d.documentElement.scrollWidth;
+      if (h) f.style.height = (h + 30) + 'px';
+      d.documentElement.style.overflowX = 'hidden';
+      // широкое содержимое: лист расширяется, чтобы внутри не было прокрутки
+      if (w > f.clientWidth + 1) { var sh = f.parentNode; sh.style.maxWidth = 'none'; sh.style.width = (w + sh.offsetWidth - f.clientWidth) + 'px'; }
+    } catch (e) {}
+    if (n > 0) setTimeout(function () { fit(n - 1); }, 700);
+  })(15);
+</script>
 </body>
 </html>

@@ -50,7 +50,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/eats")
@@ -76,11 +80,6 @@ public class CEat {
   @Autowired private DPatient dPatient;
   @Autowired private DNurseEats dNurseEat;
   @Autowired private DNurseEatPatient dNurseEatPatient;
-
-  @RequestMapping("/acts.s")
-  protected String acts(){
-    return "/med/eat/act/index";
-  }
 
   @RequestMapping("/claims.s")
   protected String claims(HttpServletRequest req, Model model) {
@@ -119,7 +118,7 @@ public class CEat {
           if(patient.getPatient() != null) {
             pat.setId(patient.getPatient().getId());
             pat.setFio(patient.getPatient().getSurname() + " " + patient.getPatient().getName() + " " + patient.getPatient().getMiddlename());
-            pat.setOtdPal(patient.getPatient().getDept().getName() + "/" + patient.getPatient().getRoom().getName() + "-" + patient.getPatient().getRoom().getRoomType().getName());
+            pat.setOtdPal(otdPal(patient.getPatient()));
             pat.setIbNum(patient.getPatient().getYearNum() + "");
             pat.setDateBegin(Util.dateToString(patient.getPatient().getDateBegin()));
             pat.setDateEnd(Util.dateToString(patient.getPatient().getDateEnd()));
@@ -161,7 +160,7 @@ public class CEat {
           if(patient.getPatient() != null) {
             pat.setId(patient.getPatient().getId());
             pat.setFio(patient.getPatient().getSurname() + " " + patient.getPatient().getName() + " " + patient.getPatient().getMiddlename());
-            pat.setOtdPal(patient.getPatient().getDept().getName() + "/" + patient.getPatient().getRoom().getName() + "-" + patient.getPatient().getRoom().getRoomType().getName());
+            pat.setOtdPal(otdPal(patient.getPatient()));
             pat.setIbNum(patient.getPatient().getYearNum() + "");
             pat.setDateBegin(Util.dateToString(patient.getPatient().getDateBegin()));
             pat.setDateEnd(Util.dateToString(patient.getPatient().getDateEnd()));
@@ -194,6 +193,13 @@ public class CEat {
     return "/med/eat/claims/generate";
   }
 
+  /** ќтделение / палата пациента; без отделени€ или палаты не падает */
+  private static String otdPal(ckb.domains.med.patient.Patients p) {
+    String dept = p.getDept() == null ? "" : p.getDept().getName();
+    String room = p.getRoom() == null ? "" : p.getRoom().getName() + (p.getRoom().getRoomType() == null ? "" : "-" + p.getRoom().getRoomType().getName());
+    return dept + (dept.isEmpty() || room.isEmpty() ? "" : "/") + room;
+  }
+
   @RequestMapping("/claim/patients.s")
   protected String claimPatients(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
@@ -216,10 +222,13 @@ public class CEat {
           "         (Select c.Name From Eat_S_Tables c Where c.Id = d.Table_Id) Table_Num," +
           "         (Select c.fio From Users c Where c.Id = t.lv_id) lv" +
           "     From Patients t, Patient_Eats d " +
-          "    Where t.Id = d.patient_id And date(d.actDate) = ? And d.menuType_Id = ?"
+          "    Where t.Id = d.patient_id And d.actDate >= ? And d.actDate < Date_Add(?, Interval 1 Day) And d.menuType_Id = ?" +
+          "    Order By Table_Num, Fio"
       );
-      ps.setString(1, Util.dateDB(Util.dateToString(claim.getMenu().getMenuDate())));
-      ps.setInt(2, claim.getMenuType().getId());
+      String day = Util.dateDB(Util.dateToString(claim.getMenu().getMenuDate()));
+      ps.setString(1, day);
+      ps.setString(2, day);
+      ps.setInt(3, claim.getMenuType().getId());
       rs = ps.executeQuery();
       while (rs.next()) {
         ObjList obj = new ObjList();
@@ -269,7 +278,7 @@ public class CEat {
         if(patient.getPatient() != null) {
           pat.setId(patient.getPatient().getId());
           pat.setFio(patient.getPatient().getSurname() + " " + patient.getPatient().getName() + " " + patient.getPatient().getMiddlename());
-          pat.setOtdPal(patient.getPatient().getDept().getName() + "/" + patient.getPatient().getRoom().getName() + "-" + patient.getPatient().getRoom().getRoomType().getName());
+          pat.setOtdPal(otdPal(patient.getPatient()));
           pat.setIbNum(patient.getPatient().getYearNum() + "");
           pat.setDateBegin(Util.dateToString(patient.getPatient().getDateBegin()));
           pat.setDateEnd(Util.dateToString(patient.getPatient().getDateEnd()));
@@ -326,6 +335,7 @@ public class CEat {
         dEatClaim.save(claim);
       } else {
         claim = dEatClaim.get(Util.getInt(req, "id"));
+        if("CON".equals(claim.getState())) throw new Exception("«а€вка уже подтверждена, изменить нельз€");
       }
       for(EatTables table: tables) {
         dEatClaimPatient.deleteTable(claim, table);
@@ -433,6 +443,12 @@ public class CEat {
     List<EatMenuTypes> menuTypes = dEatMenuType.getList("From EatMenuTypes Where state = 'A'");
     List<EatTables> tables = dEatTable.getList("From EatTables Order By Id");
     model.addAttribute("tables", tables);
+    Map<String, List<EatMenuRows>> menuRows = new HashMap<String, List<EatMenuRows>>();
+    for(EatMenuRows row: dEatMenuRow.getList("From EatMenuRows Where menu.id = " + menu.getId() + " Order By id")) {
+      String key = row.getMenuType().getId() + "_" + row.getTable().getId();
+      if(!menuRows.containsKey(key)) menuRows.put(key, new ArrayList<EatMenuRows>());
+      menuRows.get(key).add(row);
+    }
     for(EatMenuTypes menuType: menuTypes) {
       EatMenuType mMenuType = new EatMenuType();
       mMenuType.setId(menuType.getId());
@@ -442,7 +458,7 @@ public class CEat {
         EatMenuTable tbl = new EatMenuTable();
         tbl.setId(table.getId());
         tbl.setName(table.getName());
-        List<EatMenuRows> rows = dEatMenuRow.getList("From EatMenuRows Where menu.id = " + menu.getId() + " And table.id = " + tbl.getId() + " And menuType.id = " + mMenuType.getId());
+        List<EatMenuRows> rows = menuRows.containsKey(mMenuType.getId() + "_" + tbl.getId()) ? menuRows.get(mMenuType.getId() + "_" + tbl.getId()) : new ArrayList<EatMenuRows>();
         JSONArray eatJson = new JSONArray();
         List<EatMenuTableEat> mEats = new ArrayList<>();
         for(EatMenuRows row: rows) {
@@ -466,17 +482,40 @@ public class CEat {
     }
     List<EatTypes> types = dEatType.getList("From EatTypes Where state = 'A'");
     List<ObjList> eats = new ArrayList<>();
+    // блюда без норм не предлагаютс€: нормы и блюда читаютс€ двум€ запросами вместо запроса на каждое блюдо
+    Set<Integer> withNorms = new HashSet<Integer>();
+    Connection nc = null;
+    PreparedStatement nps = null;
+    ResultSet nrs = null;
+    try {
+      nc = DB.getConnection();
+      nps = nc.prepareStatement("Select Distinct eat_id From Eat_s_Norms Where eat_id Is Not Null");
+      nrs = nps.executeQuery();
+      while(nrs.next()) withNorms.add(nrs.getInt(1));
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(nrs);
+      DB.done(nps);
+      DB.done(nc);
+    }
+    Map<Integer, List<Eats>> byType = new HashMap<Integer, List<Eats>>();
+    for(Eats et: dEat.getList("From Eats Where state = 'A' Order By name")) {
+      if(et.getType() == null) continue;
+      if(!byType.containsKey(et.getType().getId())) byType.put(et.getType().getId(), new ArrayList<Eats>());
+      byType.get(et.getType().getId()).add(et);
+    }
     for(EatTypes type: types) {
       ObjList obj = new ObjList();
       obj.setC1(type.getName());
       obj.setC2("" + type.getId());
-      List<Eats> ets = dEat.getList("From Eats Where type.id = " + type.getId() + " And state = 'A'");
+      List<Eats> ets = byType.containsKey(type.getId()) ? byType.get(type.getId()) : new ArrayList<Eats>();
       List<ObjList> list = new ArrayList<>();
       for(Eats et : ets) {
         ObjList e = new ObjList();
         e.setC1("" + et.getId());
         e.setC2(et.getName());
-        if(dEatNorm.getCount("From EatNorms Where eat.id = " + et.getId()) > 0) {
+        if(withNorms.contains(et.getId())) {
           list.add(e);
         }
       }
@@ -528,7 +567,8 @@ public class CEat {
           "    and a.eat_Id = e.eat_Id " +
           "    and d.id = a.product_id " +
           "    and f.id = a.measure_Id " +
-          "   Group By d.Id, f.name "
+          "   Group By d.Id, f.name " +
+          "   Order By product_name"
       );
       ps.setInt(1, claim.getId());
       rs = ps.executeQuery();
@@ -540,6 +580,8 @@ public class CEat {
         obj.setC4(rs.getString("measure_name"));
         products.add(obj);
       }
+      DB.done(rs);
+      DB.done(ps);
       ps = conn.prepareStatement(
         "Select t.Eat_Id Eat_Id, " +
           "          Max(c.Name) eat_Name, " +
@@ -551,7 +593,8 @@ public class CEat {
           "  and t.menuType_Id = a.menuType_Id" +
           "  and t.table_Id = f.table_Id" +
           "  and c.Id = t.eat_Id" +
-          " Group By t.eat_Id "
+          " Group By t.eat_Id " +
+          " Order By eat_Name"
       );
       ps.setInt(1, claim.getId());
       rs = ps.executeQuery();
@@ -646,7 +689,7 @@ public class CEat {
       ObjList obj = new ObjList();
       obj.setC1(type.getName());
       obj.setC2("" + type.getId());
-      List<Eats> ets = dEat.getList("From Eats Where upper(name) like '%" + Util.get(req, "filter").toUpperCase() + "%' And type.id = " + type.getId() + " And state = 'A'");
+      List<Eats> ets = dEat.getList("From Eats Where upper(name) like '%" + Util.get(req, "filter", "").toUpperCase().replace("'", "''") + "%' And type.id = " + type.getId() + " And state = 'A'");
       List<ObjList> list = new ArrayList<>();
       for(Eats et : ets) {
         ObjList e = new ObjList();
@@ -794,8 +837,10 @@ public class CEat {
       String[] ids = req.getParameterValues("id");
       EatMenuTypes type = dEatMenuType.get(Util.getInt(req, "menu_type"));
       EatTables table = dEatTable.get(Util.getInt(req, "table"));
-      String name = Util.get(req, "name");
-      Long count = dEatMenuTemplate.getCount("From EatMenuTemplates Where upper(name) = '" + name.toUpperCase() + "' And table.id = " + table.getId() + " And menuType.id = " + type.getId());
+      String name = Util.get(req, "name", "").trim();
+      if(name.isEmpty()) throw new Exception("”кажите название шаблона");
+      if(ids == null || ids.length == 0) throw new Exception("¬ меню стола нет блюд");
+      Long count = dEatMenuTemplate.getCount("From EatMenuTemplates Where upper(name) = '" + name.toUpperCase().replace("'", "''") + "' And table.id = " + table.getId() + " And menuType.id = " + type.getId());
       if(count == 0) {
         EatMenuTemplates template = new EatMenuTemplates();
         template.setName(name);
@@ -1009,6 +1054,9 @@ public class CEat {
           obj.setCrBy(session.getUserId());
           obj.setCrOn(new Date());
         }
+        // нормы провер€ютс€ до сохранени€ блюда, чтобы не оставалось блюда без расходов
+        if(req.getParameterValues("norm_id") == null) throw new Exception("–асходы блюд не может быть пустым");
+        if(obj.getName() == null || obj.getName().trim().isEmpty()) throw new Exception("Ќаименование не может быть пустым");
         try {
           dEat.save(obj);
           String[] ids = req.getParameterValues("norm_id");
@@ -1024,7 +1072,7 @@ public class CEat {
             norm.setEat(obj);
             norm.setProduct(dEatProduct.get(Integer.parseInt(products[i])));
             norm.setMeasure(dEatMeasure.get(Integer.parseInt(measures[i])));
-            norm.setRasxod(Double.parseDouble(rasxods[i]));
+            norm.setRasxod(Double.parseDouble(rasxods[i].trim().replace(',', '.')));
             dEatNorm.save(norm);
             i++;
           }

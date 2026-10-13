@@ -7,6 +7,9 @@
       <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5InnoDBDialect" /> <!--MySql version-->
       <property name="hibernate.transaction.auto_close_session" value="true" />
       <property name="hibernate.cache.use_second_level_cache" value="true" />
+      <!-- reference tables (marked @Cache) are kept in memory, settings in ehcache.xml -->
+      <property name="hibernate.cache.region.factory_class" value="net.sf.ehcache.hibernate.SingletonEhCacheRegionFactory" />
+      <property name="net.sf.ehcache.configurationResourceName" value="/ehcache.xml" />
       <property name="hibernate.hbm2ddl.auto" value="update" />
       <property name="hibernate.show_sql" value="false" />
     </properties>

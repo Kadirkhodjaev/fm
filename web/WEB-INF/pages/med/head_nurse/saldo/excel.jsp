@@ -28,15 +28,15 @@
   <c:forEach items="${rows}" var="row" varStatus="loop">
     <tr>
       <td align="center" style="border:1px solid black;">${loop.index + 1}</td>
-      <td align="center" style="border:1px solid black;">${row.drug.id}</td>
-      <td style="border:1px solid black;vertical-align: middle;">${row.direction.name}</td>
-      <td style="border:1px solid black;vertical-align: middle;">${row.drug.name}</td>
-      <td align="center" style="border:1px solid black;vertical-align: middle; width:200px">Акт №${row.outRow.doc.regNum} от <fmt:formatDate pattern="dd.MM.yyyy" value="${row.outRow.doc.regDate}"/></td>
-      <td align="center" style="border:1px solid black;vertical-align: middle;"><fmt:formatDate pattern="dd.MM.yyyy" value="${row.outRow.income.endDate}"/></td>
+      <td align="center" style="border:1px solid black;">${row.drugId}</td>
+      <td style="border:1px solid black;vertical-align: middle;">${row.direction}</td>
+      <td style="border:1px solid black;vertical-align: middle;">${row.drug}</td>
+      <td align="center" style="border:1px solid black;vertical-align: middle; width:200px">Акт №${row.regNum} от <fmt:formatDate pattern="dd.MM.yyyy" value="${row.regDate}"/></td>
+      <td align="center" style="border:1px solid black;vertical-align: middle;"><fmt:formatDate pattern="dd.MM.yyyy" value="${row.endDate}"/></td>
       <td align="right" style="border:1px solid black;vertical-align: middle; width:100px">${row.drugCount}</td>
       <td align="right" style="border:1px solid black;vertical-align: middle; width:100px">${row.rasxod}</td>
-      <td align="right" style="border:1px solid black;vertical-align: middle; width:100px">${row.drugCount - row.rasxod}</td>
-      <td style="border:1px solid black;vertical-align: middle; width:100px">${row.drug.measure.name}</td>
+      <td align="right" style="border:1px solid black;vertical-align: middle; width:100px">${row.saldo}</td>
+      <td style="border:1px solid black;vertical-align: middle; width:100px">${row.measure}</td>
     </tr>
   </c:forEach>
   </tbody>

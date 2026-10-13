@@ -14,7 +14,7 @@
   <div class="panel-heading">
     Операционный день
     <button  class="btn btn-sm btn-success" onclick="addEditOperday(0)" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
-    <button  class="btn btn-sm btn-danger" onclick="closeOperday()" style="float:right; height:30px; margin-top:-5px; margin-right:5px;"><i class="fa fa-close"></i> Закрыть</button>
+    <button  class="btn btn-sm btn-danger" onclick="closeOperday()" style="float:right; height:30px; margin-top:-5px; margin-right:5px;"><i class="fa fa-times"></i> Закрыть</button>
   </div>
   <div class="panel-body">
     <%@include file="/incs/msgs/successError.jsp"%>
@@ -119,7 +119,7 @@
   function closeOperday() {
     const lk = $('input[name=operday_id]').val();
     if(lk > 0)
-      if(confirm('Дейтвительно хотите закрыть?')) {
+      FmsConfirm('Дейтвительно хотите закрыть?', function () {
         $.ajax({
           url: '/cashbox/closeOperday.s',
           method: 'post',
@@ -133,6 +133,6 @@
             }
           }
         });
-      }
+      });
   }
 </script>

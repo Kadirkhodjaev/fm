@@ -1,119 +1,111 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<div class="panel panel-info w-100">
-  <div class="panel-heading">
-    <span class="fa fa-users"></span> Реестр клиентов
-  </div>
-  <div class="right pt-5 mb-30">
-    <div class="float-left">
-      <select class="form-control" onchange="setFlag(this.value)">
-        <option value="0">Все</option>
-        <option <c:if test="${flag == 'DONE'}">selected</c:if> value="DONE">Проверено</option>
-        <option <c:if test="${flag == 'UNDONE'}">selected</c:if> value="UNDONE">Не проверено</option>
-      </select>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%-- Регистрация → Клиенты: реестр клиентов (без финансовой информации) --%>
+<%@include file="/WEB-INF/pages/core/forms/style.jsp"%>
+<style>
+  .cl-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#C3C7CE; }
+  .cl-dot.ok { background:#2E9E62; }
+  .cl-pg { display:flex; align-items:center; gap:6px; flex:none; }
+  .cl-pg .fm-btn { padding:0 9px; }
+  .cl-pg .fm-btn[disabled] { opacity:.4; cursor:default; }
+  .cl-pg select { height:32px; border:1px solid #E6E8EC; border-radius:9px; background:#fff; padding:0 6px; font-family:inherit; font-size:13px; }
+  .cl-pg .of { color:#6B7280; font-size:12.5px; white-space:nowrap; }
+  #clRows tr { cursor:pointer; }
+  #clRows tr.sel td { background:#EEF4FF; }
+  #clRows td { white-space:nowrap; }
+  #clRows td.fio { white-space:normal; }
+  .cl-flag { display:inline-flex; align-items:center; gap:6px; }
+</style>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-users"></i></span>
+        <div>
+          <h2>Клиенты</h2>
+          <span class="fm-count">найдено <b><fmt:formatNumber value="${grid.rowCount}" pattern="#,##0"/></b><c:if test="${not empty grid.word}"> по «${fn:escapeXml(grid.word)}»</c:if></span>
+        </div>
+      </div>
+      <div class="fm-seg">
+        <button type="button" class="${empty flag ? 'on' : ''}" onclick="clGo('?flag=0')">Все</button>
+        <button type="button" class="${flag == 'DONE' ? 'on' : ''}" onclick="clGo('?flag=DONE')"><span class="cl-flag"><span class="cl-dot ok"></span>Проверено</span></button>
+        <button type="button" class="${flag == 'UNDONE' ? 'on' : ''}" onclick="clGo('?flag=UNDONE')"><span class="cl-flag"><span class="cl-dot"></span>Не проверено</span></button>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="clSearch" style="width:280px" value="${fn:escapeXml(grid.word)}" placeholder="ФИО, телефон или паспорт + Enter" autocomplete="off"
+               onkeydown="if (event.keyCode == 13) clGo('?action=search&word=' + encodeURIComponent($.trim(this.value)))"/>
+      </div>
+      <c:if test="${not empty grid.word}">
+        <button type="button" class="fm-btn" onclick="clGo('?action=search&word=')" title="Сбросить поиск"><i class="fa fa-times"></i></button>
+      </c:if>
+      <div class="cl-pg">
+        <button type="button" class="fm-btn" onclick="clGo('?action=prev')" title="Назад" <c:if test="${grid.page <= 1}">disabled</c:if>><i class="fa fa-chevron-left"></i></button>
+        <select onchange="clGo('?action=page_num&page_num=' + this.value)" title="Страница">
+          <c:forEach begin="1" end="${grid.maxPage < 1 ? 1 : grid.maxPage}" var="p">
+            <option value="${p}" <c:if test="${grid.page == p}">selected</c:if>>${p}</option>
+          </c:forEach>
+        </select>
+        <span class="of">из ${grid.maxPage < 1 ? 1 : grid.maxPage}</span>
+        <button type="button" class="fm-btn" onclick="clGo('?action=next')" title="Вперёд" <c:if test="${grid.page >= grid.maxPage}">disabled</c:if>><i class="fa fa-chevron-right"></i></button>
+        <select onchange="clGo('?action=page_size&page_size=' + this.value)" title="Строк на странице">
+          <c:forEach items="${grid.pageSizes}" var="s">
+            <option value="${s}" <c:if test="${grid.pageSize == s}">selected</c:if>>${s}</option>
+          </c:forEach>
+        </select>
+      </div>
     </div>
-    <ul class="pagination mb-0 float-right">
-      <li class="paginate_button" tabindex="0">
-        <input type="text" class="grid-search-field uppercase" id="amb-search-field" placeholder="Поиск" onkeydown="setWord(this.value)" value="${grid.word}"/>
-      </li>
-      <li class="paginate_button" tabindex="0">
-        <select class="paginator-select" onchange="setPageSize(this.value)">
-          <c:forEach items="${grid.pageSizes}" var="elem">
-            <option <c:if test="${grid.pageSize == elem}">selected</c:if> value="${elem}">${elem}</option>
-          </c:forEach>
-        </select>
-      </li>
-      <li class="paginate_button" tabindex="0">
-        <div class="float-left p-4">- ${grid.rowCount}</div>
-      </li>
-      <li class="paginate_button <c:if test="${grid.page == 1}">disabled</c:if>" tabindex="0"><a onclick="setNav('begin')" href="#"><i class="fa fa-fast-backward"></i>&nbsp;</a></li>
-      <li class="paginate_button <c:if test="${grid.page == 1}">disabled</c:if>" tabindex="0"><a onclick="setNav('prev')" href="#"><i class="fa fa-backward"></i>&nbsp;</a></li>
-      <li class="paginate_button" aria-controls="dataTables-example" tabindex="0">
-        <select class="paginator-select" onchange="setPageNum(this.value)">
-          <c:forEach begin="1" end="${grid.maxPage}" var="elem">
-            <option <c:if test="${grid.page == elem}">selected</c:if> value="${elem}">${elem}</option>
-          </c:forEach>
-        </select>
-      </li>
-      <li class="paginate_button <c:if test="${grid.page == grid.maxPage}">disabled</c:if>" tabindex="0"><a onclick="setNav('next')" href="#"><i class="fa fa-forward"></i>&nbsp;</a></li>
-      <li class="paginate_button <c:if test="${grid.page == grid.maxPage}">disabled</c:if>" tabindex="0"><a onclick="setNav('end')" href="#"><i class="fa fa-fast-forward"></i>&nbsp;</a></li>
-    </ul>
-  </div>
-  <div class="clearboth"></div>
-  <div class="table-responsive" style="overflow-y: auto; height: 95%">
-    <table class="table table-striped table-bordered table-hover grid dataTable hand">
-      <thead>
-      <tr>
-        <th style="width:50px">№</th>
-        <th style="width:30px">#</th>
-        <th>ФИО</th>
-        <th style="width: 150px">Пол</th>
-        <th style="width: 150px">Дата рождения</th>
-        <th style="width: 150px">Документ</th>
-        <th style="width: 150px">Страна</th>
-        <th style="width: 150px">Региод</th>
-        <th style="width: 150px">Телефон.</th>
-        <th style="width: 150px">Дата рег.</th>
-      </tr>
-      </thead>
-      <tbody style="overflow: scroll">
-      <c:forEach items="${rows}" var="p" varStatus="loop">
-        <tr ondblclick="view(${p.id})" onclick="setRow(${loop.index})" id="grid_row_${loop.index}">
-          <td class="center">${loop.index + 1}</td>
-          <td class="center">
-            <c:if test="${p.flag == 'DONE'}">
-              <img src="/res/imgs/green.gif"/>
-            </c:if>
-            <c:if test="${p.flag != 'DONE'}">
-              <img src="/res/imgs/red.gif"/>
-            </c:if>
-          </td>
-          <td><a href="#" onclick="view(${p.id}); return false;">${p.fio}</a></td>
-          <td class="center">${p.sex}</td>
-          <td class="center">${p.birthdate}</td>
-          <td class="center">${p.docSeria} ${p.docNum}</td>
-          <td class="center">${p.country}</td>
-          <td class="center">${p.region}</td>
-          <td class="center">${p.tel}</td>
-          <td class="center">${p.dateReg}</td>
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
+        <thead>
+        <tr>
+          <th style="width:60px">№</th>
+          <th style="width:30px"></th>
+          <th>ФИО</th>
+          <th style="width:90px">Пол</th>
+          <th style="width:120px">Дата рождения</th>
+          <th style="width:130px">Документ</th>
+          <th style="width:200px">Страна / область</th>
+          <th style="width:140px">Телефон</th>
+          <th style="width:140px">Дата рег.</th>
         </tr>
-      </c:forEach>
-      </tbody>
-    </table>
+        </thead>
+        <tbody id="clRows">
+        <c:forEach items="${rows}" var="p" varStatus="loop">
+          <tr data-id="${p.id}" onclick="clView(${p.id})" title="Открыть карточку">
+            <td class="mut">${grid.startPos + loop.index}</td>
+            <td><span class="cl-dot ${p.flag == 'DONE' ? 'ok' : ''}" title="${p.flag == 'DONE' ? 'Проверено' : 'Не проверено'}"></span></td>
+            <td class="fio"><span class="nm">${fn:escapeXml(p.fio)}</span></td>
+            <td class="mut">${p.sex}</td>
+            <td>${p.birthdate}</td>
+            <td>${fn:escapeXml(p.docSeria)} ${fn:escapeXml(p.docNum)}</td>
+            <td class="mut">${p.country}<c:if test="${not empty p.region}"> · ${p.region}</c:if></td>
+            <td>${fn:escapeXml(p.tel)}</td>
+            <td class="mut">${p.dateReg}</td>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
+      <c:if test="${empty rows}">
+        <div class="fm-empty" style="display:block"><i class="fa fa-users"></i>Клиенты не найдены</div>
+      </c:if>
+    </div>
   </div>
 </div>
 <script>
-  let lrw = localStorage.getItem('${sessionScope.ENV.curUrl}_row');
-  let row = lrw == null ? '0' : lrw;
-  $(() => {
-    <c:if test="${grid.word != ''}">
-    $('#amb-search-field').focus()
-    </c:if>
-    setRow(row);
-  })
-  function setRow(idx) {
-    $('#grid_row_' + row).removeClass('selected');
-    row = idx;
-    localStorage.setItem('${sessionScope.ENV.curUrl}_row', idx);
-    $('#grid_row_' + idx).addClass('selected');
+  function clGo(q) { setPage('/clients/list.s' + q); }
+  function clView(id) {
+    try { sessionStorage.setItem('clLast', id); } catch (e) {}
+    setPage('/clients/view.s?id=' + id);
   }
-  function setPageSize(val) {
-    setPage('${sessionScope.ENV.curUrl}?action=page_size&page_size=' + val);
-  }
-  function setWord(val) {
-    if(event.keyCode === 13)
-      setPage('${sessionScope.ENV.curUrl}?action=search&word=' + encodeURIComponent(val));
-  }
-  function setPageNum(val) {
-    setPage('${sessionScope.ENV.curUrl}?action=page_num&page_num=' + val)
-  }
-  function setNav(code) {
-    setPage('${sessionScope.ENV.curUrl}?action=' + code);
-  }
-  function view(id) {
-    setPage('${view_url}' + id);
-  }
-  function setFlag(flag) {
-    setPage('${sessionScope.ENV.curUrl}?flag=' + flag);
-  }
+  (function () {
+    var last = null;
+    try { last = sessionStorage.getItem('clLast'); } catch (e) {}
+    var tr = last ? $('#clRows tr[data-id=' + Number(last) + ']') : $();
+    if (tr.length) { tr.addClass('sel'); tr[0].scrollIntoView({block: 'center'}); }
+    <c:if test="${not empty grid.word}">$('#clSearch').focus();</c:if>
+  })();
 </script>

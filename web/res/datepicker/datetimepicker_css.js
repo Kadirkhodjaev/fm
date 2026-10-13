@@ -84,22 +84,14 @@ $(document).ready(function(){
   initDates();
 });
 
+// Old date fields (.datepicker) now use the new calendar /res/js/fms-calendar.js:
+// it works on all .datepicker fields, including ones loaded later, so here we only load it once.
 function initDates(){
-  $('.datepicker').each(function () {
-  	var input = $(this);
-    var elem = document.getElementById(input.attr('id'));
-    if (!elem.hasAttribute('placeholder')) {
-      input.attr("placeholder", "dd.mm.yyyy").on("dblclick", function () {
-        getCalendar(this, 'ddMMyyyy', 'arrow');
-      }).attr("readonly", "readonly").css("float", "left");
-      var sp = $("<div>");
-      sp.attr("class", "dateImg");
-      sp.on("click", function () {
-        getCalendar(elem, 'ddMMyyyy', 'arrow');
-      });
-      input.after(sp);
-    }
-  });
+  $('.datepicker').next('.dateImg').remove();
+  if (!window.__fmsCalendar && !window.__fmsCalendarLoading) {
+    window.__fmsCalendarLoading = true;
+    $.ajax({url: '/res/js/fms-calendar.js', dataType: 'script', cache: true});
+  }
 }
 
 // Calendar prototype

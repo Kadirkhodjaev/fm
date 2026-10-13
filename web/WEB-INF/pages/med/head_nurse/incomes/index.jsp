@@ -1,185 +1,130 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading" style="padding:0 20px;">
-    <table style="margin:0;width:100%">
-      <tr>
-        <td style="width:70px; font-weight:bold; vertical-align: middle">Приход</td>
-        <td style="width:140px;padding:5px">
-          <input name="period_start" id="period_start" type="text" class="form-control datepicker" value="${period_start}"/>
-        </td>
-        <td style="width:10px;vertical-align: middle">
-          -
-        </td>
-        <td style="width:140px;padding:5px">
-          <input name="period_end" id="period_end" type="text" class="form-control datepicker" value="${period_end}"/>
-        </td>
-        <td style="vertical-align: middle">
-          <button onclick="setCashStat()" class="btn btn-success btn-icon"><span class="fa fa-search"></span> Поиск</button>
-        </td>
-        <td style="width:150px; padding-right:5px">
-          <select class="form-control" required id="ins_flag" onchange="setCashStat()">
-            <option <c:if test="${ins_flag == '0'}">selected</c:if> value="0">Все</option>
-            <option <c:if test="${ins_flag == 'Y'}">selected</c:if> value="Y">Принятые на склад</option>
-            <option <c:if test="${ins_flag == 'N'}">selected</c:if> value="N">Непринятые на склад</option>
-          </select>
-        </td>
-        <td style="width:250px">
-          <select class="form-control" required id="dr" onchange="setCashStat()">
-            <option <c:if test="${filter_direction == '0'}">selected</c:if> value="0">Все</option>
-            <c:forEach items="${directions}" var="cc">
-              <option <c:if test="${filter_direction == cc.direction.id}">selected</c:if> value="${cc.direction.id}">${cc.direction.name}</option>
-            </c:forEach>
-          </select>
-        </td>
-        <td align="right" style="vertical-align: middle;width:100px">
-          <button  class="btn btn-icon btn-success" onclick="setPage('/head_nurse/incomes/save.s?id=0')"><i class="fa fa-plus"></i> Добавить</button>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div class="panel-body">
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<%-- Склады → Приход: заявки на получение медикаментов из аптеки --%>
+<%@include file="/WEB-INF/pages/med/head_nurse/hn_style.jsp"%>
+<c:set var="sum" value="0"/><c:set var="cntEnt" value="0"/><c:set var="cntSnd" value="0"/><c:set var="cntCon" value="0"/>
+<c:forEach items="${rows}" var="o">
+  <c:set var="sum" value="${sum + o.c3}"/>
+  <c:if test="${o.c5 == 'ENT'}"><c:set var="cntEnt" value="${cntEnt + 1}"/></c:if>
+  <c:if test="${o.c5 == 'SND'}"><c:set var="cntSnd" value="${cntSnd + 1}"/></c:if>
+  <c:if test="${o.c5 == 'CON' || empty o.c5}"><c:set var="cntCon" value="${cntCon + 1}"/></c:if>
+</c:forEach>
+
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-download"></i></span>
+        <div>
+          <h2>Приход</h2>
+          <span class="fm-count"><b id="inShown">${fn:length(rows)}</b> из <b>${fn:length(rows)}</b> заявок</span>
+        </div>
+      </div>
+      <div class="hn-flt">
+        <input id="period_start" type="text" class="fm-in datepicker" value="${period_start}" title="С" autocomplete="off"/>
+        <span class="dash">—</span>
+        <input id="period_end" type="text" class="fm-in datepicker" value="${period_end}" title="По" autocomplete="off"/>
+        <select class="fm-in fms-select" id="dr" style="width:220px" onchange="inLoad()">
+          <option value="0">Все получатели</option>
+          <c:forEach items="${directions}" var="cc">
+            <option <c:if test="${filter_direction == cc.direction.id}">selected</c:if> value="${cc.direction.id}">${cc.direction.name}</option>
+          </c:forEach>
+        </select>
+        <button type="button" class="fm-btn" onclick="inLoad()"><i class="fa fa-search"></i>Показать</button>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg">
+        <button type="button" class="${ins_flag == '0' ? 'on' : ''}" onclick="inLoad('0')">Все</button>
+        <button type="button" class="${ins_flag == 'N' ? 'on' : ''}" onclick="inLoad('N')">Не приняты на склад</button>
+        <button type="button" class="${ins_flag == 'Y' ? 'on' : ''}" onclick="inLoad('Y')">Приняты</button>
+      </div>
+      <button type="button" class="fm-btn primary" onclick="setPage('/head_nurse/incomes/save.s?id=0')"><i class="fa fa-plus"></i>Новая заявка</button>
+    </div>
+    <div class="fm-toolbar" style="padding-top:0">
+      <div class="fm-seg" id="inSeg">
+        <button type="button" data-f="" class="on" onclick="hnSeg('in', this)">Все состояния</button>
+        <button type="button" data-f="ENT" onclick="hnSeg('in', this)">Черновик · ${cntEnt}</button>
+        <button type="button" data-f="SND" onclick="hnSeg('in', this)">Отправлено · ${cntSnd}</button>
+        <button type="button" data-f="CON" onclick="hnSeg('in', this)">Подтверждено · ${cntCon}</button>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="inSearch" placeholder="Номер, получатель" oninput="hnFilter('in')" autocomplete="off"/>
+      </div>
+    </div>
+
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>№</th>
-          <th>#</th>
+          <th style="width:70px">№</th>
           <th>Получатель</th>
           <th>Документ</th>
-          <th>Кол-во</th>
-          <th>Сумма</th>
-          <th>Создания</th>
-          <th>Отправка</th>
-          <th>Подтверждения</th>
-          <th>Склад</th>
-          <th style="width:40px">Удалить</th>
+          <th style="width:80px" class="r">Позиций</th>
+          <th style="width:130px" class="r">Сумма</th>
+          <th style="width:140px" class="nw">Создана</th>
+          <th style="width:140px" class="nw">Отправлена</th>
+          <th style="width:140px" class="nw">Подтверждена</th>
+          <th style="width:130px">Состояние</th>
+          <th style="width:110px">Склад</th>
+          <th style="width:50px"></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="inRows">
         <c:forEach items="${rows}" var="obj">
-          <tr ondblclick="setPage('/head_nurse/incomes/save.s?id=${obj.ib}')">
-            <td align="center" style="width:80px">${obj.ib}</td>
-            <td align="center" style="width:30px">
+          <c:set var="st" value="${obj.c5 == 'ENT' ? 'ENT' : obj.c5 == 'SND' ? 'SND' : 'CON'}"/>
+          <tr class="go" data-f="${st}" data-s="${obj.ib} ${fn:escapeXml(obj.c6)} ${fn:escapeXml(obj.c1)}" onclick="setPage('/head_nurse/incomes/save.s?id=${obj.ib}')">
+            <td class="mut"><b>${obj.ib}</b></td>
+            <td><c:if test="${obj.c11 == 'Y'}"><span class="hn-auto">Авто</span></c:if><span class="nm">${obj.c6}</span></td>
+            <td class="mut nw">${obj.c1}</td>
+            <td class="r">${obj.c2}</td>
+            <td class="r"><fmt:formatNumber value="${obj.c3}" type="number" maxFractionDigits="2"/></td>
+            <td class="mut nw">${obj.c7}</td>
+            <td class="mut nw">${obj.c8}</td>
+            <td class="mut nw">${obj.c9}</td>
+            <td>
+              <c:choose>
+                <c:when test="${st == 'ENT'}"><span class="hn-st ent">Черновик</span></c:when>
+                <c:when test="${st == 'SND'}"><span class="hn-st snd">Отправлено</span></c:when>
+                <c:otherwise><span class="hn-st con">Подтверждено</span></c:otherwise>
+              </c:choose>
+            </td>
+            <td><span class="hn-st ${obj.c10 == 'Y' ? 'con' : 'off'}">${obj.c10 == 'Y' ? 'Принято' : 'Не принято'}</span></td>
+            <td class="r" onclick="event.stopPropagation()">
               <c:if test="${obj.c5 == 'ENT'}">
-                <img src="/res/imgs/red.gif">
-              </c:if>
-              <c:if test="${obj.c5 == 'CON' || obj.c5 == null}">
-                <img src="/res/imgs/green.gif">
-              </c:if>
-              <c:if test="${obj.c5 == 'SND'}">
-                <img src="/res/imgs/yellow.gif">
-              </c:if>
-            </td>
-            <td align="center">
-              <c:if test="${obj.c11 == 'Y'}">
-                <span style="color:red">Авто заявка</span> -
-              </c:if>
-              ${obj.c6}
-            </td>
-            <td align="center">${obj.c1}</td>
-            <td align="center">${obj.c2}</td>
-            <td align="right"><fmt:formatNumber value="${obj.c3}" type = "number"/></td>
-            <td align="center" style="width:150px">${obj.c7}</td>
-            <td align="center" style="width:150px">${obj.c8}</td>
-            <td align="center" style="width:150px">${obj.c9}</td>
-            <td align="center" style="width:30px">
-              <c:if test="${obj.c10 == 'Y'}">
-                <img src="/res/imgs/green.gif">
-              </c:if>
-              <c:if test="${obj.c10 != 'Y'}">
-                <img src="/res/imgs/red.gif">
-              </c:if>
-            </td>
-            <td class="center">
-              <c:if test="${obj.c5 == 'ENT'}">
-                <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.ib})"><i class="fa fa-minus"></i></button>
+                <button type="button" class="fm-act danger" title="Удалить заявку" onclick="delDrugRow(${obj.ib})"><i class="fa fa-trash-o"></i></button>
               </c:if>
             </td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="inEmpty" style="display:none"><i class="fa fa-download"></i>Заявок за период нет</div>
     </div>
-    <!-- /.table-responsive -->
+    <div class="hn-foot">
+      <span>Заявок: <b>${fn:length(rows)}</b></span>
+      <span>Сумма: <b><fmt:formatNumber value="${sum}" type="number" maxFractionDigits="2"/></b></span>
+    </div>
   </div>
-  <!-- /.panel-body -->
 </div>
 <script>
-  function addDrugDict(){
-    addEditForm.reset();
-    document.getElementById("modal_window").click();
-  }
-  function editDrugDict(id) {
-    document.getElementById("modal_window").click();
-    $.ajax({
-      url: '/drugs/dict/get.s',
-      method: 'post',
-      data: 'code=category&id=' + id,
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('*[name=id]').val(res.id);
-          $('*[name=name]').val(res.name);
-          $('*[name=state]').prop('checked', res.state == 'A');
-        } else {
-          alert(res.msg);
-        }
-      }
-    });
-  }
-  function saveDrugForm() {
-    if($('#category-name').val() == '') {
-      alert('Наименование не может быть пустым');
-      return;
-    }
-    $.ajax({
-      url: '/drugs/dict/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          $('#close-modal').click();
-          setPage('/drugs/dicts.s');
-        } else {
-          alert(res.msg);
-        }
-      }
-    });
+  hnFilter('in');
+  function inLoad(ins) {
+    setPage('/head_nurse/incomes.s?period_start=' + encodeURIComponent($('#period_start').val()) + '&period_end=' + encodeURIComponent($('#period_end').val()) +
+      '&dr=' + $('#dr').val() + '&ins_flag=' + (ins == null ? '${ins_flag}' : ins));
   }
   function delDrugRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
-      $.ajax({
-        url: '/head_nurse/incomes/del.s',
-        method: 'post',
-        data: 'id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert('Данные успешно удалены');
-            setPage('/head_nurse/incomes.s');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
-  }
-  function setCashStat(){
-    var start = document.getElementById("period_start");
-    var end = document.getElementById("period_end");
-    var direction = document.getElementById("dr");
-    var ins_flag = document.getElementById("ins_flag");
-    setPage('/head_nurse/incomes.s?period_start=' + start.value + '&period_end=' + end.value + '&dr=' + direction.value + '&ins_flag=' + ins_flag.value);
+    FmsConfirm('Удалить заявку №' + id + '?', function () {
+    $.ajax({
+      url: '/head_nurse/incomes/del.s', method: 'post', data: 'id=' + id, dataType: 'json',
+      success: function (res) {
+        if (res.success) { openMedMsg('Заявка удалена', true); setPage('/head_nurse/incomes.s'); }
+        else errMsg(res.msg);
+      }
+    });
+  });
   }
 </script>

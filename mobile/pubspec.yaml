@@ -1,0 +1,25 @@
+name: fms_patient
+description: "Farhod Madad Shifo: приложение для клиентов клиники (Android, iPhone)."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2
+  flutter_secure_storage: ^9.2.2
+  google_fonts: ^6.2.1
+  path_provider: ^2.1.4
+  open_filex: ^4.5.0
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo_fms_h.png
+    - assets/logo_fms_mini.png

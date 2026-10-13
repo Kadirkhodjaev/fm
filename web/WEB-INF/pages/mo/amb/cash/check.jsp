@@ -88,7 +88,7 @@
 <c:if test="${qrcode == 'Y'}">
   <script>
     $(function(){
-      $('#qrcodefield').attr("src", '${qrcodeurl}${pat.qrcode}', () => {
+      $('#qrcodefield').attr("src", '/qrcode_png.s?code=${pat.qrcode}', () => {
         print();
       });
     })

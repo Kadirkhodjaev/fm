@@ -1,9 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix = "fn" uri = "http://java.sun.com/jsp/jstl/functions"%>
+<%@include file="/WEB-INF/pages/core/skin.jsp"%>
+<div class="fm-skin">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
 <script src="/res/js/jquery.mask.js"></script>
-<script src="/res/js/common.js"></script>
+<script src="/res/js/common.js?v=2026101309"></script>
 <div class="modal-body">
   <form id="field_settings">
     <table class="w-100 light-table">
@@ -374,7 +376,7 @@
     });
   }
   function deleteOption(id) {
-    if(confirm('Вы действительно хотите удалить выбранное значение?')) {
+    FmsConfirm('Вы действительно хотите удалить выбранное значение?', function () {
       $.ajax({
         url: '/core/ambv2/service/field/option/del.s',
         method: 'post',
@@ -385,7 +387,7 @@
           reloadPage(res);
         }
       });
-    }
+    });
   }
   function setFieldType(val, init) {
     $('.with_norm_field').toggle(val.indexOf('_norm') > 0 && val.indexOf('_nonorm') === -1);
@@ -445,8 +447,7 @@
     });
   }
   function delNorma(id) {
-    if(confirm('Вы действительно хотите удалить запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить запись?', function () { $.ajax({
         url: '/core/ambv2/service/field/norma/del.s',
         method: 'post',
         data: 'id=' + id,
@@ -455,7 +456,7 @@
           openMsg(res);
           reloadPage(res);
         }
-      });
+      }); });
   }
   function saveField() {
     $.ajax({
@@ -473,3 +474,4 @@
     });
   }
 </script>
+</div>

@@ -139,10 +139,10 @@ public class CPatient {
         if (session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +
-          "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.yearNum) Like Upper('%" + session.getFilterFio() + "%') " +
+          "Upper(t.surname) like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.name) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.middlename) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.yearNum) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') " +
           ")";
       }
       sql += session.getFilterSql();
@@ -190,6 +190,7 @@ public class CPatient {
       SessionUtil.addSession(r, "patientGrid", grid);
       model.addAttribute("list", sPatient.getGridList(grid, session));
       model.addAttribute("roleId", session.getRoleId());
+      if(session.getRoleId() == 16) model.addAttribute("docFizio", dUser.get(session.getUserId()).isDocfizio());
       model.addAttribute("curUrl", session.getCurUrl());
       sPatient.makeAddEditUrlByRole(model, session.getRoleId(), curPat);
       Util.makeMsg(r, model);
@@ -240,12 +241,12 @@ public class CPatient {
         if(session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +
-          "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.yearNum) Like Upper('%" + session.getFilterFio() + "%') " +
+          "Upper(t.surname) like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.name) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.middlename) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.yearNum) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') " +
           ")";
-        //sql += " And ( Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%'))";
+        //sql += " And ( Upper(t.surname) like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or Upper(t.name) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or Upper(t.middlename) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%'))";
       }
       // Фильтр
       if(!Req.isNull(r, "filter") || !Util.nvl(session.getFilterFio()).equals("")) {
@@ -255,12 +256,12 @@ public class CPatient {
         if(session.getFilterFio().equals(""))
           session.setFiltered(false);
         sql += " And ( " +
-          "Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%') Or " +
-          "Upper(t.yearNum) Like Upper('%" + session.getFilterFio() + "%') " +
+          "Upper(t.surname) like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.name) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.middlename) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or " +
+          "Upper(t.yearNum) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') " +
           ")";
-        //sql += " And ( Upper(t.surname) like Upper('%" + session.getFilterFio() + "%') Or Upper(t.name) Like Upper('%" + session.getFilterFio() + "%') Or Upper(t.middlename) Like Upper('%" + session.getFilterFio() + "%'))";
+        //sql += " And ( Upper(t.surname) like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or Upper(t.name) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%') Or Upper(t.middlename) Like Upper('%" + Util.sqlText(session.getFilterFio()) + "%'))";
       }
       sql += session.getFilterSql();
       Grid grid = SessionUtil.getGrid(r, "patientGrid");
@@ -308,6 +309,7 @@ public class CPatient {
       SessionUtil.addSession(r, "patientGrid", grid);
       m.addAttribute("list", sPatient.getGridList(grid, session));
       m.addAttribute("roleId", session.getRoleId());
+      if(session.getRoleId() == 16) m.addAttribute("docFizio", dUser.get(session.getUserId()).isDocfizio());
       m.addAttribute("curUrl", session.getCurUrl());
       m.addAttribute("addEditUrl", session.getRoleId() == 13 ? "/cashbox/stat.s?id=" : "/view/index.s?id=");
       m.addAttribute("flag", flag);
@@ -373,6 +375,7 @@ public class CPatient {
       SessionUtil.addSession(r, "patientGrid", grid);
       m.addAttribute("list", sPatient.getGridList(grid, session));
       m.addAttribute("roleId", session.getRoleId());
+      if(session.getRoleId() == 16) m.addAttribute("docFizio", dUser.get(session.getUserId()).isDocfizio());
       m.addAttribute("curUrl", session.getCurUrl());
       m.addAttribute("addEditUrl", "/view/index.s?id=");
       Util.makeMsg(r, m);
@@ -418,6 +421,8 @@ public class CPatient {
           if(session.getParam("CLINIC_CODE").equals("fm")) {
             p.setState("CZG"); // Отправляется леч. врачу
             dPatient.save(p);
+            // главному врачу в Telegram: новый пациент ждёт назначения лечащего врача
+            ckb.utils.tg.TgNewPatientGlv.send(p, dUser.get(session.getUserId()).getFio());
           } else {
             if (p.getLv_id() != null && p.getDept() != null && p.getLv_id() != null && p.getDept().getId() != null) {
               p.setState("LV"); // Отправляется леч. врачу
@@ -471,6 +476,10 @@ public class CPatient {
     ResultSet rs = null;
     Long regTotal = 0L, vypTotal = 0L, curTotal = 0L;
     try {
+      // admitted today / discharged today / current, for all doctors in three grouped queries
+      java.util.Map<Integer, Long> regs = ckb.utils.Counts.group("Select lv_id, Count(*) From Patients Where state = 'LV' And Date_Begin >= CURRENT_DATE() And Date_Begin < CURRENT_DATE() + INTERVAL 1 DAY Group By lv_id");
+      java.util.Map<Integer, Long> vyps = ckb.utils.Counts.group("Select lv_id, Count(*) From Patients Where state = 'LV' And Date_End >= CURRENT_DATE() And Date_End < CURRENT_DATE() + INTERVAL 1 DAY Group By lv_id");
+      java.util.Map<Integer, Long> curs = ckb.utils.Counts.group("Select lv_id, Count(*) From Patients Where state = 'LV' Group By lv_id");
       conn = DB.getConnection();
       ps = conn.prepareStatement("SELECT t.id, t.fio FROM Users t WHERE t.lv = 1 AND t.active = 1 ORDER BY t.fio");
       ps.execute();
@@ -479,9 +488,9 @@ public class CPatient {
         ObjList obj = new ObjList();
         obj.setC1(rs.getString(1));
         obj.setC2(rs.getString(2));
-        Long reg = dPatient.getCount("From Patients Where state = 'LV' And date(dateBegin) = date(CURRENT_TIMESTAMP()) And lv_Id = " + obj.getC1());
-        Long vyp = dPatient.getCount("From Patients Where state = 'LV' And date(dateEnd) = date(CURRENT_TIMESTAMP()) And lv_Id = " + obj.getC1());
-        Long cur = dPatient.getCount("From Patients Where state = 'LV' And lv_Id = " + obj.getC1());
+        Long reg = ckb.utils.Counts.get(regs, rs.getInt(1));
+        Long vyp = ckb.utils.Counts.get(vyps, rs.getInt(1));
+        Long cur = ckb.utils.Counts.get(curs, rs.getInt(1));
         obj.setC3("" + reg);
         obj.setC4("" + vyp);
         obj.setC5("" + cur);

@@ -1,173 +1,165 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
+<%-- Питание → Справочники → Реестр блюд → карточка блюда: название, категория, нормы продуктов на порцию --%>
+<%@include file="/WEB-INF/pages/med/drugs/dicts/dict_kit.jsp"%>
 <style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
+  .ed-wrap { max-width:960px; margin:0 auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
+  .ed-card { background:#fff; border:1px solid #E6E8EC; border-radius:14px; }
+  .ed-h { display:flex; align-items:center; gap:8px; padding:11px 16px; border-bottom:1px solid #F0F1F4; font-weight:700; font-size:14px; }
+  .ed-h small { font-weight:500; color:#9AA1AC; font-size:12px; }
+  .ed-h .fm-spacer { flex:1; }
+  .ed-b { padding:14px 16px; }
+  .ed-main { display:grid; grid-template-columns:2fr 1fr auto; gap:12px; align-items:end; }
+  #edRows td { vertical-align:middle; }
+  #edRows .fm-in.num { text-align:right; }
+  #edRows .ro { background:#F5F6F8; }
 </style>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    Реквизиты блюды
-  </div>
-  <div class="panel-body">
-    <form id="addEditForm" name="addEditForm">
-      <input type="hidden" name="id" value="${eat.id}" />
-      <input type="hidden" name="code" value="eat" />
-      <table class="table table-bordered" style="margin:auto; width:500px">
-        <tr>
-          <td class="right bold">Наименование*:</td>
-          <td>
-            <input type="text" id="category-name" class="form-control" name="name" value="${eat.name}"/>
-          </td>
-        </tr>
-        <tr>
-          <td class="right bold">Категория*:</td>
-          <td>
-            <select class="form-control" name="type_id">
-              <c:forEach items="${types}" var="type">
-                <option <c:if test="${eat.type.id == type.id}">selected</c:if> value="${type.id}">${type.name}</option>
-              </c:forEach>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td class="right bold">Активный?:</td>
-          <td class="left">
-            <input type="checkbox" <c:if test="${eat.state == 'A' || eat.id == null}">checked</c:if> name="state" value="Y"/>
-          </td>
-        </tr>
-      </table>
-      <fieldset>
-        <legend>
-          Расходы
-          <button  class="btn btn-sm btn-success" type="button" onclick="newProductRow()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i></button>
-        </legend>
-        <table class="table table-bordered miniGrid" id="eat-products">
-          <thead>
+<div class="fm-page fm-admin">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-cutlery"></i></span>
+        <div>
+          <h2>${eat.id == null ? 'Новое блюдо' : fn:escapeXml(eat.name)}</h2>
+          <span class="fm-count">карточка блюда · продуктов <b id="edCnt">${fn:length(norms)}</b></span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <button type="button" class="fm-btn primary" id="edSaveBtn" onclick="saveEatForm()"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      <button type="button" class="fm-btn" onclick="$('#pager').load('/eats/dict/eats.s')"><i class="fa fa-arrow-left"></i>Назад</button>
+    </div>
+    <div class="fm-table-wrap" style="background:#F7F8FA">
+      <form id="addEditForm" class="ed-wrap" onsubmit="saveEatForm(); return false" autocomplete="off">
+        <input type="hidden" name="id" value="${eat.id}"/>
+        <input type="hidden" name="code" value="eat"/>
+        <div class="ed-card">
+          <div class="ed-h">Блюдо</div>
+          <div class="ed-b">
+            <div class="fm-err" id="edErr" style="margin-bottom:12px"></div>
+            <div class="ed-main">
+              <div><label class="fm-l">Наименование *</label><input type="text" id="category-name" class="fm-in" name="name" maxlength="255" value="${fn:escapeXml(eat.name)}"/></div>
+              <div>
+                <label class="fm-l">Категория *</label>
+                <select class="fm-in" name="type_id">
+                  <c:forEach items="${types}" var="type">
+                    <option <c:if test="${eat.type.id == type.id}">selected</c:if> value="${type.id}">${type.name}</option>
+                  </c:forEach>
+                </select>
+              </div>
+              <label class="fm-tgl"><input type="checkbox" name="state" value="Y" <c:if test="${eat.state == 'A' || eat.id == null}">checked</c:if>/><span>Активное</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="ed-card">
+          <div class="ed-h">Нормы продуктов <small>расход на одну порцию; блюдо без норм не попадает в меню</small><span class="fm-spacer"></span>
+            <button type="button" class="fm-btn" onclick="newProductRow()"><i class="fa fa-plus"></i>Продукт</button>
+          </div>
+          <table class="fm-grid">
+            <thead>
             <tr>
-              <th>Наименование продукта</th>
-              <th>Количество</th>
-              <th>Ед. изм.</th>
-              <th style="width: 60px">Удалить</th>
+              <th>Продукт</th>
+              <th class="r" style="width:140px">Количество</th>
+              <th style="width:180px">Ед. изм.</th>
+              <th style="width:50px"></th>
             </tr>
-          </thead>
-          <tbody>
-            <c:forEach items="${norms}" var="norm" varStatus="loop">
-              <tr id="rasxod-row-${loop.index}">
+            </thead>
+            <tbody id="edRows">
+            <c:forEach items="${norms}" var="norm">
+              <tr>
                 <td>
                   <input type="hidden" name="norm_id" value="${norm.id}">
-                  <input type="hidden" readonly name="product" value="${norm.product.id}">
-                  <input type="text" class="form-control" readonly value="${norm.product.name}">
+                  <input type="hidden" name="product" value="${norm.product.id}">
+                  <span class="nm">${norm.product.name}</span>
                 </td>
+                <td><input type="text" inputmode="decimal" class="fm-in num" name="rasxod" value="${norm.rasxod}"></td>
                 <td>
-                  <input type="text" class="form-control right" name="rasxod" value="${norm.rasxod}">
+                  <input type="hidden" name="measure" value="${norm.measure.id}">
+                  <span class="mut">${norm.measure.name}</span>
                 </td>
-                <td>
-                  <input type="hidden" readonly name="measure" value="${norm.measure.id}">
-                  <input type="text" class="form-control" readonly value="${norm.measure.name}">
-                </td>
-                <td class="center">
-                  <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" type="button" title="Удалить" onclick="delEatNormRow(${norm.id}, this)"><i class="fa fa-minus"></i></button>
-                </td>
+                <td class="r"><button type="button" class="fm-act danger" title="Удалить" onclick="delEatNormRow(${norm.id}, this)"><i class="fa fa-trash-o"></i></button></td>
               </tr>
             </c:forEach>
-          </tbody>
-        </table>
-      </fieldset>
-    </form>
-    <table id="rasxod-row" class="hidden">
-      <tr>
-        <td>
-          <input type="hidden" name="norm_id" value="0">
-          <select class="form-control" name="product" onchange="buildMeasureOptions(this)">
-            <option value=""></option>
-            <c:forEach items="${products}" var="product">
-              <option value="${product.id}" data-cat="${product.measureType.id}">${product.name}</option>
-            </c:forEach>
-          </select>
-        </td>
-        <td>
-          <input type="text" class="form-control right" name="rasxod" value="0">
-        </td>
-        <td>
-          <select class="form-control" name="measure"></select>
-        </td>
-        <td class="center">
-          <button class="btn btn-danger btn-sm" type="button" style="height:20px;padding:1px 10px" title="Удалить" onclick="delEatNormRow(0, this)"><i class="fa fa-minus"></i></button>
-        </td>
-      </tr>
-    </table>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-primary" onclick="saveEatForm()">Сохранить</button>
-      <button type="button" class="btn btn-default" onclick="$('#pager').load('/eats/dict/eats.s');">Назад</button>
+            </tbody>
+          </table>
+          <div class="fm-empty" id="edEmpty" style="display:${empty norms ? 'block' : 'none'}"><i class="fa fa-cubes"></i>Добавьте продукты блюда</div>
+        </div>
+      </form>
     </div>
   </div>
 </div>
+<%-- шаблон строки нового продукта (вне формы, в отправку не попадает) --%>
+<table style="display:none"><tbody id="edTpl">
+  <tr>
+    <td>
+      <input type="hidden" name="norm_id" value="0">
+      <select class="fm-in" name="product" onchange="buildMeasureOptions(this)">
+        <option value="">Выберите продукт</option>
+        <c:forEach items="${products}" var="product">
+          <option value="${product.id}" data-cat="${product.measureType.id}">${product.name}</option>
+        </c:forEach>
+      </select>
+    </td>
+    <td><input type="text" inputmode="decimal" class="fm-in num" name="rasxod" value=""></td>
+    <td><select class="fm-in" name="measure"></select></td>
+    <td class="r"><button type="button" class="fm-act danger" title="Убрать" onclick="delEatNormRow(0, this)"><i class="fa fa-times"></i></button></td>
+  </tr>
+</tbody></table>
 <script>
-  var rasxodRowCount = ${fn:length(norms)};
   var opts = [];
-  <c:forEach items="${measures}" var="measure">
-    opts.push({id:${measure.id}, name: '${measure.name}', type: '${measure.cat.id}'});
+  <c:forEach items="${measures}" var="measure">opts.push({id: ${measure.id}, name: '${fn:escapeXml(measure.name)}', type: '${measure.cat.id}'});
   </c:forEach>
+  function edCount() {
+    var n = $('#edRows tr').length;
+    $('#edCnt').text(n);
+    $('#edEmpty').toggle(n == 0);
+  }
   function saveEatForm() {
-    if($('#category-name').val() == '') {
-      alert('Наименование не может быть пустым');
-      return;
-    }
+    var f = $('#addEditForm'), err = '';
+    if (!$.trim($('#category-name').val())) err = 'Укажите наименование';
+    else if (!$('#edRows tr').length) err = 'Добавьте хотя бы один продукт';
+    $('#edRows tr').each(function () {
+      if (err) return;
+      var p = $(this).find('[name=product]').val(), m = $(this).find('[name=measure]').val(), r = String($(this).find('[name=rasxod]').val()).replace(',', '.');
+      if (!p) err = 'Выберите продукт в каждой строке';
+      else if (!m) err = 'Выберите единицу измерения';
+      else if (r === '' || isNaN(r) || Number(r) <= 0) err = 'Количество должно быть больше нуля';
+    });
+    if (err) { DK.err('ed', err); return; }
+    $('#edErr').hide();
+    $('#edSaveBtn').prop('disabled', true);
     $.ajax({
-      url: '/eats/dict/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
+      url: '/eats/dict/save.s', method: 'post', data: f.serialize(), dataType: 'json',
       success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          $('#pager').load('/eats/dict/eat/addEdit.s?id=' + res.id);
-        } else {
-          alert(res.msg);
-        }
-      }
+        if (res.success) { openMsg(res); $('#pager').load('/eats/dict/eat/addEdit.s?id=' + res.id); }
+        else DK.err('ed', res.msg);
+      },
+      complete: function () { $('#edSaveBtn').prop('disabled', false); }
     });
   }
-  function newProductRow(){
-    rasxodRowCount++;
-    var html = $('#rasxod-row').html();
-    $('#eat-products').append(html);
-    checkMeasures($(html));
+  function newProductRow() {
+    var tr = $($('#edTpl').html());
+    $('#edRows').append(tr);
+    edCount();
+    buildMeasureOptions(tr.find('select[name=product]')[0]);
   }
-  function checkMeasures(html) {
-    html.find('select[name=product]').each((idx, obj) => {
-      buildMeasureOptions(obj);
-    });
-  }
+  // единицы измерения по типу единиц продукта
   function buildMeasureOptions(dom) {
-    var ops = opts.filter(obj => obj.type === dom.options[dom.selectedIndex].getAttribute("data-cat"));
-    var measure = $(dom).parent().parent().find('select[name=measure]');
-    measure.html('');
-    ops.forEach(obj => {
-      measure.append($("<option value='" + obj.id + "' data-cat='" + obj.type + "'>" + obj.name + "</option>"));
-    });
+    var o = dom.options[dom.selectedIndex], cat = o ? o.getAttribute('data-cat') : null;
+    var measure = $(dom).closest('tr').find('select[name=measure]').html('');
+    for (var i = 0; i < opts.length; i++) if (cat && opts[i].type === cat) measure.append($('<option>').val(opts[i].id).text($('<div>').html(opts[i].name).text()));
+    measure.trigger('change');
   }
-  function delEatNormRow(id, btn){
-    if(id == 0) {
-      $(btn).parent().parent().remove();
-    } else {
+  function delEatNormRow(id, btn) {
+    if (id == 0) { $(btn).closest('tr').remove(); edCount(); return; }
+    FmsConfirm('Удалить продукт из норм блюда?', function () {
       $.ajax({
-        url: '/eats/dict/delete.s',
-        method: 'post',
-        data: 'code=eat-product&id=' + id,
-        dataType: 'json',
+        url: '/eats/dict/delete.s', method: 'post', data: 'code=eat-product&id=' + id, dataType: 'json',
         success: function (res) {
-          if (res.success) {
-            alert("<ui:message code="successSave"/>");
-            $(btn).parent().parent().remove();
-          } else {
-            alert(res.msg);
-          }
+          if (res.success) { FmsToast.show('Продукт удалён', 'ok'); $(btn).closest('tr').remove(); edCount(); }
+          else FmsToast.show(res.msg, 'err');
         }
       });
-    }
+    });
   }
 </script>

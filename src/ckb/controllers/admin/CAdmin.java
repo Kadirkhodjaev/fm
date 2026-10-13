@@ -17,6 +17,8 @@ import ckb.utils.BeanSession;
 import ckb.utils.BeanUsers;
 import ckb.utils.Req;
 import ckb.utils.Util;
+import ckb.utils.tg.Tg;
+import net.sf.ehcache.CacheManager;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +29,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin")
@@ -46,7 +50,40 @@ public class CAdmin {
   protected String changePass(HttpServletRequest request, Model model){
     Session session = SessionUtil.getUser(request);
     model.addAttribute("u", dUser.get(session.getUserId()));
+    model.addAttribute("tgEnabled", Tg.isEnabled());
+    String[] tg = Tg.status(session.getUserId());
+    model.addAttribute("tgLinked", "Y".equals(tg[0]));
+    model.addAttribute("tgPhone", tg[1]);
     return "/core/users/changePass";
+  }
+
+  // Telegram: one-time link to the staff bot (t.me/<bot>?start=<code>)
+  @RequestMapping(value = "/tgLink.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String tgLink(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      json.put("url", Tg.linkUrl(SessionUtil.getUser(req).getUserId()));
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  @RequestMapping(value = "/tgUnlink.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String tgUnlink(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Tg.unlink(SessionUtil.getUser(req).getUserId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
   }
 
   @RequestMapping(value = "/changePass.s", method = RequestMethod.POST)
@@ -57,6 +94,11 @@ public class CAdmin {
       Session session = SessionUtil.getUser(req);
       String password = Req.get(req, "newPass");
       Users u = dUser.get(session.getUserId());
+      if (u.getPassword() != null && !u.getPassword().equalsIgnoreCase(Util.md5(Req.get(req, "currPass")))) {
+        json.put("success", false);
+        json.put("msg", "WRONG_PASS");
+        return json.toString();
+      }
       u.setPassword(Util.md5(password));
       dUser.save(u);
       json.put("success", true);
@@ -77,6 +119,24 @@ public class CAdmin {
     return "/admin/prices";
   }
 
+  // Сброс кэшей: справочники Hibernate (@Cache, ehcache) и bSession / пользователи.
+  // Нужен после правок прямо в базе (роли, меню, справочники): иначе они видны только через 10 минут или после перезапуска.
+  @RequestMapping(value = "/reload.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String reload(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    Session session = SessionUtil.getUser(req);
+    if(session.getRoleId() != 1) return Util.err(json, "Доступно только администратору");
+    try {
+      CacheManager.getInstance().clearAll();
+      beanSession.initialize();
+      beanUser.initialize();
+      return Util.success(json);
+    } catch (Exception e) {
+      return Util.err(json, e.getMessage());
+    }
+  }
+
   @RequestMapping(value = "/price.s", method = RequestMethod.POST)
   @ResponseBody
   protected String savePrice(HttpServletRequest req) throws JSONException {
@@ -84,12 +144,32 @@ public class CAdmin {
     try {
       String[] codes = req.getParameterValues("code");
       String[] prices = req.getParameterValues("price");
-      for(int i=0;i<codes.length;i++) {
-        Params param = dParam.getObj("From Params Where code = '" + codes[i] + "'");
-        param.setVal(prices[i]);
-        dParam.save(param);
+      // меняются только параметры, которые показаны на странице; код из запроса в SQL не подставляется
+      HashMap<String, Params> shown = new HashMap<String, Params>();
+      for(Params pr: dParam.getList("From Params Where showFlag = 'Y'")) shown.put(pr.getCode(), pr);
+      List<Params> changed = new ArrayList<Params>();
+      for(int i = 0; codes != null && prices != null && i < codes.length && i < prices.length; i++) {
+        Params param = shown.get(codes[i]);
+        if(param == null) continue;
+        String val = prices[i] == null ? "" : prices[i].trim();
+        if("NUMBER".equals(param.getFieldType())) {
+          val = val.replaceAll("[\\s\u00A0]", "").replace(',', '.');
+          try {
+            if(Double.parseDouble(val) < 0) throw new NumberFormatException();
+          } catch (NumberFormatException e) {
+            json.put("success", false);
+            json.put("msg", "Неверное число: " + param.getName());
+            return json.toString();
+          }
+        }
+        if(val.equals(param.getVal())) continue;
+        param.setVal(val);
+        changed.add(param);
       }
+      for(Params param: changed) dParam.save(param);
+      if(!changed.isEmpty()) beanSession.initialize();
       json.put("success", true);
+      json.put("changed", changed.size());
     } catch (Exception e) {
       json.put("success", false);
       json.put("msg", e.getMessage());
@@ -101,8 +181,10 @@ public class CAdmin {
   protected String log(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
     session.setCurUrl("/admin/log.s");
-    String user = Util.get(req, "user", "0");
-    String ip = Util.get(req, "ip", "");
+    // подставляются в запрос: только цифры (пользователь) и цифры, точки, двоеточия (IP)
+    String user = Util.get(req, "user", "0").replaceAll("[^0-9]", "");
+    if(user.isEmpty()) user = "0";
+    String ip = Util.get(req, "ip", "").replaceAll("[^0-9.:]", "");
     //
     String db = session.getDateBegin().get("user_log");
     if(db == null) db = "01" + Util.getCurDate().substring(2);
@@ -119,7 +201,7 @@ public class CAdmin {
     dh.put("user_log", endDate);
     session.setDateEnd(dh);
     //
-    model.addAttribute("rows", dUserLog.getList("From UserLogs Where " + (ip.equals("") ? "" : " ip like '%" + ip + "%' And ") + (user.equals("") || user.equals("0") ? "" : " user.id = " + user + " And ") + " date(dateTime) Between '" + Util.dateDBBegin(startDate) + "' And '" + Util.dateDBBegin(endDate) + "' Order By id Desc"));
+    model.addAttribute("rows", dUserLog.getList("From UserLogs Where " + (ip.equals("") ? "" : " ip like '%" + ip + "%' And ") + (user.equals("") || user.equals("0") ? "" : " user.id = " + user + " And ") + " dateTime >= '" + Util.dateDB(startDate) + "' And dateTime < '" + logDayAfter(endDate) + "' Order By id Desc"));
     model.addAttribute("users", dUser.getAll());
     model.addAttribute("period_start", startDate);
     model.addAttribute("period_end", endDate);
@@ -127,6 +209,14 @@ public class CAdmin {
     model.addAttribute("filterWord", ip);
     //
     return "/admin/log";
+  }
+
+  /** Следующий день после даты dd.MM.yyyy (yyyy-MM-dd): условие по диапазону вместо date(поле), чтобы работал индекс */
+  private static String logDayAfter(String date) {
+    java.util.Calendar c = java.util.Calendar.getInstance();
+    c.setTime(Util.stringToDate(date));
+    c.add(java.util.Calendar.DATE, 1);
+    return new java.text.SimpleDateFormat("yyyy-MM-dd").format(c.getTime());
   }
 
   @RequestMapping("/depts.s")

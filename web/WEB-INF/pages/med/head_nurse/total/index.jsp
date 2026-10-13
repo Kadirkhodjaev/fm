@@ -1,86 +1,73 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    <table style="margin:0;width:100%">
-      <tr>
-        <td style="width:70px; font-weight:bold; vertical-align: middle">Пациенты</td>
-        <td style="width:140px;padding:5px">
-          <input name="period_start" id="period_start" type="text" class="form-control datepicker" value="${period_start}"/>
-        </td>
-        <td style="width:10px;vertical-align: middle">
-          -
-        </td>
-        <td style="width:140px;padding:5px">
-          <input name="period_end" id="period_end" type="text" class="form-control datepicker" value="${period_end}"/>
-        </td>
-        <td style="vertical-align: middle">
-          <button onclick="setCashStat()" class="btn btn-success btn-sm">Поиск</button>
-        </td>
-        <td style="width:200px">
-          <input style="height:30px; margin-top:-5px" class="form-control" type="text" id="filter_word" placeholder="Поиск..." value="${filter_word}" onkeydown="setPatientFilter()">
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div class="panel-body">
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<%-- Склады → Пациенты: пациенты отделений склада и итог по препаратам --%>
+<%@include file="/WEB-INF/pages/med/head_nurse/hn_style.jsp"%>
+<c:set var="cntDone" value="0"/>
+<c:forEach items="${rows}" var="o"><c:if test="${o.fizio}"><c:set var="cntDone" value="${cntDone + 1}"/></c:if></c:forEach>
+
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-user"></i></span>
+        <div>
+          <h2>Пациенты</h2>
+          <span class="fm-count"><b id="ptShown">${fn:length(rows)}</b> из <b>${fn:length(rows)}</b> пациентов</span>
+        </div>
+      </div>
+      <div class="hn-flt">
+        <input id="period_start" type="text" class="fm-in datepicker" value="${period_start}" title="Поступили с" autocomplete="off"/>
+        <span class="dash">—</span>
+        <input id="period_end" type="text" class="fm-in datepicker" value="${period_end}" title="по" autocomplete="off"/>
+        <button type="button" class="fm-btn" onclick="ptLoad()"><i class="fa fa-search"></i>Показать</button>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg" id="ptSeg">
+        <button type="button" data-f="" class="on" onclick="hnSeg('pt', this)">Все</button>
+        <button type="button" data-f="Y" onclick="hnSeg('pt', this)">С итогом · ${cntDone}</button>
+        <button type="button" data-f="N" onclick="hnSeg('pt', this)">Без итога · ${fn:length(rows) - cntDone}</button>
+      </div>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="ptSearch" placeholder="ФИО или № ИБ" value="${fn:escapeXml(filter_word)}" oninput="hnFilter('pt')" autocomplete="off"/>
+      </div>
+    </div>
+
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>#</th>
+          <th style="width:110px">Итог</th>
           <th>ФИО</th>
-          <th>ИБ №</th>
-          <th>Дата поступления</th>
-          <th>Дата выписки</th>
-          <th>Год рождения</th>
+          <th style="width:100px">№ ИБ</th>
+          <th style="width:120px" class="nw">Поступил</th>
+          <th style="width:120px" class="nw">Выписан</th>
+          <th style="width:110px" class="c">Год рождения</th>
         </tr>
         </thead>
-        <tbody>
-        <c:forEach items="${rows}" var="obj" varStatus="loop">
-          <tr ondblclick="setPage('/head_nurse/total/patients/info.s?id=${obj.id}')">
-            <td align="center">
-              <c:if test="${!obj.fizio}">
-                <img src="/res/imgs/red.gif">
-              </c:if>
-              <c:if test="${obj.fizio}">
-                <img src="/res/imgs/green.gif">
-              </c:if>
-            </td>
-            <td>${obj.surname} ${obj.name} ${obj.middlename}</td>
-            <td align="center">${obj.yearNum}</td>
-            <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateBegin}" /></td>
-            <td align="center"><fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateEnd}" /></td>
-            <td align="center">${obj.birthyear}</td>
+        <tbody id="ptRows">
+        <c:forEach items="${rows}" var="obj">
+          <tr class="go" data-f="${obj.fizio ? 'Y' : 'N'}" data-s="${fn:escapeXml(obj.surname)} ${fn:escapeXml(obj.name)} ${fn:escapeXml(obj.middlename)} ${obj.yearNum}"
+              onclick="setPage('/head_nurse/total/patients/info.s?id=${obj.id}')">
+            <td><span class="hn-st ${obj.fizio ? 'con' : 'off'}">${obj.fizio ? 'Есть' : 'Нет'}</span></td>
+            <td><span class="nm">${obj.surname} ${obj.name} ${obj.middlename}</span></td>
+            <td class="mut">${obj.yearNum}</td>
+            <td class="nw"><fmt:formatDate pattern="dd.MM.yyyy" value="${obj.dateBegin}"/></td>
+            <td class="nw mut"><fmt:formatDate pattern="dd.MM.yyyy" value="${obj.dateEnd}"/></td>
+            <td class="c mut">${obj.birthyear}</td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="ptEmpty" style="display:none"><i class="fa fa-user"></i>Пациенты не найдены</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
 </div>
 <script>
-  function setCashStat(){
-    var start = document.getElementById("period_start");
-    var end = document.getElementById("period_end");
-    setPage('/head_nurse/total/patients.s?period_start=' + start.value + '&period_end=' + end.value);
-  }
-  function setPatientFilter() {
-    if(event.keyCode === 13) {
-      let start = document.getElementById("period_start");
-      let end = document.getElementById("period_end");
-      let filter = document.getElementById("filter_word");
-      setPage('/head_nurse/total/patients.s?period_start=' + start.value + '&period_end=' + end.value + "&set=1&filter=" + filter.value);
-    }
+  hnFilter('pt');
+  function ptLoad() {
+    setPage('/head_nurse/total/patients.s?period_start=' + encodeURIComponent($('#period_start').val()) + '&period_end=' + encodeURIComponent($('#period_end').val()) + '&set=1&filter=');
   }
 </script>

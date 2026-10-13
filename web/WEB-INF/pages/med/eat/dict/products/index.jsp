@@ -1,173 +1,129 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script>
-</script>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    Реестр продуктов
-    <button  class="btn btn-sm btn-success" onclick="addEatDict()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
-  </div>
-  <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%-- Питание → Справочники → Продукты --%>
+<%@include file="/WEB-INF/pages/med/drugs/dicts/dict_kit.jsp"%>
+<style>.pr-cat { display:inline-block; padding:0 7px; border-radius:6px; background:#EEF1F6; color:#3C4A63; font-size:11.5px; font-weight:600; line-height:18px; }</style>
+<c:set var="cntA" value="0"/>
+<c:forEach items="${list}" var="o"><c:if test="${o.state == 'A'}"><c:set var="cntA" value="${cntA + 1}"/></c:if></c:forEach>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-shopping-cart"></i></span>
+        <div>
+          <h2>Продукты</h2>
+          <span class="fm-count"><b id="prShown">${fn:length(list)}</b> из <b>${fn:length(list)}</b> · активных <b>${cntA}</b></span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg" id="prSeg">
+        <button type="button" data-f="" class="on" onclick="DK.seg('pr', this)">Все</button>
+        <button type="button" data-f="A" onclick="DK.seg('pr', this)">Активные</button>
+        <button type="button" data-f="P" onclick="DK.seg('pr', this)">Пассивные</button>
+      </div>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="prSearch" placeholder="Продукт или категория" oninput="DK.filter('pr')" autocomplete="off"/>
+      </div>
+      <button type="button" class="fm-btn primary" onclick="prEdit(0)"><i class="fa fa-plus"></i>Добавить</button>
+    </div>
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>#</th>
-          <th>Категория</th>
+          <th style="width:70px">ID</th>
+          <th style="width:220px">Категория</th>
           <th>Наименование</th>
-          <th>Состояние</th>
-          <th style="width:40px">Удалить</th>
+          <th style="width:130px">Состояние</th>
+          <th style="width:50px"></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="prRows">
         <c:forEach items="${list}" var="obj">
-          <tr>
-            <td align="center">${obj.id}</td>
-            <td align="center">${obj.category.name}</td>
-            <td>
-              <a href="#" onclick="editEatDict(${obj.id});return false">${obj.name}</a>
-            </td>
-            <td align="center">
-              <c:if test="${obj.state == 'A'}">Активный</c:if>
-              <c:if test="${obj.state != 'A'}">Пассивный</c:if>
-            </td>
-            <td class="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delEatRow(${obj.id})"><i class="fa fa-minus"></i></button>
+          <tr data-f="${obj.state == 'A' ? 'A' : 'P'}" data-s="${obj.id} ${fn:escapeXml(obj.name)} ${fn:escapeXml(obj.category.name)}" data-name="${fn:escapeXml(obj.name)}" onclick="prEdit(${obj.id})" title="Изменить">
+            <td class="mut"><b>${obj.id}</b></td>
+            <td><span class="pr-cat">${obj.category.name}</span></td>
+            <td><span class="nm">${obj.name}</span></td>
+            <td><span class="dk-st ${obj.state == 'A' ? 'A' : 'P'}">${obj.state == 'A' ? 'Активный' : 'Пассивный'}</span></td>
+            <td class="r" onclick="event.stopPropagation()">
+              <button type="button" class="fm-act danger" title="Удалить" onclick="DK.del('product', ${obj.id}, $(this).closest('tr').attr('data-name'), 'products')"><i class="fa fa-trash-o"></i></button>
             </td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="prEmpty" style="display:none"><i class="fa fa-shopping-cart"></i>Ничего не найдено</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
 </div>
-<a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты кетогорий</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value="" />
-          <input type="hidden" name="code" value="product" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Категория *:</td>
-              <td>
-                <select class="form-control" name="category">
-                  <c:forEach items="${categories}" var="category">
-                    <option value="${category.id}">${category.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Наименование*:</td>
-              <td>
-                <input type="text" id="product-name" class="form-control" name="name" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Тип ед. изм. *:</td>
-              <td>
-                <select class="form-control" name="measureType">
-                  <c:forEach items="${measureTypes}" var="measureType">
-                    <option value="${measureType.id}">${measureType.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Активный?:</td>
-              <td class="left">
-                <input type="checkbox" checked name="state" value="Y"/>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveEatForm()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
+
+<div class="fm-overlay" id="prModal" onclick="if (event.target === this) DK.close('pr')">
+  <div class="fm-modal" style="width:520px">
+    <div class="fm-modal-head">
+      <h3 id="prTitle"></h3>
+      <button type="button" class="fm-x" onclick="DK.close('pr')"><i class="fa fa-times"></i></button>
     </div>
-    <!-- /.modal-content -->
+    <form id="prForm" onsubmit="prSave(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="id"/>
+        <input type="hidden" name="code" value="product"/>
+        <div class="fm-err" id="prErr"></div>
+        <div>
+          <label class="fm-l">Наименование *</label>
+          <input type="text" class="fm-in" name="name" autocomplete="off"/>
+        </div>
+        <div class="fm-row" style="grid-template-columns:1fr 1fr">
+          <div>
+            <label class="fm-l">Категория *</label>
+            <select class="fm-in fms-select" name="category">
+              <c:forEach items="${categories}" var="category">
+                <option value="${category.id}">${category.name}</option>
+              </c:forEach>
+            </select>
+          </div>
+          <div>
+            <label class="fm-l">Тип ед. изм. *</label>
+            <select class="fm-in fms-select" name="measureType">
+              <c:forEach items="${measureTypes}" var="measureType">
+                <option value="${measureType.id}">${measureType.name}</option>
+              </c:forEach>
+            </select>
+          </div>
+        </div>
+        <div class="fm-state" style="align-self:flex-start">
+          <label><input type="radio" class="a" name="state" value="Y" checked/><span>Активный</span></label>
+          <label><input type="radio" class="p" name="state" value=""/><span>Пассивный</span></label>
+        </div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="DK.close('pr')">Отмена</button>
+        <button type="submit" class="fm-btn primary"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      </div>
+    </form>
   </div>
-  <!-- /.modal-dialog -->
 </div>
 <script>
-  function addEatDict(){
-    addEditForm.reset();
-    document.getElementById("modal_window").click();
-  }
-  function editEatDict(id) {
-    document.getElementById("modal_window").click();
-    $.ajax({
-      url: '/eats/dict/get.s',
-      method: 'post',
-      data: 'code=product&id=' + id,
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('*[name=id]').val(res.id);
-          $('*[name=category]').val(res.category);
-          $('*[name=name]').val(res.name);
-          $('*[name=state]').prop('checked', res.state == 'A');
-          $('*[name=measureType]').val(res.measureType);
-        } else {
-          alert(res.msg);
-        }
-      }
+  DK.base = '/eats/dict';
+  DK.filter('pr');
+  function prEdit(id) {
+    var f = document.getElementById('prForm');
+    f.reset();
+    f.elements['id'].value = '';
+    DK.open('pr', id ? 'Изменить продукт' : 'Новый продукт');
+    if (!id) { f.elements['name'].focus(); return; }
+    DK.get('pr', 'product', id, function (res) {
+      f.elements['id'].value = res.id;
+      f.elements['name'].value = res.name || '';
+      $(f.elements['category']).val(res.category).trigger('change');
+      if (res.measureType) $(f.elements['measureType']).val(res.measureType).trigger('change');
+      DK.setState(f, res.state == 'A');
     });
   }
-  function saveEatForm() {
-    if($('#product-name').val() == '') {
-      alert('Наименование не может быть пустым');
-      return;
-    }
-    $.ajax({
-      url: '/eats/dict/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          $('#close-modal').click();
-          setPage('/eats/dicts.s');
-        } else {
-          alert(res.msg);
-        }
-      }
-    });
-  }
-  function delEatRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
-      $.ajax({
-        url: '/eats/dict/delete.s',
-        method: 'post',
-        data: 'code=product&id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            setPage('/eats/dicts.s');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
+  function prSave() {
+    var f = document.getElementById('prForm');
+    if (!$.trim(f.elements['name'].value)) { DK.err('pr', 'Укажите наименование'); return; }
+    DK.save('pr', f, 'products');
   }
 </script>

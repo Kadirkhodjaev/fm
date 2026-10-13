@@ -129,6 +129,7 @@
         </div>
       </div>
 
+      <div id="idleNote" style="display:none; margin:0 0 12px; padding:10px 12px; border-radius:10px; background:#FFF4D6; color:#8A5A00; font-size:13px; line-height:1.4">Сеанс завершён: 15 минут без действий. Войдите снова.</div>
       <button type="submit" class="btn-main" id="submitBtn"><ui:message code="enter"/></button>
     </f:form>
   </div>
@@ -138,6 +139,13 @@
 <script>
   (function () {
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // после автовыхода по бездействию (common.js FmsIdle) показываем причину
+    try {
+      var idleOut = parseInt(localStorage.getItem('fmsIdleOut'), 10) || 0;
+      if (idleOut && Date.now() - idleOut < 10 * 60 * 1000) document.getElementById('idleNote').style.display = 'block';
+      localStorage.removeItem('fmsIdleOut');
+    } catch (e) {}
 
     var pass = document.getElementById('password');
     document.getElementById('togglePass').addEventListener('click', function () {

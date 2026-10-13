@@ -1,189 +1,129 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
-<style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<script>
-</script>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    Реестр договоров
-    <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-    <button  class="btn btn-sm btn-success" onclick="addDrugDict()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
-  </div>
-  <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%-- Аптека → Справочники → Договоры с поставщиками --%>
+<%@include file="/WEB-INF/pages/med/drugs/dicts/dict_kit.jsp"%>
+<script src="/res/js/fms-calendar.js" type="text/javascript"></script>
+<jsp:useBean id="now" class="java.util.Date"/>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-file-text-o"></i></span>
+        <div>
+          <h2>Договоры</h2>
+          <span class="fm-count"><b id="ctShown">${fn:length(list)}</b> из <b>${fn:length(list)}</b></span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-seg" id="ctSeg">
+        <button type="button" data-f="" class="on" onclick="DK.seg('ct', this)">Все</button>
+        <button type="button" data-f="A" onclick="DK.seg('ct', this)">Действующие</button>
+        <button type="button" data-f="P" onclick="DK.seg('ct', this)">Истёкшие</button>
+      </div>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="ctSearch" placeholder="Поставщик или номер" oninput="DK.filter('ct')" autocomplete="off"/>
+      </div>
+      <button type="button" class="fm-btn primary" onclick="ctEdit(0)"><i class="fa fa-plus"></i>Добавить</button>
+    </div>
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>#</th>
-          <th>Партнер</th>
-          <th>Договор</th>
-          <th>Дата начала</th>
-          <th>Дата окончания</th>
-          <th style="width:40px">Удалить</th>
+          <th style="width:70px">ID</th>
+          <th>Поставщик</th>
+          <th style="width:220px">Договор</th>
+          <th style="width:120px" class="nw">Начало</th>
+          <th style="width:120px" class="nw">Окончание</th>
+          <th style="width:50px"></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="ctRows">
         <c:forEach items="${list}" var="obj">
-          <tr>
-            <td align="center">${obj.id}</td>
-            <td align="center">${obj.partner.name}</td>
-            <td align="center">
-              <a href="#" onclick="editDrugDict(${obj.id}); return false">№${obj.regNum} от <fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.regDate}" /></a>
-            </td>
-            <td align="center">
-              <fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.startDate}" />
-            </td>
-            <td align="center">
-              <fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.endDate}" />
-            </td>
-            <td class="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.id})"><i class="fa fa-minus"></i></button>
+          <c:set var="expired" value="${obj.endDate != null && obj.endDate < now}"/>
+          <tr data-f="${expired ? 'P' : 'A'}" data-s="${obj.id} ${fn:escapeXml(obj.partner.name)} ${fn:escapeXml(obj.regNum)}" data-name="${fn:escapeXml(obj.regNum)}" onclick="ctEdit(${obj.id})" title="Изменить">
+            <td class="mut"><b>${obj.id}</b></td>
+            <td><span class="nm">${obj.partner.name}</span></td>
+            <td>№${obj.regNum} <span class="mut" style="color:#6B7280">от <fmt:formatDate pattern="dd.MM.yyyy" value="${obj.regDate}"/></span></td>
+            <td class="nw"><fmt:formatDate pattern="dd.MM.yyyy" value="${obj.startDate}"/></td>
+            <td class="nw"><c:choose><c:when test="${expired}"><span class="dk-st P"><fmt:formatDate pattern="dd.MM.yyyy" value="${obj.endDate}"/></span></c:when><c:otherwise><fmt:formatDate pattern="dd.MM.yyyy" value="${obj.endDate}"/></c:otherwise></c:choose></td>
+            <td class="r" onclick="event.stopPropagation()">
+              <button type="button" class="fm-act danger" title="Удалить" onclick="DK.del('contract', ${obj.id}, 'договор №' + $(this).closest('tr').attr('data-name'), 'contracts')"><i class="fa fa-trash-o"></i></button>
             </td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="ctEmpty" style="display:none"><i class="fa fa-file-text-o"></i>Ничего не найдено</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
-</div>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты препарата</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value=""/>
-          <input type="hidden" name="code" value="contract"/>
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Партнер*:</td>
-              <td>
-                <select class="form-control" name="partner">
-                  <c:forEach items="${partners}" var="partner">
-                    <option value="${partner.id}">${partner.name}</option>
-                  </c:forEach>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Рег №*:</td>
-              <td>
-                <input type="text" id="reg-num" class="form-control" name="reg_num" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Рег дата*:</td>
-              <td>
-                <input name="reg_date" id="reg-date" type="text" class="form-control datepicker" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Дата начала:</td>
-              <td>
-                <input name="start_date" id="start-date" type="text" class="form-control datepicker" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Дата окончания:</td>
-              <td>
-                <input name="end_date" id="end-date" type="text" class="form-control datepicker" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Описание:</td>
-              <td>
-                <input type="text" class="form-control" name="extra_info" value=""/>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveDrugForm()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
-    </div>
-    <!-- /.modal-content -->
-  </div>
-  <!-- /.modal-dialog -->
 </div>
 
+<div class="fm-overlay" id="ctModal" onclick="if (event.target === this) DK.close('ct')">
+  <div class="fm-modal" style="width:560px">
+    <div class="fm-modal-head">
+      <h3 id="ctTitle"></h3>
+      <button type="button" class="fm-x" onclick="DK.close('ct')"><i class="fa fa-times"></i></button>
+    </div>
+    <form id="ctForm" onsubmit="ctSave(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="id"/>
+        <input type="hidden" name="code" value="contract"/>
+        <div class="fm-err" id="ctErr"></div>
+        <div>
+          <label class="fm-l">Поставщик *</label>
+          <select class="fm-in fms-select" name="partner">
+            <option value="">Выберите поставщика</option>
+            <c:forEach items="${partners}" var="p">
+              <option value="${p.id}">${p.name}</option>
+            </c:forEach>
+          </select>
+        </div>
+        <div class="fm-row" style="grid-template-columns:1fr 1fr">
+          <div><label class="fm-l">Рег. № *</label><input type="text" class="fm-in" name="reg_num" autocomplete="off"/></div>
+          <div><label class="fm-l">Рег. дата *</label><input type="text" class="fm-in datepicker" name="reg_date" autocomplete="off"/></div>
+          <div><label class="fm-l">Начало</label><input type="text" class="fm-in datepicker" name="start_date" autocomplete="off"/></div>
+          <div><label class="fm-l">Окончание</label><input type="text" class="fm-in datepicker" name="end_date" autocomplete="off"/></div>
+        </div>
+        <div>
+          <label class="fm-l">Описание</label>
+          <textarea class="fm-in" name="extra_info" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="DK.close('ct')">Отмена</button>
+        <button type="submit" class="fm-btn primary"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
 <script>
-  function addDrugDict(){
-    addEditForm.reset();
-    document.getElementById("modal_window").click();
-  }
-  function editDrugDict(id) {
-    document.getElementById("modal_window").click();
-    $.ajax({
-      url: '/drugs/dict/get.s',
-      method: 'post',
-      data: 'code=contract&id=' + id,
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('*[name=id]').val(res.id);
-          $('*[name=partner]').val(res.partner);
-          $('*[name=reg_num]').val(res.reg_num);
-          $('*[name=reg_date]').val(res.reg_date);
-          $('*[name=start_date]').val(res.start_date);
-          $('*[name=end_date]').val(res.end_date);
-          $('*[name=extra_info]').val(res.extra_info);
-        } else {
-          alert(res.msg);
-        }
-      }
+  DK.filter('ct');
+  function ctEdit(id) {
+    var f = document.getElementById('ctForm');
+    f.reset();
+    f.elements['id'].value = '';
+    DK.open('ct', id ? 'Изменить договор' : 'Новый договор');
+    if (!id) return;
+    DK.get('ct', 'contract', id, function (res) {
+      f.elements['id'].value = res.id;
+      $(f.elements['partner']).val(res.partner).trigger('change');
+      f.elements['reg_num'].value = res.reg_num || '';
+      f.elements['reg_date'].value = res.reg_date || '';
+      f.elements['start_date'].value = res.start_date || '';
+      f.elements['end_date'].value = res.end_date || '';
+      f.elements['extra_info'].value = res.extra_info || '';
     });
   }
-  function saveDrugForm() {
-    if($('#reg-num').val() == '' || $('#reg-date').val() == '') {
-      alert('Наименование не может быть пустым');
+  function ctSave() {
+    var f = document.getElementById('ctForm');
+    if (!f.elements['partner'].value || !$.trim(f.elements['reg_num'].value) || !$.trim(f.elements['reg_date'].value)) {
+      DK.err('ct', 'Заполните поставщика, рег. № и рег. дату');
       return;
     }
-    $.ajax({
-      url: '/drugs/dict/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          $('#close-modal').click();
-          setPage('/drugs/dicts.s');
-        } else {
-          alert(res.msg);
-        }
-      }
-    });
-  }
-  function delDrugRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
-      $.ajax({
-        url: '/drugs/dict/delete.s',
-        method: 'post',
-        data: 'code=contract&id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            setPage('/drugs/dicts.s');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
+    DK.save('ct', f, 'contracts');
   }
 </script>

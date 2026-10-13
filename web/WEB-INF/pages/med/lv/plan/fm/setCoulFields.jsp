@@ -2,7 +2,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <script>
   function doSave(){
-    var vals = document.getElementsByTagName("input"), req = '';
+    var vals = document.querySelectorAll("#pmGrid input"), req = '';
     for(var i=0;i<vals.length;i++)
       if(vals[i].checked)
         req += '&' + vals[i].name + '=' + vals[i].value;
@@ -13,27 +13,25 @@
     d.checked = !d.checked;
   }
 </script>
-<div class="modal-dialog" style="width: 800px">
+<%@include file="/WEB-INF/pages/med/lv/plan/pm_style.jsp"%>
+<div class="modal-dialog pm" style="width: 760px">
   <div class="modal-content">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
       <h4 class="modal-title" id="myModalLabel">Гармон</h4>
     </div>
     <div class="modal-body">
-      <div class="table-responsive">
-        <table class="miniGrid table table-striped table-bordered">
-          <tbody>
-            <tr><td align="center" width="30"><input type="checkbox" <c:if test="${bio.c4}">checked</c:if> id="c4" name="c4" value="1"/></td><td class="hand" onclick="setCheck(4)">ПТИ</td>
-            <tr><td align="center" width="30"><input type="checkbox" <c:if test="${bio.c1}">checked</c:if> id="c1" name="c1" value="1"/></td><td class="hand" onclick="setCheck(1)">Фибриноген</td>
-            <tr><td align="center" width="30"><input type="checkbox" <c:if test="${bio.c2}">checked</c:if> id="c2" name="c2" value="1"/></td><td class="hand" onclick="setCheck(2)">Тромбин вакти</td>
-            <tr><td align="center" width="30"><input type="checkbox" <c:if test="${bio.c3}">checked</c:if> id="c3" name="c3" value="1"/></td><td class="hand" onclick="setCheck(3)">А.Ч.Т.В. (сек)</td>
-          </tbody>
-        </table>
+      <div class="pm-tools"><a href="#" onclick="pmAll(true); return false">Отметить все</a><a href="#" onclick="pmAll(false); return false">Снять все</a><span class="pm-cnt" id="pmCnt"></span></div>
+      <div class="pm-grid" id="pmGrid">
+          <label class="pm-it"><input type="checkbox" <c:if test="${bio.c4}">checked</c:if> id="c4" name="c4" value="1"/><span>ПТИ</span></label>
+          <label class="pm-it"><input type="checkbox" <c:if test="${bio.c1}">checked</c:if> id="c1" name="c1" value="1"/><span>Фибриноген</span></label>
+          <label class="pm-it"><input type="checkbox" <c:if test="${bio.c2}">checked</c:if> id="c2" name="c2" value="1"/><span>Тромбин вакти</span></label>
+          <label class="pm-it"><input type="checkbox" <c:if test="${bio.c3}">checked</c:if> id="c3" name="c3" value="1"/><span>А.Ч.Т.В. (сек)</span></label>
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-default" id="closeBtn" data-dismiss="modal">Закрыть</button>
-      <button type="button" onclick="doSave()" class="btn btn-primary">Сохранить</button>
+      <button type="button" class="pm-btn" id="closeBtn" data-dismiss="modal">Закрыть</button>
+      <button type="button" onclick="doSave()" class="pm-btn primary"><i class="fa fa-check"></i> Сохранить</button>
     </div>
   </div>
 </div>

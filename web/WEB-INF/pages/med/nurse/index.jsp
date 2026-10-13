@@ -1,90 +1,94 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<script src="/res/datepicker/datetimepicker_css.js"></script>
-<div>
-  <div class="row" style="margin:20px 0 0 0;">
-    <div class="col-md-12">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <div class="row">
-            <div class="col-md-6">
-              <i class="fa fa-twitter fa-fw"></i>
-              Работа
-            </div>
-            <div class="col-md-6">
-              <table style="float: right">
-                <tr>
-                  <td style="padding:0 10px">
-                    <select id="dep_id" class="form-control" onchange="setPostFilter()" style="width:250px">
-                      <c:forEach items="${depts}" var="dp">
-                        <option <c:if test="${dp.id == dep}">selected</c:if> value="${dp.id}">${dp.name}</option>
-                      </c:forEach>
-                    </select>
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div class="panel-body" id="panel_body" style="position:relative; overflow: auto; height:400px">
-          <div class="list-group">
-            <table class="table table-bordered">
-              <tr>
-                <td class="center bold">№</td>
-                <td class="center bold">Пациент</td>
-                <c:forEach items="${types}" var="key">
-                  <c:if test="${is1 && key.id == 1}"><td class="center bold" nowrap>Лаборатория</td></c:if>
-                  <c:if test="${is3 && key.id == 3}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is4 && key.id == 4}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is6 && key.id == 6}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is10 && key.id == 10}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is11 && key.id == 11}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is12 && key.id == 12}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is13 && key.id == 13}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is14 && key.id == 14}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is17 && key.id == 17}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                  <c:if test="${is22 && key.id == 22}"><td class="center bold" nowrap>${key.name}</td></c:if>
-                </c:forEach>
-                <c:if test="${is15}">
-                  <td class="center bold" nowrap>Консультация</td>
-                </c:if>
-                <c:if test="${is16}">
-                  <td class="center bold" nowrap>Физиотерапия</td>
-                </c:if>
-              </tr>
-              <c:forEach items="${rows}" var="rw" varStatus="loop">
-                <tr title="${rw.c1} Год рож.: ${rw.c2} ИБ №: ${rw.c4} Дата рег.: ${rw.c3} Палата: ${rw.c30}" class="hover">
-                  <td class="center" style="vertical-align: middle">${loop.index + 1}</td>
-                  <td nowrap style="vertical-align: middle">
-                    ${rw.c1}<br/>
-                    <b>Год рож.:</b>${rw.c2} <b>ИБ №:</b>${rw.c4} <b>Дата рег.:</b>${rw.c3} <b>Палата:</b>${rw.c30}
-                  </td>
-                  <c:if test="${is1}"><td nowrap>${rw.c11}</td></c:if>
-                  <c:if test="${is3}"><td nowrap>${rw.c13}</td></c:if>
-                  <c:if test="${is4}"><td nowrap>${rw.c14}</td></c:if>
-                  <c:if test="${is6}"><td nowrap>${rw.c16}</td></c:if>
-                  <c:if test="${is10}"><td nowrap>${rw.c20}</td></c:if>
-                  <c:if test="${is11}"><td nowrap>${rw.c21}</td></c:if>
-                  <c:if test="${is12}"><td nowrap>${rw.c22}</td></c:if>
-                  <c:if test="${is13}"><td nowrap>${rw.c23}</td></c:if>
-                  <c:if test="${is14}"><td nowrap>${rw.c24}</td></c:if>
-                  <c:if test="${is17}"><td nowrap>${rw.c27}</td></c:if>
-                  <c:if test="${is22}"><td nowrap>${rw.c25}</td></c:if>
-                  <c:if test="${is15}"><td nowrap>${rw.c18}</td></c:if>
-                  <c:if test="${is16}"><td nowrap>${rw.c26}</td></c:if>
-                </tr>
-              </c:forEach>
-            </table>
-          </div>
-        </div>
+<%@include file="../../proc/nurse_style.jsp"%>
+<style>
+  .nw-wrap { overflow:auto; max-height:calc(100vh - 170px); border-top:1px solid var(--border); border-radius:0 0 16px 16px; }
+  table.nw { width:100%; border-collapse:separate; border-spacing:0; font-size:14.5px; }
+  table.nw th { position:sticky; top:0; z-index:2; height:40px; padding:0 10px; background:#F8F9FA; border-bottom:1px solid var(--border);
+    color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; text-align:left; white-space:nowrap; }
+  table.nw td { padding:10px; border-bottom:1px solid #F0F1F4; vertical-align:top; }
+  table.nw tr:hover td { background:#F8F9FB; }
+  table.nw td.num { color:#B0B5BD; text-align:center; width:44px; vertical-align:middle; }
+  table.nw .fio { font-weight:700; font-size:15px; }
+  table.nw .meta { display:block; margin-top:3px; font-size:12.5px; color:var(--muted); }
+  table.nw .meta b { color:var(--text); font-weight:600; }
+  table.nw .svc { white-space:nowrap; line-height:1.6; }
+  .np-sel { height:44px; padding:0 12px; border:1px solid var(--border); border-radius:12px; background:#fff; font-size:15px; font-family:inherit; color:var(--text); min-width:220px; }
+</style>
+<div class="np">
+  <div class="np-head">
+    <div class="np-title">
+      <span class="ic"><i class="fa fa-medkit"></i></span>
+      <div>
+        <h2>Услуги пациентов</h2>
+        <span class="sub"><b>${fn:length(rows)}</b> пациентов на лечении</span>
       </div>
+    </div>
+    <span class="np-spacer"></span>
+    <select id="dep_id" class="np-sel" onchange="setPostFilter()">
+      <c:forEach items="${depts}" var="dp">
+        <option <c:if test="${dp.id == dep}">selected</c:if> value="${dp.id}">${dp.name}</option>
+      </c:forEach>
+    </select>
+  </div>
+
+  <div class="np-card">
+    <div class="nw-wrap">
+      <table class="nw">
+        <thead>
+        <tr>
+          <th style="text-align:center">№</th>
+          <th>Пациент</th>
+          <c:forEach items="${types}" var="key">
+            <c:if test="${is1 && key.id == 1}"><th>Лаборатория</th></c:if>
+            <c:if test="${is3 && key.id == 3}"><th>${key.name}</th></c:if>
+            <c:if test="${is4 && key.id == 4}"><th>${key.name}</th></c:if>
+            <c:if test="${is6 && key.id == 6}"><th>${key.name}</th></c:if>
+            <c:if test="${is10 && key.id == 10}"><th>${key.name}</th></c:if>
+            <c:if test="${is11 && key.id == 11}"><th>${key.name}</th></c:if>
+            <c:if test="${is12 && key.id == 12}"><th>${key.name}</th></c:if>
+            <c:if test="${is13 && key.id == 13}"><th>${key.name}</th></c:if>
+            <c:if test="${is14 && key.id == 14}"><th>${key.name}</th></c:if>
+            <c:if test="${is17 && key.id == 17}"><th>${key.name}</th></c:if>
+            <c:if test="${is22 && key.id == 22}"><th>${key.name}</th></c:if>
+          </c:forEach>
+          <c:if test="${is15}"><th>Консультация</th></c:if>
+          <c:if test="${is16}"><th>Физиотерапия</th></c:if>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach items="${rows}" var="rw" varStatus="loop">
+          <tr>
+            <td class="num">${loop.index + 1}</td>
+            <td>
+              <span class="fio">${rw.c1}</span>
+              <span class="meta"><b>ИБ №</b> ${rw.c4} · <b>палата</b> ${rw.c30} · ${rw.c2} г.р. · поступил ${rw.c3}</span>
+            </td>
+            <c:if test="${is1}"><td class="svc">${rw.c11}</td></c:if>
+            <c:if test="${is3}"><td class="svc">${rw.c13}</td></c:if>
+            <c:if test="${is4}"><td class="svc">${rw.c14}</td></c:if>
+            <c:if test="${is6}"><td class="svc">${rw.c16}</td></c:if>
+            <c:if test="${is10}"><td class="svc">${rw.c20}</td></c:if>
+            <c:if test="${is11}"><td class="svc">${rw.c21}</td></c:if>
+            <c:if test="${is12}"><td class="svc">${rw.c22}</td></c:if>
+            <c:if test="${is13}"><td class="svc">${rw.c23}</td></c:if>
+            <c:if test="${is14}"><td class="svc">${rw.c24}</td></c:if>
+            <c:if test="${is17}"><td class="svc">${rw.c27}</td></c:if>
+            <c:if test="${is22}"><td class="svc">${rw.c25}</td></c:if>
+            <c:if test="${is15}"><td class="svc">${rw.c18}</td></c:if>
+            <c:if test="${is16}"><td class="svc">${rw.c26}</td></c:if>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
+      <c:if test="${empty rows}">
+        <div class="np-empty"><i class="fa fa-medkit"></i>Нет пациентов с услугами</div>
+      </c:if>
     </div>
   </div>
 </div>
 <script>
-  $(function(){
-    $('#panel_body').width($(window).width() - 250).height($(window).height() - 180);
-  });
   function setPostFilter() {
     setPage('/nurses/work.s?dep=' + $('#dep_id').val());
   }

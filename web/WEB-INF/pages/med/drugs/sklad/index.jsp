@@ -75,7 +75,7 @@
     <input name="period_start" id="period_start" type="text" class="si fms-cal" autocomplete="off" style="width:130px; text-align:center" value="${period_start}"/>
     <span class="lab">—</span>
     <input name="period_end" id="period_end" type="text" class="si fms-cal" autocomplete="off" style="width:130px; text-align:center" value="${period_end}"/>
-    <button onclick="SK.period()" class="ab primary" type="button"><i class="fa fa-refresh"></i> Показать</button>
+    <button onclick="SK.period()" class="ab primary" type="button"><i class="fa fa-search"></i> Показать</button>
   </div>
 
   <div class="sk-tiles">

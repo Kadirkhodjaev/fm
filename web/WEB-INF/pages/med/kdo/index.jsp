@@ -28,6 +28,10 @@
   .kp-dot.red { background:#E5484D; box-shadow:0 0 0 3px #FDECEE; }
   .kp-dot.yellow { background:#F5B800; box-shadow:0 0 0 3px #FEF6D6; }
   .kp-dot.green { background:#30A46C; box-shadow:0 0 0 3px #E3F6EC; }
+  .kp-batch { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 13px; border:1px solid #1F2430; border-radius:9px; background:#1F2430;
+    color:#fff; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; }
+  .kp-batch:hover { background:#353B4A; }
+  .kp-batch b { padding:0 7px; border-radius:8px; background:rgba(255,255,255,.18); font-weight:600; }
   .kp-empty { padding:26px 18px; text-align:center; color:var(--muted); }
 </style>
 <div class="kp">
@@ -35,6 +39,13 @@
     <span class="lab">Пациент</span>
     <span class="fio">${p.surname} ${p.name} ${p.middlename}</span>
     <span class="cnt">Обследований: ${fn:length(plans)}</span>
+    <c:set var="kpSingle" value="0"/>
+    <c:forEach items="${plans}" var="x"><c:if test="${x.c2 != '999' && x.c2 != '889'}"><c:set var="kpSingle" value="${kpSingle + 1}"/></c:if></c:forEach>
+    <c:if test="${kpSingle > 0}">
+      <button type="button" class="kp-batch" onclick="setPage('/kdo/batch.s?id=${p.id}')" title="Ввести результаты всех анализов пациента на одной странице">
+        <i class="fa fa-list-ol"></i> Пакетный ввод <b>${kpSingle}</b>
+      </button>
+    </c:if>
   </div>
   <div class="kp-card">
     <c:if test="${empty plans}">

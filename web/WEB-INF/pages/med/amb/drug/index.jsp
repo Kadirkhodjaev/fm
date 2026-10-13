@@ -142,7 +142,7 @@
         </table>
       </form>
       <div class="right">
-        <button class="btn btn-sm btn-success" type="button" onclick="save()"><i class="fa fa-save"></i> Сохранить</button>
+        <button class="btn btn-sm btn-success" type="button" onclick="save()"><i class="fa fa-floppy-o"></i> Сохранить</button>
       </div>
     </div>
   </div>
@@ -335,8 +335,7 @@
     $('#amb_drug').load('/amb/drug.s?id=' + id);
   }
   function removePatientDrug(id) {
-    if(confirm('Вы действительно хотите удалить выбранную запись?'))
-      $.ajax({
+    FmsConfirm('Вы действительно хотите удалить выбранную запись?', function () { $.ajax({
         url: '/amb/drug/delete.s',
         data: 'id=' + id,
         method: 'post',
@@ -349,6 +348,6 @@
           } else
             alert(res.msg);
         }
-      });
+      }); });
   }
 </script>

@@ -57,6 +57,7 @@ public class SFormImp implements SForm {
         li.setEi(Util.nvl(kdo.getEi()));
       }
       li.setFieldCode(f.getFieldCode());
+      li.setCode(Util.nvl(f.getCodes()));
       list.add(li);
     }
     model.addAttribute("fields", list);
@@ -79,6 +80,7 @@ public class SFormImp implements SForm {
       li.setId(f.getId());
       li.setName(f.getField());
       li.setFieldCode(f.getFieldCode());
+      li.setCode(Util.nvl(f.getCodes()));
       li.setHtml(getFieldHtml(f));
       li.setNorma(f.getNormaFrom() != null ? f.getNormaFrom() + (!"".equals(f.getNormaTo()) ? " - " + f.getNormaTo() : "") : norma);
       li.setEi(f.getEI() != null ? f.getEI() : ei);

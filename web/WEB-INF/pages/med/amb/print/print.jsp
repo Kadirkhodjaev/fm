@@ -57,11 +57,75 @@
   <div id="ser_${ser.id}" style="padding:10px"></div>
 </c:forEach>
 </body>
+<%-- печатный вид листа (pp-*): пациент, услуги, значения вне нормы, подпись; классы ставит скрипт после загрузки услуг --%>
+<style>
+  :root { --fs:${sessionScope.fontSize}px; }
+  body { margin:0; padding:8px 4px 24px; background:#fff; color:#111827; font-family:'Inter', 'Segoe UI', Arial, sans-serif; }
+  table.pp-pat { border-collapse:collapse; max-width:840px; }
+  table.pp-pat td { border:0 !important; border-bottom:1px solid #E5E7EB !important; padding:5px 8px !important; text-align:left !important; font-weight:400 !important; }
+  table.pp-pat td:first-child { color:#6B7280; width:170px; }
+  table.pp-pat td:last-child { font-weight:600 !important; }
+  .pp-ser { max-width:840px; margin:0 auto; }
+  .pp-ser table { border-collapse:collapse !important; }
+  .pp-ser td { border:0 !important; padding:5px 8px !important; color:#111827; }
+  .pp-ser tr.pp-title td { text-align:center !important; font-weight:700 !important; padding:16px 0 10px !important; }
+  .pp-ser tr.pp-th td { background:#F3F4F6; color:#374151 !important; font-weight:700 !important; text-transform:uppercase; letter-spacing:.3px;
+    font-size:calc(var(--fs) * .8) !important; border-top:1px solid #9CA3AF !important; border-bottom:1px solid #9CA3AF !important; text-align:center !important; }
+  .pp-ser tr.pp-row td { border-bottom:1px solid #E5E7EB !important; }
+  .pp-ser td.pp-v { font-weight:700; }
+  .pp-ser td.pp-n { white-space:nowrap; }
+  .pp-ser td.pp-out { color:#B91C1C !important; }
+  .pp-ser tr.pp-sign td { padding:26px 8px 0 !important; border:0 !important; }
+  .pp-sign-line { display:flex; align-items:flex-end; gap:12px; font-weight:400; }
+  .pp-sign-line .ln { flex:1; max-width:220px; border-bottom:1px solid #111827; height:1px; }
+  @media print { body { padding:0; } @page { margin:12mm 12mm; } }
+</style>
 <script>
-  $(function(){
-    <c:forEach items="${services}" var="ser">
-      $('#ser_${ser.id}').load('/amb/view.s?id=${ser.id}');
-    </c:forEach>
-  })
+  // после загрузки всех услуг: шапка таблицы, значения (вне нормы «a-b» — красным со стрелкой), подпись врача
+  function ppStyle() {
+    var VAL = /резул|натиж|кийм/i,
+        NORM = /норм|меъёр/i, DOC = /^\s*Врач/;
+    function num(s) { s = String(s).replace(/\s/g, '').replace(',', '.'); return s !== '' && !isNaN(s) ? Number(s) : null; }
+    $('table').each(function () {
+      if (this.rows.length && $(this).find('td').filter(function () { return /Ф\.И\.О|ФИО/.test($(this).text()); }).length && !$(this).closest('.pp-ser').length)
+        $(this).addClass('pp-pat');
+    });
+    $('.pp-ser > table').each(function () {
+      var t = this, vi = -1, ni = -1, hc = 0;
+      for (var r = 0; r < t.rows.length; r++) {
+        var row = t.rows[r], c = row.cells, txt = $(row).text();
+        if (r == 0 && c.length == 1) { row.className += ' pp-title'; continue; }
+        if (DOC.test(txt) && (r == t.rows.length - 1)) {
+          var parts = $(row).find('td td, div').map(function () { return $.trim($(this).text()); }).get(), fio = parts.length ? parts[parts.length - 1] : '';
+          if (DOC.test(fio)) fio = '';
+          row.className += ' pp-sign';
+          row.innerHTML = '<td colspan="10"><div class="pp-sign-line"><span>Врач</span><span class="ln"></span><b></b></div></td>';
+          $(row).find('b').text(fio);
+          continue;
+        }
+        if (vi < 0 && VAL.test(txt) && c.length > 1) {
+          row.className += ' pp-th'; hc = c.length;
+          for (var i = 0; i < c.length; i++) { var x = $(c[i]).text(); if (vi < 0 && VAL.test(x)) vi = i; if (ni < 0 && NORM.test(x)) ni = i; }
+          continue;
+        }
+        if (vi < 0 || c.length != hc) continue;
+        row.className += ' pp-row';
+        c[vi].className += ' pp-v';
+        if (ni < 0) continue;
+        c[ni].className += ' pp-n';
+        var m = /^\s*(\d+(?:[.,]\d+)?)\s*-\s*(\d+(?:[.,]\d+)?)\s*$/.exec($(c[ni]).text()), v = num($(c[vi]).text());
+        if (!m || v == null) continue;
+        var lo = num(m[1]), hi = num(m[2]);
+        if (v < lo || v > hi) { c[vi].className += ' pp-out'; c[vi].innerHTML += v < lo ? ' &darr;' : ' &uarr;'; }
+      }
+    });
+  }
+  $(function () {
+    var left = $('div[id^=ser_]').length;
+    $('div[id^=ser_]').each(function () {
+      $(this).addClass('pp-ser').load('/amb/view.s?id=' + this.id.substring(4), function () { if (--left == 0) ppStyle(); });
+    });
+    if (!left) ppStyle();
+  });
 </script>
 </html>

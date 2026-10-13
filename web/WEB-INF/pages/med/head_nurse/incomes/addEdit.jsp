@@ -1,305 +1,162 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<style>
-  .required {color:red;}
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<link href="/res/choosen/chosen.min.css" rel="stylesheet">
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
-<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<div class="panel panel-info" style="width: 80%; margin: auto">
-  <div class="panel-heading">
-    Реквизиты акта
-    <button  class="btn btn-icon float-right" onclick="setPage('/head_nurse/incomes.s')"><i class="fa fa-backward"></i> Назад</button>
-    <c:if test="${(obj.id > 0 && obj.state == 'ENT') && fn:length(rows) > 0}">
-      <button  class="btn btn-icon btn-info float-right mr-5" onclick="confirmIncome()"><i class="fa fa-check"></i> Подтвердить</button>
-    </c:if>
-    <c:if test="${(obj.id == 0 || obj.state == 'ENT') && fn:length(rows) == 0}">
-      <button  class="btn btn-icon btn-success float-right mr-5" onclick="saveAct()"><i class="fa fa-save"></i> Сохранить</button>
-    </c:if>
-  </div>
-  <div class="panel-body">
-    <form id="addEditForm" style="padding:5px">
-      <input type="hidden" name="id" value="${obj.id}">
-      <table class="table table-bordered" style="width:100%; margin:auto;">
-        <tr>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Рег № <i class="required">*</i>:</td>
-          <td>
-            <input type="text" class="form-control center" id="out_reg_num" name="reg_num" value="${obj.regNum}"/>
-          </td>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Рег дата <i class="required">*</i>:</td>
-          <td>
-            <input type="text" readonly style="width:80px; text-align: center" class="form-control" name="reg_date" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.regDate}"/>"/>
-            <%--<input type="text" class="form-control datepicker" name="reg_date" id="reg_date" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.regDate}"/>"/>--%>
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Получатель <i class="required">*</i>:</td>
-          <td colspan="3">
-            <select class="form-control" required name="direction" id="out_direction">
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%-- Склады → Приход → заявка: реквизиты, добавление препаратов, подтверждение и приём на склад --%>
+<%@include file="/WEB-INF/pages/med/head_nurse/hn_style.jsp"%>
+<c:set var="isNew" value="${obj.id == null || obj.id == 0}"/>
+<c:set var="isDraft" value="${isNew || obj.state == 'ENT'}"/>
+
+<div class="hn-page">
+  <div class="hn-doc">
+    <div class="hn-card">
+      <div class="hn-card-h">
+        <div>
+          <h3>${isNew ? 'Новая заявка на приход' : 'Заявка на приход №'}${isNew ? '' : obj.id}</h3>
+          <c:if test="${!isNew}">
+            <c:choose>
+              <c:when test="${obj.state == 'ENT'}"><span class="hn-st ent">Черновик</span></c:when>
+              <c:when test="${obj.state == 'SND'}"><span class="hn-st snd">Отправлено</span></c:when>
+              <c:otherwise><span class="hn-st con">Подтверждено</span></c:otherwise>
+            </c:choose>
+            <c:if test="${obj.insFlag == 'Y'}"><span class="hn-st con">Принято на склад</span></c:if>
+          </c:if>
+        </div>
+        <span class="fm-spacer"></span>
+        <c:if test="${isDraft && fn:length(rows) == 0}">
+          <button type="button" class="fm-btn primary" onclick="saveAct()"><i class="fa fa-floppy-o"></i>Сохранить</button>
+        </c:if>
+        <c:if test="${!isNew && obj.state == 'ENT' && fn:length(rows) > 0}">
+          <button type="button" class="fm-btn primary" onclick="confirmIncome()"><i class="fa fa-paper-plane"></i>Подтвердить заявку</button>
+        </c:if>
+        <c:if test="${obj.state == 'CON' && fn:length(rows) > 0 && obj.insFlag != 'Y'}">
+          <button type="button" class="fm-btn primary" onclick="updateDrop()"><i class="fa fa-check"></i>Принять на склад</button>
+        </c:if>
+        <button type="button" class="fm-btn" onclick="setPage('/head_nurse/incomes.s')"><i class="fa fa-arrow-left"></i>Назад</button>
+      </div>
+      <form id="addEditForm" class="hn-card-b" onsubmit="return false">
+        <input type="hidden" name="id" value="${obj.id}">
+        <div class="fm-row" style="grid-template-columns:1fr 160px 2fr">
+          <div>
+            <label class="fm-l">Рег. № <span class="hn-req">*</span></label>
+            <input type="text" class="fm-in" id="out_reg_num" name="reg_num" value="${fn:escapeXml(obj.regNum)}" <c:if test="${!isDraft || fn:length(rows) > 0}">readonly</c:if>/>
+          </div>
+          <div>
+            <label class="fm-l">Дата</label>
+            <input type="text" readonly class="fm-in" style="text-align:center; background:#F5F6F8" name="reg_date" value="<fmt:formatDate pattern="dd.MM.yyyy" value="${obj.regDate}"/>"/>
+          </div>
+          <div>
+            <label class="fm-l">Получатель <span class="hn-req">*</span></label>
+            <select class="fm-in" name="direction" id="out_direction" <c:if test="${!isDraft || fn:length(rows) > 0}">disabled</c:if>>
               <c:forEach items="${directions}" var="cc">
                 <option <c:if test="${obj.direction.id == cc.direction.id}">selected</c:if> value="${cc.direction.id}">${cc.direction.name}</option>
               </c:forEach>
             </select>
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Дополнительная информация:</td>
-          <td colspan="3">
-            <textarea name="info" class="form-control">${obj.info}</textarea>
-          </td>
-        </tr>
-      </table>
-    </form>
-  </div>
-  <!-- /.panel-body -->
-</div>
-<c:if test="${obj.id > 0 && obj.state == 'ENT'}">
-  <div class="panel panel-info" style="width: 80%; margin: auto">
-    <div class="panel-heading">
-      Новая запись
-      <button  class="btn btn-icon btn-success float-right" onclick="saveActRow()"><i class="fa fa-save"></i> Сохранить</button>
-    </div>
-    <div class="panel-body">
-      <form id="addEditFormRow" style="padding:5px">
-        <input type="hidden" name="doc" value="${obj.id}"/>
-        <table class="table table-bordered" style="width:100%; margin:auto">
-          <tr>
-            <td align="right">Препарат: </td>
-            <td>
-              <select class="form-control chzn-select" style="width:100%" required name="drug_id" onchange="setDrugCount(this)">
-                <option></option>
-                <c:forEach items="${drugs}" var="cc">
-                  <option value="${cc.id}" measure="${cc.measure.name}">${cc.name}</option>
-                </c:forEach>
-              </select>
-            </td>
-            <td align="right">Количество: </td>
-            <td style="width:100px"><input type="number" id="drug_count" disabled name="drug_count" class="form-control center"></td>
-            <td>
-              Ед. изм.
-            </td>
-            <td>
-              <input class="form-control" disabled id="measure" value=""/>
-            </td>
-          </tr>
-        </table>
+          </div>
+        </div>
+        <div>
+          <label class="fm-l">Дополнительная информация</label>
+          <textarea name="info" class="fm-in" rows="2" <c:if test="${!isDraft || fn:length(rows) > 0}">readonly</c:if>>${fn:escapeXml(obj.info)}</textarea>
+        </div>
       </form>
     </div>
-  <!-- /.panel-body -->
-  </div>
-</c:if>
-<c:if test="${fn:length(rows) > 0}">
-  <div class="panel panel-info" style="width: 80%; margin: auto">
-    <div class="panel-heading">
-      Записи
-      <c:if test="${obj.state == 'CON' && fn:length(rows) > 0 && obj.insFlag != 'Y'}">
-        <button  class="btn btn-sm btn-info" onclick="updateDrop()" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-check"></i> Принять на склад</button>
-      </c:if>
-    </div>
-    <div class="panel-body">
-      <table class="table miniGrid">
-        <thead>
+
+    <c:if test="${!isNew && obj.state == 'ENT'}">
+      <div class="hn-card">
+        <div class="hn-card-h"><h3>Добавить препарат</h3></div>
+        <form id="addEditFormRow" class="hn-card-b" onsubmit="saveActRow(); return false">
+          <input type="hidden" name="doc" value="${obj.id}"/>
+          <div class="fm-row" style="grid-template-columns:1fr 130px 110px auto; align-items:end">
+            <div>
+              <label class="fm-l">Препарат</label>
+              <select class="fm-in fms-select" name="drug_id" id="drug_id" onchange="setDrugCount(this)">
+                <option value="">Выберите препарат</option>
+                <c:forEach items="${drugs}" var="cc">
+                  <option value="${cc.id}" measure="${fn:escapeXml(cc.measure.name)}">${cc.name}</option>
+                </c:forEach>
+              </select>
+            </div>
+            <div>
+              <label class="fm-l">Количество</label>
+              <input type="number" step="any" min="0" id="drug_count" disabled name="drug_count" class="fm-in" style="text-align:center">
+            </div>
+            <div>
+              <label class="fm-l">Ед. изм.</label>
+              <input class="fm-in" readonly id="measure" style="background:#F5F6F8"/>
+            </div>
+            <button type="submit" class="fm-btn primary" style="height:32px"><i class="fa fa-plus"></i>Добавить</button>
+          </div>
+        </form>
+      </div>
+    </c:if>
+
+    <c:if test="${fn:length(rows) > 0}">
+      <div class="hn-card">
+        <div class="hn-card-h"><h3>Препараты</h3><span class="fm-count">· ${fn:length(rows)}</span></div>
+        <table class="fm-grid flat">
+          <thead>
           <tr>
-            <th style="width:30px">#</th>
+            <th style="width:40px"></th>
             <th>Наименование</th>
-            <th>Количество заявки</th>
-            <th>Ед. изм.</th>
-            <th>Получено</th>
-            <c:if test="${obj.state == 'ENT'}">
-              <th>Удалить</th>
-            </c:if>
+            <th style="width:140px" class="r">В заявке</th>
+            <th style="width:110px">Ед. изм.</th>
+            <th style="width:140px" class="r">Получено</th>
+            <c:if test="${obj.state == 'ENT'}"><th style="width:50px"></th></c:if>
           </tr>
-        </thead>
-        <tbody>
-          <c:forEach items="${rows}" var="row" varStatus="loop">
+          </thead>
+          <tbody>
+          <c:forEach items="${rows}" var="row">
+            <c:set var="got" value="${row.hndrug != null && row.hndrug > 0}"/>
             <tr>
-              <td class="center">
-                <c:if test="${row.hndrug != null && row.hndrug > 0}">
-                  <img src="/res/imgs/green.gif">
-                </c:if>
-                <c:if test="${!(row.hndrug != null && row.hndrug > 0)}">
-                  <img src="/res/imgs/red.gif">
-                </c:if>
-              </td>
-              <td>${row.drug.name}</td>
-              <td style="width:150px; text-align:right"><fmt:formatNumber value = "${row.claimCount}" type = "number"/></td>
-              <td style="width:150px;">${row.measure.name}</td>
-              <td style="width:150px; text-align:center"><fmt:formatNumber value = "${row.drugCount == null ? 0 : row.drugCount}" type = "number"/></td>
+              <td class="c"><i class="fa ${got ? 'fa-check-circle hn-ok' : 'fa-circle-o hn-no'}" title="${got ? 'На складе' : 'Ещё не на складе'}"></i></td>
+              <td><span class="nm">${row.drug.name}</span></td>
+              <td class="r"><fmt:formatNumber value="${row.claimCount}" type="number" maxFractionDigits="2"/></td>
+              <td class="mut">${row.measure.name}</td>
+              <td class="r"><fmt:formatNumber value="${row.drugCount == null ? 0 : row.drugCount}" type="number" maxFractionDigits="2"/></td>
               <c:if test="${obj.state == 'ENT'}">
-                <td style="width:30px;text-align: center">
-                  <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delActRow(${row.id})"><span class="fa fa-minus"></span></button>
-                </td>
+                <td class="r"><button type="button" class="fm-act danger" title="Удалить" onclick="delActRow(${row.id})"><i class="fa fa-trash-o"></i></button></td>
               </c:if>
             </tr>
           </c:forEach>
-        </tbody>
-      </table>
-    </div>
-    <!-- /.panel-body -->
+          </tbody>
+        </table>
+      </div>
+    </c:if>
   </div>
-</c:if>
+</div>
 <script>
-  let measures = [];
-  <c:forEach items="${measures}" var="m">
-    measures.push({drug: ${m.drug}, id: ${m.measure.id}, name: '${m.measure.name}'});
-  </c:forEach>
-  function saveAct() {
-    if($('#out_reg_num').val() == '' || $('#reg_date').val() == '' || !($('#out_direction').val() > 0)) {
-      alert('Не заполнены обязательные поля');
-      return;
-    }
+  function hnReload() { setPage('/head_nurse/incomes/save.s?id=${obj.id}'); }
+  function hnPost(url, data, okText, after) {
     $.ajax({
-      url: '/head_nurse/incomes/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
+      url: url, method: 'post', data: data, dataType: 'json',
       success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          setPage('/head_nurse/incomes/save.s?id=' + res.id);
-        } else {
-          alert(res.msg);
-        }
+        if (res.success) { openMedMsg(okText || 'Данные успешно сохранены', true); (after || hnReload)(res); }
+        else errMsg(res.msg);
       }
     });
+  }
+  function saveAct() {
+    if ($.trim($('#out_reg_num').val()) == '' || !($('#out_direction').val() > 0)) { errMsg('Заполните рег. № и получателя'); return; }
+    hnPost('/head_nurse/incomes/save.s', $('#addEditForm').serialize(), null, function (res) { setPage('/head_nurse/incomes/save.s?id=' + res.id); });
   }
   function saveActRow() {
-    if(parseFloat($('#drug_count').val()) > 0) {
-      $.ajax({
-        url: '/head_nurse/incomes/row/save.s',
-        method: 'post',
-        data: $('#addEditFormRow').serialize(),
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert("<ui:message code="successSave"/>");
-            setPage('/head_nurse/incomes/save.s?id=${obj.id}');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    } else {
-      alert('Не правильный формат данных поле "Количество"');
-    }
+    if (!$('#drug_id').val()) { errMsg('Выберите препарат'); return; }
+    if (!(parseFloat($('#drug_count').val()) > 0)) { errMsg('Укажите количество больше нуля'); return; }
+    hnPost('/head_nurse/incomes/row/save.s', $('#addEditFormRow').serialize(), 'Препарат добавлен');
   }
   function delActRow(id) {
-    if(confirm('Вы действительно хотите удалить выбранную запись?')) {
-      $.ajax({
-        url: '/head_nurse/incomes/row/del.s',
-        method: 'post',
-        data: 'id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert("<ui:message code="successSave"/>");
-            setPage('/head_nurse/incomes/save.s?id=${obj.id}');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
+    FmsConfirm('Удалить препарат из заявки?', function () { hnPost('/head_nurse/incomes/row/del.s', 'id=' + id, 'Препарат удалён'); });
   }
   function setDrugCount(dom) {
-    $('#drug_count').attr('disabled', !(dom.value > 0));
-    let mn = dom.options[dom.selectedIndex].getAttribute("measure");
-    $('#measure').val(mn);
+    $('#drug_count').prop('disabled', !(dom.value > 0));
+    var o = dom.options[dom.selectedIndex];
+    $('#measure').val(o ? (o.getAttribute('measure') || '') : '');
+    if (dom.value > 0) setTimeout(function () { $('#drug_count').focus(); }, 0);
   }
   function confirmIncome() {
-    if(confirm('Вы действительно хотите подтвердить заявку?')) {
-      $.ajax({
-        url: '/head_nurse/incomes/confirm.s',
-        method: 'post',
-        data: 'id=${obj.id}',
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert("<ui:message code="successSave"/>");
-            setPage('/head_nurse/incomes/save.s?id=${obj.id}');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
-  }
-  function copyRow(id, idx) {
-    $('#modal_window').click();
-    $('#fact_id').val(id);
-    $('#fact_count').val($('#drug_count_' + idx).val());
-    $('#drug_name').html($('#drug_name_' + idx).html());
-  }
-  function saveLineDrop() {
-    var fc = parseFloat($('#fact_count').val());
-    var dc = $('#drop_count').val();
-    if(dc == null || dc == '' || parseFloat(dc) <= 0 || parseFloat(dc) >= fc) {
-      alert('Кол-во для разделения не соответствует требованиям');
-      return;
-    }
-    $.ajax({
-      url: '/head_nurse/incomes/row/copy.s',
-      data: $('#addEditForms').serialize(),
-      method: 'post',
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('#close-modal').click();
-          alert('Данные успешно сохранены');
-          setPage('/head_nurse/incomes/save.s?id=${obj.id}');
-        } else
-          alert(res.msg);
-      }
-    });
-  }
-  function setDropCount(dom) {
-    var fc = parseFloat($('#fact_count').val());
-    if(fc <= parseFloat(dom.value) || parseFloat(dom.value) <= 0) {
-      dom.value = 0;
-      alert('Кол-во для разделения не может быть меньше 0 или больше кол-во препарата');
-    }
+    FmsConfirm('Подтвердить заявку? После этого её нельзя будет изменить.', function () { hnPost('/head_nurse/incomes/confirm.s', 'id=${obj.id}', 'Заявка подтверждена'); });
   }
   function updateDrop() {
-    if(confirm('Вы действительно хотите принять данный приход на склад?')) {
-      $.ajax({
-        url: '/head_nurse/incomes/drop.s',
-        method: 'post',
-        data: 'id=${obj.id}',
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            alert("<ui:message code="successSave"/>");
-            setPage('/head_nurse/incomes/save.s?id=${obj.id}');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
+    FmsConfirm('Принять этот приход на склад?', function () { hnPost('/head_nurse/incomes/drop.s', 'id=${obj.id}', 'Приход принят на склад'); });
   }
-  function saveRow(id) {
-    $.ajax({
-      url: '/head_nurse/incomes/drop/save.s',
-      data: 'id=' + id + '&value=' + $('#drug_counter_' + id).val(),
-      method: 'post',
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          alert('Данные успешно сохранены');
-          setPage('/head_nurse/incomes/save.s?id=${obj.id}');
-        } else
-          alert(res.msg);
-      }
-    });
-  }
-  $(function(){
-    $(".chzn-select").chosen();
-  });
 </script>

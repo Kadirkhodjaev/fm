@@ -43,7 +43,7 @@
     Пациент - <b>${fio}</b>
     <ul class="pagination" style="float:right; margin-top:-4px;">
       <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="printPage()"><i title="Печать" class="fa fa-print"></i> Печать</a></li>
-      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="document.getElementById('saveBtn').click()"><i title="Сохранить" class="fa fa-print"></i> Сохранить</a></li>
+      <li class="paginate_button" tabindex="0" style="width: 100px !important;"><a href="#" onclick="document.getElementById('saveBtn').click()"><i title="Сохранить" class="fa fa-floppy-o"></i> Сохранить</a></li>
     </ul>
   </div>
   <!-- /.panel-heading -->

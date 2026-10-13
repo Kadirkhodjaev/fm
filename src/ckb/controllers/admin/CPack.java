@@ -60,8 +60,11 @@ public class CPack {
       obj.setId(0);
       obj.setNdsProc(ndsProc);
     }
-    model.addAttribute("kdos", dKdo.list("From Kdos t Where Not Exists (Select 1 From SalePackRows c Where c.doc.id =  " + Util.get(req, "id", "0") + " And c.service = t.id) And state = 'A' Order By name"));
-    model.addAttribute("services", dAmbService.list("From AmbServices t Where Not Exists (Select 1 From SalePackRows c Where c.doc.id =  " + Util.get(req, "id", "0") + " And c.service = t.id) And state = 'A' Order By name"));
+    // id только числом; список обследований стационара нужен лишь для старых пакетов STAT
+    int packId = Util.getInt(req, "id");
+    if("STAT".equals(obj.getAmbStat()))
+      model.addAttribute("kdos", dKdo.list("From Kdos t Where Not Exists (Select 1 From SalePackRows c Where c.doc.id = " + packId + " And c.service = t.id) And state = 'A' Order By name"));
+    model.addAttribute("services", dAmbService.list("From AmbServices t Where Not Exists (Select 1 From SalePackRows c Where c.doc.id = " + packId + " And c.service = t.id) And state = 'A' Order By name"));
     model.addAttribute("obj", obj);
     List<SalePackRows> rows = dSalePackRow.list("From SalePackRows Where doc.id = " + Util.getInt(req, "id"));
     double sum = 0, realSum = 0;

@@ -1,164 +1,107 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
-</style>
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script>
-</script>
-<div class="panel panel-info" style="width: 100%; margin: auto">
-  <div class="panel-heading">
-    Партнеры
-    <a href="#" data-toggle="modal" data-target="#myModal" id="modal_window" class="hidden"></a>
-    <button  class="btn btn-sm btn-success" onclick="addDrugDict()" style="float:right;margin-top:-5px"><i class="fa fa-plus"></i> Добавить</button>
-  </div>
-  <div class="panel-body">
-    <%@include file="/incs/msgs/successError.jsp"%>
-    <div class="table-responsive">
-      <table class="miniGrid table table-striped table-bordered">
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%-- Аптека → Справочники → Поставщики --%>
+<%@include file="/WEB-INF/pages/med/drugs/dicts/dict_kit.jsp"%>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-truck"></i></span>
+        <div>
+          <h2>Поставщики</h2>
+          <span class="fm-count"><b id="ptShown">${fn:length(list)}</b> из <b>${fn:length(list)}</b></span>
+        </div>
+      </div>
+      <span class="fm-spacer"></span>
+      <div class="fm-search-wrap">
+        <i class="fa fa-search"></i>
+        <input type="text" class="fm-search" id="ptSearch" placeholder="Название, телефон, email" oninput="DK.filter('pt')" autocomplete="off"/>
+      </div>
+      <button type="button" class="fm-btn primary" onclick="ptEdit(0)"><i class="fa fa-plus"></i>Добавить</button>
+    </div>
+    <div class="fm-table-wrap">
+      <table class="fm-grid">
         <thead>
         <tr>
-          <th>#</th>
+          <th style="width:70px">ID</th>
           <th>Наименование</th>
-          <th>Телефон</th>
-          <th>Email</th>
-          <th>Очередь</th>
-          <th style="width:40px">Удалить</th>
+          <th style="width:180px">Телефон</th>
+          <th style="width:240px">Email</th>
+          <th style="width:110px" class="c">Очерёдность</th>
+          <th style="width:50px"></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="ptRows">
         <c:forEach items="${list}" var="obj">
-          <tr>
-            <td align="center">${obj.id}</td>
-            <td>
-              <a href="#" onclick="editDrugDict(${obj.id});return false">${obj.name}</a>
-            </td>
-            <td align="center">${obj.phone}</td>
-            <td align="center">${obj.email}</td>
-            <td align="center">${obj.ord}</td>
-            <td class="center">
-              <button class="btn btn-danger btn-sm" style="height:20px;padding:1px 10px" title="Удалить" onclick="delDrugRow(${obj.id})"><i class="fa fa-minus"></i></button>
+          <tr data-s="${obj.id} ${fn:escapeXml(obj.name)} ${fn:escapeXml(obj.phone)} ${fn:escapeXml(obj.email)}" data-name="${fn:escapeXml(obj.name)}" onclick="ptEdit(${obj.id})" title="Изменить">
+            <td class="mut"><b>${obj.id}</b></td>
+            <td><span class="nm">${obj.name}</span></td>
+            <td class="mut">${obj.phone}</td>
+            <td class="mut">${obj.email}</td>
+            <td class="c"><fmt:formatNumber value="${obj.ord}" maxFractionDigits="0"/></td>
+            <td class="r" onclick="event.stopPropagation()">
+              <button type="button" class="fm-act danger" title="Удалить" onclick="DK.del('partner', ${obj.id}, $(this).closest('tr').attr('data-name'), 'partners')"><i class="fa fa-trash-o"></i></button>
             </td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+      <div class="fm-empty" id="ptEmpty" style="display:none"><i class="fa fa-truck"></i>Ничего не найдено</div>
     </div>
-    <!-- /.table-responsive -->
   </div>
-  <!-- /.panel-body -->
 </div>
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title" id="myModalLabel">Реквизиты партнера</h4>
-      </div>
-      <div class="modal-body">
-        <form id="addEditForm" name="addEditForm">
-          <input type="hidden" name="id" value="" />
-          <input type="hidden" name="code" value="partner" />
-          <table class="table table-bordered">
-            <tr>
-              <td class="right bold">Наименование*:</td>
-              <td>
-                <input type="text" id="partner-name" class="form-control" name="name" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Телефон:</td>
-              <td>
-                <input type="text" class="form-control" name="phone" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Очередность:</td>
-              <td>
-                <input type="number" class="form-control" name="ord" value=""/>
-              </td>
-            </tr>
-            <tr>
-              <td class="right bold">Электронный адрес:</td>
-              <td>
-                <input type="text" class="form-control" name="email" value=""/>
-              </td>
-            </tr>
-          </table>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="saveDrugForm()">Сохранить</button>
-        <button type="button" class="btn btn-default" id="close-modal" data-dismiss="modal">Закрыть</button>
-      </div>
+
+<div class="fm-overlay" id="ptModal" onclick="if (event.target === this) DK.close('pt')">
+  <div class="fm-modal" style="width:520px">
+    <div class="fm-modal-head">
+      <h3 id="ptTitle"></h3>
+      <button type="button" class="fm-x" onclick="DK.close('pt')"><i class="fa fa-times"></i></button>
     </div>
-    <!-- /.modal-content -->
+    <form id="ptForm" onsubmit="ptSave(); return false">
+      <div class="fm-modal-body">
+        <input type="hidden" name="id"/>
+        <input type="hidden" name="code" value="partner"/>
+        <div class="fm-err" id="ptErr"></div>
+        <div>
+          <label class="fm-l">Наименование *</label>
+          <input type="text" class="fm-in" name="name" autocomplete="off"/>
+        </div>
+        <div class="fm-row" style="grid-template-columns:1fr 1fr 110px">
+          <div><label class="fm-l">Телефон</label><input type="text" class="fm-in" name="phone" autocomplete="off"/></div>
+          <div><label class="fm-l">Email</label><input type="text" class="fm-in" name="email" autocomplete="off"/></div>
+          <div><label class="fm-l">Очерёдность</label><input type="number" class="fm-in" name="ord" style="text-align:center"/></div>
+        </div>
+      </div>
+      <div class="fm-modal-foot">
+        <span class="fm-spacer"></span>
+        <button type="button" class="fm-btn" onclick="DK.close('pt')">Отмена</button>
+        <button type="submit" class="fm-btn primary"><i class="fa fa-floppy-o"></i>Сохранить</button>
+      </div>
+    </form>
   </div>
-  <!-- /.modal-dialog -->
 </div>
 <script>
-  function addDrugDict(){
-    addEditForm.reset();
-    document.getElementById("modal_window").click();
-  }
-  function editDrugDict(id) {
-    document.getElementById("modal_window").click();
-    $.ajax({
-      url: '/drugs/dict/get.s',
-      method: 'post',
-      data: 'code=partner&id=' + id,
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          $('*[name=id]').val(res.id);
-          $('*[name=name]').val(res.name);
-          $('*[name=phone]').val(res.phone);
-          $('*[name=email]').val(res.email);
-          $('*[name=ord]').val(res.ord);
-        } else {
-          alert(res.msg);
-        }
-      }
+  DK.filter('pt');
+  function ptEdit(id) {
+    var f = document.getElementById('ptForm');
+    f.reset();
+    f.elements['id'].value = '';
+    DK.open('pt', id ? 'Изменить поставщика' : 'Новый поставщик');
+    f.elements['name'].focus();
+    if (!id) return;
+    DK.get('pt', 'partner', id, function (res) {
+      f.elements['id'].value = res.id;
+      f.elements['name'].value = res.name || '';
+      f.elements['phone'].value = res.phone || '';
+      f.elements['email'].value = res.email || '';
+      f.elements['ord'].value = res.ord == null ? '' : res.ord;
     });
   }
-  function saveDrugForm() {
-    if($('#partner-name').val() == '') {
-      alert('Наименование не может быть пустым');
-      return;
-    }
-    $.ajax({
-      url: '/drugs/dict/save.s',
-      method: 'post',
-      data: $('#addEditForm').serialize(),
-      dataType: 'json',
-      success: function (res) {
-        if (res.success) {
-          alert("<ui:message code="successSave"/>");
-          $('#close-modal').click();
-          setPage('/drugs/dicts.s');
-        } else {
-          alert(res.msg);
-        }
-      }
-    });
-  }
-  function delDrugRow(id) {
-    if(confirm('Дейтвительно хотите удалить?')) {
-      $.ajax({
-        url: '/drugs/dict/delete.s',
-        method: 'post',
-        data: 'code=partner&id=' + id,
-        dataType: 'json',
-        success: function (res) {
-          if (res.success) {
-            setPage('/drugs/dicts.s');
-          } else {
-            alert(res.msg);
-          }
-        }
-      });
-    }
+  function ptSave() {
+    var f = document.getElementById('ptForm');
+    if (!$.trim(f.elements['name'].value)) { DK.err('pt', 'Укажите наименование'); return; }
+    DK.save('pt', f, 'partners');
   }
 </script>

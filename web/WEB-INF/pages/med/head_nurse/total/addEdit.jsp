@@ -1,141 +1,118 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ui" uri="http://www.springframework.org/tags" %>
-<%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%-- Склады → Общий расход: итог препаратов по пациенту за пребывание, подтверждение для бухгалтерии --%>
+<%@include file="/WEB-INF/pages/med/head_nurse/hn_style.jsp"%>
 <style>
-  .miniGrid thead tr th {text-align: center; background: #e8e8e8}
-  .miniGrid tbody tr:hover {background: #f5f5f5; cursor: pointer}
+  .tp-info { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; }
+  .tp-info .v { font-size:14px; font-weight:600; color:#1F2430; margin-top:2px; }
+  .tp-info .k { font-size:12px; color:#6B7280; }
 </style>
-<link href="/res/choosen/chosen.min.css" rel="stylesheet">
-<script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/datepicker/datetimepicker_css.js" type="text/javascript"></script>
-<script src="/res/choosen/chosen.jquery.min.js" type="text/javascript"></script>
-<script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/js/common.js" type="text/javascript"></script>
-
-<div class="panel panel-info" style="width: 80%; margin: auto">
-  <div class="panel-heading">
-    <span style="font-weight: bold; font-size:16px" title="${obj.id}">ИБ №${obj.yearNum} - ${obj.surname} ${obj.name} ${obj.middlename}</span>
-    <button  class="btn btn-sm" onclick="setPage('/head_nurse/total/patients.s')" style="float:right;margin-top:-5px; margin-left:10px"><i class="fa fa-backward"></i> Назад</button>
-    <c:if test="${parent == null}">
-      <button  class="btn btn-sm btn-info" onclick="confirmPatient()" style="float:right;margin-top:-5px; margin-left:5px"><i class="fa fa-check"></i> Подтвердить</button>
-    </c:if>
-  </div>
-  <div class="panel-body">
-    <form id="addEditForm" style="padding:5px">
-      <input type="hidden" name="id" id="row_id" value="${obj.id}">
-      <input type="hidden" name="patient_id" id="patient_id" value="${obj.id}">
-      <table class="table table-bordered" style="width:100%; margin:auto;">
-        <tr>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Год рождения: </td>
-          <td><input type="text" disabled id="birth_year" class="form-control center" value="${obj.birthyear}"></td>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Дата поступления: </td>
-          <td><input type="text" disabled id="start_date" class="form-control center" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateBegin}" />"></td>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Дата выписки: </td>
-          <td><input type="text" disabled id="end_date" class="form-control center" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${obj.dateEnd}" />"></td>
-          <td style="text-align:right;font-weight:bold;vertical-align: middle">Палата: </td>
-          <td><input type="text" disabled id="palata" class="form-control center" value="${obj.room.name}"></td>
-        </tr>
-      </table>
-    </form>
-  </div>
-  <!-- /.panel-body -->
-</div>
-<div class="panel panel-info" style="width: 80%; margin: auto">
-  <div class="panel-heading">
-    Расходы по дням
-  </div>
-  <div class="panel-body">
-    <table class="table table-bordered miniGrid">
-      <thead>
-      <tr>
-        <th style="width:50px">№</th>
-        <th>Склад</th>
-        <th style="width:100px">Дата</th>
-        <th style="width:100px">Состояние</th>
-      </tr>
-      </thead>
-      <c:forEach items="${dates}" var="d" varStatus="lp">
-        <tr class="hand hover" ondblclick="setPage('head_nurse/out/patient/save.s?id=${d.c1}')">
-          <td align="center">${lp.index + 1}</td>
-          <td>${d.c2}</td>
-          <td align="center">${d.c3}</td>
-          <td align="center">
-            <c:if test="${d.c4 == 'ENT'}">Введен</c:if>
-            <c:if test="${d.c4 != 'ENT'}">Подтвержден</c:if>
-          </td>
-        </tr>
-      </c:forEach>
-    </table>
-  </div>
-  <!-- /.panel-body -->
-</div>
-<div class="panel panel-info" style="width: 80%; margin: auto">
-  <div class="panel-heading">
-    Записи
-    <c:if test="${parent != null && parent.closed == 'N'}">
-      <button  class="btn btn-sm btn-default" onclick="updateDrugs()" style="float:right;margin-top:-5px; margin-left:5px"><i class="fa fa-refresh"></i> Обновить</button>
-    </c:if>
-  </div>
-  <c:if test="${fn:length(rows) > 0}">
-    <div class="panel-body">
-      <table class="table table-bordered miniGrid">
-        <thead>
-        <tr>
-          <th style="width:50px">№</th>
-          <th>Наименование</th>
-          <th style="width:100px">Расход</th>
-          <th style="width:100px">Ед. изм.</th>
-        </tr>
-        </thead>
-        <c:forEach items="${rows}" var="d" varStatus="lp">
-          <tr class="hand hover">
-            <td align="center">${lp.index + 1}</td>
-            <td>${d.c1}</td>
-            <td align="right">${d.c2}</td>
-            <td>${d.c3}</td>
-          </tr>
-        </c:forEach>
-      </table>
+<div class="fm-page">
+  <div class="fm-box">
+    <div class="fm-toolbar">
+      <div class="fm-title">
+        <span class="ic"><i class="fa fa-user"></i></span>
+        <div>
+          <h2 title="ID ${obj.id}">${obj.surname} ${obj.name} ${obj.middlename}</h2>
+          <span class="fm-count">ИБ №<b>${obj.yearNum}</b> · общий расход препаратов</span>
+        </div>
+      </div>
+      <c:choose>
+        <c:when test="${parent == null}"><span class="hn-st ent">Не подтверждён</span></c:when>
+        <c:when test="${parent.closed == 'N'}"><span class="hn-st snd">Подтверждён</span></c:when>
+        <c:otherwise><span class="hn-st con">Закрыт бухгалтерией</span></c:otherwise>
+      </c:choose>
+      <span class="fm-spacer"></span>
+      <c:if test="${parent != null && parent.closed == 'N'}">
+        <button type="button" class="fm-btn" id="tpUpdBtn" onclick="updateDrugs()"><i class="fa fa-refresh"></i>Пересчитать</button>
+      </c:if>
+      <c:if test="${parent == null}">
+        <button type="button" class="fm-btn primary" id="tpConfBtn" onclick="confirmPatient()"><i class="fa fa-check"></i>Подтвердить</button>
+      </c:if>
+      <button type="button" class="fm-btn" onclick="setPage('/head_nurse/total/patients.s')"><i class="fa fa-arrow-left"></i>Назад</button>
     </div>
-  </c:if>
-  <!-- /.panel-body -->
+    <div class="fm-table-wrap" style="background:#F5F6F8">
+      <div class="hn-doc" style="padding:12px 0">
+        <div class="hn-card">
+          <div class="hn-card-b">
+            <div class="tp-info">
+              <div><div class="k">Год рождения</div><div class="v">${obj.birthyear}</div></div>
+              <div><div class="k">Поступление</div><div class="v"><fmt:formatDate pattern="dd.MM.yyyy" value="${obj.dateBegin}"/></div></div>
+              <div><div class="k">Выписка</div><div class="v"><c:choose><c:when test="${empty obj.dateEnd}">—</c:when><c:otherwise><fmt:formatDate pattern="dd.MM.yyyy" value="${obj.dateEnd}"/></c:otherwise></c:choose></div></div>
+              <div><div class="k">Палата</div><div class="v">${empty obj.room.name ? '—' : obj.room.name}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hn-card">
+          <div class="hn-card-h"><h3 style="flex:1">Дни списания</h3><span class="fm-count">${fn:length(dates)}</span></div>
+          <table class="fm-grid">
+            <thead><tr><th style="width:50px">№</th><th>Склад</th><th style="width:120px">Дата</th><th style="width:140px">Состояние</th></tr></thead>
+            <tbody>
+            <c:forEach items="${dates}" var="d" varStatus="lp">
+              <tr class="go" onclick="setPage('/head_nurse/out/patient/save.s?id=${d.c1}')" title="Открыть день списания">
+                <td class="mut">${lp.index + 1}</td>
+                <td>${d.c2}</td>
+                <td class="nw">${d.c3}</td>
+                <td><span class="hn-st ${d.c4 == 'ENT' ? 'ent' : 'con'}">${d.c4 == 'ENT' ? 'Черновик' : 'Подтверждено'}</span></td>
+              </tr>
+            </c:forEach>
+            </tbody>
+          </table>
+          <c:if test="${empty dates}"><div class="fm-empty" style="display:block"><i class="fa fa-calendar"></i>Дней списания нет</div></c:if>
+        </div>
+
+        <div class="hn-card">
+          <div class="hn-card-h">
+            <h3 style="flex:1">Препараты</h3>
+            <span class="fm-count">${parent == null ? 'по подтверждённым дням' : 'переданы бухгалтерии'}</span>
+          </div>
+          <table class="fm-grid">
+            <thead><tr><th style="width:50px">№</th><th>Препарат</th><th class="r" style="width:130px">Расход</th><th style="width:110px">Ед. изм.</th></tr></thead>
+            <tbody>
+            <c:forEach items="${rows}" var="d" varStatus="lp">
+              <tr>
+                <td class="mut">${lp.index + 1}</td>
+                <td>${d.c1}</td>
+                <td class="r"><b>${d.c2}</b></td>
+                <td class="mut">${d.c3}</td>
+              </tr>
+            </c:forEach>
+            </tbody>
+          </table>
+          <c:if test="${empty rows}"><div class="fm-empty" style="display:block"><i class="fa fa-medkit"></i>Препаратов нет</div></c:if>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <script>
   function confirmPatient() {
-    if(confirm('Дейтвительно хотите подтвердить документ?')) {
+    FmsConfirm('Подтвердить общий расход? Препараты по подтверждённым дням будут переданы бухгалтерии.', function () {
+      $('#tpConfBtn').prop('disabled', true);
       $.ajax({
-        url: '/head_nurse/total/patients/confirm.s',
-        data: 'id=${obj.id}',
-        method: 'post',
-        dataType: 'json',
+        url: '/head_nurse/total/patients/confirm.s', data: 'id=${obj.id}', method: 'post', dataType: 'json',
         success: function (res) {
-          if (res.success) {
-            alert('Данные успешно сохранены');
-            parent.setPage('/head_nurse/total/patients/info.s?id=${obj.id}');
-          } else
-            alert(res.msg);
-        }
+          if (res.success) { FmsToast.show('Расход подтверждён', 'ok'); setPage('/head_nurse/total/patients/info.s?id=${obj.id}'); }
+          else { FmsToast.show(res.msg, 'err'); $('#tpConfBtn').prop('disabled', false); }
+        },
+        error: function () { $('#tpConfBtn').prop('disabled', false); }
       });
-    }
+    }, {ok: 'Подтвердить'});
   }
   function updateDrugs() {
-    if(confirm('Дейтвительно хотите препараты с бухгалтерией?')) {
+    FmsConfirm('Пересчитать препараты для бухгалтерии по подтверждённым дням?', function () {
+      $('#tpUpdBtn').prop('disabled', true);
       $.ajax({
-        url: '/head_nurse/total/patients/update.s',
-        data: 'id=${parent.id}',
-        method: 'post',
-        dataType: 'json',
+        url: '/head_nurse/total/patients/update.s', data: 'id=${parent.id}', method: 'post', dataType: 'json',
         success: function (res) {
-          if (res.success) {
-            alert('Данные успешно сохранены');
-            parent.setPage('/head_nurse/total/patients/info.s?id=${obj.id}');
-          } else
-            alert(res.msg);
-        }
+          if (res.success) { FmsToast.show('Препараты пересчитаны', 'ok'); setPage('/head_nurse/total/patients/info.s?id=${obj.id}'); }
+          else FmsToast.show(res.msg, 'err');
+        },
+        complete: function () { $('#tpUpdBtn').prop('disabled', false); }
       });
-    }
+    }, {ok: 'Пересчитать'});
   }
 </script>

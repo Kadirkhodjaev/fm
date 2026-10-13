@@ -8,7 +8,7 @@
   Данные каждой вкладки JS берёт POST-запросом с /boss/data.s?tab=<вкладка>, когда вкладку открывают (формат в README.md).
   JS лежит в отдельных файлах: в JSP запись ${...} внутри JS была бы съедена EL.
 --%>
-<link href="/res/boss/boss.css?v=8" rel="stylesheet">
+<link href="/res/boss/boss.css?v=9" rel="stylesheet">
 <%-- Страница вставляется в #mainWindow через jQuery, и jQuery сам скачивает эти скрипты по XHR: атрибут charset тогда не действует,
      текст декодируется по Content-Type сервера. Поэтому для скриптов модуля явно просим UTF-8 (файлы к тому же сохранены с BOM). --%>
 <script>
@@ -17,15 +17,15 @@
     jQuery.ajaxPrefilter('script', function (o) { if (o.url && o.url.indexOf('/res/boss/') !== -1) o.mimeType = 'text/javascript; charset=UTF-8'; });
   }
 </script>
-<script src="/res/boss/rp.js?v=8" charset="UTF-8"></script>
-<script src="/res/boss/boss.js?v=8" charset="UTF-8"></script>
+<script src="/res/boss/rp.js?v=9" charset="UTF-8"></script>
+<script src="/res/boss/boss.js?v=11" charset="UTF-8"></script>
 
 <div class="fms-ruk" id="fmsRuk">
   <div class="head">
     <div>
       <div class="crumb"><a href="#">Разделы</a> / Управление</div>
       <h1>Руководство и учредители</h1>
-      <p>Деньги, койки и приём клиники за <span data-rk="periodLabel"></span>. Суммы в млн сум.</p>
+      <p>Деньги, койки и приём клиники за <span data-rk="periodLabel"></span>. Суммы в тыс. сум.</p>
     </div>
     <div class="spacer"></div>
     <span class="sample" data-rk="sample" hidden>Пример данных. Реальные цифры придут из MedOnline</span>
@@ -46,6 +46,7 @@
     <button type="button" role="tab" data-t="amb">Амбулатория</button>
     <button type="button" role="tab" data-t="drug">Медикаменты</button>
     <button type="button" role="tab" data-t="doc">Врачи и партнёры</button>
+    <button type="button" role="tab" data-t="clients">Клиенты</button>
   </nav>
 
   <div data-rk-body>
@@ -59,7 +60,7 @@
       </div>
       <div class="card c12">
         <h3>Поступления в кассу по месяцам</h3>
-        <p class="sub">Оплаты стационара и амбулатории в кассе, млн сум. Серым выделен выбранный период, пунктиром прошлый. Наведите на график, чтобы увидеть суммы.</p>
+        <p class="sub">Оплаты стационара и амбулатории в кассе, тыс. сум. Серым выделен выбранный период, пунктиром прошлый. Наведите на график, чтобы увидеть суммы.</p>
         <div class="legend"><span><i style="background:var(--s1)"></i>Стационар</span><span><i style="background:var(--s2)"></i>Амбулатория</span></div>
         <svg class="chart" data-rk="trend" viewBox="0 0 1200 250" role="img" aria-label="Поступления стационара и амбулатории за 12 месяцев"></svg>
       </div>
@@ -79,7 +80,7 @@
       </div>
       <div class="card c6">
         <h3>Скидки по типам</h3>
-        <p class="sub">Тип скидки пациента и ручные скидки в кассе, млн сум</p>
+        <p class="sub">Тип скидки пациента и ручные скидки в кассе, тыс. сум</p>
         <div class="hbar" data-rk="disc"></div>
       </div>
       <div class="card c12">
@@ -134,17 +135,17 @@
       <div class="c12 kpis k5" data-rk="drugKpis"></div>
       <div class="card c12">
         <h3>Медикаменты по отделениям</h3>
-        <p class="sub">Выдано на пост и списано в акты пациентов по цене аптеки, млн сум. Разница не попала ни в акты, ни в остаток поста.</p>
+        <p class="sub">Выдано на пост и списано в акты пациентов по цене аптеки, тыс. сум. Разница не попала ни в акты, ни в остаток поста. Кабинеты и списание без отделения сюда не входят. Акт считается по дате выписки, поэтому за короткий период в акты может уйти больше, чем выдано: расходуются остатки поста.</p>
         <div class="tw"><table data-rk="drugDeps"></table></div>
       </div>
       <div class="card c7">
         <h3>Препараты с наибольшим расходом</h3>
-        <p class="sub">Топ-8 по сумме расхода за период, млн сум</p>
+        <p class="sub">Топ-8 по сумме расхода за период, тыс. сум</p>
         <div class="tw"><table data-rk="drugTop"></table></div>
       </div>
       <div class="card c5">
         <h3>По типу назначения</h3>
-        <p class="sub">Из листов назначений, млн сум</p>
+        <p class="sub">Назначения врачей за период, штук</p>
         <div class="hbar" data-rk="drugTypes"></div>
         <h3 style="margin-top:20px">Чьи препараты</h3>
         <p class="sub">«Свой» значит, что пациент принёс препарат сам и в акт он не попадает</p>
@@ -156,14 +157,19 @@
     <section data-panel="doc" class="grid" hidden>
       <div class="card c12">
         <h3>Врачи</h3>
-        <p class="sub">Услуги, выручка и вознаграждение по проценту из карточки услуги, млн сум</p>
+        <p class="sub">Услуги, выручка и вознаграждение по проценту из карточки услуги, тыс. сум</p>
         <div class="tw"><table data-rk="docs"></table></div>
       </div>
       <div class="card c12">
         <h3>Партнёры-направители</h3>
-        <p class="sub">По коду отправителя при регистрации и проценту для партнёров из группы услуг, млн сум</p>
+        <p class="sub">По коду отправителя при регистрации и проценту для партнёров из группы услуг, тыс. сум</p>
         <div class="tw"><table data-rk="partners"></table></div>
       </div>
+    </section>
+
+    <!-- КЛИЕНТЫ: клиентская база и финансовый анализ клиента (/boss/clients/*), не зависит от периода -->
+    <section data-panel="clients" hidden>
+      <div id="bossClients"><div class="loading"><span class="spin" aria-hidden="true"></span>Загружаю клиентов…</div></div>
     </section>
   </div>
 </div>
@@ -173,4 +179,21 @@
     today: '<fmt:formatDate value="${today}" pattern="dd.MM.yyyy"/>',
     dataFrom: '<fmt:formatDate value="${dataFrom}" pattern="dd.MM.yyyy"/>'
   });
+
+  // Вкладка «Клиенты» грузит свои страницы (список и карточку клиента) внутрь себя
+  function bossCl(url) {
+    $('#bossClients').load(url);
+  }
+  (function () {
+    var root = document.getElementById('fmsRuk');
+    var filters = root.querySelector('.filters');
+    var loaded = false;
+    function sync() {
+      var on = !root.querySelector('[data-panel="clients"]').hidden;
+      if (filters) filters.style.display = on ? 'none' : '';   // период к клиентам не относится
+      if (on && !loaded) { loaded = true; bossCl('/boss/clients/list.s'); }
+    }
+    root.querySelectorAll('.tabs button').forEach(function (b) { b.addEventListener('click', function () { setTimeout(sync, 0); }); });
+    sync();
+  })();
 </script>

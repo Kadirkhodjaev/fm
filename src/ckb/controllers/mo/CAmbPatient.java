@@ -229,7 +229,7 @@ public class CAmbPatient {
       pat.setMiddlename(c.getMiddlename());
       pat.setBirthyear(c.getBirthyear());
       pat.setSex(c.getSex());
-      pat.setTel(Util.get(req, "tel"));
+      pat.setTel(ckb.utils.Phone.format(Util.get(req, "tel")));
       pat.setCounteryId(c.getCountry().getId());
       pat.setRegionId(c.getRegion().getId());
       pat.setFizio(Util.nvl(req, "fizio", "N"));

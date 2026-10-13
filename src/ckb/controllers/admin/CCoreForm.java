@@ -9,6 +9,7 @@ import ckb.domains.admin.SelOpts;
 import ckb.session.Session;
 import ckb.session.SessionUtil;
 import ckb.utils.BeanSession;
+import ckb.utils.DB;
 import ckb.utils.Req;
 import ckb.utils.Util;
 import org.codehaus.jettison.json.JSONException;
@@ -21,8 +22,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/core/form")
@@ -39,7 +45,59 @@ public class CCoreForm {
     session.setCurUrl("/core/form/list.s");
     model.addAttribute("forms", dForm.getAll());
     model.addAttribute("debug", beanSession.getParam("IS_DEBUG").equals("Y"));
+    // number of fields and where each form is used (outpatient services / lab KDO)
+    model.addAttribute("fieldCounts", counts("Select Form_Id, Count(*) From Form_Fields Group By Form_Id"));
+    model.addAttribute("ambUse", counts("Select form_id, Count(*) From Amb_Services Where form_id Is Not Null Group By form_id"));
+    model.addAttribute("kdoUse", counts("Select formId, Count(*) From Kdos Where formId Is Not Null Group By formId"));
     return "/core/forms/index";
+  }
+
+  private Map<Integer, Long> counts(String sql) {
+    Map<Integer, Long> map = new HashMap<>();
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      conn = DB.getConnection();
+      ps = conn.prepareStatement(sql);
+      rs = ps.executeQuery();
+      while (rs.next()) map.put(rs.getInt(1), rs.getLong(2));
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      DB.done(conn, ps, rs);
+    }
+    return map;
+  }
+
+  // create (no id) or edit a form
+  @RequestMapping(value = "/save.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String saveForm(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      String name = Util.nvl(req.getParameter("name")).trim();
+      if (name.isEmpty()) return Util.err(json, "EMPTY_NAME");
+      Forms form = Util.isNull(req, "id") ? new Forms() : dForm.get(Util.getInt(req, "id"));
+      form.setName(name);
+      form.setAmb("Y".equals(Util.get(req, "amb")) ? "Y" : null);
+      form.setType(Util.isNull(req, "type") ? 1 : Util.getInt(req, "type"));
+      form.setJsp(Util.nvl(req.getParameter("jsp")).trim().isEmpty() ? null : req.getParameter("jsp").trim());
+      form.setResult(Util.nvl(req.getParameter("result")).trim().isEmpty() ? null : req.getParameter("result").trim());
+      form.setNormaFlag("Y".equals(Util.get(req, "norma_flag")) ? "Y" : "N");
+      form.setEiFlag("Y".equals(Util.get(req, "ei_flag")) ? "Y" : "N");
+      form.setCodeFlag("Y".equals(Util.get(req, "code_flag")) ? "Y" : "N");
+      form.setShapka("Y".equals(Util.get(req, "shapka")));
+      form.setShapka_left(Util.nvl(req.getParameter("shapka_left")));
+      form.setShapka_right(Util.nvl(req.getParameter("shapka_right")));
+      form = dForm.saveAndReturn(form);
+      json.put("id", form.getId());
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
   }
 
   @RequestMapping(value = "/get.s", method = RequestMethod.POST)
@@ -52,6 +110,14 @@ public class CCoreForm {
       json.put("form_name", d.getName());
       json.put("ei_flag", d.getEiFlag());
       json.put("norma_flag", d.getNormaFlag());
+      json.put("code_flag", d.getCodeFlag());
+      json.put("amb", d.getAmb());
+      json.put("type", d.getType());
+      json.put("jsp", Util.nvl(d.getJsp()));
+      json.put("result", Util.nvl(d.getResult()));
+      json.put("shapka", d.isShapka());
+      json.put("shapka_left", Util.nvl(d.getShapka_left()));
+      json.put("shapka_right", Util.nvl(d.getShapka_right()));
       json.put("success", true);
     } catch (Exception e) {
       json.put("success", false);
@@ -71,6 +137,24 @@ public class CCoreForm {
       form.setType(1);
       form.setEiFlag(Util.get(req, "ei_flag", "N"));
       form.setNormaFlag(Util.get(req, "norma_flag", "N"));
+      form.setCodeFlag(Util.get(req, "code_flag", "N"));
+      dForm.save(form);
+      json.put("success", true);
+    } catch (Exception e) {
+      json.put("success", false);
+      json.put("msg", e.getMessage());
+    }
+    return json.toString();
+  }
+
+  // form-level "Code" column: Y - shown in the input and print forms
+  @RequestMapping(value = "/codeFlag.s", method = RequestMethod.POST)
+  @ResponseBody
+  protected String codeFlag(HttpServletRequest req) throws JSONException {
+    JSONObject json = new JSONObject();
+    try {
+      Forms form = dForm.get(Util.getInt(req, "id"));
+      form.setCodeFlag("Y".equals(Util.get(req, "code_flag")) ? "Y" : "N");
       dForm.save(form);
       json.put("success", true);
     } catch (Exception e) {
@@ -85,7 +169,7 @@ public class CCoreForm {
     int formId = Req.getInt(request, "formId");
     Session session = SessionUtil.getUser(request);
     session.setCurUrl("/core/form/fields.s?formId=" + formId);
-    model.addAttribute("fields", dFormField.getFiledsByForm(formId));
+    model.addAttribute("fields", dFormField.getList("From FormFields t Where t.form.id = " + formId + " Order By t.ord, t.id"));
     model.addAttribute("form", dForm.get(formId));
     return "/core/forms/fields";
   }
@@ -159,6 +243,7 @@ public class CCoreForm {
       f.setTextRows(Req.getInt(req, "textRows"));
       f.setOrd(Util.isNull(req, "ord") ? null : Util.getInt(req, "ord"));
       f.setResFlag(Util.nvl(Req.get(req, "resFlag"), "N"));
+      f.setCodes(Req.get(req, "codes"));
       dFormField.save(f);
       List<SelOpts> opts = f.getOpts();
       SelOpts val = new SelOpts();

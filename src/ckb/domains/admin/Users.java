@@ -6,6 +6,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
+@org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "Users")
 public class Users extends GenId {
 
@@ -40,6 +41,7 @@ public class Users extends GenId {
   private Depts dept;
 
   @ManyToMany(fetch = FetchType.EAGER)
+  @org.hibernate.annotations.Cache(usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE)
   @JoinTable(name="User_Roles")
   private List<Roles> roles;
 
