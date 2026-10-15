@@ -19,7 +19,7 @@
           method: 'post',
           dataType: 'json',
           success: function (res) {
-            alert(res.msg);
+            if (res.success && top.openMedMsg) top.openMedMsg(res.msg, true); else top.alert(res.msg);
           }
         });
       }

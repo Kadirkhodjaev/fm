@@ -60,7 +60,11 @@
   .tg-sum .bar { width:46px; height:6px; border-radius:3px; background:#EEF0F3; overflow:hidden; flex:none; }
   .tg-sum .bar i { display:block; height:100%; background:#22A55B; border-radius:3px; }
   .tg-sum.part .bar i { background:#D97706; }
-  .tg-sum .offs { color:#9AA1AC; font-weight:500; overflow:hidden; text-overflow:ellipsis; }
+  /* отключённые типы — отдельной строкой под сводкой, мелкими метками с переносом */
+  .tg-offs { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; max-width:420px; }
+  .tg-offs span { display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:999px; background:#F3F4F6; color:#6B7280; font-size:11.5px; line-height:18px; }
+  .tg-offs span .fa { font-size:10px; color:#B0B6BF; }
+  .tg-kmode .tg-offs { display:none; }
   .tg-kinds { display:none; }
   .tg-kmode .tg-sum { display:none; }
   .tg-kmode .tg-kinds { display:block; }
@@ -184,6 +188,7 @@
               <c:choose>
                 <c:when test="${anyKind}">
                   <button type="button" class="tg-sum" onclick="tgSettings(this)" title="Настроить уведомления"></button>
+                  <div class="tg-offs"></div>
                   <div class="tg-kinds">
                     <c:forEach items="${r.kinds}" var="k">
                       <c:if test="${k.applies}">
@@ -291,16 +296,16 @@
       complete: function(){ if (done) done(); }
     });
   }
-  // сводка в строке: «4 из 4» или «3 из 4 · откл.: Вопрос пациента»
+  // сводка в строке: «4 из 4» или «3 из 4», отключённые типы метками под ней
   function tgSum(row){
     var chips = row.find('.tg-kinds .tg-chip'), on = chips.filter('.on').length, all = chips.length, offs = [];
     if (!all) return;
     chips.filter('.off').each(function(){ offs.push($(this).data('name')); });
     var b = row.find('.tg-sum').removeClass('part none').addClass(on == all ? '' : (on ? 'part' : 'none'));
     b.html('<i class="fa ' + (on ? 'fa-bell' : 'fa-bell-slash') + '"></i><span>' + (on == all ? 'Все ' + all : on + ' из ' + all) + '</span>' +
-      '<span class="bar"><i style="width:' + Math.round(on * 100 / all) + '%"></i></span>' +
-      (offs.length ? '<span class="offs"></span>' : ''));
-    if (offs.length) b.find('.offs').text('откл.: ' + offs.join(', '));
+      '<span class="bar"><i style="width:' + Math.round(on * 100 / all) + '%"></i></span>');
+    var box = row.find('.tg-offs').empty();
+    offs.forEach(function (n) { box.append($('<span title="Отключено"><i class="fa fa-bell-slash"></i></span>').append(document.createTextNode(n))); });
     b.attr('title', 'Настроить уведомления' + (offs.length ? '\nОтключено: ' + offs.join(', ') : ''));
   }
   // окно настроек пользователя: переключатель на каждый тип

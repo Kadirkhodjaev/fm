@@ -424,6 +424,24 @@ public class Util {
     return dateDB(dateToString(date));
   }
 
+  // ƒни с from по to включительно (врем€ отбрасываетс€). Ќе больше max дней: защита от бесконечного цикла,
+  // который раньше получалс€, когда у даты начала было врем€, а у последнего дн€ нет (сервер падал по пам€ти).
+  public static List<Date> dayList(Date from, Date to, int max) {
+    List<Date> list = new ArrayList<Date>();
+    if(from == null || to == null) return list;
+    Calendar c = Calendar.getInstance();
+    c.setTime(to);
+    c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
+    Date last = c.getTime();
+    c.setTime(from);
+    c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
+    while(!c.getTime().after(last) && list.size() < max) {
+      list.add(c.getTime());
+      c.add(Calendar.DATE, 1);
+    }
+    return list;
+  }
+
   public static int getInt(HttpServletRequest req, String name, int def) {
     return req.getParameter(name) == null || req.getParameter(name).isEmpty() ? def : Integer.parseInt(req.getParameter(name));
   }

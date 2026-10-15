@@ -7,7 +7,7 @@
 <link href="/res/css/styles.css" rel="stylesheet">
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101501" type="text/javascript"></script>
 <style>
   .fz { --brand:#D7182E; --text:#1F2430; --muted:#6B7280; --border:#E6E8EC; --ok:#15803D; --ok-bg:#E8F7EE; --bad:#B91C1C; --bad-bg:#FDECEE;
     padding:16px 20px 28px; color:var(--text); font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }

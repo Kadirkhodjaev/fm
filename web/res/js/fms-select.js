@@ -18,6 +18,8 @@
   };
   var LIMIT = 300;
   var open = null, all = [];
+  // phone or tablet: finger instead of mouse (the screen keyboard changes the window size)
+  var TOUCH = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
   // keeps the field text in sync with the hidden select; drops fields that left the page
   setInterval(function () {
     for (var i = all.length - 1; i >= 0; i--) if (!all[i].sync()) all.splice(i, 1);
@@ -127,13 +129,23 @@
       load();
       input.value = '';
       wrap.classList.add('on');
-      // open upwards when there is no room below
-      var r = wrap.getBoundingClientRect();
-      var up = window.innerHeight - r.bottom < 300 && r.top > window.innerHeight - r.bottom;
-      wrap.classList.toggle('up', up);
       // the list is fixed to the window, so tables and cards with overflow:hidden do not cut it off
       // into the body (or the bootstrap modal itself: its focus trap would steal focus from the search box)
       ((wrap.closest && wrap.closest('.modal')) || document.body).appendChild(drop);
+      place();
+      render();
+      open = api;
+      // on a phone or tablet the keyboard is not opened by itself: the list is visible at once, tap the search box to type
+      if (!TOUCH) setTimeout(function () { input.focus(); }, 0);
+    }
+    // position of the fixed list next to the field (again after the screen keyboard opens or the page scrolls)
+    function place() {
+      // open upwards when there is no room below
+      var r = wrap.getBoundingClientRect();
+      var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      var up = vh - r.bottom < 300 && r.top > vh - r.bottom;
+      wrap.classList.toggle('up', up);
+      list.style.maxHeight = Math.max(120, Math.min(300, (up ? r.top : vh - r.bottom) - 70)) + 'px';
       drop.style.display = 'block';
       drop.style.zIndex = '2100';
       drop.style.position = 'fixed';
@@ -142,9 +154,6 @@
       drop.style.right = 'auto';
       drop.style.top = up ? 'auto' : (r.bottom + 6) + 'px';
       drop.style.bottom = up ? (window.innerHeight - r.top + 6) + 'px' : 'auto';
-      render();
-      open = api;
-      setTimeout(function () { input.focus(); }, 0);
     }
     function close() {
       wrap.classList.remove('on');
@@ -179,7 +188,7 @@
     // old pages refresh chosen after changing options or value: keep the button text in sync
     if (window.jQuery) window.jQuery(sel).on('liszt:updated chosen:updated', function () { load(); label(); });
 
-    var api = {close: close, refresh: function () { load(); label(); },
+    var api = {close: close, place: place, typing: function () { return document.activeElement === input; }, refresh: function () { load(); label(); },
       // value, options or disabled changed from code without a change event (form.reset(), sel.value = ...)
       sync: function () {
         var o = sel.options[sel.selectedIndex];
@@ -199,11 +208,14 @@
     if (open && !(e.target.closest && e.target.closest('.fms-sel.on, .fms-sel-drop'))) open.close();
   });
 
-  // the open list is fixed to the window: scrolling the page or resizing closes it
+  // the open list is fixed to the window: scrolling the page or resizing closes it.
+  // While typing in the search box the screen keyboard of a phone/tablet resizes and scrolls the page: then the list only moves.
   window.addEventListener('scroll', function (e) {
-    if (open && !(e.target && e.target.closest && e.target.closest('.fms-sel-drop'))) open.close();
+    if (!open || (e.target && e.target.closest && e.target.closest('.fms-sel-drop'))) return;
+    if (TOUCH || open.typing()) open.place(); else open.close();
   }, true);
-  window.addEventListener('resize', function () { if (open) open.close(); });
+  window.addEventListener('resize', function () { if (open) { if (TOUCH || open.typing()) open.place(); else open.close(); } });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { if (open && (TOUCH || open.typing())) open.place(); });
 
   window.FmsSelect = {attach: attach, attachAll: attachAll};
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { attachAll(); });

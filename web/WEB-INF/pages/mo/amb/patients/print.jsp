@@ -8,7 +8,7 @@
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <html>
 <head>
-  <title>Медицинская система</title>
+  <title>MedOnline</title>
   <script>
     function getPrint(){
       frm.print();

@@ -43,7 +43,9 @@
   .kb-fhead .nm { flex:1; font-weight:700; font-size:14px; }
   .kb-fhead .m { font-size:12px; color:#6B7280; white-space:nowrap; }
   .kb-fhead a { font-size:12px; color:#6B7280; }
-  .kb-fbody { padding:6px 10px 10px; font-size:13px; }
+  .kb-fbody { padding:6px 10px 10px; font-size:13px; overflow-x:auto; }
+  /* широкий бланк (много столбцов, например антибиотикограмма) занимает всю строку; если и так не влезает - прокрутка, а не обрезка */
+  .kb-form.wide { grid-column:1 / -1; }
   .kb-fbody table { width:100% !important; border-collapse:collapse; }
   .kb-fbody td { padding:3px 6px !important; border:0 !important; border-bottom:1px solid #F0F1F4 !important; background:none !important; font-size:13px; }
   .kb-fbody tr:first-child td { color:#6B7280; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
@@ -224,6 +226,12 @@
       n += forms.filter(function () { return $(this).attr('data-done') == 'Y' || ($(this).data('loaded') && hasVal($(this))); }).length;
       $('#kbFilled').text(n);
     }
+    // бланк шире своей колонки: карточка на всю строку (проверяем ещё раз, когда подгрузятся шрифты и картинки)
+    function fitWide(card, body) {
+      var check = function () { if (body[0].scrollWidth > body[0].clientWidth + 2) card.addClass('wide'); };
+      check();
+      setTimeout(check, 300);
+    }
     // бланк фрагментом: таблица полей + данные; значения раскладываются по полям этого блока
     forms.each(function () {
       var f = $(this), body = f.find('.kb-fbody');
@@ -236,6 +244,7 @@
           body.find('script').remove();
           fields(f).each(function () { if (d[this.name] != null) $(this).val(d[this.name]); });
           if (f.attr('data-done') == 'Y') fields(f).prop('disabled', true).attr('title', 'Результат подтверждён');
+          fitWide(f, body);
           f.data('loaded', true).data('o', ser(f));
           markForm(f);
           count();

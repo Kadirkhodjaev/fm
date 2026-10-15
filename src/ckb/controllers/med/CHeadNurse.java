@@ -40,6 +40,7 @@ import ckb.domains.med.nurse.eat.NurseEats;
 import ckb.domains.med.patient.PatientDrugRows;
 import ckb.domains.med.patient.PatientDrugs;
 import ckb.domains.med.patient.PatientEats;
+import ckb.domains.med.patient.PatientWatchers;
 import ckb.domains.med.patient.Patients;
 import ckb.models.Obj;
 import ckb.models.ObjList;
@@ -106,6 +107,7 @@ public class CHeadNurse {
   @Autowired private DEatMenuType dEatMenuType;
   @Autowired private DNurseEats dNurseEat;
   @Autowired private DNurseEatPatient dNurseEatPatient;
+  @Autowired private DPatientWatchers dPatientWatchers;
   @Autowired private DEatTable dEatTable;
   @Autowired private DPatientEat dPatientEat;
 
@@ -1912,6 +1914,7 @@ public class CHeadNurse {
             pat.setNurseEat(eat);
             pat.setTable(patient.getTable());
             dNurseEatPatient.save(pat);
+            addWatchers(eat, pat);
           }
         }
         //
@@ -1926,6 +1929,35 @@ public class CHeadNurse {
       json.put("msg", e.getMessage());
     }
     return json.toString();
+  }
+
+  private static final String WATCHER_PREFIX = "Ухаживающий — ";
+
+  // Ухаживающий пациента (регистрация, кроме «Брони») получает питание за тем же столом, что и пациент,
+  // на дни с даты поступления по количеству дней, указанному в регистратуре
+  private void addWatchers(NurseEats eat, NurseEatPatients pat) {
+    Patients p = pat.getPatient();
+    if (p == null || p.getDateBegin() == null || eat.getActDate() == null) return;
+    String day = Util.dateToString(eat.getActDate());
+    for (PatientWatchers w : dPatientWatchers.byPatient(p.getId())) {
+      if (w.getType() != null && w.getType().getId() == 8) continue;
+      if (w.getDayCount() == null || w.getDayCount() <= 0) continue;
+      boolean in = false;
+      for (Date d : Util.dayList(p.getDateBegin(), p.getDateBegin(), 1)) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        for (int i = 0; i < w.getDayCount() && !in; i++) {
+          if (Util.dateToString(c.getTime()).equals(day)) in = true;
+          c.add(Calendar.DATE, 1);
+        }
+      }
+      if (!in) continue;
+      NurseEatPatients np = new NurseEatPatients();
+      np.setComment(WATCHER_PREFIX + p.getYearNum() + " " + Util.nvl(p.getSurname()) + " " + Util.nvl(p.getName()) + " " + Util.nvl(p.getMiddlename()));
+      np.setNurseEat(eat);
+      np.setTable(pat.getTable());
+      dNurseEatPatient.save(np);
+    }
   }
 
   @RequestMapping(value = "eat/del.s", method = RequestMethod.POST)
@@ -1991,6 +2023,9 @@ public class CHeadNurse {
     try {
       NurseEats eat = dNurseEat.get(Util.getInt(req, "id"));
       dNurseEatPatient.delPatientsByEat(eat.getId());
+      // строки ухаживающих тоже пересоздаём (ручные строки медсестры не трогаем)
+      for (NurseEatPatients old : dNurseEatPatient.getList("From NurseEatPatients Where nurseEat.id = " + eat.getId() + " And patient Is Null And comment Like '" + WATCHER_PREFIX + "%'"))
+        dNurseEatPatient.delete(old);
       //
       List<PatientEats> patients = dPatientEat.getList("From PatientEats Where patient.dept.id in (" + eat.getDept().getId() + ") And table.id > 0 And actDate = '" + Util.dateDB(Util.dateToString(eat.getActDate())) + "' And menuType.id = " + eat.getMenuType().getId());
       for (PatientEats patient : patients) {
@@ -2000,6 +2035,7 @@ public class CHeadNurse {
           pat.setNurseEat(eat);
           pat.setTable(patient.getTable());
           dNurseEatPatient.save(pat);
+          addWatchers(eat, pat);
         }
       }
       //
@@ -2028,6 +2064,7 @@ public class CHeadNurse {
           pat.setNurseEat(eat);
           pat.setTable(patient.getTable());
           dNurseEatPatient.save(pat);
+          addWatchers(eat, pat);
         }
       }
       json.put("success", true);
@@ -2080,48 +2117,14 @@ public class CHeadNurse {
     Patients patient = dPatient.get(Util.getInt(req, "id"));
     model.addAttribute("patient", patient);
     model.addAttribute("eat_id", Util.getInt(req, "eat_id"));
-    List<PatientEats> eats = dPatientEat.getPatientEat(patient.getId());
-    List<EatMenuTypes> menuTypes = dEatMenuType.getList("From EatMenuTypes Where state = 'A'");
-    if(eats == null || eats.isEmpty()) {
-      eats = new ArrayList<>();
-      int count = patient.getDayCount();
-      if(patient.getDateEnd() != null && patient.getDateEnd().after(patient.getDateBegin())) {
-        count = Integer.parseInt("" + ((patient.getDateEnd().getTime() - patient.getDateBegin().getTime()) / (1000 * 60 * 60 * 24))) + 1;
-      }
-      List<Date> dates = Util.getDateArray(patient.getDateBegin(), count);
-      for(Date date: dates) {
-        for(EatMenuTypes menuType: menuTypes) {
-          PatientEats eat = new PatientEats();
-          eat.setActDate(date);
-          eat.setPatient(patient);
-          eat.setTable(null);
-          eat.setMenuType(menuType);
-          eat.setState("ENT");
-          dPatientEat.save(eat);
-          eats.add(eat);
-        }
-      }
-    } else {
-      if(patient.getDateEnd() != null && patient.getDateEnd().after(patient.getDateBegin())) {
-        Date maxDate = eats.get(eats.size() - 1).getActDate();
-        int count = Integer.parseInt("" + ((patient.getDateEnd().getTime() - patient.getDateBegin().getTime()) / (1000 * 60 * 60 * 24))) + 1;
-        List<Date> dates = Util.getDateArray(maxDate, count - (eats.size() / menuTypes.size()) + 1);
-        for (Date date : dates) {
-          if (maxDate.getTime() != date.getTime()) {
-            for (EatMenuTypes menuType : menuTypes) {
-              PatientEats eat = new PatientEats();
-              eat.setActDate(date);
-              eat.setPatient(patient);
-              eat.setTable(null);
-              eat.setMenuType(menuType);
-              eat.setState("ENT");
-              dPatientEat.save(eat);
-              eats.add(eat);
-            }
-          }
-        }
-      }
+    // питание по датам лечения: день регистрации без завтрака, день выписки (регистрация + дни - 1) до выбранного времени ухода;
+    // недостающие дни в конце добавляются, лишние неподтверждённые убираются (ckb.services.med.patient.DayCount)
+    try {
+      ckb.services.med.patient.DayCount.shapeEats(patient.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+    List<PatientEats> eats = dPatientEat.getPatientEat(patient.getId());
     model.addAttribute("eats", eats);
     model.addAttribute("tables", dEatTable.getList("From EatTables Where state = 'A'"));
     //

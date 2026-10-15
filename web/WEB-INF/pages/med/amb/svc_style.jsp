@@ -15,7 +15,10 @@
   .sv-st.done { background:#E3F6EC; color:#1E7A4C; }
   .sv-head { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid #F0F1F4; background:#FAFBFC; }
   .sv-head h3 { flex:1; margin:0; font-size:15px; font-weight:700; }
-  .sv-body { padding:8px 14px 14px; font-size:13px; }
+  .sv-body { padding:8px 14px 14px; font-size:13px; overflow-x:auto; }
+  /* широкий бланк: на услуге - колонка бланка на всю ширину, в пакетном вводе - карточка на всю строку; если и так не влезает - прокрутка */
+  .sv-wrap.wide { grid-template-columns:300px minmax(0, 1fr); }
+  .ab-form.wide { grid-column:1 / -1; }
   .sv-body table { width:100% !important; border-collapse:collapse; border:0 !important; }
   .sv-body td { padding:4px 8px !important; border:0 !important; border-bottom:1px solid #F0F1F4 !important; background:none !important; font-size:13px; text-align:left !important; }
   .sv-body tr:first-child td { color:#6B7280; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
@@ -52,6 +55,13 @@
         form.removeAttr('id').addClass('sv-form').on('submit', function () { return false; });
         body.empty().append(form);
         form.find('input[name], select[name], textarea[name]').each(function () { if (this.name != 'id' && d[this.name] != null) $(this).val(d[this.name]); });
+        var wide = function () {
+          if (body[0].scrollWidth <= body[0].clientWidth + 2) return;
+          body.closest('.sv-wrap').addClass('wide');
+          body.closest('.ab-form').addClass('wide');
+        };
+        wide();
+        setTimeout(wide, 300);
         if (cb) cb();
       },
       error: function () { body.html('<div class="sv-load">Бланк не открылся</div>'); }

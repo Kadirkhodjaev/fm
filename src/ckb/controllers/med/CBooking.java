@@ -242,12 +242,12 @@ public class CBooking {
           List<ObjList> list = new ArrayList<>();
           while (rs.next()) {
             if(Util.isNotNull(req,"emptyDate")) {
-              Date vypiska = Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count"));
+              Date vypiska = Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count") - 1);
               if(vypiska.before(Util.stringToDate(emptyDate)) || vypiska.equals(Util.stringToDate(emptyDate)))
                 continue;
             }
             if(Util.isNotNull(req, "vypDate")) {
-              Date vypiska = Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count"));
+              Date vypiska = Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count") - 1);
               if(!vypiska.equals(Util.stringToDate(vypDate)))
                 continue;
             }
@@ -256,7 +256,7 @@ public class CBooking {
             obj.setFio(rs.getString("surname") + " " + rs.getString("name"));
             obj.setIb(rs.getString("yearnum"));
             obj.setDate(Util.dateToString(rs.getDate("date_begin")));
-            obj.setC1(Util.dateToString(Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count"))));
+            obj.setC1(Util.dateToString(Util.dateAddDay(rs.getDate("date_begin"), rs.getInt("day_count") - 1)));
             obj.setC2("cr");
             obj.setC10(room.getName() + " - " + room.getRoomType().getName());
             list.add(obj);
@@ -463,7 +463,7 @@ public class CBooking {
       rs = ps.executeQuery();
       while (rs.next()) {
         Date from = rs.getDate("date_begin");
-        Date to = Util.dateAddDay(from, rs.getInt("day_count"));
+        Date to = Util.dateAddDay(from, rs.getInt("day_count") - 1); // discharge = registration + days - 1: the bed is free from the discharge day
         // planned discharge has passed but the patient is still here: the bed is taken today
         boolean over = !to.after(today);
         if(over) to = Util.dateAddDay(today, 1);

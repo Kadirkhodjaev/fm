@@ -4,12 +4,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <link href="/res/quill/quill.snow.css" rel="stylesheet">
 <script src="/res/quill/quill.js" type="text/javascript"></script>
+<script src="/res/quill/quill-fms.js?v=2026101501" type="text/javascript" charset="UTF-8"></script>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <link href="/res/css/styles.css" rel="stylesheet">
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet">
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101501" type="text/javascript"></script>
 <script src="/res/js/fms-templates.js?v=4" type="text/javascript" charset="UTF-8"></script>
 <script src="/res/js/fms-calendar.js" type="text/javascript"></script>
 <style>

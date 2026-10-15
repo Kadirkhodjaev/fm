@@ -89,7 +89,7 @@
 <script>
   $(document).ready(function(){
     <c:if test="${authErr}">
-    alert('Время Вашей сессии истекло. Авторизуйтесь ещё раз!');
+    top.alert('Время Вашей сессии истекло. Авторизуйтесь ещё раз!');
     parent.location = 'login.s';
     </c:if>
     var fieldId = '${newFieldId}';
@@ -148,7 +148,7 @@
   }
 
   function printPage(){
-    alert('Print Page');
+    top.alert('Print Page');
   }
 
   function setPageNum(page){

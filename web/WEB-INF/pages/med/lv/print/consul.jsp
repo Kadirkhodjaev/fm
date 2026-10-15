@@ -8,6 +8,7 @@
 %>
 <c:set var="fs" value="${empty sessionScope.fontSize ? 14 : sessionScope.fontSize}"/>
 <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
   .osmp { width:100%; max-width:790px; margin:0 auto; font-family:Arial, 'Segoe UI', sans-serif; font-size:${fs}px; color:#000; line-height:1.4; }
   .osmp table { border-collapse:collapse; width:100%; }
   .osmp td { color:#000; vertical-align:top; }

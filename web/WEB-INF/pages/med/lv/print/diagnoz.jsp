@@ -13,6 +13,7 @@
 <c:set var="dx2Keys" value="c10,c11,c12"/>
 <c:set var="dxTitles" value="${fn:split('Асосий|Хамрох|Асорати', '|')}"/>
 <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
   .dxp { width:100%; max-width:790px; margin:0 auto; font-family:Arial, 'Segoe UI', sans-serif; font-size:${fs + 2}px; color:#000; line-height:1.35; }
   .dxp table { border-collapse:collapse; width:100%; }
   .dxp table, .dxp td { font-size:inherit; }

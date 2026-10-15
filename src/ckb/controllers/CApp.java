@@ -266,6 +266,9 @@ public class  CApp {
     Roles curRole = roleId > 0 ? dRole.get(roleId) : null;
     model.addAttribute("showMenu", (!m.isEmpty() && session.getCurPat() == 0) || (curRole != null && "Y".equals(curRole.getShowMenu())));
     model.addAttribute("showSearch", curRole != null && "Y".equals(curRole.getShowSearch()));
+    // role switcher in the header (as in nano): current role and all roles of the user
+    model.addAttribute("curRole", curRole);
+    model.addAttribute("userRoles", userRoles);
     model.addAttribute("isEnterFilter", beanSession.getParam("FILTER_WITH_ENTER").equals("Y"));
     model.addAttribute("session", session);
     model.addAttribute("clinicName", beanSession.getParam("CLINIC_NAME"));

@@ -73,7 +73,7 @@ function saveTemplate(field, fieldId) {
         method: 'post',
         dataType: 'json',
         success: function (res) {
-          alert(res.msg);
+          if (res.success) openMedMsg(res.msg, true); else errMsg(res.msg);
         }
       });
     }
@@ -196,7 +196,7 @@ function saveDrugTemplate(id){
       method: 'post',
       dataType: 'json',
       success: function (res) {
-        alert(res.msg);
+        if (res.success) openMedMsg(res.msg, true); else errMsg(res.msg);
       }
     });
   });
@@ -360,8 +360,24 @@ if (window.jQuery) {
   (document.head || document.documentElement).appendChild(st);
 
   var box = null;
+  // the notice of a page inside a frame is shown by the main window: a small frame would hide it,
+  // and it stays visible when the frame reloads right after the message
+  function topToast() {
+    try {
+      var t = window.top;
+      return t !== window && t.FmsToast && t.FmsToast.show ? t.FmsToast : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  var KEEP = 'fmsToastNext';
   function show(text, type) {
+    var top = topToast();
+    if (top) { top.show(text, type); return; }
     if (!document.body) return;
+    // the page may reload or go to another address right after the message: the next page shows it
+    try { sessionStorage.setItem(KEEP, JSON.stringify({t: String(text == null ? '' : text), k: type || 'ok', at: Date.now()})); } catch (e) {}
+    setTimeout(function () { try { sessionStorage.removeItem(KEEP); } catch (e) {} }, 1500);
     if (!box || !box.parentNode) { box = document.createElement('div'); box.id = 'fms-toasts'; document.body.appendChild(box); }
     type = type || 'ok';
     var el = document.createElement('div');
@@ -402,12 +418,21 @@ if (window.jQuery) {
   // success alerts (uspeshno, sokhranen, udalen, dobavlen, podtverzhden) go to a notice
   var OK_RE = /(\u0443\u0441\u043f\u0435\u0448\u043d\u043e|\u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d|\u0443\u0434\u0430\u043b\u0435\u043d|\u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d|\u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d)/i;
   var BAD_RE = /(\u043e\u0448\u0438\u0431\u043a|\u043d\u0435\u043b\u044c\u0437\u044f|\u043d\u0435 \u0443\u0434\u0430\u043b|\u043d\u0435 \u0441\u043e\u0445\u0440\u0430\u043d|error|exception)/i;
-  var nativeAlert = window.alert;
+  // every alert is a notice now: success in green, everything else (errors, "fill in the field") in red
   window.alert = function (msg) {
-    var s = String(msg == null ? '' : msg);
-    if (s.length < 160 && OK_RE.test(s) && !BAD_RE.test(s)) { show(s, 'ok'); return; }
-    return nativeAlert.call(window, msg);
+    var s = plain(msg instanceof Error ? msg.message : msg);
+    if (!s || s === 'null' || s === 'undefined') s = 'Произошла ошибка';
+    show(s, s.length < 160 && OK_RE.test(s) && !BAD_RE.test(s) ? 'ok' : 'err');
   };
+  // a notice left by the previous page (it reloaded right after the message)
+  function showKept() {
+    var k = null;
+    try { k = JSON.parse(sessionStorage.getItem(KEEP) || 'null'); sessionStorage.removeItem(KEEP); } catch (e) {}
+    if (k && Date.now() - k.at < 6000) show(k.t, k.k);
+  }
+  if (!topToast()) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showKept); else showKept();
+  }
 })(window, document);
 
 /*

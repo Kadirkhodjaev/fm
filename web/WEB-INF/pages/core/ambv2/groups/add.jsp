@@ -3,7 +3,7 @@
 <%@include file="/WEB-INF/pages/core/skin.jsp"%>
 <div class="fm-skin">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
-<script src="/res/js/common.js?v=2026101309"></script>
+<script src="/res/js/common.js?v=2026101501"></script>
 <script>
   function doSave() {
     if (checkForm($('#bf'))) {

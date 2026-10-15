@@ -5,7 +5,7 @@
 <div class="fm-skin">
 <script src="/res/datepicker/datetimepicker_css.js"></script>
 <script src="/res/js/jquery.mask.js"></script>
-<script src="/res/js/common.js?v=2026101309"></script>
+<script src="/res/js/common.js?v=2026101501"></script>
 <div class="modal-body">
   <form id="field_settings">
     <table class="w-100 light-table">

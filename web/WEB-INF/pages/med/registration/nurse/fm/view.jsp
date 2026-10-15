@@ -3,7 +3,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="f" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101501" type="text/javascript"></script>
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
@@ -294,6 +294,9 @@
       <div><dt>Руйхатга олинган вакт</dt><dd>${pat.time}</dd></div>
       <div><dt>Тениаринхоз санаси</dt><dd>${pat.tarDate}</dd></div>
 
+      <%-- койко-дни: значение, плановая выписка, изменение лечащим врачом / админом с причиной, история (CDayCount) --%>
+      <div class="w4" id="rvDays"><dt>Койко-дни</dt><dd>${pat.dayCount}</dd></div>
+
       <div class="w2">
         <dt>Даволовчи шифокор</dt>
         <c:choose>
@@ -363,3 +366,122 @@
     </dl>
   </div>
 </div>
+
+<style>
+  .dc-top { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; }
+  .dc-num { display:inline-block; padding:2px 12px; border-radius:8px; background:var(--brand-soft); color:var(--brand-dark); font-weight:700; font-size:15px; }
+  .dc-meta { font-size:13px; color:var(--muted); }
+  .dc-meta b { color:var(--text); font-weight:600; }
+  .dc-form { margin-top:12px; padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:#FAFBFC; display:none; }
+  .dc-form.on { display:block; }
+  .dc-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+  .dc-row label { display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:4px; }
+  .dc-row input[type=number] { width:110px; }
+  .dc-row .grow { flex:1; min-width:260px; }
+  .dc-prev { font-size:13px; color:var(--muted); padding-bottom:8px; }
+  .dc-prev.bad { color:#A50F22; }
+  .dc-leave { margin-top:12px; padding:12px 14px; border:1px solid var(--border); border-radius:12px; }
+  .dc-leave.req { border-color:#F59E0B; background:#FFFBEB; }
+  .dc-lh { font-size:13px; font-weight:700; margin-bottom:8px; }
+  .dc-lh .fa { color:var(--brand); margin-right:4px; }
+  .dc-hist { margin-top:12px; width:100%; border-collapse:collapse; font-size:13px; }
+  .dc-hist th { text-align:left; font-size:11.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; padding:6px 8px; border-bottom:1px solid var(--border); }
+  .dc-hist td { padding:6px 8px; border-bottom:1px solid #F0F1F4; vertical-align:top; }
+</style>
+<script>
+  (function () {
+    var box = $('#rvDays'), info = null;
+    function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+    function plan(days) {
+      if (!info || !info.begin || !(days > 0)) return '';
+      var p = info.begin.split('.'), d = new Date(+p[2], +p[1] - 1, +p[0] + days - 1);
+      return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
+    }
+    function render() {
+      var h = '<dt>Койко-дни</dt><dd style="overflow:visible"><div class="dc-top">' +
+        '<span class="dc-num">' + esc(info.days || '—') + '</span>' +
+        '<span class="dc-meta">Регистрация <b>' + esc(info.begin) + '</b>' +
+        (info.dateEnd ? ' · выписка <b>' + esc(info.dateEnd) + '</b>' : (info.planEnd ? ' · плановая выписка <b>' + esc(info.planEnd) + '</b>' : '')) + '</span>' +
+        (info.canEdit ? '<button type="button" class="rv-btn" id="dcEdit"><i class="fa fa-pencil"></i> Изменить кол-во дней</button>' : '') +
+        '</div>';
+      if (info.canEdit) {
+        h += '<div class="dc-form" id="dcForm"><div class="dc-row">' +
+          '<div><label>Новое кол-во дней</label><input type="number" class="form-control" id="dcDays" min="' + info.min + '" max="' + info.max + '" step="1" value="' + esc(info.days) + '"></div>' +
+          '<div class="grow"><label>Причина изменения <span style="color:#D7182E">*</span></label><input type="text" class="form-control" id="dcReason" maxlength="500" placeholder="Например: продление лечения по состоянию"></div>' +
+          '<div><button type="button" class="rv-btn primary" id="dcSave"><i class="fa fa-floppy-o"></i> Сохранить</button> <button type="button" class="rv-btn" id="dcCancel">Отмена</button></div>' +
+          '</div><div class="dc-prev" id="dcPrev"></div>' +
+          '<div style="font-size:11.5px;color:#9AA1AC">Дата выписки = регистрация + кол-во дней − 1, она не может быть раньше сегодняшнего дня (не меньше ' + info.min + ' дн.). ' +
+          'Питание пациента сразу продлевается или сокращается до новой даты.</div></div>';
+      }
+      // время ухода в день выписки: после какого приёма пищи (от него зависит питание дня выписки)
+      if (info.leaveOptions && info.leaveOptions.length && (info.planEnd || info.dateEnd)) {
+        var cur = $.grep(info.leaveOptions, function (o) { return o.id == info.leave; })[0];
+        h += '<div class="dc-leave' + (info.leaveRequired ? ' req' : '') + '"><div class="dc-lh"><i class="fa fa-sign-out"></i> Время ухода ' +
+          esc(info.dateEnd || info.planEnd) + '</div>';
+        if (info.leaveCanEdit) {
+          h += '<div class="dc-row"><div class="grow"><select class="form-control" id="dcLeave"><option value="">— выберите —</option>';
+          $.each(info.leaveOptions, function (i, o) { h += '<option value="' + o.id + '"' + (o.id == info.leave ? ' selected' : '') + '>' + esc(o.name) + '</option>'; });
+          h += '</select></div><div><button type="button" class="rv-btn primary" id="dcLeaveSave"><i class="fa fa-floppy-o"></i> Сохранить</button></div></div>';
+        } else {
+          h += '<div style="font-weight:600">' + (cur ? esc(cur.name) : 'не выбрано (по умолчанию только завтрак)') + '</div>';
+        }
+        h += '<div style="font-size:11.5px;color:#9AA1AC;margin-top:4px">' + (info.leaveRequired
+          ? 'Нужно выбрать до выписки: без этого лечащий врач не сможет работать в системе.'
+          : 'В день регистрации завтрака нет; в день выписки питание до выбранного приёма пищи включительно.') + '</div></div>';
+      }
+      if (info.history && info.history.length) {
+        h += '<table class="dc-hist"><thead><tr><th>Когда</th><th>Кто</th><th>Было</th><th>Стало</th><th>Причина</th></tr></thead><tbody>';
+        $.each(info.history, function (i, r) {
+          h += '<tr><td style="white-space:nowrap">' + esc(r.date) + '</td><td>' + esc(r.user) + '</td><td>' + esc(r.from) + '</td><td><b>' + esc(r.to) + '</b></td><td>' + esc(r.reason) + '</td></tr>';
+        });
+        h += '</tbody></table>';
+      }
+      box.html(h + '</dd>');
+    }
+    function preview() {
+      var n = parseInt($('#dcDays').val(), 10), el = $('#dcPrev');
+      if (!(n > 0)) { el.text('').removeClass('bad'); return; }
+      var bad = n < info.min || n > info.max;
+      el.toggleClass('bad', bad).text(bad ? 'Допустимо от ' + info.min + ' до ' + info.max + ' дн.' : 'Плановая выписка станет ' + plan(n));
+    }
+    function load() {
+      $.ajax({url: '/reg/days/info.s', data: {id: '${pat.id}'}, dataType: 'json', success: function (res) {
+        if (!res.success) return;
+        info = res;
+        render();
+      }});
+    }
+    box.on('click', '#dcEdit', function () { $('#dcForm').addClass('on'); $('#dcDays').focus().select(); preview(); });
+    box.on('click', '#dcCancel', function () { $('#dcForm').removeClass('on'); });
+    box.on('input', '#dcDays', function () { this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3); preview(); });
+    box.on('click', '#dcLeaveSave', function () {
+      var v = $('#dcLeave').val();
+      if (!v) { errMsg('Выберите, после какого питания уходит пациент.'); return; }
+      var b = $(this).prop('disabled', true);
+      $.ajax({url: '/reg/days/leave.s', method: 'post', data: {id: '${pat.id}', meal: v}, dataType: 'json',
+        success: function (res) {
+          if (res.success) {
+            openMedMsg('Время ухода сохранено, питание дня выписки обновлено.', true);
+            load();
+            try { if (window.top.fmsLeaveCheck) window.top.fmsLeaveCheck(); } catch (e) {}
+          } else errMsg(res.msg);
+        },
+        complete: function () { b.prop('disabled', false); }
+      });
+    });
+    box.on('click', '#dcSave', function () {
+      var n = parseInt($('#dcDays').val(), 10), reason = $.trim($('#dcReason').val());
+      if (!(n >= info.min && n <= info.max)) { errMsg('Кол-во дней: от ' + info.min + ' до ' + info.max + '.'); return; }
+      if (!reason) { errMsg('Укажите причину изменения.'); $('#dcReason').focus(); return; }
+      var b = $(this).prop('disabled', true);
+      $.ajax({url: '/reg/days/change.s', method: 'post', data: {id: '${pat.id}', days: n, reason: reason}, dataType: 'json',
+        success: function (res) {
+          if (res.success) { openMedMsg('Кол-во койко-дней изменено: ' + n + '. Плановая выписка ' + res.planEnd + '.', true); load(); }
+          else errMsg(res.msg);
+        },
+        complete: function () { b.prop('disabled', false); }
+      });
+    });
+    load();
+  })();
+</script>

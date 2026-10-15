@@ -25,7 +25,7 @@
 <script src="/res/bs/metisMenu/metisMenu.min.js"></script>
 <script src="/res/bs/morrisjs/morris.min.js"></script>
 <script src="/res/bs/sb_admin/js/sb-admin-2.js"></script>
-<script src="/res/js/common.js?v=2026101309"></script>
+<script src="/res/js/common.js?v=2026101501"></script>
 <script src="/res/editor/nicEdit.js" type="text/javascript"></script>
 <script src="/res/tinymce/jquery-te-1.4.0.js" type="text/javascript"></script>
 <body style="background:white;">
@@ -61,6 +61,7 @@
 <form action='save.s?planId=${plan.id}' id="formAction" name="formAction" method="post" target="frm">
   <c:if test="${!print}">
     <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
       * {font-size:${sessionScope.fontSize}px !important;}
     </style>
     <%-- печатный вид листа (kp-*): шапка, пациент, название, таблица результатов, подпись; размер шрифта — от выбранного --%>

@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
   <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-  <script src="/res/js/common.js?v=2026101309"></script>
+  <script src="/res/js/common.js?v=2026101501"></script>
   <%@include file="/WEB-INF/pages/core/forms/style.jsp"%>
   <style>
     html, body { height:100%; margin:0; background:#F5F6F8; }

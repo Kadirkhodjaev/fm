@@ -37,7 +37,7 @@
   <div class="rpp-head">
     <div class="rpp-top">
       <h3>${report.name}</h3>
-      <button type="button" class="fm-btn" id="rpPrint" onclick="rpPrint()" disabled title="Печать отчёта"><i class="fa fa-print"></i>Печать</button>
+      <button type="button" class="fm-btn" id="rpPrint" onclick="window.rpPrint()" disabled title="Печать отчёта"><i class="fa fa-print"></i>Печать</button>
       <button type="button" class="fm-btn" onclick="rpExcel()" title="Скачать таблицы отчёта в Excel"><i class="fa fa-file-excel-o"></i>Excel</button>
       <button type="button" class="fm-btn" onclick="rpSend('tab')" title="Открыть отчёт в новой вкладке"><i class="fa fa-external-link"></i>В новом окне</button>
       <button type="submit" class="fm-btn primary"><i class="fa fa-play"></i>Сформировать</button>

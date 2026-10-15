@@ -7,7 +7,7 @@
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
 <link href="/res/css/styles.css" rel="stylesheet">
 <link href="/res/bs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<script src="/res/js/common.js?v=2026101309"></script>
+<script src="/res/js/common.js?v=2026101501"></script>
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <style>
   .kd { --brand:#D7182E; --brand-soft:#FDECEE; --text:#1F2430; --muted:#6B7280; --border:#E6E8EC;

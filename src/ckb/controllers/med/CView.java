@@ -434,21 +434,14 @@ public class CView {
       cal.add(Calendar.DATE, 10);
       end = cal.getTime();
     }
-    if(pat.getDateBegin().after(end) || pat.getDateBegin().equals(end)) {
-      return "redirect:/view/fizio/index.s";
-    }
     List<LvFizioDates> dates = new ArrayList<>();
-    int i = 0;
-    while(true) {
+    // дни с поступления по последний день графика (не больше года); раньше цикл по equals мог не остановиться
+    for(Date d : Util.dayList(pat.getDateBegin(), end, 366)) {
       LvFizioDates date = new LvFizioDates();
-      Calendar cl = Calendar.getInstance();
-      cl.setTime(pat.getDateBegin());
-      cl.add(Calendar.DATE, i++);
-      date.setDate(cl.getTime());
+      date.setDate(d);
       date.setDone("N");
       date.setState("N");
       dates.add(date);
-      if(cl.getTime().equals(end)) break;
     }
     model.addAttribute("dates", dates);
     HashMap<Integer, List<LvFizioDates>> ds = new HashMap<>();

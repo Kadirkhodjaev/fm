@@ -899,7 +899,7 @@ public class TgPatientBot {
         .append(".sec-h{font-weight:bold;padding:10px 0 2px;border-bottom:1px solid #888;text-transform:uppercase;font-size:13px}")
         .append(".grp-h{font-weight:bold;padding:12px 0 2px;border-bottom:2px solid #000;text-transform:uppercase}.dx-h{font-weight:bold;padding:5px 0 0}")
         .append(".sec-b{padding:3px 0 1px;text-align:justify}.sign{margin-top:22px}.sign td{padding:8px 0 3px}")
-        .append("@media print{.osmp{max-width:none;padding:0}}</style></head><body><div class=\"osmp\">");
+        .append(".osmp td[data-row]{border:1px solid #888;padding:3px 6px;vertical-align:top}.osmp table{max-width:100%}@media print{.osmp{max-width:none;padding:0}}</style></head><body><div class=\"osmp\">");
       b.append("<div class=\"org\">«").append(Tg.esc(clinicName(conn))).append("»</div>");
       b.append("<div class=\"doc-title\">Касаллик тарихидан кучирма № ").append(rs.getInt("yearNum") != 0 ? rs.getInt("yearNum") + "" : "").append("</div>");
       b.append("<table class=\"info\"><tr><td class=\"l\">Бемор</td><td class=\"v\" colspan=\"3\">")

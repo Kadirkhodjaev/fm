@@ -145,7 +145,14 @@ public class SPatientImp implements SPatient {
     pat.setDrugEffect(Util.get(req, "drugEffect"));
     pat.setResus(Util.get(req, "resus"));
     pat.setPalata(Util.get(req, "palata"));
-    pat.setDayCount(Util.getInt(req, "dayCount"));
+    // кол-во койко-дней строгое: у приёмного - с проверкой, после приёмного врача - только лечащий врач или админ в карточке (CDayCount)
+    if(DayCount.regEditable(pat)) {
+      Integer days = Util.isNull(req, "dayCount") ? null : Integer.valueOf(Util.getInt(req, "dayCount"));
+      String daysErr = DayCount.check(pat.getDateBegin(), days);
+      if(daysErr != null) throw new Exception(daysErr);
+      pat.setDayCount(days);
+    } else if(Util.isNotNull(req, "dayCount") && pat.getDayCount() != null && Util.getInt(req, "dayCount") != pat.getDayCount())
+      throw new Exception("После приёмного врача кол-во койко-дней меняют только лечащий врач и администратор: карточка пациента, вкладка «Регистрация».");
     pat.setBloodGroup(Util.isNull(req, "bloodGroup.id") ? null : dOpt.get(Util.getInt(req, "bloodGroup.id")));
     pat.setLvpartner(Util.isNull(req, "lvpartner.id") ? null : dLvPartner.get(Util.getInt(req, "lvpartner.id")));
     pat.setDept(Util.isNull(req, "dept.id") ? null : beanSession.getDept(Util.getInt(req, "dept.id")));
@@ -546,10 +553,8 @@ public class SPatientImp implements SPatient {
     p.setC35(pat.getC35());
     p.setC36(pat.getC36());
     p.setC37(pat.getC37());
-    if(p.getYearNum() == null)
-      p.setYearNum(dPatient.getNextYearNum());
-    else
-      p.setYearNum(pat.getYearNum());
+    p.setYearNum(pat.getYearNum() == null ? dPatient.getNextYearNum() : pat.getYearNum());
+    p.setDateBegin(pat.getDateBegin() == null ? new Date() : pat.getDateBegin());
   }
 
   @Override

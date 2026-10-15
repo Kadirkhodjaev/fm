@@ -15,7 +15,7 @@
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js"></script>
-<script src="/res/js/common.js?v=2026101309"></script>
+<script src="/res/js/common.js?v=2026101501"></script>
 <%-- Процедурная (Users.procUser): оболочка в новом дизайне для планшета. Меню из одного пункта не показываем,
      страницы (палаты, палата) открываются во всю ширину. --%>
 <style>

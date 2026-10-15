@@ -1,7 +1,7 @@
 <%@ page pageEncoding="UTF-8" %>
 <%-- Разделы карточки пациента во фрейме: jQuery, common.js, общий набор fm-* и лист ld-* --%>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101501" type="text/javascript"></script>
 <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <%@include file="/WEB-INF/pages/core/forms/style.jsp"%>
 <%@include file="/WEB-INF/pages/med/lv/doc_style.jsp"%>

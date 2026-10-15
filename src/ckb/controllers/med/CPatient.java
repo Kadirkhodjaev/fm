@@ -119,6 +119,8 @@ public class CPatient {
         model.addAttribute("gridHeight", "65");
         String ids = session.getKdoTypesIds().toString();
         ids = ids.substring(1, ids.length() - 1);
+        // у сотрудника лаборатории может не быть ни одного типа обследований: пустой «in ()» давал ошибку SQL
+        if (ids.trim().isEmpty()) ids = "-1";
         sql += " And Exists (Select 1 From Patient_Plans c Where t.id = c.patient_id And c.actDate <= CURRENT_TIMESTAMP() And c.Kdo_Type_Id in (" + ids + ")) ";
       }
       if (session.getRoleId() == 25) {

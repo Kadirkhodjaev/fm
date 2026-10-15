@@ -2,6 +2,9 @@
 <html>
 <head>
   <title>Распечатка по пациенту ${pat.fio}</title>
+  <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
+  </style>
 </head>
 <body>
   <table style="width:100%; margin:auto;border-collapse: collapse">

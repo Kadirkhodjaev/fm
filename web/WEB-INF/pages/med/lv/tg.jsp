@@ -98,8 +98,8 @@
     var b = $('#tpInvite').prop('disabled', true);
     $.ajax({
       url: '/lv/tg/invite.s', method: 'post', dataType: 'json',
-      success: function (res) { alert(res.msg || (res.success ? 'Отправлено' : 'Не удалось отправить')); },
-      error: function () { alert('Не удалось отправить'); },
+      success: function (res) { openMedMsg(res.msg || (res.success ? 'Отправлено' : 'Не удалось отправить'), !!res.success); },
+      error: function () { errMsg('Не удалось отправить'); },
       complete: function () { b.prop('disabled', false); }
     });
   });

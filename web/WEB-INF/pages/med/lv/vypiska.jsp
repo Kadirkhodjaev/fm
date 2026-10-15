@@ -11,9 +11,10 @@
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <script src="/res/bs/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
 
-<script src="/res/js/common.js?v=2026101309" type="text/javascript"></script>
+<script src="/res/js/common.js?v=2026101501" type="text/javascript"></script>
 <link href="/res/quill/quill.snow.css" rel="stylesheet">
 <script src="/res/quill/quill.js" type="text/javascript"></script>
+<script src="/res/quill/quill-fms.js?v=2026101501" type="text/javascript" charset="UTF-8"></script>
 <script src="/res/js/fms-calendar.js" type="text/javascript"></script>
 <script src="/res/js/fms-templates.js?v=4" type="text/javascript" charset="UTF-8"></script>
 
@@ -35,6 +36,33 @@
   .hd-empty { color: #6B7280; font-size: 12.5px; padding: 4px 2px; }
   .hd-follow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
   .hd-follow input { height: 28px; padding: 2px 6px; font-size: 13px; }
+  /* выбор МКБ-10 как в «Осмотре врача»: поиск по коду и названию, плашка выбранного диагноза, справочник */
+  .mkb-pick { position: relative; font-size: 14px; }
+  .mkb-field { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 4px 0 12px; background: #fff;
+    border: 1px solid #ccc; border-radius: 6px; transition: border-color .15s, box-shadow .15s; }
+  .mkb-field:focus-within { border-color: #9AA1AC; box-shadow: 0 0 0 3px rgba(31, 36, 48, .06); }
+  .mkb-pick.mkb-error .mkb-field { border-color: #d9534f; box-shadow: 0 0 0 3px rgba(217, 83, 79, .12); }
+  .mkb-ico { flex: none; color: #9AA1AC; font-size: 14px; }
+  .mkb-pick.mkb-error .mkb-ico { color: #d9534f; }
+  .mkb-field input.mkb-input { flex: 1; min-width: 0; height: 36px !important; padding: 0; border: 0; outline: none;
+    box-shadow: none; background: transparent; font-size: 14px; color: #1F2430; }
+  .mkb-input::placeholder { color: #9AA1AC; }
+  .mkb-chip { flex: 1; min-width: 0; display: none; align-items: center; gap: 8px; margin: 5px 0; color: #1F2430; }
+  .mkb-pick.has-value .mkb-chip { display: flex; }
+  .mkb-pick.has-value .mkb-input, .mkb-pick.has-value .mkb-ico { display: none; }
+  .mkb-chip-code { flex: none; padding: 3px 8px; border-radius: 5px; background: #FDECEC; color: #C62828; font-weight: 700; font-size: 13px; }
+  .mkb-chip-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mkb-btn { flex: none; height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: none; color: #4B5563; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .mkb-btn:hover { background: #F1F2F4; color: #1F2430; }
+  .mkb-btn-clear { width: 28px; padding: 0; color: #9AA1AC; }
+  .mkb-pick:not(.has-value) .mkb-btn-clear { display: none; }
+  .mkb-sep { flex: none; width: 1px; height: 20px; background: #E6E8EC; }
+  .mkb-list { display: none; position: absolute; z-index: 1000; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 6px; list-style: none;
+    max-height: 320px; overflow-y: auto; background: #fff; border: 1px solid #E6E8EC; border-radius: 10px; box-shadow: 0 12px 32px rgba(20, 25, 40, .14); }
+  .mkb-list li a { display: flex; gap: 10px; padding: 7px 10px; border-radius: 6px; color: #1F2430; text-decoration: none; line-height: 1.35; }
+  .mkb-list li a:hover, .mkb-list li.active a { background: #F1F2F4; }
+  .mkb-list li.disabled a { color: #9AA1AC; cursor: default; background: none; }
+  .mkb-list .mkb-code { flex: none; min-width: 56px; font-weight: 700; color: #C62828; }
 </style>
 <script type="text/javascript">
   window.quills = window.quills || {};
@@ -77,13 +105,100 @@
       }
     });
   }
-  function setMkb(text, id) {
-    var q = window.quills['c1'];
-    $('#mkb').val(text);
-    $('#mkb_id').val(id);
-    var hasText = q.getText().trim().length > 0;
-    q.insertText(q.getLength() - 1, (hasText ? ', ' : '') + text);
+  // Показывает выбранный диагноз плашкой: код отдельно, название рядом (как в «Осмотре врача»)
+  function showMkbChip(text) {
+    var m = /^([A-ZА-Я]\d{2}(?:[.\-][\w.\-]*)?)\s+(.*)$/i.exec(text || '');
+    $('.mkb-chip-code').text(m ? m[1] : 'МКБ').toggle(true);
+    $('.mkb-chip-name').text(m ? m[2] : text).attr('title', text);
+    $('.mkb-pick').toggleClass('has-value', !!$('#mkb_id').val());
   }
+  // выбор из поиска или из окна справочника (/mkb/index.s вызывает opener.setMkb): диагноз добавляется в «Основной диагноз»
+  function setMkb(text, id) {
+    text = $.trim(text);
+    $('#mkb_id').val(id);
+    $('#mkb').val(text);
+    $('#mkb_search').val('');
+    $('#mkb_list').hide().empty();
+    $('.mkb-pick').removeClass('mkb-error');
+    showMkbChip(text);
+    var q = window.quills['c1'];
+    if (q && q.getText().indexOf(text) < 0) {
+      var hasText = q.getText().trim().length > 0;
+      q.insertText(q.getLength() - 1, (hasText ? ', ' : '') + text);
+    }
+  }
+  function clearMkb() {
+    $('#mkb_id, #mkb, #mkb_search').val('');
+    $('#mkb_list').hide().empty();
+    $('.mkb-pick').removeClass('has-value');
+    $('#mkb_search').focus();
+  }
+  $(function () {
+    var timer = null, xhr = null;
+    var box = $('#mkb_list'), inp = $('#mkb_search');
+    // Старые записи хранили id диагноза в поле mkb: подтягиваем название из справочника
+    if (!$('#mkb_id').val() && /^\d+$/.test($('#mkb').val())) $('#mkb_id').val($('#mkb').val());
+    if ($('#mkb_id').val() && !/\D/.test($('#mkb').val())) {
+      showMkbChip('');
+      $.post('/mkb/get.s', {id: $('#mkb_id').val()}, function (res) {
+        if (res.success && res.name) {
+          var t = (res.code ? res.code + ' ' : '') + res.name;
+          $('#mkb').val(t);
+          showMkbChip(t);
+        }
+      }, 'json');
+    } else {
+      showMkbChip($('#mkb').val());
+    }
+    function render(rows) {
+      box.empty();
+      if (!rows.length) box.append('<li class="disabled"><a href="#">Ничего не найдено</a></li>');
+      $.each(rows, function (i, r) {
+        var text = (r.code ? r.code + ' ' : '') + r.name;
+        var a = $('<a href="#"></a>').attr('data-id', r.id).attr('data-text', text);
+        if (r.code) a.append($('<span class="mkb-code"></span>').text(r.code));
+        a.append($('<span></span>').text(r.name));
+        box.append($('<li></li>').append(a));
+      });
+      box.show();
+    }
+    inp.on('input', function () {
+      $('#mkb_id').val('');
+      $('#mkb').val('');
+      var v = $.trim(inp.val());
+      clearTimeout(timer);
+      if (v.length < 2) { box.hide().empty(); return; }
+      timer = setTimeout(function () {
+        if (xhr) xhr.abort();
+        xhr = $.post('/mkb/search.s', {q: v}, function (res) {
+          if (res.success) render(res.rows || []);
+        }, 'json');
+      }, 300);
+    });
+    inp.on('keydown', function (e) {
+      if (!box.is(':visible')) return;
+      var items = box.find('li:not(.disabled)'), cur = items.index(items.filter('.active'));
+      if (e.keyCode === 40 || e.keyCode === 38) {
+        e.preventDefault();
+        cur = e.keyCode === 40 ? Math.min(cur + 1, items.length - 1) : Math.max(cur - 1, 0);
+        items.removeClass('active').eq(cur).addClass('active');
+        var el = items.eq(cur)[0];
+        if (el) el.scrollIntoView({block: 'nearest'});
+      } else if (e.keyCode === 13) {
+        e.preventDefault();
+        if (cur >= 0) items.eq(cur).find('a').click();
+      } else if (e.keyCode === 27) {
+        box.hide();
+      }
+    });
+    box.on('click', 'a', function (e) {
+      e.preventDefault();
+      if ($(this).attr('data-id')) setMkb($(this).attr('data-text'), $(this).attr('data-id'));
+    });
+    $(document).on('click', function (e) {
+      if (!$(e.target).closest('.mkb-pick').length) box.hide();
+    });
+  });
   function printRecommend() {
     window.open('/lv/print_recommend.s');
   }
@@ -234,6 +349,13 @@
   };
   $(function () { homeDrugs.init(); });
   function saveDoc() {
+    if (!$('#mkb_id').val()) {
+      $('.mkb-pick').addClass('mkb-error');
+      $('#mkb_search')[0].scrollIntoView({block: 'center'});
+      $('#mkb_search').focus();
+      errMsg('Выберите основной диагноз по МКБ-10: без него выписку сохранить нельзя');
+      return;
+    }
     var hdErr = homeDrugs.validate();
     if (hdErr) { errMsg(hdErr); return; }
     $('#doc_form').html('');
@@ -266,18 +388,50 @@
     <input type="hidden" name="doc_code" value="vypiska"/>
     <div class="ld-body">
 
-        <div class="ld-head"><div class="ld-c"><b>Пациент(ка):</b> ${patient.fio}</div><div class="ld-c"><b>Год рождения:</b> ${patient.birthyear}</div><div class="ld-c"><b>Дата выписки:</b></div><div class="ld-c"><input name="Date_End" id="Date_End" type="text" class="form-control fms-cal" autocomplete="off" value="<fmt:formatDate pattern = "dd.MM.yyyy" value = "${patient.dateEnd}" />"/></div></div>
+        <div class="ld-head"><div class="ld-c"><b>Пациент(ка):</b> ${patient.fio}</div><div class="ld-c"><b>Год рождения:</b> ${patient.birthyear}</div><div class="ld-c"><b>Дата выписки:</b></div><div class="ld-c">
+          <%-- дата выписки не вводится: всегда дата регистрации + кол-во койко-дней (меняет лечащий врач в Регистрации) --%>
+          <input type="hidden" name="Date_End" id="Date_End" value=""/>
+          <span id="vyEnd" style="font-weight:700"></span>
+          <c:if test="${empty patient.dateEnd}">
+            <label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 0 10px;font-weight:600;cursor:pointer">
+              <input type="checkbox" id="vyOut" onchange="$('#Date_End').val(this.checked ? 'Y' : '')"/> Оформить выписку
+            </label>
+          </c:if>
+          <c:if test="${not empty patient.dateEnd}"><span style="margin-left:8px;color:#15803D;font-weight:600">выписан</span></c:if>
+          <div style="font-size:11.5px;color:#9AA1AC;margin-top:2px">Регистрация <fmt:formatDate pattern="dd.MM.yyyy" value="${patient.dateBegin}"/> + ${patient.dayCount} дн. − 1. Кол-во дней и время ухода выбирает лечащий врач: Регистрация → «Койко-дни».</div>
+          <script>
+            (function () {
+              var b = '<fmt:formatDate pattern="dd.MM.yyyy" value="${patient.dateBegin}"/>'.split('.'), n = parseInt('${patient.dayCount}', 10);
+              var t = '<fmt:formatDate pattern="dd.MM.yyyy" value="${patient.dateEnd}"/>';
+              if (!t && b.length === 3 && n > 0) {
+                var d = new Date(+b[2], +b[1] - 1, +b[0] + n - 1);
+                t = ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
+              }
+              document.getElementById('vyEnd').textContent = t || '—';
+            })();
+          </script>
+        </div></div>
         <div class="ld-sec">Клинический диагноз</div>
+        <div class="ld-l">
+            Основной диагноз по МКБ-10 <span style="color:#d9534f" title="Обязательное поле">*</span>
+        </div>
         <div class="ld-raw">
-            <table style="width:100%">
-              <tr>
-                <td style="width:100px"><a href="#" onclick="window.open('/mkb/index.s', '_blank')">МКБ 10</a>:</td>
-                <td>
-                  <input type="hidden" name="mkb_id" id="mkb_id" value="${doc.mkb_id}"/>
-                  <input type="text" readonly name="mkb" id="mkb" class="form-control" value="${doc.mkb}"/>
-                </td>
-              </tr>
-            </table>
+            <input type="hidden" name="mkb_id" id="mkb_id" value="${doc.mkb_id}"/>
+            <input type="hidden" name="mkb" id="mkb" value="<c:out value='${doc.mkb}'/>"/>
+            <div class="mkb-pick">
+              <div class="mkb-field">
+                <i class="fa fa-search mkb-ico"></i>
+                <input type="text" id="mkb_search" class="mkb-input" autocomplete="off" placeholder="Начните вводить код или название диагноза, например I10 или гипертензия"/>
+                <div class="mkb-chip" title="Выбранный диагноз">
+                  <span class="mkb-chip-code"></span>
+                  <span class="mkb-chip-name"></span>
+                </div>
+                <button class="mkb-btn mkb-btn-clear" type="button" onclick="clearMkb()" title="Убрать диагноз"><i class="fa fa-times"></i></button>
+                <span class="mkb-sep"></span>
+                <button class="mkb-btn" type="button" onclick="window.open('/mkb/index.s', '_blank')" title="Открыть справочник МКБ-10"><i class="fa fa-sitemap"></i> Справочник</button>
+              </div>
+              <ul id="mkb_list" class="mkb-list"></ul>
+            </div>
         </div>
         <div class="ld-l">
             Основной диагноз

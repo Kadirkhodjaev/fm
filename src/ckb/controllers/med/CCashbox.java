@@ -785,8 +785,19 @@ public class CCashbox {
     res.setContentType("text/plain;charset=UTF-8");
     try {
       Patients pat = dPatient.get(Util.getInt(req, "id"));
-      pat.setDayCount(Util.getInt(req, "koyko"));
+      // кол-во койко-дней мен€ют только лечащий врач и администратор: с проверкой, историей и пересчЄтом питани€
+      ckb.session.Session session = ckb.session.SessionUtil.getUser(req);
+      if(!ckb.services.med.patient.DayCount.canChange(session, pat))
+        throw new Exception(" ол-во койко-дней мен€ют только лечащий врач пациента и администратор (карточка пациента, вкладка Ђ–егистраци€ї).");
+      int days = Util.getInt(req, "koyko");
+      String daysErr = ckb.services.med.patient.DayCount.check(pat, days);
+      if(daysErr != null) throw new Exception(daysErr);
+      Integer oldDays = pat.getDayCount();
+      pat.setDayCount(days);
+      // discharge date always follows registration + bed-days
+      if(pat.getDateEnd() != null) pat.setDateEnd(ckb.services.med.patient.DayCount.planEnd(pat.getDateBegin(), days));
       dPatient.save(pat);
+      ckb.services.med.patient.DayCount.afterChange(pat, oldDays, days, "»зменено на странице кассы", session.getUserId());
       data.put("success", true);
     } catch (Exception e) {
       data.put("success", false);

@@ -681,31 +681,6 @@ public class CEat {
     return json.toString();
   }
 
-  @RequestMapping("/eat/filter.s")
-  protected String eatFilter(HttpServletRequest req, Model model) {
-    List<EatTypes> types = dEatType.getList("From EatTypes Where state = 'A'");
-    List<ObjList> eats = new ArrayList<>();
-    for(EatTypes type: types) {
-      ObjList obj = new ObjList();
-      obj.setC1(type.getName());
-      obj.setC2("" + type.getId());
-      List<Eats> ets = dEat.getList("From Eats Where upper(name) like '%" + Util.get(req, "filter", "").toUpperCase().replace("'", "''") + "%' And type.id = " + type.getId() + " And state = 'A'");
-      List<ObjList> list = new ArrayList<>();
-      for(Eats et : ets) {
-        ObjList e = new ObjList();
-        e.setC1("" + et.getId());
-        e.setC2(et.getName());
-        list.add(e);
-      }
-      if(!list.isEmpty()) {
-        obj.setList(list);
-        eats.add(obj);
-      }
-    }
-    model.addAttribute("eats", eats);
-    return "/med/eat/menus/filter";
-  }
-
   @RequestMapping(value = "/menu/save.s", method = RequestMethod.POST)
   @ResponseBody
   protected String menuSave(HttpServletRequest req) throws JSONException {

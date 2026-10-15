@@ -4,7 +4,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%-- Карточка пациента → Экстренный: списание препаратов пациенту с остатков склада (/lv/shock/row/save.s, delete.s) --%>
 <%@include file="/WEB-INF/pages/med/lv/frame_style.jsp"%>
-<script src="/res/js/fms-select.js?v=2026101305"></script>
+<script src="/res/js/fms-select.js?v=2026101410"></script>
 <div class="ld-sheet" style="max-width:1000px">
   <div class="ld-title"><i class="fa fa-ambulance" style="color:#D7182E"></i> Экстренный <span class="sub">списание препаратов пациенту</span></div>
   <div class="ld-body">

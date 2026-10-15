@@ -54,7 +54,7 @@
     for (var i=0;i<tds.length;i++) {
       if (tds[i].getAttribute('required') == 'true') {
         if (tds[i].getElementsByTagName('textarea')[0].value == '') {
-          alert('Не заполнено поля Заключение');
+          top.alert('Не заполнено поля Заключение');
           return;
         }
       }
@@ -83,7 +83,7 @@
       }
     }
   } catch(e) {
-    alert(e);
+    top.alert(e);
   }
   </c:if>
 </script>

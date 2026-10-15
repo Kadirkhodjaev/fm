@@ -40,6 +40,29 @@ public class Tg {
 
   // ---------- Настройки ----------
 
+  /**
+   * Где запущен fm: "prod" - служба Tomcat на сервере, "dev" - Tomcat из IntelliJ (папка JetBrains).
+   * Можно задать явно: -Dfm.env=dev|prod или переменная окружения FM_ENV.
+   */
+  public static String env() {
+    String e = System.getProperty("fm.env");
+    if (e == null || e.trim().isEmpty()) e = System.getenv("FM_ENV");
+    if (e != null && !e.trim().isEmpty()) return e.trim().toLowerCase();
+    String base = System.getProperty("catalina.base", "") + "|" + System.getProperty("catalina.home", "");
+    return base.contains("JetBrains") ? "dev" : "prod";
+  }
+
+  public static boolean isProd() {
+    return "prod".equals(env());
+  }
+
+  /** Эти параметры вне prod берутся только из dev.*: боевые боты на компьютере разработчика не запускаются никогда */
+  private static final String[] ENV_KEYS = {"bot.token", "bot.name", "patient.bot.token", "patient.bot.name", "invite.url", "invite.token"};
+
+  /**
+   * telegram.properties: общие параметры + боевые (bot.token и т.д.) + для разработки с префиксом dev. (dev.bot.token и т.д.).
+   * В prod ключи dev.* не читаются; вне prod любой dev.ключ заменяет ключ, а боты без dev.*-токена выключены.
+   */
   static Properties props() {
     if (props == null) {
       Properties p = new Properties();
@@ -48,7 +71,15 @@ public class Tg {
       } catch (Exception e) {
         e.printStackTrace();
       }
-      props = p;
+      Properties r = new Properties();
+      for (String k : p.stringPropertyNames()) if (!k.startsWith("dev.")) r.setProperty(k, p.getProperty(k));
+      if (!isProd()) {
+        for (String k : ENV_KEYS) r.setProperty(k, p.getProperty("dev." + k, ""));
+        for (String k : p.stringPropertyNames()) if (k.startsWith("dev.")) r.setProperty(k.substring(4), p.getProperty(k));
+      }
+      System.out.println("TG_ENV " + env() + ": бот сотрудников " + (r.getProperty("bot.token", "").trim().isEmpty() ? "выключен" : "включён") +
+        ", бот пациентов " + (r.getProperty("patient.bot.token", "").trim().isEmpty() ? "выключен" : "включён"));
+      props = r;
     }
     return props;
   }

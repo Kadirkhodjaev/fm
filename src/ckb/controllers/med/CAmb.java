@@ -1114,52 +1114,6 @@ public class CAmb {
   //endregion
 
   //region DRUGS
-  @RequestMapping("/drug.s")
-  protected String drug(HttpServletRequest req, Model model){
-    Session session = SessionUtil.getUser(req);
-    //
-    AmbPatients pat = dAmbPatients.get(session.getCurPat());
-    model.addAttribute("pat", pat);
-    model.addAttribute("drugs", dDrug.getList("From Drugs t Where t.id in (Select c.drug.id From DrugActDrugs c Where c.counter - rasxod > 0) Or t.id In (Select f.drug.id From HNDrugs f Where f.drugCount - f.rasxod > 0) Order By name"));
-    //
-    PatientDrug drug = new PatientDrug();
-    if(Util.isNotNull(req, "id"))
-      model.addAttribute("drug", sAmb.getDrug(Util.getInt(req, "id")));
-    else {
-      drug.setDateBegin(pat.getRegDate());
-      //
-      Calendar cal = Calendar.getInstance();
-      cal.setTime(pat.getRegDate());
-      cal.add(Calendar.DATE, 10);
-      List<PatientDrugDate> dates = new ArrayList<>();
-      for (int i = 0; i <= 10; i++) {
-        PatientDrugDate date = new PatientDrugDate();
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(pat.getRegDate());
-        cl.add(Calendar.DATE, i);
-        date.setDate(cl.getTime());
-        date.setState("ENT");
-        date.setId(0);
-        dates.add(date);
-      }
-      drug.setDateEnd(cal.getTime());
-      drug.setDates(dates);
-      model.addAttribute("drug", drug);
-    }
-    Date minDate = dAmbDrugDate.minDate(session.getCurPat());
-    Date maxDate = dAmbDrugDate.maxDate(session.getCurPat());
-    if(minDate != null) {
-      long diffInMillies = Math.abs(maxDate.getTime() - minDate.getTime());
-      long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 2;
-      model.addAttribute("dates", Util.getDateList(minDate, (int) (diff)));
-    }
-    model.addAttribute("rows", sAmb.getDrugs(session.getCurPat()));
-    model.addAttribute("drugTypes", dDict.getList("From Dicts Where typeCode = 'drugTypes'"));
-    model.addAttribute("injectionTypes", dDict.getList("From Dicts Where typeCode = 'injectionTypes'"));
-    //
-    return "med/amb/drug/index";
-  }
-
   @RequestMapping("/drug/view.s")
   protected String drugView(HttpServletRequest req, Model model){
     Session session = SessionUtil.getUser(req);

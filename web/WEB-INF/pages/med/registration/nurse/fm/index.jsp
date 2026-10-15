@@ -5,6 +5,7 @@
 <%@ taglib prefix = "fmt" uri = "http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <script src="/res/datepicker/datetimepicker_css.js"></script>
+<script src="/res/js/fms-time.js?v=2026101501" type="text/javascript"></script>
 <script>
   // маска даты: плагин подгружается один раз (jQuery и общие скрипты уже на главной странице)
   function arMask() { if ($.fn.mask) $(".date-format").mask("99.99.9999", {placeholder: "_"}); }
@@ -203,6 +204,7 @@
           $('input[name=cl_tel]').val(res.tel);
           $('select[name=cl_country_id]').val(res.country_id);
           $('select[name=cl_region_id]').val(res.region_id);
+          arRegion();
           $('input[name=cl_address]').val(res.address);
           $('#btn_client_view').click();
         } else openMedMsg(res.msg, false);
@@ -388,7 +390,7 @@
               <input name="cl_doc_info" type="text" class="form-control" maxlength="64" placeholder="Кем и когда выдан"/></div>
 
             <div class="f s3"><label>Резидентство <req>*</req></label>
-              <select name="cl_country_id" class="form-control" onchange="$('select[name=cl_region_id]').toggle(this.value === '199').val()">
+              <select name="cl_country_id" class="form-control" onchange="arRegion()">
                 <c:forEach items="${countries}" var="reg">
                   <option value="${reg.id}">${reg.name}</option>
                 </c:forEach>
@@ -529,9 +531,19 @@
             </f:select></div>
 
           <div class="f s2"><label>Кол-во койко-дней <d></d></label>
-            <f:input path="dayCount" required="true" class="form-control" type="number"/></div>
+            <%-- строгое поле: по нему бронирование коек, питание и период назначений. После приёмного врача меняют только лечащий врач и админ в карточке --%>
+            <c:choose>
+              <c:when test="${patient.id != null && not empty patient.state && patient.state != 'PRN' && patient.state != 'PRD'}">
+                <f:input path="dayCount" class="form-control" type="number" readonly="true" title="Меняют лечащий врач и администратор: карточка пациента, вкладка «Регистрация»"/>
+                <div style="font-size:11.5px;color:#9AA1AC;margin-top:3px">Меняет лечащий врач в карточке → Регистрация</div>
+              </c:when>
+              <c:otherwise>
+                <f:input path="dayCount" required="true" class="form-control" type="number" min="1" max="365" step="1"
+                         oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"/>
+              </c:otherwise>
+            </c:choose></div>
           <div class="f s2"><label>Руйхатга олинган вакт</label>
-            <f:input path="time" type="text" class="form-control" maxlength="400"/></div>
+            <f:input path="time" type="text" class="form-control fms-time" maxlength="400" placeholder="чч:мм" autocomplete="off"/></div>
           <div class="f s2"><label>Амб. картаси раками</label>
             <f:input path="ambNum" type="text" class="form-control" maxlength="30"/></div>
 
@@ -796,4 +808,13 @@
   kdoRecalc();
 
   $('d').html('*');
+
+  // область нужна только для резидентов (Узбекистан, id 199): прячется всё поле вместе с подписью
+  function arRegion() {
+    $('select[name=cl_region_id]').closest('.f').toggle($('select[name=cl_country_id]').val() === '199');
+  }
+  // длинные списки - с поиском (FmsSelect загружен на главной странице); короткие (пол, группа крови, да/нет) остаются обычными
+  if (window.FmsSelect)
+    $('select[name=cl_country_id], select[name=cl_region_id], select[name="dept.id"], #room_id, select[name="vidPer.id"], select[name="metka.id"], select[name="lvpartner.id"]')
+      .each(function () { FmsSelect.attach(this); });
 </script>

@@ -9,6 +9,7 @@
 <c:if test="${text}">
   <link href="/res/quill/quill.snow.css" rel="stylesheet">
   <script src="/res/quill/quill.js" type="text/javascript"></script>
+  <script src="/res/quill/quill-fms.js?v=2026101501" type="text/javascript" charset="UTF-8"></script>
   <script src="/res/js/fms-templates.js?v=4" type="text/javascript" charset="UTF-8"></script>
 </c:if>
 <style>
@@ -24,7 +25,9 @@
   .kf-st.done { background:#E3F6EC; color:#1E7A4C; }
   .kf-head { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid #F0F1F4; background:#FAFBFC; }
   .kf-head h3 { flex:1; margin:0; font-size:15px; font-weight:700; }
-  .kf-body { padding:8px 14px 14px; font-size:13px; }
+  .kf-body { padding:8px 14px 14px; font-size:13px; overflow-x:auto; }
+  /* широкий бланк: колонка бланка на всю оставшуюся ширину; если и так не влезает - прокрутка, а не обрезка */
+  .kf-wrap.wide { grid-template-columns:300px minmax(0, 1fr); }
   .kf-body table { width:100% !important; border-collapse:collapse; }
   .kf-body td { padding:4px 8px !important; border:0 !important; border-bottom:1px solid #F0F1F4 !important; background:none !important; font-size:13px; }
   .kf-body tr:first-child td { color:#6B7280; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
@@ -177,6 +180,9 @@
         try { d = JSON.parse(body.find('script.kb-data').text() || '{}'); } catch (e) {}
         body.find('script').remove();
         fields().each(function () { if (d[this.name] != null) $(this).val(d[this.name]); });
+        var wide = function () { if (body[0].scrollWidth > body[0].clientWidth + 2) body.closest('.kf-wrap').addClass('wide'); };
+        wide();
+        setTimeout(wide, 300);
         if (done) lock(true);
         orig = ser();
         if (!done) fields().filter('input:not([type=hidden])').filter(function () { return this.value === ''; }).first().focus();

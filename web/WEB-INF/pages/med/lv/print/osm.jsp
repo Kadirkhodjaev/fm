@@ -19,6 +19,7 @@
 <c:set var="endKeys" value="c4,c5,c18,c19"/>
 <c:set var="endTitles" value="${fn:split('Стационар даволанишдан олдинги муолажалар|Тахминий ташхис: Асосий|Тахминий ташхис: Хамрох|Тахминий ташхис: Асорати', '|')}"/>
 <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
   .osmp { width:100%; max-width:790px; margin:0 auto; font-family:Arial, 'Segoe UI', sans-serif; font-size:${fs + 2}px; color:#000; line-height:1.35; }
   .osmp table { border-collapse:collapse; width:100%; }
   /* В таблицах шрифт наследуется: без doctype браузер иначе ставит в td свой размер 16px */

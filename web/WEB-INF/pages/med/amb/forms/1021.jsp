@@ -20,7 +20,7 @@
 <script src="/res/bs/metisMenu/metisMenu.min.js"></script>
 <script src="/res/bs/morrisjs/morris.min.js"></script>
 <script src="/res/bs/sb_admin/js/sb-admin-2.js"></script>
-<script src="/res/js/common.js?v=2026101309"></script>
+<script src="/res/js/common.js?v=2026101501"></script>
 <script src="/res/editor/nicEdit.js" type="text/javascript"></script>
 <script src="/res/tinymce/jquery-te-1.4.0.js" type="text/javascript"></script>
 

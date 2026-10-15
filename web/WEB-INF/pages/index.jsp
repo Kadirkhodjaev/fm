@@ -25,8 +25,8 @@
   <script src="/res/bs/metisMenu/metisMenu.min.js"></script>
   <script src="/res/bs/morrisjs/morris.min.js"></script>
   <script src="/res/bs/sb_admin/js/sb-admin-2.js"></script>
-  <script src="/res/js/common.js?v=2026101309"></script>
-  <script src="/res/js/fms-select.js?v=2026101305"></script>
+  <script src="/res/js/common.js?v=2026101501"></script>
+  <script src="/res/js/fms-select.js?v=2026101410"></script>
   <script src="/res/editor/nicEdit.js" type="text/javascript"></script>
   <script src="/res/tinymce/jquery-te-1.4.0.js" type="text/javascript"></script>
 
@@ -70,6 +70,37 @@
       openMainPage('${openPage}', ${showMenu});
       // автовыход: 15 минут без действий в любой вкладке системы, за минуту предупреждение
       if (window.FmsIdle) FmsIdle.start({limit: 15 * 60 * 1000, warn: 60 * 1000, logout: '/out.s'});
+      <c:if test="${session.roleId == 5}">fmsLeaveCheck(); setInterval(fmsLeaveCheck, 5 * 60 * 1000);</c:if>
+    });
+    // Лечащий врач: с 12:00 дня перед выпиской нужно выбрать, после какого питания уходит пациент.
+    // Пока не выбрано, окно закрывает всю систему (выбор прямо в окне или в карточке → Регистрация).
+    function fmsLeaveCheck() {
+      if (${session.roleId != 5}) return;
+      $.ajax({url: '/reg/days/pending.s', dataType: 'json', cache: false, success: function (res) {
+        var box = $('#fmsLeave');
+        if (!res.success || !res.items || !res.items.length) { box.remove(); return; }
+        var esc = function (s) { return $('<div>').text(s == null ? '' : s).html(); };
+        var h = '<div class="lv-dlg"><div class="lv-h"><i class="fa fa-sign-out"></i> Укажите время ухода пациентов</div>' +
+          '<div class="lv-t">У этих пациентов завтра (или уже) плановая выписка. Выберите, после какого питания пациент уходит в день выписки: ' +
+          'от этого зависит питание. Пока время ухода не указано, работа в системе недоступна.</div>';
+        $.each(res.items, function (i, p) {
+          h += '<div class="lv-row" data-id="' + esc(p.id) + '"><div class="lv-p"><b>' + esc(p.fio) + '</b><span>' + (p.ib ? 'ИБ ' + esc(p.ib) + ' · ' : '') +
+            (p.room ? 'палата ' + esc(p.room) + ' · ' : '') + 'выписка ' + esc(p.end) + '</span></div><select class="form-control"><option value="">— после какого питания уходит —</option>';
+          $.each(p.options || [], function (j, o) { h += '<option value="' + o.id + '">' + esc(o.name) + '</option>'; });
+          h += '</select><button type="button" class="lv-b">Сохранить</button></div>';
+        });
+        h += '</div>';
+        if (!box.length) box = $('<div id="fmsLeave"></div>').appendTo('body');
+        box.html(h);
+      }});
+    }
+    $(document).on('click', '#fmsLeave .lv-b', function () {
+      var row = $(this).closest('.lv-row'), v = row.find('select').val(), b = $(this);
+      if (!v) { errMsg('Выберите, после какого питания уходит пациент.'); return; }
+      b.prop('disabled', true);
+      $.ajax({url: '/reg/days/leave.s', method: 'post', data: {id: row.attr('data-id'), meal: v}, dataType: 'json',
+        success: function (res) { if (res.success) { openMedMsg('Время ухода сохранено', true); fmsLeaveCheck(); } else errMsg(res.msg); },
+        complete: function () { b.prop('disabled', false); }});
     });
     function callKeyDown(evt){
       try {
@@ -87,10 +118,12 @@
           loadMain('patients/index.s?filter=Y');
         </c:if>
         <c:if test="${fn:indexOf(session.curUrl, 'amb') != -1}">
+        // поиск ищет в списке амбулатории: из карточки пациента (reg.s?id=...) раньше уходил запрос «id=153103?filter=Y» с ошибкой
+        var ambUrl = '${session.curUrl}', ambList = (ambUrl.indexOf('/amb/home.s') != -1 || ambUrl.indexOf('/amb/archive.s') != -1) ? ambUrl.split('?')[0] : '/amb/home.s';
         if ($('#filterInput').val() != '')
-          loadMain('${session.curUrl}?filter=Y&filterInput=' + val);
+          loadMain(ambList + '?filter=Y&filterInput=' + val);
         else
-          loadMain('${session.curUrl}?filter=Y');
+          loadMain(ambList + '?filter=Y');
         </c:if>
       }
       </c:if>
@@ -237,6 +270,42 @@
     .app-brand a { display: flex; align-items: center; text-decoration: none; overflow: hidden; }
     .app-brand .logo-big  { height: 26px; }
     .app-brand .logo-mini { height: 28px; display: none; }
+
+    /* Окно «Укажите время ухода» для лечащего врача: закрывает систему, пока не выбрано */
+    #fmsLeave { position: fixed; inset: 0; z-index: 25000; background: rgba(20, 25, 40, .5); display: flex; align-items: center; justify-content: center; }
+    #fmsLeave .lv-dlg { width: 760px; max-width: calc(100% - 32px); max-height: 86vh; overflow-y: auto; background: #fff; border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(20, 25, 40, .3); padding: 20px 22px; font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: var(--text); }
+    #fmsLeave .lv-h { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    #fmsLeave .lv-h .fa { color: var(--brand); margin-right: 6px; }
+    #fmsLeave .lv-t { font-size: 13.5px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+    #fmsLeave .lv-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+    #fmsLeave .lv-p { flex: 1; min-width: 0; }
+    #fmsLeave .lv-p b { display: block; font-size: 14px; }
+    #fmsLeave .lv-p span { font-size: 12.5px; color: var(--muted); }
+    #fmsLeave select { width: 290px; height: 36px; }
+    #fmsLeave .lv-b { height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: #1F2430; color: #fff; font-weight: 600; cursor: pointer; }
+
+    /* Роль рядом с логотипом и переключение ролей (как в nano) */
+    .app-role { position: relative; flex: none; min-width: 0; }
+    .app-role-btn { display: inline-flex; align-items: center; gap: 8px; max-width: 280px; height: 38px; padding: 0 10px 0 5px;
+      border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text) !important; text-decoration: none !important; font-size: 14px; font-weight: 600; }
+    a.app-role-btn:hover, .open > .app-role-btn { border-color: var(--brand); background: var(--brand-soft); }
+    .app-role-btn.static { cursor: default; }
+    .app-role-btn .ri, .app-role-menu .ri { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); font-size: 14px; }
+    .app-role-btn .rn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .app-role-btn .rc { color: var(--muted); }
+    .app-role-menu { left: 0; right: auto; min-width: 280px; max-height: 72vh; overflow-y: auto; margin-top: 6px; padding: 6px;
+      border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(20, 25, 40, .14); }
+    .app-role-menu .rh { padding: 6px 10px 8px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .app-role-menu a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: var(--text); font-size: 14px; text-decoration: none; }
+    .app-role-menu a:hover, .app-role-menu a:focus { background: var(--brand-soft); color: var(--brand-dark); text-decoration: none; }
+    .app-role-menu a .rn { flex: 1; min-width: 0; }
+    .app-role-menu a.on { font-weight: 600; }
+    .app-role-menu a.on .ri, .app-role-menu a:hover .ri { background: var(--brand); color: #fff; }
+    .app-role-menu a .fa-check { color: var(--brand); }
+    .app-role-menu a.all { margin-top: 4px; border-top: 1px solid var(--border); border-radius: 0 0 8px 8px; padding-top: 10px; color: var(--muted); }
+    @media (max-width: 1300px) { .app-role-btn { max-width: 190px; } }
+    @media (max-width: 1100px) { .app-role-btn .rn { display: none; } }
 
     .app-search { flex: 1; display: flex; justify-content: center; padding: 0 24px; }
     .search-box { position: relative; width: 100%; max-width: 560px; }
@@ -434,6 +503,35 @@
         <img class="logo-mini" src="/res/imgs/logo_fms_mini.png" alt="Farhod Madad Shifo">
       </a>
     </div>
+
+    <%-- текущая роль; если ролей несколько — переключение между ними без возврата на страницу выбора (как в nano) --%>
+    <c:if test="${curRole != null}">
+      <c:choose>
+        <c:when test="${fn:length(userRoles) > 1}">
+          <div class="dropdown app-role">
+            <a class="app-role-btn dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" title="Сменить роль">
+              <span class="ri"><i class="${empty curRole.icon ? 'fa fa-user' : curRole.icon}" aria-hidden="true"></i></span>
+              <span class="rn"><c:out value="${curRole.name}"/></span>
+              <i class="fa fa-angle-down rc" aria-hidden="true"></i>
+            </a>
+            <div class="dropdown-menu app-role-menu">
+              <div class="rh">Сменить роль</div>
+              <c:forEach items="${userRoles}" var="r">
+                <a href="/setRole.s?id=${r.id}" class="${r.id == curRole.id ? 'on' : ''}">
+                  <span class="ri"><i class="${empty r.icon ? 'fa fa-user' : r.icon}" aria-hidden="true"></i></span>
+                  <span class="rn"><c:out value="${r.name}"/></span>
+                  <c:if test="${r.id == curRole.id}"><i class="fa fa-check" aria-hidden="true"></i></c:if>
+                </a>
+              </c:forEach>
+              <a href="/setRole.s?id=0" class="all"><span class="ri"><i class="fa fa-th-large" aria-hidden="true"></i></span><span class="rn">Все роли</span></a>
+            </div>
+          </div>
+        </c:when>
+        <c:otherwise>
+          <div class="app-role"><span class="app-role-btn static"><span class="ri"><i class="${empty curRole.icon ? 'fa fa-user' : curRole.icon}" aria-hidden="true"></i></span><span class="rn"><c:out value="${curRole.name}"/></span></span></div>
+        </c:otherwise>
+      </c:choose>
+    </c:if>
 
     <div class="app-search">
       <c:if test="${showSearch}">

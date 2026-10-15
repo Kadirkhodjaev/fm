@@ -39,11 +39,20 @@
   (function fit(n) {
     var f = document.getElementById('frm');
     try {
-      var d = f.contentWindow.document, h = d.body.scrollHeight, w = d.documentElement.scrollWidth;
+      var d = f.contentWindow.document, w = d.documentElement.scrollWidth, h = 0;
+      // высота по низу содержимого, а не scrollHeight: тот растёт вместе с фреймом, и снизу копилось пустое место
+      Array.prototype.forEach.call(d.body.children, function (el) { var r = el.getBoundingClientRect(); if (r.height) h = Math.max(h, r.bottom); });
+      h = Math.ceil(h + (d.defaultView.pageYOffset || 0));
       if (h) f.style.height = (h + 30) + 'px';
       d.documentElement.style.overflowX = 'hidden';
-      // широкое содержимое: лист расширяется, чтобы внутри не было прокрутки
-      if (w > f.clientWidth + 1) { var sh = f.parentNode; sh.style.maxWidth = 'none'; sh.style.width = (w + sh.offsetWidth - f.clientWidth) + 'px'; }
+      // широкое содержимое (таблица фиксированной ширины): лист расширяется один раз и не шире окна.
+      // Раньше расширялся при каждой проверке: содержимое шириной 100% росло вместе с листом, и лист «уезжал»
+      if (!f.getAttribute('data-wide') && w > f.clientWidth + 20) {
+        var sh = f.parentNode;
+        f.setAttribute('data-wide', 'Y');
+        sh.style.maxWidth = 'calc(100% - 32px)';
+        sh.style.width = (w + sh.offsetWidth - f.clientWidth) + 'px';
+      }
     } catch (e) {}
     if (n > 0) setTimeout(function () { fit(n - 1); }, 700);
   })(15);

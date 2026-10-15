@@ -11,6 +11,8 @@ import ckb.dao.med.kdos.DKdos;
 import ckb.dao.med.lv.docs.DLvDoc;
 import ckb.dao.med.lv.plan.DLvPlan;
 import ckb.dao.med.patient.DPatient;
+import ckb.dao.med.patient.DPatientEat;
+import ckb.domains.med.patient.PatientEats;
 import ckb.dao.med.patient.DPatientLink;
 import ckb.dao.med.patient.DPatientPlan;
 import ckb.dao.med.patient.DPatientWatchers;
@@ -42,6 +44,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -52,6 +55,7 @@ public class CReg {
   @Autowired SForm sForm;
   @Autowired SPatient sPatient;
   @Autowired DPatient dPatient;
+  @Autowired DPatientEat dPatientEat;
   @Autowired DPatientLink dPatientLink;
   @Autowired BeanUsers beanUsers;
   @Autowired BeanSession beanSession;
@@ -260,7 +264,7 @@ public class CReg {
     sForm.setSelectOptionModel(model, 1, "sex");
     model.addAttribute("countries", beanSession.getCounteries());
     model.addAttribute("regions", beanSession.getRegions());
-    return "med/registration/nurse/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
+    return "med/registration/nurse/fm/view";
   }
 
   @RequestMapping(value = "nurse/watcher.s", method = RequestMethod.POST)
@@ -332,9 +336,9 @@ public class CReg {
     model.addAttribute("lvs", beanUsers.getLvs());
     model.addAttribute("deps", beanSession.getDepts());
     sPatient.createDocModel(pat, patient);
-    model.addAttribute("date_Begin", Util.dateToString(pat.getDateBegin()));
-    model.addAttribute("Date_End", Util.dateToString(pat.getDateEnd()));
-    model.addAttribute("diagnos_Date", Util.dateToString(pat.getDiagnosDate()));
+    model.addAttribute("date_Begin", Util.dateToString(patient.getDateBegin()));
+    model.addAttribute("Date_End", Util.dateToString(patient.getDateEnd()));
+    model.addAttribute("diagnos_Date", Util.dateToString(patient.getDiagnosDate()));
     model.addAttribute("bioCount", dLvPlan.getCount("From LvPlans Where kdo.id = 153 And patientId = " + pat.getId()));
     Util.makeMsg(req, model);
     return "med/registration/doctor/fm/index";
@@ -353,9 +357,25 @@ public class CReg {
       if (msg.isEmpty() && pat.getYearNum() != null && pat.getYearNum() != Util.getInt(req, "yearNum"))
         if (dPatient.existIbNum(Util.getInt(req, "id"), Util.getInt(req, "yearNum")))
           msg += "Ќомер истори€ болезни - такой номер уже существует\n";
+      // дата поступлени€: нова€ или изменЄнна€ Ч не дальше 2 дней от сегодн€ (ошибались мес€цем: 14.09 вместо 14.10)
+      if (msg.isEmpty()) {
+        Date nd = Util.stringToDate(req.getParameter("date_Begin"));
+        String old = pat.getDateBegin() == null ? "" : Util.dateToString(pat.getDateBegin());
+        if (nd == null)
+          msg += "ƒата поступлени€ указана неверно\n";
+        else if (!Util.dateToString(nd).equals(old)) {
+          Calendar c = Calendar.getInstance();
+          c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
+          long days = Math.round((nd.getTime() - c.getTimeInMillis()) / 86400000.0);
+          if (Math.abs(days) > 2)
+            msg += "ƒата поступлени€ " + Util.dateToString(nd) + " отличаетс€ от сегодн€шней больше чем на 2 дн€. ѕроверьте число и мес€ц\n";
+        }
+      }
       //
       if (msg.isEmpty()) {
+        Date oldBegin = pat.getDateBegin();
         Patients p = sPatient.docSave(req);
+        shiftEats(p, oldBegin);
         data.put("success", true);
         data.put("id", p.getId());
       } else {
@@ -369,6 +389,21 @@ public class CReg {
     return data.toString();
   }
 
+  // дату поступлени€ исправили (например, 14.09 -> 14.10): питание ещЄ не подтверждЄнных дней сдвигаем на ту же разницу,
+  // иначе дни питани€ остаютс€ в старом мес€це и пациент не попадает в за€вку на питание
+  private void shiftEats(Patients p, Date oldBegin) {
+    if (oldBegin == null || p.getDateBegin() == null) return;
+    long days = Math.round((Util.stringToDate(Util.dateToString(p.getDateBegin())).getTime() - Util.stringToDate(Util.dateToString(oldBegin)).getTime()) / 86400000.0);
+    if (days == 0) return;
+    for (PatientEats e : dPatientEat.getList("From PatientEats Where patient.id = " + p.getId() + " And state != 'CON'")) {
+      Calendar c = Calendar.getInstance();
+      c.setTime(e.getActDate());
+      c.add(Calendar.DATE, (int) days);
+      e.setActDate(c.getTime());
+      dPatientEat.save(e);
+    }
+  }
+
   @RequestMapping("doctor/view.s")
   protected String docPrint(HttpServletRequest req, Model model) {
     Session session = SessionUtil.getUser(req);
@@ -377,7 +412,7 @@ public class CReg {
     if(pat.getLv_id() != null)
       model.addAttribute("lv", dUser.get(pat.getLv_id()).getFio());
     model.addAttribute("page", Util.get(req, "page"));
-    return "med/registration/doctor/" + (session.isParamEqual("CLINIC_CODE", "fm") ? "fm/" : "") + "view";
+    return "med/registration/doctor/fm/view";
   }
 
   @RequestMapping(value = "stat/removeRow.s", method = RequestMethod.POST)

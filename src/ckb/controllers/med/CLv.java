@@ -269,6 +269,8 @@ public class CLv {
       String docCode = Util.get(req, "doc_code");
       Patients p = dPatient.get(session.getCurPat());
       if(docCode.equals("vypiska") && Util.isNotNull(req, "Date_End")) {
+        if(p.getDayCount() == null || p.getDateBegin() == null)
+          return Util.err(json, "Ќе указано кол-во койко-дней: дата выписки считаетс€ как дата регистрации + кол-во дней.");
         List<ObjList> plans = sPatient.getPlans(p.getId());
         for (ObjList plan : plans)
           if (plan.getC7().equals("N"))
@@ -318,7 +320,8 @@ public class CLv {
       }
       dLvDoc.save(doc);
       if(docCode.equals("vypiska") && Util.isNotNull(req, "Date_End")) {
-        p.setDateEnd(Req.getDate(req, "Date_End"));
+        // discharge date is never typed: registration date + bed-days (see DayCount)
+        p.setDateEnd(ckb.services.med.patient.DayCount.planEnd(p.getDateBegin(), p.getDayCount()));
         dPatient.save(p);
       }
       json.put("id", doc.getId());
@@ -564,17 +567,13 @@ public class CLv {
     Date end = dLvFizioDate.getPatientMaxDay(pat.getId());
     if(end != null) {
       List<LvFizioDates> dates = new ArrayList<>();
-      int i = 0;
-      while (true) {
+      // дни с поступлени€ по последний день графика (не больше года)
+      for (Date d : Util.dayList(pat.getDateBegin(), end, 366)) {
         LvFizioDates date = new LvFizioDates();
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(pat.getDateBegin());
-        cl.add(Calendar.DATE, i++);
-        date.setDate(cl.getTime());
+        date.setDate(d);
         date.setDone("N");
         date.setState("N");
         dates.add(date);
-        if (cl.getTime().equals(end)) break;
       }
       HashMap<Integer, List<LvFizioDates>> ds = new HashMap<>();
       for (LvFizios fizio : fizios) {
@@ -982,48 +981,14 @@ public class CLv {
     session.setCurSubUrl("/lv/eat.s");
     Patients patient = dPatient.get(session.getCurPat());
     model.addAttribute("patient", patient);
-    List<PatientEats> eats = dPatientEat.getPatientEat(patient.getId());
-    List<EatMenuTypes> menuTypes = dEatMenuType.getList("From EatMenuTypes Where state = 'A'");
-    if(eats == null || eats.isEmpty()) {
-      eats = new ArrayList<>();
-      int count = patient.getDayCount();
-      if(patient.getDateEnd() != null && patient.getDateEnd().after(patient.getDateBegin())) {
-        count = Integer.parseInt("" + ((patient.getDateEnd().getTime() - patient.getDateBegin().getTime()) / (1000 * 60 * 60 * 24))) + 1;
-      }
-      List<Date> dates = Util.getDateArray(patient.getDateBegin(), count);
-      for(Date date: dates) {
-        for(EatMenuTypes menuType: menuTypes) {
-          PatientEats eat = new PatientEats();
-          eat.setActDate(date);
-          eat.setPatient(patient);
-          eat.setTable(null);
-          eat.setMenuType(menuType);
-          eat.setState("ENT");
-          dPatientEat.save(eat);
-          eats.add(eat);
-        }
-      }
-    } else {
-      if(patient.getDateEnd() != null && patient.getDateEnd().after(patient.getDateBegin())) {
-        Date maxDate = eats.get(eats.size() - 1).getActDate();
-        int count = Integer.parseInt("" + ((patient.getDateEnd().getTime() - patient.getDateBegin().getTime()) / (1000 * 60 * 60 * 24))) + 1;
-        List<Date> dates = Util.getDateArray(maxDate, count - (eats.size() / menuTypes.size()) + 1);
-        for (Date date : dates) {
-          if (maxDate.getTime() != date.getTime()) {
-            for (EatMenuTypes menuType : menuTypes) {
-              PatientEats eat = new PatientEats();
-              eat.setActDate(date);
-              eat.setPatient(patient);
-              eat.setTable(null);
-              eat.setMenuType(menuType);
-              eat.setState("ENT");
-              dPatientEat.save(eat);
-              eats.add(eat);
-            }
-          }
-        }
-      }
+    // питание по датам лечени€: день регистрации без завтрака, день выписки (регистраци€ + дни - 1) до выбранного времени ухода;
+    // недостающие дни в конце добавл€ютс€, лишние неподтверждЄнные убираютс€ (ckb.services.med.patient.DayCount)
+    try {
+      ckb.services.med.patient.DayCount.shapeEats(patient.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+    List<PatientEats> eats = dPatientEat.getPatientEat(patient.getId());
     model.addAttribute("eats", eats);
     model.addAttribute("tables", dEatTable.getList("From EatTables Where state = 'A'"));
     return "/med/lv/eat";
@@ -1110,22 +1075,6 @@ public class CLv {
   //endregion
 
   //region DRUGS
-  // Ќазначение
-  @RequestMapping("/drug/index.s")
-  protected String naznachIndex(HttpServletRequest request, Model model){
-    Session session = SessionUtil.getUser(request);
-    Patients m = dPatient.get(session.getCurPat());
-    session.setCurSubUrl("/lv/drug/index.s");
-    model.addAttribute("pat", m);
-    model.addAttribute("drugs", dLvDrug.getPatientDrugs(session.getCurPat()));
-    model.addAttribute("fio", Util.nvl(m.getSurname()) + " " + Util.nvl(m.getName()) + " " + Util.nvl(m.getMiddlename()));
-    model.addAttribute("birthyear", m.getBirthyear());
-    model.addAttribute("goals", dLvDrugGoal.getAll());
-    model.addAttribute("templates", dDrugTemplate.byUser(session.getUserId()));
-    Util.makeMsg(request, model);
-    return "/med/lv/drug/index";
-  }
-
   // ”даление
   @RequestMapping(value = "/drug/delete.s", method = RequestMethod.POST)
   @ResponseBody
@@ -1150,52 +1099,6 @@ public class CLv {
       res.put("id", 0);
     }
     return res.toString();
-  }
-
-  // Ќазначение
-  @RequestMapping(value = "/drug/index.s", method = RequestMethod.POST)
-  protected String naznachSave(HttpServletRequest req){
-    Session session = SessionUtil.getUser(req);
-    String[] ids = req.getParameterValues("id");
-    String[] idx = req.getParameterValues("idx");
-    String[] types = req.getParameterValues("type");
-    String[] cats = req.getParameterValues("cat");
-    String[] goals = req.getParameterValues("goal");
-    String[] drugNames = req.getParameterValues("drugName");
-    String[] startDates = req.getParameterValues("startDate");
-    String[] endDates = req.getParameterValues("endDate");
-    String[] notes = req.getParameterValues("note");
-    Set<LvDrugs> drugsList = new HashSet<>();
-    //
-    if(idx != null) {
-      for(int i=0;i<idx.length;i++) {
-        LvDrugs lvDrug = ids[i].isEmpty() ? new LvDrugs() : dLvDrug.get(Integer.parseInt(ids[i]));
-        lvDrug.setPatient(session.getCurPat());
-        lvDrug.setDrugName(drugNames[i]);
-        lvDrug.setType(types[i]);
-        lvDrug.setCat(cats[i]);
-        lvDrug.setGoal(dLvDrugGoal.get(Integer.parseInt(goals[i])));
-        lvDrug.setMorningTime(Util.get(req, "morningTime" + idx[i]) != null);
-        lvDrug.setNoonTime(Util.get(req, "noonTime" + idx[i]) != null);
-        lvDrug.setEveningTime(Util.get(req, "eveningTime" + idx[i]) != null);
-        lvDrug.setStartDate(startDates[i] != null ? Util.stringToDate(startDates[i]) : null);
-        lvDrug.setEndDate(endDates[i] != null ? Util.stringToDate(endDates[i]) : null);
-        lvDrug.setNote(notes[i]);
-        //
-        drugsList.add(lvDrug);
-      }
-    }
-    dLvDrug.save(drugsList);
-    return "redirect:/lv/drug/index.s?msgState=1&msgCode=successSave";
-  }
-
-  // Ќазначение - список препаратов
-  @RequestMapping("/drug/home.s")
-  protected String drugHome(HttpServletRequest request){
-    Session session = SessionUtil.getUser(request);
-    Patients m = dPatient.get(session.getCurPat());
-    session.setCurSubUrl("/lv/drug/home.s");
-    return "/med/lv/drug/home";
   }
 
   // Ћист назначени€
@@ -1327,6 +1230,9 @@ public class CLv {
         return json.toString();
       }
       if(begin.after(end)) throw new Exception(" онец периода не может быть больще начала");
+      // период назначени€: не раньше регистрации и не позже выписки (во врем€ лечени€ - регистраци€ + кол-во койко-дней)
+      String periodErr = ckb.services.med.patient.DayCount.checkPeriod(pat, begin, end);
+      if(periodErr != null) throw new Exception(periodErr);
       JSONArray dates = new JSONArray();
       int i = 0;
       while(true) {
@@ -1413,6 +1319,9 @@ public class CLv {
       String[] dates = req.getParameterValues("dates");
       String[] dateStates = req.getParameterValues("date_state");
       String[] date_states = req.getParameterValues("dt_state");
+      // период назначени€: не раньше регистрации и не позже выписки (во врем€ лечени€ - регистраци€ + кол-во койко-дней)
+      String periodErr = ckb.services.med.patient.DayCount.checkPeriod(dPatient.get(session.getCurPat()), Util.getDate(req, "dateBegin"), Util.getDate(req, "dateEnd"));
+      if(periodErr != null) return Util.err(json, periodErr);
       //
       for(int i=0;i<sources.length;i++) {
         PatientDrugRows row = new PatientDrugRows();

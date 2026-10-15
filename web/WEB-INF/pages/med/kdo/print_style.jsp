@@ -1,6 +1,7 @@
 <%@ page pageEncoding="UTF-8" %>
 <%-- Общий вид страниц просмотра печати анализов (print.jsp, printPlans.jsp): панель сверху и белый лист на сером фоне --%>
 <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
   html, body { margin:0; background:#ECEEF1; font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color:#1F2430; }
   .pv-bar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px; padding:10px 18px; background:#fff; border-bottom:1px solid #E6E8EC; }
   .pv-bar .ic { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:#EEF1F5; color:#4B5563; }

@@ -3,6 +3,7 @@
 <%-- Вся история болезни одной страницей: печатные версии разделов подряд, оглавление слева; печать — каждый раздел с новой страницы --%>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
   html, body { margin:0; }
   body.fms-all { background:#E9EBEE; }
   .ah-wrap { display:flex; gap:16px; align-items:flex-start; padding:16px; font-family:'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }

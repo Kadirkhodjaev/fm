@@ -104,6 +104,14 @@ public class CKdo {
     }
   }
 
+  // id результатов назначений через запятую (только сохранённые)
+  private static String resultIds(List<LvPlans> plans) {
+    StringBuilder sb = new StringBuilder();
+    for(LvPlans p : plans)
+      if(p.getResultId() != null && p.getResultId() > 0) sb.append(sb.length() > 0 ? "," : "").append(p.getResultId());
+    return sb.toString();
+  }
+
   // показатели с одним полем результата (бланки 777, 888): их можно вводить списком
   private static boolean isSingle(LvPlans p) {
     int f = p.getKdo().getFormId();
@@ -126,8 +134,10 @@ public class CKdo {
       if(isSingle(p)) single.add(p); else other.add(p);
     }
     HashMap<Integer, String> vals = new HashMap<Integer, String>();
-    if(!single.isEmpty())
-      for(F999 f : df999.getList("From F999 Where patientId = " + id)) vals.put(f.getId(), f.getC1());
+    // значения берём по id результатов (первичный ключ): поиск по patientId шёл по всей таблице F999 без индекса и вешал систему
+    String rids = resultIds(single);
+    if(!rids.isEmpty())
+      for(F999 f : df999.getList("From F999 Where id In (" + rids + ")")) vals.put(f.getId(), f.getC1());
     model.addAttribute("p", pat);
     model.addAttribute("single", single);
     model.addAttribute("other", other);
@@ -207,8 +217,9 @@ public class CKdo {
         plids.append(plids.length() > 0 ? "," : "").append(p.getId());
       }
       for(Patients pt : dPatient.getList("From Patients Where id In (" + pids + ")")) pats.put(pt.getId(), pt);
-      if(isSingle(plans.get(0)))
-        for(F999 f : df999.getList("From F999 Where plan_id In (" + plids + ")")) vals.put(f.getId(), f.getC1());
+      String rids = resultIds(plans);
+      if(isSingle(plans.get(0)) && !rids.isEmpty())
+        for(F999 f : df999.getList("From F999 Where id In (" + rids + ")")) vals.put(f.getId(), f.getC1());
       // по алфавиту пациентов
       Collections.sort(plans, new Comparator<LvPlans>() {
         public int compare(LvPlans a, LvPlans b) {

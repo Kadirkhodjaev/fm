@@ -10,6 +10,7 @@
 <c:if test="${svText}">
   <link href="/res/quill/quill.snow.css" rel="stylesheet">
   <script src="/res/quill/quill.js" type="text/javascript"></script>
+  <script src="/res/quill/quill-fms.js?v=2026101501" type="text/javascript" charset="UTF-8"></script>
   <script src="/res/js/fms-templates.js?v=4" type="text/javascript" charset="UTF-8"></script>
 </c:if>
 <%@include file="/WEB-INF/pages/med/amb/svc_style.jsp"%>

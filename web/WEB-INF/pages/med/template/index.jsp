@@ -8,7 +8,7 @@
   <meta charset="UTF-8">
   <title>Шаблоны</title>
   <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
-  <script src="/res/js/common.js?v=2026101309"></script>
+  <script src="/res/js/common.js?v=2026101501"></script>
   <link href="/res/bs/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>

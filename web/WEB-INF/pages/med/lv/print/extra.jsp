@@ -8,6 +8,7 @@
   }
 %>
 <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
   * {font-size:${sessionScope.fontSize}px !important;color:black}
   table, p { width:95% !important; }
 </style>

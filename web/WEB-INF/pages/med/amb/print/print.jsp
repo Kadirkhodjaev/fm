@@ -9,6 +9,7 @@
 %>
 <script src="/res/bs/jquery/jquery.min.js" type="text/javascript"></script>
 <style>
+  /* tables from the text editor (Quill: td[data-row]) - cell borders on print */ td[data-row] { border:1px solid #888 !important; padding:3px 6px !important; vertical-align:top; } table:has(td[data-row]) { border-collapse:collapse; max-width:100%; }
   * {font-size:${sessionScope.fontSize}px !important;}
 </style>
 <html>
@@ -89,6 +90,11 @@
     $('table').each(function () {
       if (this.rows.length && $(this).find('td').filter(function () { return /Ф\.И\.О|ФИО/.test($(this).text()); }).length && !$(this).closest('.pp-ser').length)
         $(this).addClass('pp-pat');
+    });
+    // пустые поля текстовых услуг (в том числе старые «undefined») не печатаем: из-за них подпись врача уезжала вниз
+    $('.pp-ser tr').each(function () {
+      var tx = $.trim($(this).text());
+      if ((tx === '' || tx === 'undefined') && !$(this).find('img, input, textarea, select').length) $(this).remove();
     });
     $('.pp-ser > table').each(function () {
       var t = this, vi = -1, ni = -1, hc = 0;
